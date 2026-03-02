@@ -2,22 +2,18 @@ import { useState } from 'react'
 import styles from './GalleryGrid.module.css'
 
 function GalleryGrid({ images }) {
-  const [lightbox, setLightbox] = useState(null)
+  const [lightboxIndex, setLightboxIndex] = useState(null)
 
-  const openLightbox = (image) => setLightbox(image)
-  const closeLightbox = () => setLightbox(null)
+  const openLightbox = (index) => setLightboxIndex(index)
+  const closeLightbox = () => setLightboxIndex(null)
 
   const handleKeyDown = (e) => {
     if (e.key === 'Escape') closeLightbox()
-    if (e.key === 'ArrowRight') {
-      const idx = images.indexOf(lightbox)
-      if (idx < images.length - 1) setLightbox(images[idx + 1])
-    }
-    if (e.key === 'ArrowLeft') {
-      const idx = images.indexOf(lightbox)
-      if (idx > 0) setLightbox(images[idx - 1])
-    }
+    if (e.key === 'ArrowRight' && lightboxIndex < images.length - 1) setLightboxIndex(lightboxIndex + 1)
+    if (e.key === 'ArrowLeft' && lightboxIndex > 0) setLightboxIndex(lightboxIndex - 1)
   }
+
+  const lightbox = lightboxIndex !== null ? images[lightboxIndex] : null
 
   return (
     <>
@@ -27,8 +23,8 @@ function GalleryGrid({ images }) {
             key={image.id}
             className={styles.item}
             role="listitem"
-            onClick={() => openLightbox(image)}
-            onKeyDown={(e) => e.key === 'Enter' && openLightbox(image)}
+            onClick={() => openLightbox(index)}
+            onKeyDown={(e) => e.key === 'Enter' && openLightbox(index)}
             tabIndex={0}
             aria-label={`View ${image.alt}`}
           >
