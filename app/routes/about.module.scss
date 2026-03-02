@@ -1,0 +1,123 @@
+@use '~/styles/global' as g;
+
+.page {
+  min-height: 60vh;
+}
+
+// ─── Page header ───────────────────────────────────────────────────────────────
+.pageHeader {
+  background: var(--color-dark);
+  color: var(--color-white);
+  text-align: center;
+  padding: 4rem var(--space-page-x) 3rem;
+}
+
+.pageTitle {
+  font-size: var(--text-3xl);
+  letter-spacing: 0.05em;
+}
+
+.pageSubtitle {
+  margin-top: 0.75rem;
+  color: var(--color-gold);
+  font-style: italic;
+  font-size: var(--text-lg);
+}
+
+// ─── Bio ───────────────────────────────────────────────────────────────────────
+.bio {
+  padding: 5rem var(--space-page-x);
+}
+
+.bioInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 4rem;
+  align-items: start;
+
+  @media (max-width: #{g.$bp-md}) {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.bioImage img {
+  width: 100%;
+  border-radius: 4px;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 12%);
+}
+
+.bioText {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bioHeading {
+  font-size: var(--text-2xl);
+}
+
+.bioRole {
+  color: var(--color-gold);
+  font-style: italic;
+  font-size: var(--text-base);
+  margin-top: -0.5rem;
+}
+
+.bioText p {
+  color: #555;
+  line-height: 1.8;
+}
+
+// ─── Approach ──────────────────────────────────────────────────────────────────
+.approach {
+  background: var(--color-light-gray);
+  padding: 5rem var(--space-page-x);
+}
+
+.approachInner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.approachHeading {
+  font-size: var(--text-2xl);
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 2rem;
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pillar {
+  background: var(--color-white);
+  padding: 2rem;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+}
+
+.pillarIcon {
+  flex-shrink: 0;
+}
+
+.pillarTitle {
+  font-size: var(--text-lg);
+}
+
+.pillarDesc {
+  color: #666;
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
