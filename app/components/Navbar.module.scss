@@ -1,0 +1,151 @@
+@use '~/styles/global' as g;
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--color-dark);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 40%);
+}
+
+.nav {
+  max-width: #{g.$bp-xl};
+  margin: 0 auto;
+  padding: 0 var(--space-page-x);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-family: var(--font-serif);
+  font-size: var(--text-lg);
+  color: var(--color-white);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  transition: color g.$transition-fast;
+
+  &:hover {
+    color: var(--color-gold);
+  }
+}
+
+.navList {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+  align-items: center;
+}
+
+.navLink {
+  color: #ccc;
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0;
+  border-bottom: 2px solid transparent;
+  transition:
+    color g.$transition-fast,
+    border-color g.$transition-fast;
+
+  &:hover {
+    color: var(--color-white);
+  }
+}
+
+.navLinkActive {
+  color: var(--color-gold);
+  border-bottom-color: var(--color-gold);
+}
+
+// ─── Hamburger (single element with CSS bars via ::before / ::after) ──────────
+.menuToggle {
+  display: none;
+  background: none;
+  border: none;
+  padding: 0.4rem;
+  color: var(--color-white);
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+}
+
+.hamburger {
+  display: block;
+  position: relative;
+  width: 22px;
+  height: 2px;
+  background: var(--color-white);
+  border-radius: 2px;
+  transition: transform g.$transition-fast;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--color-white);
+    border-radius: 2px;
+    transition: transform g.$transition-fast;
+  }
+
+  &::before {
+    top: -7px;
+  }
+
+  &::after {
+    top: 7px;
+  }
+
+  // Animate to × when open
+  &.hamburgerOpen {
+    background: transparent;
+
+    &::before {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    &::after {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+  }
+}
+
+@media (max-width: #{g.$bp-sm}) {
+  .menuToggle {
+    display: flex;
+  }
+
+  .navList {
+    display: none;
+    position: absolute;
+    top: 64px;
+    left: 0;
+    right: 0;
+    background-color: var(--color-dark);
+    flex-direction: column;
+    gap: 0;
+    padding: 0.5rem 0;
+    border-top: 1px solid #333;
+
+    &.navListOpen {
+      display: flex;
+    }
+  }
+
+  .navList li {
+    width: 100%;
+  }
+
+  .navLink {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem var(--space-page-x);
+    border-bottom: none;
+    min-height: 44px;
+  }
+}
