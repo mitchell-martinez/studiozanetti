@@ -277,8 +277,8 @@ In your domain registrar / DNS panel for `mitchellmartinez.tech`:
 
 | Type | Name | Value |
 |------|------|-------|
-| A | `studiozanetti` | `<your VPS IP>` |
-| A | `staging.studiozanetti` | `<your VPS IP>` |
+| A | `studiozanetti` | `103.4.234.10` |
+| A | `staging.studiozanetti` | `103.4.234.10` |
 
 Propagation can take up to 24 hours but is usually a few minutes.
 
@@ -318,7 +318,7 @@ Go to **GitHub → Settings → Secrets and variables → Actions → New reposi
 
 | Secret | Value |
 |--------|-------|
-| `VPS_HOST` | Your Mammoth Cloud VPS IP address |
+| `VPS_HOST` | `103.4.234.10` (Mammoth Cloud VPS IP) |
 | `VPS_USER` | `deploy` (or `root` if you skipped deploy user) |
 | `VPS_SSH_KEY` | The private key printed in the VPS setup step above |
 | `GHCR_TOKEN` | GitHub PAT with `read:packages` scope (create at github.com → Settings → Developer settings → PATs) |
@@ -367,7 +367,7 @@ Feature branch → PR → merge to main → staging auto-deploys → review → 
 ### Check container status on the VPS
 
 ```bash
-ssh deploy@<VPS_IP>
+ssh deploy@103.4.234.10
 docker ps                              # see both containers running
 docker logs zanetti-staging --tail 50  # staging logs
 docker logs zanetti-prod    --tail 50  # production logs
