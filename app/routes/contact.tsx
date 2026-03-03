@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react'
 import type { ActionFunctionArgs, MetaFunction } from 'react-router'
-import { Form, useActionData, useNavigation } from 'react-router'
+import { Form, useActionData, useLoaderData, useNavigation } from 'react-router'
+import { getPageBySlug } from '~/lib/wordpress'
+import type { WPPage } from '~/types/wordpress'
 import styles from './contact.module.scss'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -13,6 +15,16 @@ interface FormFields {
 interface ActionData {
   success?: true
   errors?: Partial<Record<keyof FormFields, string>>
+}
+
+// ─── Loader ───────────────────────────────────────────────────────────────────
+interface ContactLoaderData {
+  page: WPPage | null
+}
+
+export async function loader(): Promise<ContactLoaderData> {
+  const page = await getPageBySlug('contact')
+  return { page }
 }
 
 // ─── Action (runs server-side; handles form submission) ───────────────────────
@@ -52,7 +64,8 @@ interface ContactItem {
   href?: string
 }
 
-const CONTACT_ITEMS: ContactItem[] = [
+// Fallback values used until WordPress contact details are configured.
+const FALLBACK_CONTACT_ITEMS: ContactItem[] = [
   {
     label: 'Email',
     value: 'hello@studiozanetti.com',
@@ -62,6 +75,26 @@ const CONTACT_ITEMS: ContactItem[] = [
   { label: 'Studio', value: 'Via della Vigna Nuova 18, Florence, Italy' },
   { label: 'Hours', value: 'Mon–Sat, 9:00am – 6:00pm' },
 ]
+
+/** Derive contact items from WP ACF fields, falling back to hardcoded values. */
+function buildContactItems(page: WPPage | null): ContactItem[] {
+  const acf = page?.acf
+  if (!acf?.contact_email) return FALLBACK_CONTACT_ITEMS
+  return [
+    { label: 'Email', value: acf.contact_email, href: `mailto:${acf.contact_email}` },
+    ...(acf.contact_phone
+      ? [
+          {
+            label: 'Phone',
+            value: acf.contact_phone,
+            href: `tel:${acf.contact_phone.replace(/[^+\d]/g, '')}`,
+          },
+        ]
+      : []),
+    ...(acf.contact_address ? [{ label: 'Studio', value: acf.contact_address }] : []),
+    ...(acf.contact_hours ? [{ label: 'Hours', value: acf.contact_hours }] : []),
+  ]
+}
 
 // ─── Contact form ─────────────────────────────────────────────────────────────
 interface ContactFormProps {
@@ -176,9 +209,11 @@ const SuccessMessage = () => (
 
 // ─── Route component ──────────────────────────────────────────────────────────
 const Contact = () => {
+  const { page } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
   const navigation = useNavigation()
   const isPending = navigation.state === 'submitting'
+  const contactItems = buildContactItems(page)
 
   return (
     <div className={styles.page}>
@@ -199,7 +234,7 @@ const Contact = () => {
             </p>
 
             <address className={styles.contactInfo}>
-              {CONTACT_ITEMS.map(({ label, value, href }) => (
+              {contactItems.map(({ label, value, href }) => (
                 <div key={label} className={styles.contactItem}>
                   <span className={styles.contactLabel}>{label}</span>
                   {href ? (

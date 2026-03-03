@@ -6,36 +6,38 @@ import Contact, { action } from '../contact'
 
 const renderContact = () => {
   const router = createMemoryRouter(
-    [{ path: '/', element: <Contact />, action }],
+    [{ path: '/', element: <Contact />, action, loader: () => ({ page: null }) }],
     { initialEntries: ['/'] },
   )
   render(<RouterProvider router={router} />)
 }
 
 describe('Contact route', () => {
-  it('renders the page heading', () => {
+  it('renders the page heading', async () => {
     renderContact()
-    expect(screen.getByRole('heading', { name: 'Contact', level: 1 })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Contact', level: 1 }),
+    ).toBeInTheDocument()
   })
 
-  it('renders all form fields', () => {
+  it('renders all form fields', async () => {
     renderContact()
-    expect(screen.getByLabelText(/full name/i)).toBeInTheDocument()
+    expect(await screen.findByLabelText(/full name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/email address/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/message/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument()
   })
 
-  it('renders contact information', () => {
+  it('renders contact information', async () => {
     renderContact()
-    expect(screen.getByText('hello@studiozanetti.com')).toBeInTheDocument()
+    expect(await screen.findByText('hello@studiozanetti.com')).toBeInTheDocument()
     expect(screen.getByText(/Florence/i)).toBeInTheDocument()
   })
 
   it('shows validation errors after empty submission', async () => {
     const user = userEvent.setup()
     renderContact()
-    await user.click(screen.getByRole('button', { name: /send message/i }))
+    await user.click(await screen.findByRole('button', { name: /send message/i }))
     await waitFor(() => {
       expect(screen.getAllByRole('alert').length).toBeGreaterThan(0)
     })
@@ -45,7 +47,7 @@ describe('Contact route', () => {
     const user = userEvent.setup()
     renderContact()
     // Submit empty to trigger errors
-    await user.click(screen.getByRole('button', { name: /send message/i }))
+    await user.click(await screen.findByRole('button', { name: /send message/i }))
     await waitFor(() => expect(screen.getAllByRole('alert').length).toBeGreaterThan(0))
     // Start typing in the name field — its error should disappear
     await user.type(screen.getByLabelText(/full name/i), 'Marco')
@@ -55,7 +57,7 @@ describe('Contact route', () => {
   it('shows success message when form is submitted with valid data', async () => {
     const user = userEvent.setup()
     renderContact()
-    await user.type(screen.getByLabelText(/full name/i), 'Test User')
+    await user.type(await screen.findByLabelText(/full name/i), 'Test User')
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com')
     await user.type(screen.getByLabelText(/message/i), 'This is a test message.')
     await user.click(screen.getByRole('button', { name: /send message/i }))
