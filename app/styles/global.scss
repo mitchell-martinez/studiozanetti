@@ -1,0 +1,125 @@
+// ─── SCSS Design Tokens ───────────────────────────────────────────────────────
+// Compile-time constants used inside SCSS (not exposed at runtime)
+$bp-sm: 640px;
+$bp-md: 768px;
+$bp-lg: 1024px;
+$bp-xl: 1200px;
+
+$transition-fast: 0.2s ease;
+$transition-mid: 0.3s ease;
+
+// ─── CSS Custom Properties (runtime theme) ────────────────────────────────────
+:root {
+  --color-dark: #1a1a1a;
+  --color-white: #ffffff;
+  --color-gold: #c9a96e;
+  --color-light-gray: #f5f5f5;
+  --color-mid-gray: #888888;
+  --color-error: #c0392b;
+
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+
+  // Fluid type scale
+  --text-sm: clamp(0.8rem, 0.75rem + 0.25vw, 0.875rem);
+  --text-base: clamp(0.9rem, 0.85rem + 0.25vw, 1rem);
+  --text-lg: clamp(1rem, 0.9rem + 0.5vw, 1.2rem);
+  --text-xl: clamp(1.2rem, 1rem + 1vw, 1.6rem);
+  --text-2xl: clamp(1.6rem, 1.2rem + 2vw, 2.4rem);
+  --text-3xl: clamp(2rem, 1.5rem + 2.5vw, 3rem);
+  --text-hero: clamp(2.5rem, 2rem + 3vw, 5rem);
+
+  // Spacing
+  --space-page-x: clamp(1rem, 4vw, 1.5rem);
+}
+
+// ─── Box-sizing Reset ─────────────────────────────────────────────────────────
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+// ─── Base ─────────────────────────────────────────────────────────────────────
+html {
+  scroll-behavior: smooth;
+  // Prevent layout shift from scrollbar
+  scrollbar-gutter: stable;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-dark);
+  background-color: var(--color-white);
+  line-height: 1.6;
+  font-size: var(--text-base);
+  // Improve text rendering
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-serif);
+  line-height: 1.2;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+// ─── Skip navigation link (a11y) ──────────────────────────────────────────────
+.skip-link {
+  position: absolute;
+  top: -3rem;
+  left: 1rem;
+  background: var(--color-dark);
+  color: var(--color-white);
+  padding: 0.5rem 1rem;
+  z-index: 9999;
+  border-radius: 0 0 4px 4px;
+  font-size: var(--text-sm);
+  transition: top $transition-fast;
+
+  &:focus {
+    top: 0;
+  }
+}
+
+// ─── App layout ───────────────────────────────────────────────────────────────
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+
+  // Remove default focus outline; focus is managed manually per component
+  &:focus {
+    outline: none;
+  }
+}
+
+// ─── Focus-visible baseline ───────────────────────────────────────────────────
+:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 2px;
+}

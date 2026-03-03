@@ -1,0 +1,43 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+
+# node_modules
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment variable files — never commit secrets
+.env
+.env.*
+!.env.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# React Router generated types
+.react-router/
+
+# Build output
+build/
+
+# Test coverage
+coverage/
+
+# Playwright
+playwright-report/
+test-results/
