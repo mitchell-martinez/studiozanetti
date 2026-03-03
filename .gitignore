@@ -41,3 +41,6 @@ coverage/
 # Playwright
 playwright-report/
 test-results/
+
+node_modules/
+.react-router/
