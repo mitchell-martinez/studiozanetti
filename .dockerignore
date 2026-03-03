@@ -1,0 +1,28 @@
+# ─── Build-time / dependency directories ─────────────────────────────────────
+node_modules
+.npm
+.react-router/
+build/
+
+# ─── Development tooling (not needed in the production image) ─────────────────
+mock-wp/
+coverage/
+playwright-report/
+test-results/
+e2e/
+
+# ─── Environment / secrets ───────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─── Source-control metadata ──────────────────────────────────────────────────
+.git
+.gitignore
+
+# ─── Editor artefacts ─────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
