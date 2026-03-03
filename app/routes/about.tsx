@@ -1,20 +1,39 @@
 import type { MetaFunction } from 'react-router'
+import { useLoaderData } from 'react-router'
+import { getPageBySlug } from '~/lib/wordpress'
+import type { WPPage } from '~/types/wordpress'
+import BlockRenderer from '~/components/blocks/BlockRenderer'
 import styles from './about.module.scss'
 
-export const meta: MetaFunction = () => [
-  { title: 'About | Studio Zanetti' },
-  {
-    name: 'description',
-    content:
-      'Meet the team behind Studio Zanetti — passionate photographers dedicated to crafting beautiful, lasting images.',
-  },
-  { property: 'og:title', content: 'About | Studio Zanetti' },
-  {
-    property: 'og:description',
-    content: 'Meet the team behind Studio Zanetti.',
-  },
-  { name: 'twitter:card', content: 'summary_large_image' },
-]
+// ─── Loader ───────────────────────────────────────────────────────────────────
+interface LoaderData {
+  page: WPPage | null
+}
+
+export async function loader(): Promise<LoaderData> {
+  const page = await getPageBySlug('about')
+  return { page }
+}
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const yoast = data?.page?.yoast_head_json
+  return [
+    { title: yoast?.title ?? 'About | Studio Zanetti' },
+    {
+      name: 'description',
+      content:
+        yoast?.description ??
+        'Meet the team behind Studio Zanetti — passionate photographers dedicated to crafting beautiful, lasting images.',
+    },
+    { property: 'og:title', content: yoast?.title ?? 'About | Studio Zanetti' },
+    {
+      property: 'og:description',
+      content: yoast?.description ?? 'Meet the team behind Studio Zanetti.',
+    },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    ...(yoast?.og_image?.[0] ? [{ property: 'og:image', content: yoast.og_image[0].url }] : []),
+  ]
+}
 
 interface Pillar {
   title: string
@@ -40,7 +59,17 @@ const PILLARS: Pillar[] = [
   },
 ]
 
-const About = () => (
+const About = () => {
+  const { page } = useLoaderData<typeof loader>()
+  const blocks = page?.acf?.blocks
+
+  // If WordPress has configured blocks for this page, render them dynamically.
+  if (blocks?.length) {
+    return <BlockRenderer blocks={blocks} />
+  }
+
+  // ─── Hardcoded fallback (used until WordPress is configured) ─────────────────
+  return (
   <div className={styles.page}>
     <header className={styles.pageHeader}>
       <h1 className={styles.pageTitle}>About Us</h1>
@@ -110,6 +139,7 @@ const About = () => (
       </div>
     </section>
   </div>
-)
+  )
+}
 
 export default About

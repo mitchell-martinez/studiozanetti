@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { useLoaderData } from 'react-router'
+import { getGalleryPhotos } from '~/lib/wordpress'
 import type { GalleryCategory, GalleryImage } from '~/types/gallery'
 import styles from './gallery.module.scss'
 
@@ -104,13 +105,23 @@ const ALL_IMAGES: GalleryImage[] = [
 
 const CATEGORIES: GalleryCategory[] = ['All', 'Weddings', 'Portraits', 'Events']
 
-// ─── Loader (SSR — will be called server-side on every request) ───────────────
+// ─── Loader (SSR — called on every request for live gallery data) ─────────────
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function loader(_: LoaderFunctionArgs): Promise<LoaderData> {
-  // When the backend API is ready, replace the return below with:
-  //   const res = await fetch(`${process.env.API_BASE_URL}/api/gallery`)
-  //   if (!res.ok) throw new Response('Gallery unavailable', { status: 502 })
-  //   return res.json() as Promise<LoaderData>
+  const wpPhotos = await getGalleryPhotos()
+
+  if (wpPhotos.length > 0) {
+    const images: GalleryImage[] = wpPhotos.map((photo) => ({
+      id: photo.id,
+      category: photo.acf.category,
+      alt: photo.title.rendered,
+      thumbnail: photo.acf.thumbnail_image?.url ?? photo.acf.full_image.url,
+      src: photo.acf.full_image.url,
+    }))
+    return { images }
+  }
+
+  // Fallback to placeholder data until the WordPress gallery_photo CPT is populated.
   return { images: ALL_IMAGES }
 }
 

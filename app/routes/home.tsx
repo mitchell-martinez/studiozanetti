@@ -1,25 +1,45 @@
 import { Link } from 'react-router'
 import type { MetaFunction } from 'react-router'
 import { memo } from 'react'
+import { useLoaderData } from 'react-router'
+import { getPageBySlug } from '~/lib/wordpress'
+import type { WPPage } from '~/types/wordpress'
+import BlockRenderer from '~/components/blocks/BlockRenderer'
 import useIntersectionObserver from '~/hooks/useIntersectionObserver'
 import styles from './home.module.scss'
 
-export const meta: MetaFunction = () => [
-  { title: 'Studio Zanetti — Professional Photography' },
-  {
-    name: 'description',
-    content:
-      'Studio Zanetti — professional photography studio specialising in weddings, portraits, and events. Capturing moments, creating memories.',
-  },
-  { property: 'og:title', content: 'Studio Zanetti — Professional Photography' },
-  {
-    property: 'og:description',
-    content:
-      'Studio Zanetti — professional photography studio specialising in weddings, portraits, and events.',
-  },
-  { property: 'og:type', content: 'website' },
-  { name: 'twitter:card', content: 'summary_large_image' },
-]
+// ─── Loader ───────────────────────────────────────────────────────────────────
+interface LoaderData {
+  page: WPPage | null
+}
+
+export async function loader(): Promise<LoaderData> {
+  const page = await getPageBySlug('home')
+  return { page }
+}
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const yoast = data?.page?.yoast_head_json
+  return [
+    { title: yoast?.title ?? 'Studio Zanetti — Professional Photography' },
+    {
+      name: 'description',
+      content:
+        yoast?.description ??
+        'Studio Zanetti — professional photography studio specialising in weddings, portraits, and events. Capturing moments, creating memories.',
+    },
+    { property: 'og:title', content: yoast?.title ?? 'Studio Zanetti — Professional Photography' },
+    {
+      property: 'og:description',
+      content:
+        yoast?.description ??
+        'Studio Zanetti — professional photography studio specialising in weddings, portraits, and events.',
+    },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    ...(yoast?.og_image?.[0] ? [{ property: 'og:image', content: yoast.og_image[0].url }] : []),
+  ]
+}
 
 // ─── Service card with lazy image ────────────────────────────────────────────
 interface ServiceItem {
@@ -73,8 +93,18 @@ const SERVICE_ITEMS: ServiceItem[] = [
   },
 ]
 
-const Home = () => (
-  <>
+const Home = () => {
+  const { page } = useLoaderData<typeof loader>()
+  const blocks = page?.acf?.blocks
+
+  // If WordPress has configured blocks for this page, render them dynamically.
+  if (blocks?.length) {
+    return <BlockRenderer blocks={blocks} />
+  }
+
+  // ─── Hardcoded fallback (used until WordPress is configured) ─────────────────
+  return (
+    <>
     <section className={styles.hero} aria-label="Hero">
       <img
         src="https://picsum.photos/seed/zanetti-hero/1600/900"
@@ -133,6 +163,7 @@ const Home = () => (
       </div>
     </section>
   </>
-)
+  )
+}
 
 export default Home
