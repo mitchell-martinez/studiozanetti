@@ -98,6 +98,9 @@ jobs:
           BRANCH="${GITHUB_REF#refs/heads/}"
           echo "value=ghcr.io/${{ github.repository }}:${BRANCH}" >> "$GITHUB_OUTPUT"
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -148,7 +151,7 @@ jobs:
       - name: Pull image and restart staging container
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          GHCR_USER:  ${{ github.repository_owner }}
+          GHCR_USER: ${{ github.repository_owner }}
         run: |
           ssh -i ~/.ssh/deploy_key \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
@@ -200,7 +203,7 @@ jobs:
       - name: Pull image and restart production container
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          GHCR_USER:  ${{ github.repository_owner }}
+          GHCR_USER: ${{ github.repository_owner }}
         run: |
           ssh -i ~/.ssh/deploy_key \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
