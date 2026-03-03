@@ -1,0 +1,23 @@
+@use '~/styles/global' as g;
+
+.page {
+  min-height: 60vh;
+}
+
+.pageHeader {
+  background: var(--color-dark);
+  color: var(--color-white);
+  text-align: center;
+  padding: 4rem var(--space-page-x) 3rem;
+}
+
+.pageTitle {
+  font-size: var(--text-3xl);
+  letter-spacing: 0.05em;
+}
+
+.pageContent {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 4rem var(--space-page-x);
+}
