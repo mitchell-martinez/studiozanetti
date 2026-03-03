@@ -9,13 +9,16 @@ Built with **React Router 7** (SSR) + **WordPress** as a headless CMS.
 
 1. [Architecture overview](#1-architecture-overview)
 2. [Do I need to write PHP? (No)](#2-do-i-need-to-write-php-no)
-3. [Local quick start (no CMS)](#3-local-quick-start-no-cms)
-4. [Staging environment with mock WordPress](#4-staging-environment-with-mock-wordpress)
-5. [WordPress production setup](#5-wordpress-production-setup)
-6. [Block component library](#6-block-component-library)
-7. [Adding a new block](#7-adding-a-new-block)
-8. [Environment variables](#8-environment-variables)
-9. [Deployment](#9-deployment)
+3. [Local quick start (no CMS needed)](#3-local-quick-start-no-cms-needed)
+4. [Local dev with the mock WordPress server](#4-local-dev-with-the-mock-wordpress-server)
+5. [Local dev with a real WordPress backend](#5-local-dev-with-a-real-wordpress-backend)
+6. [Deploy to Mammoth Cloud VPS](#6-deploy-to-mammoth-cloud-vps)
+7. [Branching strategy](#7-branching-strategy)
+8. [WordPress production setup](#8-wordpress-production-setup)
+9. [Block component library](#9-block-component-library)
+10. [Adding a new block](#10-adding-a-new-block)
+11. [Environment variables reference](#11-environment-variables-reference)
+12. [GitHub Secrets reference](#12-github-secrets-reference)
 
 ---
 
@@ -39,50 +42,50 @@ Built with **React Router 7** (SSR) + **WordPress** as a headless CMS.
 ┌─────────────────────────────────────────────────────────┐
 │  React Router 7 SSR (Node.js — this repo)               │
 │                                                         │
-│  Route loader calls app/lib/wordpress.ts on each        │
-│  request → passes JSON to React components              │
+│  Each route loader calls app/lib/wordpress.ts which     │
+│  fetches JSON from WordPress and passes it to React.    │
 │                                                         │
-│  app/components/blocks/BlockRenderer.tsx                │
-│    dispatches by acf_fc_layout → renders a React        │
-│    component for each block Michael has placed          │
+│  BlockRenderer dispatches by acf_fc_layout field:       │
+│    "hero"          → HeroBlock.tsx                      │
+│    "services_grid" → ServicesGridBlock.tsx              │
+│    "biography"     → BiographyBlock.tsx   … etc.        │
 └─────────────────────────────────────────────────────────┘
                            │
-                           ▼
-                    Browser (HTML/CSS/JS)
+              ┌────────────┴────────────┐
+              ▼                         ▼
+     Staging VPS (port 3001)   Production VPS (port 3000)
+     Caddy → Docker container  Caddy → Docker container
 ```
 
 **Content flow:**
 
-1. Michael opens WordPress admin → opens a page → drags blocks into position, fills in text and images → clicks **Publish**.
-2. On the next page request the React Router SSR loader calls `getPageBySlug(slug)`.
-3. WordPress returns a JSON array containing the page's `acf.blocks` array.
-4. `BlockRenderer` maps each `acf_fc_layout` string to a React component and renders it.
+1. Michael opens WordPress admin → opens a page → arranges blocks → fills in text and images → clicks **Publish**.
+2. On the next page request the React Router SSR loader fetches the page from WordPress.
+3. `BlockRenderer` maps each `acf_fc_layout` string to a React component and renders it.
 
-No rebuilds or code changes are needed for Michael to update existing content or reorder blocks.
+No code changes or rebuilds needed for Michael to update content, reorder blocks, or create new pages.
 
 ---
 
 ## 2. Do I need to write PHP? (No)
 
-> "ACF blocks are apparently PHP — is it true that they require PHP?"
+> "ACF blocks are apparently PHP — is it true that they require PHP or can I build everything with React?"
 
-**Short answer:** Michael uses PHP on the _WordPress side_ to manage content. The React developer writes **zero PHP**.
+**Short answer: the React developer writes zero PHP.** Here is the full separation:
 
-Here is the full separation:
-
-| Who | Where | Language |
-|-----|-------|----------|
-| **Michael** | WordPress admin → ACF block builder | Uses a PHP-powered web UI, but never writes code |
+| Who | Tool | Language |
+|-----|------|----------|
+| **Michael** | WordPress admin → ACF block builder | Clicks through a PHP-powered web UI — no coding |
 | **React developer** | `app/components/blocks/*.tsx` | TypeScript + React only |
 
 **Why no PHP on the React side?**
 
-Traditional WordPress themes use PHP _templates_ to render ACF blocks server-side.  
-In our **headless** setup WordPress is only a data store + admin interface.  
+Traditional WordPress themes use PHP _templates_ to render ACF blocks server-side into HTML.  
+In our **headless** setup WordPress is purely a **data store and admin interface**.  
 The ACF Flexible Content field group stores Michael's content in the WordPress database.  
-The REST API (enabled by default in WP 4.7+) exposes that content as **plain JSON** — the same format this mock server returns.
+The REST API exposes that content as **plain JSON** — the same format the mock server (`mock-wp/server.mjs`) returns for local development.
 
-ACF blocks in headless mode look like this:
+The React developer sees only this JSON and writes a React component to render it:
 
 ```json
 {
@@ -94,13 +97,12 @@ ACF blocks in headless mode look like this:
 }
 ```
 
-The React developer sees only that JSON and writes a React component to render it.  
-`BlockRenderer.tsx` switches on `acf_fc_layout` and calls the right component.  
-**That's the entire integration — pure TypeScript.**
+`BlockRenderer.tsx` switches on `acf_fc_layout` → calls the right component → **done**.  
+**That's the entire integration — pure TypeScript, zero PHP.**
 
 ---
 
-## 3. Local quick start (no CMS)
+## 3. Local quick start (no CMS needed)
 
 ```bash
 git clone https://github.com/mitchell-martinez/studiozanetti
@@ -111,22 +113,17 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173).
 
-All pages render using the **hardcoded fallback data** built into each route — identical to what Michael will see once WordPress is configured. The fallbacks are in:
-
-- `app/routes/home.tsx` — hero, services, intro text
-- `app/routes/about.tsx` — biography, pillars
-- `app/routes/contact.tsx` — contact details (`FALLBACK_CONTACT_ITEMS`)
-- `app/routes/gallery.tsx` — 12 placeholder gallery images (`ALL_IMAGES`)
-
-Once WordPress is live and `WORDPRESS_URL` is set, the fallbacks are bypassed automatically — no code changes required.
+All pages render using **hardcoded fallback data** built into each route.  
+These fallbacks are identical to what Michael will see once WordPress is configured.  
+Once `WORDPRESS_URL` is set the fallbacks are bypassed automatically — no code changes required.
 
 ---
 
-## 4. Staging environment with mock WordPress
+## 4. Local dev with the mock WordPress server
 
-To test the **dynamic CMS code path** (blocks rendering from real JSON, gallery from CPT data, dynamic `/pricing` route, Yoast SEO meta) without a real WordPress installation:
+This exercises every dynamic code path (blocks, gallery CPT, dynamic `/pricing` route, Yoast SEO meta) without needing a real WordPress installation.
 
-### Step 1 — Create your local env file
+### Step 1 — Create a local env file
 
 ```bash
 cp .env.example .env.development.local
@@ -138,69 +135,273 @@ Edit `.env.development.local` and set:
 WORDPRESS_URL=http://localhost:8787
 ```
 
-_(`.env.development.local` is gitignored via `*.local` — your secrets never commit.)_
+> `.env.development.local` matches the `*.local` pattern in `.gitignore` — it will never be committed.
 
 ### Step 2 — Start the mock WP server
 
 ```bash
+# Terminal 1
 npm run dev:mock
 ```
 
-Output:
 ```
 ╔══════════════════════════════════════════════════════════╗
 ║  mock-wp: WordPress REST API mock server                 ║
 ║  Listening on http://localhost:8787                      ║
 ╚══════════════════════════════════════════════════════════╝
 
-  Point the dev server at this mock by setting:
-    WORDPRESS_URL=http://localhost:8787
-
   Mocked pages: home, about, contact, pricing
   Gallery photos: 12 items (Weddings, Portraits, Events)
 ```
 
-### Step 3 — Start the dev server
-
-In a second terminal:
+### Step 3 — Start the React Router dev server
 
 ```bash
+# Terminal 2
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173).
 
-**What you'll see with the mock server running:**
+**What you'll see:**
 
-| URL | Rendered from | Block types demonstrated |
-|-----|---------------|--------------------------|
+| URL | Renders from | Block types exercised |
+|-----|--------------|----------------------|
 | `/` | `PAGE_HOME` fixture | `hero`, `services_grid`, `text_block` |
 | `/about` | `PAGE_ABOUT` fixture | `biography`, `pillar_grid` |
 | `/contact` | `PAGE_CONTACT` fixture | ACF contact-details fields |
-| `/gallery` | `GALLERY_PHOTOS` fixture | Gallery CPT (12 real photos) |
+| `/gallery` | 12 mock gallery photos | Gallery CPT |
 | `/pricing` | `PAGE_PRICING` fixture | `image_text`, `pillar_grid` (dynamic `:slug` route) |
 
-The `/pricing` route is the clearest demonstration: Michael creates it in WordPress, and it appears on the site with no code change — powered by the `app/routes/$slug.tsx` catch-all.
+The `/pricing` page is the clearest demo of the headless CMS: Michael creates it in WordPress and it appears at `/pricing` with no code change.
 
-### Mock server fixture data
-
-All fixture data lives in `mock-wp/server.mjs` (inline, no separate files). Edit the fixtures to try different block combinations, then reload the browser — changes are picked up instantly.
+Edit fixtures in `mock-wp/server.mjs` to test different block combinations.
 
 ---
 
-## 5. WordPress production setup
+## 5. Local dev with a real WordPress backend
+
+If you have access to the live WordPress instance (or a staging WP install):
+
+### Step 1 — Create a local env file
+
+```bash
+cp .env.example .env.development.local
+```
+
+### Step 2 — Set the real WordPress URL
+
+Edit `.env.development.local`:
+
+```
+WORDPRESS_URL=https://cms.studiozanetti.com
+# or your staging WP instance:
+# WORDPRESS_URL=https://staging-cms.studiozanetti.com
+```
+
+> The WordPress site must have the REST API enabled (default in WP 4.7+) and ACF fields configured to show in REST API. See [§ 8 WordPress production setup](#8-wordpress-production-setup).
+
+### Step 3 — Start the dev server
+
+```bash
+npm run dev
+```
+
+The SSR loaders will now fetch live content from WordPress on every request.  
+Hot-reload still works for code changes; browser refresh picks up WordPress content changes.
+
+### Tip — disable the SSR cache during development
+
+Add to `.env.development.local`:
+
+```
+WORDPRESS_CACHE_TTL_SECONDS=0
+```
+
+This forces a fresh WordPress fetch on every request so you see content changes instantly without restarting the server.
+
+---
+
+## 6. Deploy to Mammoth Cloud VPS
+
+Your VPS already has Docker and Caddy set up. The deployment uses:
+
+- **ghcr.io** (GitHub Container Registry) to store Docker images
+- **two Docker containers** on the same VPS — one for staging (port 3001), one for production (port 3000)
+- **Caddy** reverse-proxies external HTTPS traffic to each container
+
+### Architecture on the VPS
+
+```
+Internet (HTTPS)
+  │
+  ├── staging.studiozanetti.mitchellmartinez.tech  ──→  Caddy ──→ localhost:3001
+  │                                                              (zanetti-staging)
+  └── studiozanetti.mitchellmartinez.tech          ──→  Caddy ──→ localhost:3000
+                                                              (zanetti-prod)
+```
+
+---
+
+### One-time VPS setup
+
+SSH into the VPS and run these commands once:
+
+```bash
+# 1. Create the deployment directory
+mkdir -p /opt/zanetti
+
+# 2. Create a deploy user (optional but recommended)
+#    If you prefer to use root, skip this and use root for VPS_USER
+adduser --disabled-password --gecos "" deploy
+usermod -aG docker deploy
+
+# 3. Generate an ED25519 SSH key pair for GitHub Actions
+ssh-keygen -t ed25519 -C "github-actions@studiozanetti" -f /tmp/gh_deploy_key -N ""
+# Add the PUBLIC key to the VPS:
+cat /tmp/gh_deploy_key.pub >> /home/deploy/.ssh/authorized_keys
+# (or ~/.ssh/authorized_keys if using root)
+chmod 700 /home/deploy/.ssh
+chmod 600 /home/deploy/.ssh/authorized_keys
+
+# Print the PRIVATE key — paste this into GitHub Secret VPS_SSH_KEY (see § 12)
+cat /tmp/gh_deploy_key
+rm /tmp/gh_deploy_key /tmp/gh_deploy_key.pub
+```
+
+---
+
+### Add DNS records
+
+In your domain registrar / DNS panel for `mitchellmartinez.tech`:
+
+| Type | Name | Value |
+|------|------|-------|
+| A | `studiozanetti` | `<your VPS IP>` |
+| A | `staging.studiozanetti` | `<your VPS IP>` |
+
+Propagation can take up to 24 hours but is usually a few minutes.
+
+---
+
+### Update your Caddyfile
+
+Add these two blocks to your existing Caddyfile (usually `/etc/caddy/Caddyfile` or managed via Docker):
+
+```caddy
+staging.studiozanetti.mitchellmartinez.tech {
+    reverse_proxy localhost:3001
+}
+
+studiozanetti.mitchellmartinez.tech {
+    reverse_proxy localhost:3000
+}
+```
+
+Reload Caddy:
+
+```bash
+# If running as a system service:
+systemctl reload caddy
+
+# If running in Docker:
+docker exec caddy caddy reload --config /etc/caddy/Caddyfile
+```
+
+Caddy automatically obtains and renews Let's Encrypt TLS certificates for both subdomains.
+
+---
+
+### Add GitHub Secrets
+
+Go to **GitHub → Settings → Secrets and variables → Actions → New repository secret** and add each of the following (full reference in [§ 12](#12-github-secrets-reference)):
+
+| Secret | Value |
+|--------|-------|
+| `VPS_HOST` | Your Mammoth Cloud VPS IP address |
+| `VPS_USER` | `deploy` (or `root` if you skipped deploy user) |
+| `VPS_SSH_KEY` | The private key printed in the VPS setup step above |
+| `GHCR_TOKEN` | GitHub PAT with `read:packages` scope (create at github.com → Settings → Developer settings → PATs) |
+| `WORDPRESS_URL_STAGING` | `https://cms.studiozanetti.com` (or leave blank to use hardcoded fallback on staging) |
+| `WORDPRESS_URL_PROD` | `https://cms.studiozanetti.com` |
+
+---
+
+### First deployment
+
+Push to `main`:
+
+```bash
+git push origin main
+```
+
+GitHub Actions will:
+1. Lint, typecheck, and run all unit tests
+2. Build the Docker image and push it to `ghcr.io/mitchell-martinez/studiozanetti:main`
+3. SSH into your VPS, pull the image, and start the `zanetti-staging` container
+
+Visit **https://staging.studiozanetti.mitchellmartinez.tech** — the site is live.
+
+---
+
+### Promote staging to production
+
+When you're happy with what's on staging:
+
+```bash
+git push origin main:production
+```
+
+GitHub Actions builds `ghcr.io/mitchell-martinez/studiozanetti:production`, deploys it, and the live site at **https://studiozanetti.mitchellmartinez.tech** is updated.
+
+---
+
+### Routine workflow
+
+```
+Feature branch → PR → merge to main → staging auto-deploys → review → git push origin main:production
+```
+
+---
+
+### Check container status on the VPS
+
+```bash
+ssh deploy@<VPS_IP>
+docker ps                              # see both containers running
+docker logs zanetti-staging --tail 50  # staging logs
+docker logs zanetti-prod    --tail 50  # production logs
+```
+
+---
+
+## 7. Branching strategy
+
+| Branch | Deploys to | Trigger |
+|--------|-----------|---------|
+| `main` | Staging | Auto on every push |
+| `production` | Production | Auto on every push |
+| Any PR targeting `main` | Nowhere | CI only (lint, test, typecheck) |
+
+To release to production: `git push origin main:production`
+
+---
+
+## 8. WordPress production setup
 
 ### Plugins required
 
 | Plugin | Why |
 |--------|-----|
 | [Advanced Custom Fields Pro](https://www.advancedcustomfields.com/pro/) | Page builder UI for Michael |
-| [ACF to REST API](https://wordpress.org/plugins/acf-to-rest-api/) | Exposes ACF fields in `/wp-json/wp/v2/` (included automatically in ACF Pro 6.1+) |
-| [Yoast SEO](https://wordpress.org/plugins/wordpress-seo/) | Optional — adds `yoast_head_json` to API responses for rich meta tags |
+| [ACF to REST API](https://wordpress.org/plugins/acf-to-rest-api/) | Exposes ACF fields in the REST API (built-in since ACF Pro 6.1+) |
+| [Yoast SEO](https://wordpress.org/plugins/wordpress-seo/) | Optional — adds `yoast_head_json` for rich meta tags |
 
 ### ACF Field Groups
 
 #### "Page Blocks" — Applied to: all Pages
+
+Enable **Show in REST API** in each field group's settings.
 
 Field: `blocks` (Flexible Content)
 
@@ -213,8 +414,6 @@ Field: `blocks` (Flexible Content)
 | `biography` | `image` (Image), `name` (Text), `role` (Text), `bio` (WYSIWYG) |
 | `pillar_grid` | `heading` (Text), `pillars` (Repeater → `title`, `description`) |
 
-> **Important:** In each field group's settings, enable **Show in REST API**.
-
 #### "Contact Details" — Applied to: Page slug = `contact`
 
 | Field key | Type |
@@ -224,48 +423,41 @@ Field: `blocks` (Flexible Content)
 | `contact_address` | Text |
 | `contact_hours` | Text |
 
-#### Gallery Custom Post Type (CPT)
+#### Gallery Custom Post Type
 
-Register a CPT with slug `gallery_photo` (e.g. using [Custom Post Type UI](https://wordpress.org/plugins/custom-post-type-ui/) with REST API support enabled).
+Register CPT slug `gallery_photo` with REST API support enabled (e.g. via [Custom Post Type UI](https://wordpress.org/plugins/custom-post-type-ui/)).
 
 Field Group "Gallery Photo" — Applied to: Post Type = `gallery_photo`
 
 | Field key | Type |
 |-----------|------|
-| `category` | Select (choices: Weddings, Portraits, Events) |
+| `category` | Select (Weddings / Portraits / Events) |
 | `full_image` | Image (returns: array) |
 | `thumbnail_image` | Image (returns: array) |
 
-### Environment variable
-
-In the Fluccs deployment dashboard, add:
-
-```
-WORDPRESS_URL=https://cms.studiozanetti.com
-```
-
 ---
 
-## 6. Block component library
+## 9. Block component library
 
 All block components live in `app/components/blocks/`.
 
 | File | Block layout key | What it renders |
 |------|-----------------|-----------------|
-| `HeroBlock.tsx` | `hero` | Full-viewport hero with image, title, tagline, and CTA link |
-| `TextBlock.tsx` | `text_block` | Heading + WYSIWYG body + optional CTA link; supports left/center alignment |
+| `HeroBlock.tsx` | `hero` | Full-viewport hero with background image, title, tagline, CTA |
+| `TextBlock.tsx` | `text_block` | Heading + WYSIWYG body + optional CTA; left or center aligned |
 | `ImageTextBlock.tsx` | `image_text` | Side-by-side image and text; image position configurable |
 | `ServicesGridBlock.tsx` | `services_grid` | Responsive grid of service cards with image, title, description |
-| `BiographyBlock.tsx` | `biography` | Photographer bio with portrait image, name, role |
-| `PillarGridBlock.tsx` | `pillar_grid` | Grid of value/approach cards (title + description) |
-| `RichText.tsx` | (shared) | Renders trusted WP WYSIWYG HTML safely |
-| `BlockRenderer.tsx` | (dispatcher) | Reads `acf_fc_layout` and renders the correct component; unknown layouts are silently skipped |
+| `BiographyBlock.tsx` | `biography` | Photographer portrait, name, role, WYSIWYG bio |
+| `PillarGridBlock.tsx` | `pillar_grid` | Grid of value/approach cards |
+| `RichText.tsx` | _(shared)_ | Renders trusted WP WYSIWYG HTML |
+| `BlockRenderer.tsx` | _(dispatcher)_ | Reads `acf_fc_layout` → calls the correct component; unknown layouts silently skipped |
 
 ---
 
-## 7. Adding a new block
+## 10. Adding a new block
 
-1. **In WordPress** — add a new Flexible Content layout to the "Page Blocks" field group.
+1. **In WordPress** — add a new layout to the "Page Blocks" Flexible Content field group.
+
 2. **Add the TypeScript type** in `app/types/wordpress.ts`:
    ```ts
    export interface MyNewBlock {
@@ -275,37 +467,48 @@ All block components live in `app/components/blocks/`.
    }
    ```
    Add it to the `ContentBlock` union.
-3. **Create the React component** in `app/components/blocks/MyNewBlock.tsx`.
-4. **Register it** in `BlockRenderer.tsx`:
+
+3. **Create the React component** `app/components/blocks/MyNewBlock.tsx`.
+
+4. **Register it** in `app/components/blocks/BlockRenderer.tsx`:
    ```tsx
    case 'my_new_block':
      return <MyNewBlock key={key} block={block} />
    ```
-5. **Add fixture data** to `mock-wp/server.mjs` to test it locally.
+
+5. **Add fixture data** to `mock-wp/server.mjs` to test locally.
+
 6. **Write a test** in `app/components/blocks/__tests__/BlockRenderer.test.tsx`.
 
-Unknown block layouts are silently skipped by `BlockRenderer` — so Michael can add a new layout in WordPress before the React component is built, and the site won't break.
+Unknown layouts are silently skipped — so Michael can add a layout in WordPress before the React component exists and the site won't break.
 
 ---
 
-## 8. Environment variables
+## 11. Environment variables reference
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `WORDPRESS_URL` | No | — | Base URL of WordPress (no trailing slash). If unset, all routes fall back to hardcoded data. |
-| `WORDPRESS_CACHE_TTL_SECONDS` | No | `60` | How long to cache WP REST API responses in the SSR process. Set to `0` to disable. |
+| `WORDPRESS_URL` | No | — | WordPress base URL (no trailing slash). If unset, all routes use hardcoded fallback content. |
+| `WORDPRESS_CACHE_TTL_SECONDS` | No | `60` | SSR cache TTL in seconds. Set to `0` to disable (useful in development). |
+| `PORT` | No | `3000` | Port the SSR server listens on. |
 
-Copy `.env.example` to `.env.development.local` for local development.  
-Set variables in the Fluccs dashboard for staging/production.
+**For local development:** copy `.env.example` to `.env.development.local` (gitignored).  
+**For VPS deployment:** env vars are written to `.env.staging` / `.env.prod` by the deploy workflow using values from GitHub Secrets.  
+**Never commit a `.env` file with real values.**
 
 ---
 
-## 9. Deployment
+## 12. GitHub Secrets reference
 
-```bash
-npm run build   # builds SSR server + pre-renders /, /about, /contact
-npm run start   # runs the SSR server
-```
+Configure at: **GitHub → Settings → Secrets and variables → Actions**
 
-`react-router.config.ts` pre-renders static pages at build time. If `WORDPRESS_URL` is set at build time, it also pre-renders any extra pages Michael has created in WordPress (discovered via `GET /wp-json/wp/v2/pages`).
+| Secret | Where to get it |
+|--------|----------------|
+| `VPS_HOST` | IP address of your Mammoth Cloud VPS |
+| `VPS_USER` | SSH username (`deploy` or `root`) |
+| `VPS_SSH_KEY` | Private key generated during [VPS setup](#one-time-vps-setup) |
+| `GHCR_TOKEN` | GitHub → Settings → Developer settings → Personal access tokens → Fine-grained token → `read:packages` on this repo |
+| `WORDPRESS_URL_STAGING` | Full URL of the staging WordPress instance (may be the same as prod during early development) |
+| `WORDPRESS_URL_PROD` | Full URL of the production WordPress instance |
+
 
