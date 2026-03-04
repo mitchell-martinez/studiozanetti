@@ -1,16 +1,16 @@
 @use '~/styles/global' as g;
 
-// ─── Shared layout utilities used by multiple block components ────────────────
-.blockSection {
+// ─── Shared layout mixins used by multiple block components ───────────────────
+@mixin blockSection {
   padding: 5rem var(--space-page-x);
 }
 
-.blockInner {
+@mixin blockInner {
   max-width: #{g.$bp-xl};
   margin: 0 auto;
 }
 
-.blockHeading {
+@mixin blockHeading {
   font-size: var(--text-2xl);
   text-align: center;
   margin-bottom: 3rem;
