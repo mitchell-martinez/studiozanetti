@@ -58,7 +58,7 @@ const PreviewPage = () => {
       )}
 
       {blocks?.length ? (
-        <BlockRenderer blocks={blocks} />
+        <BlockRenderer blocks={blocks} interactive={isIframe} />
       ) : (
         <div className={styles.page}>
           <header className={styles.pageHeader}>
