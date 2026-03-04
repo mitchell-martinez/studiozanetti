@@ -158,3 +158,30 @@ export interface WPGalleryPhoto {
   title: WPRendered
   acf: WPGalleryPhotoAcf
 }
+
+// ─── Navigation Menu ──────────────────────────────────────────────────────────
+//
+// WORDPRESS SETUP — Appearance → Menus
+//   1. Create a new menu (e.g. "Primary Navigation")
+//   2. Add pages, custom links, or categories as menu items
+//   3. Drag items right to create sub-items (dropdown children)
+//   4. Under "Menu Settings", assign to the "Primary Navigation" location
+//
+//   Example structure:
+//     Home           → /
+//     Gallery        → /gallery
+//       Weddings     → /gallery?category=Weddings
+//       Portraits    → /gallery?category=Portraits
+//       Events       → /gallery?category=Events
+//     About          → /about
+//     Contact        → /contact
+//
+// The sz-headless mu-plugin exposes menus via:
+//   GET /wp-json/sz/v1/nav-menu/primary
+
+export interface WPMenuItem {
+  id: number
+  title: string
+  url: string
+  children: WPMenuItem[]
+}

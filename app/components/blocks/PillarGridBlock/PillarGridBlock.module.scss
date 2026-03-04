@@ -1,0 +1,43 @@
+@use '~/styles/global' as g;
+
+.section {
+  composes: blockSection from '../shared.module.scss';
+}
+
+.inner {
+  composes: blockInner from '../shared.module.scss';
+}
+
+.heading {
+  composes: blockHeading from '../shared.module.scss';
+}
+
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 2rem;
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pillar {
+  background: var(--color-white);
+  padding: 2rem;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+}
+
+.pillarTitle {
+  font-size: var(--text-lg);
+}
+
+.pillarDesc {
+  color: #666;
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}

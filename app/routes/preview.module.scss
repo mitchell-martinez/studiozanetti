@@ -1,0 +1,35 @@
+@use '~/styles/global' as g;
+
+.previewWrapper {
+  position: relative;
+}
+
+.previewBanner {
+  position: sticky;
+  top: 64px; // Below the sticky header
+  z-index: 90;
+  background: var(--color-gold);
+  color: var(--color-dark);
+  text-align: center;
+  padding: 0.5rem 1rem;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.page {
+  max-width: #{g.$bp-lg};
+  margin: 0 auto;
+  padding: 3rem var(--space-page-x);
+}
+
+.pageHeader {
+  margin-bottom: 2rem;
+}
+
+.pageTitle {
+  font-size: var(--text-2xl);
+}
+
+.pageContent {
+  line-height: 1.7;
+}
