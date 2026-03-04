@@ -1,0 +1,35 @@
+@use '~/styles/global' as g;
+@use '../shared.module' as shared;
+
+.section {
+  composes: blockSection from '../shared.module.scss';
+}
+
+.textContent {
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.textCenter {
+  margin: 0 auto;
+  text-align: center;
+}
+
+.textHeading {
+  font-size: var(--text-2xl);
+}
+
+.blockCta {
+  display: inline-block;
+  color: var(--color-gold);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  transition: opacity g.$transition-fast;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 0.75;
+  }
+}
