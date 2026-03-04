@@ -31,11 +31,19 @@
   }
 }
 
+// ─── Nav list ─────────────────────────────────────────────────────────────────
+
 .navList {
   display: flex;
   list-style: none;
   gap: 2rem;
   align-items: center;
+}
+
+.navItemWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .navLink {
@@ -57,6 +65,80 @@
 .navLinkActive {
   color: var(--color-gold);
   border-bottom-color: var(--color-gold);
+}
+
+// ─── Dropdown (desktop: hover flyout, mobile: accordion) ─────────────────────
+
+.hasDropdown {
+  position: relative;
+}
+
+.dropdownToggle {
+  display: none; // Hidden on desktop — dropdown shown via :hover on .hasDropdown
+  background: none;
+  border: none;
+  color: #ccc;
+  padding: 0.25rem;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  transition: color g.$transition-fast;
+
+  &:hover {
+    color: var(--color-white);
+  }
+}
+
+.caretIcon {
+  transition: transform g.$transition-fast;
+}
+
+.dropdownToggleOpen .caretIcon {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 180px;
+  background-color: var(--color-dark);
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 0.5rem 0;
+  list-style: none;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 50%);
+  z-index: 200;
+
+  &.dropdownOpen {
+    display: block;
+  }
+}
+
+.dropdownLink {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 1.2rem;
+  color: #ccc;
+  font-size: var(--text-sm);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  transition:
+    color g.$transition-fast,
+    background-color g.$transition-fast;
+  min-height: 40px;
+
+  &:hover {
+    color: var(--color-white);
+    background-color: rgba(255 255 255 / 0.06);
+  }
+}
+
+.dropdownLinkActive {
+  color: var(--color-gold);
 }
 
 // ─── Hamburger (single element with CSS bars via ::before / ::after) ──────────
@@ -115,6 +197,8 @@
   }
 }
 
+// ─── Mobile ───────────────────────────────────────────────────────────────────
+
 @media (max-width: #{g.$bp-sm}) {
   .menuToggle {
     display: flex;
@@ -141,11 +225,44 @@
     width: 100%;
   }
 
+  .navItemWrap {
+    display: flex;
+    align-items: center;
+  }
+
   .navLink {
     display: flex;
     align-items: center;
     padding: 0.85rem var(--space-page-x);
     border-bottom: none;
+    min-height: 44px;
+    flex: 1;
+  }
+
+  // Show the dropdown caret toggle on mobile
+  .dropdownToggle {
+    display: flex;
+  }
+
+  // Dropdown slides open as accordion on mobile
+  .dropdown {
+    position: static;
+    transform: none;
+    min-width: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    background-color: rgba(0 0 0 / 0.2);
+
+    &.dropdownOpen {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  .dropdownLink {
+    padding: 0.7rem var(--space-page-x) 0.7rem calc(var(--space-page-x) + 1rem);
     min-height: 44px;
   }
 }

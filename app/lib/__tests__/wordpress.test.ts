@@ -1,5 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { getPageBySlug, getAllPages, getGalleryPhotos, clearCache, _cache } from '../wordpress'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+  _cache,
+  clearCache,
+  getAllPages,
+  getGalleryPhotos,
+  getNavMenu,
+  getPageBySlug,
+  getPreviewPage,
+} from '../wordpress'
 
 const WP_URL = 'https://cms.example.com'
 
@@ -137,5 +145,58 @@ describe('caching', () => {
     expect(_cache.size).toBeGreaterThan(0)
     clearCache()
     expect(_cache.size).toBe(0)
+  })
+})
+
+describe('getNavMenu', () => {
+  it('fetches the primary navigation menu', async () => {
+    const menuItems = [
+      { id: 1, title: 'Home', url: '/', children: [] },
+      {
+        id: 2,
+        title: 'Gallery',
+        url: '/gallery',
+        children: [{ id: 21, title: 'Weddings', url: '/gallery?category=Weddings', children: [] }],
+      },
+    ]
+    mockFetch.mockReturnValueOnce(ok(menuItems))
+    const result = await getNavMenu('primary')
+    expect(result).toEqual(menuItems)
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${WP_URL}/wp-json/sz/v1/nav-menu/primary`,
+      expect.objectContaining({ headers: { Accept: 'application/json' } }),
+    )
+  })
+
+  it('returns an empty array when WordPress is unavailable', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('timeout'))
+    expect(await getNavMenu()).toEqual([])
+  })
+
+  it('returns an empty array when the menu location has no items', async () => {
+    mockFetch.mockReturnValueOnce(ok([]))
+    expect(await getNavMenu('nonexistent')).toEqual([])
+  })
+})
+
+describe('getPreviewPage', () => {
+  it('fetches a page preview with the secret', async () => {
+    mockFetch.mockReturnValueOnce(ok(mockPage))
+    const result = await getPreviewPage(1, 'test-secret')
+    expect(result).toEqual(mockPage)
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${WP_URL}/wp-json/sz/v1/preview/1?secret=test-secret`,
+      expect.objectContaining({ headers: { Accept: 'application/json' } }),
+    )
+  })
+
+  it('returns null when the preview is not found', async () => {
+    mockFetch.mockReturnValueOnce(fail(404))
+    expect(await getPreviewPage(999, 'test-secret')).toBeNull()
+  })
+
+  it('returns null when the secret is invalid', async () => {
+    mockFetch.mockReturnValueOnce(fail(403))
+    expect(await getPreviewPage(1, 'wrong-secret')).toBeNull()
   })
 })

@@ -1,7 +1,33 @@
 import { Link } from 'react-router'
+import type { WPMenuItem } from '~/types/wordpress'
 import styles from './Footer.module.scss'
 
-const Footer = () => {
+interface FooterProps {
+  /** Navigation menu items from WordPress (same source as Navbar). */
+  items: WPMenuItem[]
+}
+
+/** Fallback top-level links used when WordPress menu is not configured. */
+const FALLBACK_ITEMS: WPMenuItem[] = [
+  { id: 1, title: 'Home', url: '/', children: [] },
+  { id: 2, title: 'Gallery', url: '/gallery', children: [] },
+  { id: 3, title: 'About', url: '/about', children: [] },
+  { id: 4, title: 'Contact', url: '/contact', children: [] },
+]
+
+/** Convert a WordPress absolute URL to a relative path for react-router. */
+function toRelativePath(url: string): string {
+  if (url.startsWith('/')) return url
+  try {
+    const parsed = new URL(url)
+    return parsed.pathname + parsed.search + parsed.hash || '/'
+  } catch {
+    return url
+  }
+}
+
+const Footer = ({ items }: FooterProps) => {
+  const navItems = items.length > 0 ? items : FALLBACK_ITEMS
   const year = new Date().getFullYear()
 
   return (
@@ -13,18 +39,11 @@ const Footer = () => {
         </div>
 
         <nav className={styles.links} aria-label="Footer navigation">
-          <Link to="/" className={styles.link}>
-            Home
-          </Link>
-          <Link to="/gallery" className={styles.link}>
-            Gallery
-          </Link>
-          <Link to="/about" className={styles.link}>
-            About
-          </Link>
-          <Link to="/contact" className={styles.link}>
-            Contact
-          </Link>
+          {navItems.map((item) => (
+            <Link key={item.id} to={toRelativePath(item.url)} className={styles.link}>
+              {item.title}
+            </Link>
+          ))}
         </nav>
 
         <div className={styles.social}>
@@ -50,7 +69,7 @@ const Footer = () => {
       </div>
 
       <div className={styles.bottom}>
-        <p>© {year} Studio Zanetti. All rights reserved.</p>
+        <p>&copy; {year} Studio Zanetti. All rights reserved.</p>
       </div>
     </footer>
   )

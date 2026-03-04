@@ -1,6 +1,6 @@
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo } from 'react'
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
-import { useLoaderData } from 'react-router'
+import { useLoaderData, useSearchParams } from 'react-router'
 import { getGalleryPhotos } from '~/lib/wordpress'
 import type { GalleryCategory, GalleryImage } from '~/types/gallery'
 import styles from './gallery.module.scss'
@@ -151,14 +151,26 @@ const GridSkeleton = () => (
 // ─── Route component ──────────────────────────────────────────────────────────
 const Gallery = () => {
   const { images } = useLoaderData<typeof loader>()
-  const [activeCategory, setActiveCategory] = useState<GalleryCategory>('All')
+  // Derive active category from URL search params — supports nav sublinks
+  // like /gallery?category=Weddings. When user clicks a filter button the
+  // URL is updated, keeping it in sync.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeCategory = (searchParams.get('category') as GalleryCategory) || 'All'
 
-  const handleCategoryChange = useCallback((cat: GalleryCategory) => {
-    setActiveCategory(cat)
-  }, [])
+  const handleCategoryChange = useCallback(
+    (cat: GalleryCategory) => {
+      if (cat === 'All') {
+        setSearchParams({})
+      } else {
+        setSearchParams({ category: cat })
+      }
+    },
+    [setSearchParams],
+  )
 
   const filtered = useMemo(
-    () => (activeCategory === 'All' ? images : images.filter((img) => img.category === activeCategory)),
+    () =>
+      activeCategory === 'All' ? images : images.filter((img) => img.category === activeCategory),
     [images, activeCategory],
   )
 
