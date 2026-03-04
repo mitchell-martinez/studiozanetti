@@ -1,5 +1,6 @@
 This repo is the frontend for a professional photography site.
 This repo supplies components to a WordPress backend configured with the ACF to REST API plugin.
+The components are designed to be ACF Flexible Content blocks that can be added to pages in the WordPress admin interface, and are built with React and TypeScript.
 The frontend is built with React Router and TypeScript, and uses SCSS modules for styling. 
 The frontend is built with Vite, and the code is organized into a components directory and a pages directory. 
 The components directory contains reusable components, while the routes directory contains some basic fallback pages for the site as well as slug pages allowing the WordPress site admin to create new pages via the WordPress admin interface.
