@@ -26,7 +26,7 @@
  *  See app/types/wordpress.ts for the full field schema.
  */
 
-import type { WPPage, WPGalleryPhoto } from '~/types/wordpress'
+import type { WPGalleryPhoto, WPMenuItem, WPPage } from '~/types/wordpress'
 
 const getWpUrl = (): string | null => process.env.WORDPRESS_URL || null
 
@@ -87,7 +87,22 @@ export async function getAllPages(): Promise<WPPage[]> {
 
 /** Fetch all gallery photos (CPT: gallery_photo). Returns empty array when WP is unavailable. */
 export async function getGalleryPhotos(): Promise<WPGalleryPhoto[]> {
-  return (
-    (await wpFetch<WPGalleryPhoto[]>('/wp/v2/gallery_photo?per_page=100&status=publish')) ?? []
-  )
+  return (await wpFetch<WPGalleryPhoto[]>('/wp/v2/gallery_photo?per_page=100&status=publish')) ?? []
+}
+
+/**
+ * Fetch a navigation menu by its registered theme location.
+ * Returns a nested tree structure suitable for rendering with dropdown support.
+ * Falls back to an empty array when WordPress is unavailable.
+ */
+export async function getNavMenu(location: string = 'primary'): Promise<WPMenuItem[]> {
+  return (await wpFetch<WPMenuItem[]>(`/sz/v1/nav-menu/${encodeURIComponent(location)}`)) ?? []
+}
+
+/**
+ * Fetch a page preview by post ID and a shared secret.
+ * Used by the /preview route to render draft content from WordPress.
+ */
+export async function getPreviewPage(id: number, secret: string): Promise<WPPage | null> {
+  return await wpFetch<WPPage>(`/sz/v1/preview/${id}?secret=${encodeURIComponent(secret)}`)
 }

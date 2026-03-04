@@ -31,6 +31,8 @@
  *   GET /wp-json/wp/v2/pages?slug=pricing      ← dynamic /:slug demo page
  *   GET /wp-json/wp/v2/pages?per_page=100      ← prerender discovery
  *   GET /wp-json/wp/v2/gallery_photo?per_page=100
+ *   GET /wp-json/sz/v1/nav-menu/primary         ← navigation menu (dynamic)
+ *   GET /wp-json/sz/v1/preview/:id?secret=...   ← page preview (draft)
  *
  * ─── WHY NO PHP? ─────────────────────────────────────────────────────────────
  *
@@ -118,7 +120,7 @@ const PAGE_HOME = {
       {
         acf_fc_layout: 'text_block',
         heading: 'Welcome to Studio Zanetti',
-        body: '<p>We believe every photograph tells a story. Studio Zanetti is a premier photography studio dedicated to capturing the beauty, emotion, and authenticity of life\'s most precious moments — from intimate weddings to vibrant events and timeless portraits.</p><p>With an eye for detail and a passion for light, our work blends artistry with technical precision to create images that resonate for generations.</p>',
+        body: "<p>We believe every photograph tells a story. Studio Zanetti is a premier photography studio dedicated to capturing the beauty, emotion, and authenticity of life's most precious moments — from intimate weddings to vibrant events and timeless portraits.</p><p>With an eye for detail and a passion for light, our work blends artistry with technical precision to create images that resonate for generations.</p>",
         align: 'center',
         cta_text: 'Learn About Us →',
         cta_url: '/about',
@@ -147,7 +149,7 @@ const PAGE_ABOUT = {
         image: img('zanetti-about', 600, 700, 'Marco Zanetti, lead photographer, at work'),
         name: 'Marco Zanetti',
         role: 'Lead Photographer & Founder',
-        bio: '<p>Marco Zanetti has been capturing life\'s most meaningful moments for over 15 years. Born and raised in Florence, Italy, his love of art and beauty deeply informs his photographic style — blending classical composition with a modern, natural touch.</p><p>After studying fine arts at the Accademia di Belle Arti, Marco travelled Europe honing his craft before founding Studio Zanetti with a simple mission: to create photographs that feel as true as the moments they preserve.</p><p>Today, Studio Zanetti serves clients across Italy and internationally, bringing the same dedication to every project — whether a grand destination wedding or an intimate family portrait session.</p>',
+        bio: "<p>Marco Zanetti has been capturing life's most meaningful moments for over 15 years. Born and raised in Florence, Italy, his love of art and beauty deeply informs his photographic style — blending classical composition with a modern, natural touch.</p><p>After studying fine arts at the Accademia di Belle Arti, Marco travelled Europe honing his craft before founding Studio Zanetti with a simple mission: to create photographs that feel as true as the moments they preserve.</p><p>Today, Studio Zanetti serves clients across Italy and internationally, bringing the same dedication to every project — whether a grand destination wedding or an intimate family portrait session.</p>",
       },
       {
         acf_fc_layout: 'pillar_grid',
@@ -284,6 +286,32 @@ const GALLERY_PHOTOS = [
   makePhoto(112, 'Events', 'Gala dinner', 'zanetti12'),
 ]
 
+// ─── Navigation menu fixture ──────────────────────────────────────────────────
+//
+// This mirrors what the sz-headless mu-plugin returns from WordPress's
+// native Appearance → Menus. The admin can create any structure — including
+// nested children (dropdown sub-links).
+//
+// The mock below demonstrates Gallery with sub-categories and a flat structure
+// for the remaining items.
+
+const NAV_MENU_PRIMARY = [
+  { id: 10, title: 'Home', url: '/', children: [] },
+  {
+    id: 11,
+    title: 'Gallery',
+    url: '/gallery',
+    children: [
+      { id: 111, title: 'Weddings', url: '/gallery?category=Weddings', children: [] },
+      { id: 112, title: 'Portraits', url: '/gallery?category=Portraits', children: [] },
+      { id: 113, title: 'Events', url: '/gallery?category=Events', children: [] },
+    ],
+  },
+  { id: 12, title: 'About', url: '/about', children: [] },
+  { id: 13, title: 'Pricing', url: '/pricing', children: [] },
+  { id: 14, title: 'Contact', url: '/contact', children: [] },
+]
+
 // ─── Route handlers ───────────────────────────────────────────────────────────
 
 const PAGES_BY_SLUG = Object.fromEntries(ALL_PAGES.map((p) => [p.slug, p]))
@@ -300,6 +328,17 @@ function handlePages(searchParams) {
 
 function handleGalleryPhotos() {
   return GALLERY_PHOTOS
+}
+
+function handleNavMenu(location) {
+  if (location === 'primary') return NAV_MENU_PRIMARY
+  return []
+}
+
+function handlePreview(id) {
+  // In the mock, just return the matching published page (real WP returns drafts)
+  const page = ALL_PAGES.find((p) => p.id === Number(id))
+  return page ?? null
 }
 
 // ─── HTTP server ──────────────────────────────────────────────────────────────
@@ -333,10 +372,24 @@ const server = createServer((req, res) => {
 
   if (path === '/wp-json/wp/v2/pages') {
     body = handlePages(url.searchParams)
-    console.log(`[mock-wp] GET pages  slug=${url.searchParams.get('slug') ?? '(all)'}  → ${body.length} item(s)`)
+    console.log(
+      `[mock-wp] GET pages  slug=${url.searchParams.get('slug') ?? '(all)'}  → ${body.length} item(s)`,
+    )
   } else if (path === '/wp-json/wp/v2/gallery_photo') {
     body = handleGalleryPhotos()
     console.log(`[mock-wp] GET gallery_photo → ${body.length} photo(s)`)
+  } else if (path.startsWith('/wp-json/sz/v1/nav-menu/')) {
+    const location = path.split('/').pop()
+    body = handleNavMenu(location)
+    console.log(`[mock-wp] GET nav-menu/${location} → ${body.length} item(s)`)
+  } else if (path.startsWith('/wp-json/sz/v1/preview/')) {
+    const id = path.split('/').pop()
+    body = handlePreview(id)
+    if (!body) {
+      status = 404
+      body = { message: 'Preview not found', id }
+    }
+    console.log(`[mock-wp] GET preview/${id} → ${body ? 'found' : '404'}`)
   } else {
     status = 404
     body = { message: 'Route not found', path }
@@ -359,6 +412,8 @@ server.listen(PORT, () => {
 
   Mocked pages: home, about, contact, pricing
   Gallery photos: ${GALLERY_PHOTOS.length} items (Weddings, Portraits, Events)
+  Nav menu: primary (${NAV_MENU_PRIMARY.length} top-level items)
+  Preview: /wp-json/sz/v1/preview/:id?secret=...
 
   Press Ctrl+C to stop.
 `)
