@@ -7,6 +7,25 @@ import type { EntryContext } from 'react-router'
 
 const ABORT_DELAY = 5_000
 
+/**
+ * Allow the /preview route to be embedded in an iframe from the WordPress admin
+ * domain so the live‑preview metabox in the page editor works correctly.
+ * All other routes keep the default SAMEORIGIN restriction.
+ */
+function applyFrameHeaders(request: Request, headers: Headers) {
+  const url = new URL(request.url)
+  if (url.pathname === '/preview') {
+    const wpUrl = process.env.WORDPRESS_URL
+    if (wpUrl) {
+      // Allow embedding from the WordPress admin domain
+      headers.set('Content-Security-Policy', `frame-ancestors 'self' ${wpUrl}`)
+    } else {
+      // No WP URL configured — allow any parent (development)
+      headers.delete('X-Frame-Options')
+    }
+  }
+}
+
 export default function handleRequest(
   request: Request,
   responseStatusCode: number,
@@ -14,6 +33,7 @@ export default function handleRequest(
   routerContext: EntryContext,
 ) {
   const isBot = isbot(request.headers.get('user-agent') ?? '')
+  applyFrameHeaders(request, responseHeaders)
 
   return new Promise<Response>((resolve, reject) => {
     let shellRendered = false

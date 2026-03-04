@@ -339,7 +339,293 @@ add_action( 'admin_head', function () {
 } );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. ENSURE ACF FIELDS SHOW IN REST API
+// 7. LIVE PREVIEW PANEL IN PAGE EDITOR
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Shows an iframe of the React front-end inside the WordPress page editor so
+// the admin can see exactly what visitors will see while editing ACF fields.
+// Auto-refreshes on save / autosave and when ACF fields change (debounced).
+
+add_action( 'add_meta_boxes', function () {
+	add_meta_box(
+		'sz-live-preview',
+		'Live Front-End Preview',
+		'sz_live_preview_html',
+		'page',
+		'normal',
+		'high'
+	);
+} );
+
+/**
+ * Render the live preview metabox HTML.
+ */
+function sz_live_preview_html( $post ) {
+	if ( ! defined( 'SZ_FRONTEND_URL' ) || ! defined( 'SZ_PREVIEW_SECRET' ) ) {
+		echo '<div style="padding:2rem;text-align:center;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;">';
+		echo '<h3 style="margin:0 0 0.5rem;">⚠️ Preview not configured</h3>';
+		echo '<p>Add these constants to <code>wp-config.php</code> to enable the live preview:</p>';
+		echo '<pre style="text-align:left;background:#f5f5f5;padding:1rem;border-radius:4px;max-width:500px;margin:1rem auto;">define( \'SZ_FRONTEND_URL\', \'https://your-frontend.com\' );<br>define( \'SZ_PREVIEW_SECRET\', \'your-random-secret\' );</pre>';
+		echo '</div>';
+		return;
+	}
+
+	$preview_url = sprintf(
+		'%s/preview?id=%d&secret=%s&iframe=true',
+		rtrim( SZ_FRONTEND_URL, '/' ),
+		$post->ID,
+		rawurlencode( SZ_PREVIEW_SECRET )
+	);
+
+	$is_new_post = ( $post->post_status === 'auto-draft' );
+	?>
+	<div id="sz-preview-container">
+		<div id="sz-preview-toolbar" style="display:flex;align-items:center;gap:12px;padding:10px 0;flex-wrap:wrap;">
+			<button type="button" id="sz-refresh-preview" class="button button-primary" <?php echo $is_new_post ? 'disabled' : ''; ?>>
+				↻ Refresh Preview
+			</button>
+			<span id="sz-preview-status" style="color:#666;font-size:13px;">
+				<?php echo $is_new_post ? 'Save this page as a draft first to enable preview.' : 'Ready'; ?>
+			</span>
+			<label style="margin-left:auto;font-size:13px;cursor:pointer;">
+				<input type="checkbox" id="sz-auto-refresh" checked> Auto-refresh on changes
+			</label>
+		</div>
+
+		<div id="sz-preview-sizes" style="display:flex;gap:6px;margin-bottom:10px;">
+			<button type="button" class="button sz-size-btn active" data-width="100%">🖥 Desktop</button>
+			<button type="button" class="button sz-size-btn" data-width="768px">📱 Tablet</button>
+			<button type="button" class="button sz-size-btn" data-width="375px">📱 Mobile</button>
+			<button type="button" class="button" id="sz-fullscreen-btn" style="margin-left:auto;">⛶ Full Screen</button>
+		</div>
+
+		<?php if ( $is_new_post ) : ?>
+			<div id="sz-preview-placeholder" style="background:#f9f9f9;border:2px dashed #ddd;border-radius:8px;padding:4rem 2rem;text-align:center;color:#999;">
+				<p style="font-size:16px;margin:0;">Save this page as a <strong>Draft</strong> to see the live preview here.</p>
+			</div>
+		<?php else : ?>
+			<div id="sz-preview-frame-wrapper" style="position:relative;background:#f0f0f0;border-radius:8px;overflow:hidden;transition:all 0.3s;">
+				<div id="sz-preview-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.9);z-index:10;font-size:14px;color:#666;">
+					Loading preview…
+				</div>
+				<iframe
+					id="sz-preview-frame"
+					src="<?php echo esc_url( $preview_url ); ?>"
+					style="width:100%;height:800px;border:none;display:block;transition:width 0.3s;margin:0 auto;"
+					title="Live front-end preview"
+				></iframe>
+			</div>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+
+/**
+ * Enqueue the live preview JavaScript on the page editor screen.
+ */
+add_action( 'admin_footer-post.php', 'sz_live_preview_js' );
+add_action( 'admin_footer-post-new.php', 'sz_live_preview_js' );
+
+function sz_live_preview_js() {
+	global $post_type;
+	if ( $post_type !== 'page' ) return;
+	if ( ! defined( 'SZ_FRONTEND_URL' ) || ! defined( 'SZ_PREVIEW_SECRET' ) ) return;
+	?>
+	<script>
+	(function () {
+		'use strict';
+
+		var iframe          = document.getElementById('sz-preview-frame');
+		var refreshBtn      = document.getElementById('sz-refresh-preview');
+		var statusEl        = document.getElementById('sz-preview-status');
+		var autoRefreshCb   = document.getElementById('sz-auto-refresh');
+		var loadingOverlay  = document.getElementById('sz-preview-loading');
+		var frameWrapper    = document.getElementById('sz-preview-frame-wrapper');
+		var fullscreenBtn   = document.getElementById('sz-fullscreen-btn');
+
+		if (!iframe || !refreshBtn) return;
+
+		/* ── Helpers ─────────────────────────────────────────── */
+		function setStatus(text) {
+			if (statusEl) statusEl.textContent = text;
+		}
+
+		function showLoading() {
+			if (loadingOverlay) loadingOverlay.style.display = 'flex';
+		}
+
+		function hideLoading() {
+			if (loadingOverlay) loadingOverlay.style.display = 'none';
+		}
+
+		/* Hide the loading overlay once iframe loads */
+		iframe.addEventListener('load', function () {
+			hideLoading();
+			setStatus('Updated ' + new Date().toLocaleTimeString());
+		});
+
+		/* ── Refresh logic ───────────────────────────────────── */
+		function refreshPreview() {
+			showLoading();
+			setStatus('Refreshing…');
+			/* Cache-bust to force reload */
+			var src = iframe.src.replace(/&_cb=\d+/, '');
+			iframe.src = src + '&_cb=' + Date.now();
+		}
+
+		/* Save draft then refresh after a short delay */
+		function saveAndRefresh() {
+			setStatus('Saving…');
+			if (window.wp && wp.autosave && wp.autosave.server) {
+				wp.autosave.server.triggerSave();
+			}
+			/* Allow time for autosave request to complete */
+			setTimeout(refreshPreview, 2000);
+		}
+
+		/* ── Manual refresh button ───────────────────────────── */
+		refreshBtn.addEventListener('click', function () {
+			saveAndRefresh();
+		});
+
+		/* ── ACF field change detection ──────────────────────── */
+		if (typeof acf !== 'undefined') {
+			var debounceTimer;
+			acf.addAction('change', function () {
+				if (!autoRefreshCb || !autoRefreshCb.checked) return;
+				clearTimeout(debounceTimer);
+				setStatus('Change detected — will refresh…');
+				debounceTimer = setTimeout(saveAndRefresh, 3000);
+			});
+
+			/* Also listen for Flexible Content layout reorder/add/remove */
+			acf.addAction('append', function () {
+				if (!autoRefreshCb || !autoRefreshCb.checked) return;
+				clearTimeout(debounceTimer);
+				debounceTimer = setTimeout(saveAndRefresh, 2000);
+			});
+			acf.addAction('remove', function () {
+				if (!autoRefreshCb || !autoRefreshCb.checked) return;
+				clearTimeout(debounceTimer);
+				debounceTimer = setTimeout(saveAndRefresh, 2000);
+			});
+			acf.addAction('sortstop', function () {
+				if (!autoRefreshCb || !autoRefreshCb.checked) return;
+				clearTimeout(debounceTimer);
+				debounceTimer = setTimeout(saveAndRefresh, 2000);
+			});
+		}
+
+		/* ── Refresh after WordPress autosave ────────────────── */
+		if (typeof jQuery !== 'undefined') {
+			jQuery(document).on('after-autosave', function () {
+				if (autoRefreshCb && autoRefreshCb.checked) {
+					setTimeout(refreshPreview, 500);
+				}
+			});
+		}
+
+		/* ── Refresh after manual Publish / Update ───────────── */
+		if (typeof jQuery !== 'undefined') {
+			jQuery(document).on('heartbeat-tick', function (e, data) {
+				if (data['wp-refresh-post-lock']) {
+					/* Another user modified this — refresh */
+					refreshPreview();
+				}
+			});
+		}
+
+		/* ── Responsive size toggles ─────────────────────────── */
+		document.querySelectorAll('.sz-size-btn').forEach(function (btn) {
+			btn.addEventListener('click', function () {
+				document.querySelectorAll('.sz-size-btn').forEach(function (b) {
+					b.classList.remove('active');
+					b.classList.remove('button-primary');
+				});
+				this.classList.add('active');
+				this.classList.add('button-primary');
+				var w = this.dataset.width;
+				iframe.style.width  = w;
+				iframe.style.margin = (w === '100%') ? '0' : '0 auto';
+			});
+		});
+		/* Set initial Desktop button as primary */
+		var activeBtn = document.querySelector('.sz-size-btn.active');
+		if (activeBtn) activeBtn.classList.add('button-primary');
+
+		/* ── Full-screen toggle ───────────────────────────────── */
+		if (fullscreenBtn && frameWrapper) {
+			var isFullscreen = false;
+			fullscreenBtn.addEventListener('click', function () {
+				isFullscreen = !isFullscreen;
+				if (isFullscreen) {
+					frameWrapper.style.position = 'fixed';
+					frameWrapper.style.inset    = '0';
+					frameWrapper.style.zIndex   = '100000';
+					frameWrapper.style.borderRadius = '0';
+					iframe.style.height = '100vh';
+					iframe.style.width  = '100%';
+					fullscreenBtn.textContent = '✕ Exit Full Screen';
+				} else {
+					frameWrapper.style.position = 'relative';
+					frameWrapper.style.inset    = 'auto';
+					frameWrapper.style.zIndex   = 'auto';
+					frameWrapper.style.borderRadius = '8px';
+					iframe.style.height = '800px';
+					fullscreenBtn.textContent = '⛶ Full Screen';
+					/* Re-apply the active size */
+					var active = document.querySelector('.sz-size-btn.active');
+					if (active) {
+						var w = active.dataset.width;
+						iframe.style.width  = w;
+						iframe.style.margin = (w === '100%') ? '0' : '0 auto';
+					}
+				}
+			});
+			/* ESC key to exit full screen */
+			document.addEventListener('keydown', function (e) {
+				if (e.key === 'Escape' && isFullscreen) {
+					fullscreenBtn.click();
+				}
+			});
+		}
+
+		/* ── After first draft save, replace placeholder ─────── */
+		var placeholder = document.getElementById('sz-preview-placeholder');
+		if (placeholder && typeof jQuery !== 'undefined') {
+			jQuery(document).on('after-autosave', function () {
+				if (placeholder.parentNode) {
+					/* Build the iframe dynamically */
+					placeholder.parentNode.removeChild(placeholder);
+					var wrapper = document.createElement('div');
+					wrapper.id = 'sz-preview-frame-wrapper';
+					wrapper.style.cssText = 'position:relative;background:#f0f0f0;border-radius:8px;overflow:hidden;';
+					var newIframe = document.createElement('iframe');
+					newIframe.id    = 'sz-preview-frame';
+					newIframe.title = 'Live front-end preview';
+					newIframe.style.cssText = 'width:100%;height:800px;border:none;display:block;';
+					var postId = document.getElementById('post_ID').value;
+					newIframe.src = '<?php echo esc_js( rtrim( SZ_FRONTEND_URL, "/" ) ); ?>/preview?id=' + postId +
+						'&secret=<?php echo esc_js( rawurlencode( SZ_PREVIEW_SECRET ) ); ?>&iframe=true&_cb=' + Date.now();
+					wrapper.appendChild(newIframe);
+					document.getElementById('sz-preview-container').appendChild(wrapper);
+					/* Update references */
+					iframe = newIframe;
+					frameWrapper = wrapper;
+					refreshBtn.disabled = false;
+					newIframe.addEventListener('load', function () {
+						setStatus('Updated ' + new Date().toLocaleTimeString());
+					});
+				}
+			});
+		}
+	})();
+	</script>
+	<?php
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 8. ENSURE ACF FIELDS SHOW IN REST API
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -350,7 +636,7 @@ add_action( 'admin_head', function () {
 add_filter( 'acf/rest_api/field_settings/show_in_rest', '__return_true' );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 8. CORS — ALLOW FRONT-END ORIGIN
+// 9. CORS — ALLOW FRONT-END ORIGIN
 // ─────────────────────────────────────────────────────────────────────────────
 
 add_action( 'rest_api_init', function () {
