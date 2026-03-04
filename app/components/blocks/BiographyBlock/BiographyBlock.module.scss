@@ -1,7 +1,8 @@
 @use '~/styles/global' as g;
+@use '../shared.module' as shared;
 
 .section {
-  composes: blockSection from '../shared.module.scss';
+  @include shared.blockSection;
 }
 
 .bioInner {
