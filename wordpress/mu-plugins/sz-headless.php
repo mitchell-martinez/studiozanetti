@@ -245,7 +245,59 @@ function sz_get_preview( WP_REST_Request $request ) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. REDIRECT PREVIEW BUTTON TO REACT FRONT-END
+// 4. REDIRECT ALL FRONT-END PAGE VIEWS TO REACT SITE
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// When anyone visits a page on the WordPress domain (admin.studiozanetti…),
+// they are redirected to the same path on the React front-end. This means:
+//   • "View Page" / "View Site" in WP admin → React front-end
+//   • Direct URL visits → React front-end
+//   • Published pages → React front-end
+//
+// WordPress admin, REST API, login, and asset URLs are NOT redirected.
+
+add_action( 'template_redirect', function () {
+	if ( ! defined( 'SZ_FRONTEND_URL' ) ) {
+		return;
+	}
+
+	// Never redirect admin, AJAX, cron, or REST API requests
+	if ( is_admin() || wp_doing_ajax() || wp_doing_cron() ) {
+		return;
+	}
+	if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+		return;
+	}
+
+	// Never redirect WordPress infrastructure paths
+	$request_uri = $_SERVER['REQUEST_URI'] ?? '/';
+	if ( preg_match( '#^/(wp-admin|wp-json|wp-content|wp-login|wp-cron|wp-includes)#i', $request_uri ) ) {
+		return;
+	}
+
+	// Build the front-end URL with the same path
+	$frontend_url = rtrim( SZ_FRONTEND_URL, '/' );
+
+	// For the homepage
+	if ( is_front_page() || is_home() ) {
+		wp_redirect( $frontend_url . '/', 302 );
+		exit;
+	}
+
+	// For pages, use the page slug to build the correct path
+	if ( is_page() ) {
+		$slug = get_post_field( 'post_name', get_queried_object_id() );
+		wp_redirect( $frontend_url . '/' . $slug, 302 );
+		exit;
+	}
+
+	// Fallback: redirect with the current request URI
+	wp_redirect( $frontend_url . $request_uri, 302 );
+	exit;
+} );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4b. REDIRECT PREVIEW BUTTON TO REACT FRONT-END
 // ─────────────────────────────────────────────────────────────────────────────
 
 add_filter( 'preview_post_link', function ( $link, $post ) {
@@ -259,6 +311,26 @@ add_filter( 'preview_post_link', function ( $link, $post ) {
 		$post->ID,
 		urlencode( SZ_PREVIEW_SECRET )
 	);
+}, 10, 2 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4c. REWRITE "VIEW PAGE" PERMALINK IN ADMIN TO POINT AT REACT SITE
+// ─────────────────────────────────────────────────────────────────────────────
+
+add_filter( 'page_link', function ( $link, $post_id ) {
+	if ( ! defined( 'SZ_FRONTEND_URL' ) || ! is_admin() ) {
+		return $link;
+	}
+	$slug = get_post_field( 'post_name', $post_id );
+	if ( ! $slug ) {
+		return $link;
+	}
+	$frontend = rtrim( SZ_FRONTEND_URL, '/' );
+	// Homepage check
+	if ( (int) get_option( 'page_on_front' ) === (int) $post_id ) {
+		return $frontend . '/';
+	}
+	return $frontend . '/' . $slug;
 }, 10, 2 );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -307,36 +379,99 @@ add_action( 'wp_dashboard_setup', function () {
 } );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 6. ADMIN CSS FIXES
+// 6. ADMIN CSS — WYSIWYG-STYLE EDITOR LAYOUT
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// Prevents layout issues such as columns being squished in the admin list views.
+// On the Pages list: fixes column widths.
+// On the Page editor: creates an immersive layout where the live preview
+// iframe is the dominant element and ACF fields appear as a side panel,
+// making editing feel like working directly on the live site.
 
 add_action( 'admin_head', function () {
+	global $pagenow;
 	?>
 	<style>
-		/* Ensure the Pages list table has reasonable column widths */
+		/* ── Pages list table ───────────────────────────────── */
 		.wp-list-table .column-title { width: 40%; }
 		.wp-list-table .column-author { width: 15%; }
 		.wp-list-table .column-date { width: 15%; }
+
+		/* ── Page editor: immersive preview layout ──────────── */
+		<?php if ( in_array( $pagenow, [ 'post.php', 'post-new.php' ], true ) ) : ?>
+
+		/* Move preview to top and make it prominent */
+		#sz-live-preview {
+			border: none !important;
+			box-shadow: none !important;
+			margin-bottom: 0 !important;
+		}
+		#sz-live-preview .inside {
+			padding: 0 !important;
+			margin: 0 !important;
+		}
+		#sz-live-preview .postbox-header {
+			display: none !important;
+		}
+
+		/* ACF field groups: style as a clean editing panel */
+		.acf-postbox {
+			border: 1px solid #e0e0e0 !important;
+			border-radius: 8px !important;
+			box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+		}
+		.acf-postbox .postbox-header {
+			background: #f8f9fa !important;
+			border-bottom: 1px solid #e0e0e0 !important;
+			border-radius: 8px 8px 0 0 !important;
+		}
 
 		/* Give ACF flexible content fields more breathing room */
 		.acf-flexible-content .layout {
 			margin-bottom: 1rem;
 			border: 1px solid #ddd;
-			border-radius: 4px;
+			border-radius: 6px;
+			transition: outline 0.3s;
+		}
+		/* Highlight style for click-to-edit bridge */
+		.acf-flexible-content .layout.sz-highlight {
+			outline: 3px solid #0073aa;
+			outline-offset: 2px;
 		}
 
-		/* Make the admin area feel less cramped on smaller screens */
+		/* Hide the default WP content editor (not used for ACF pages) */
+		#postdivrich {
+			display: none !important;
+		}
+
+		/* Make the page title editor cleaner */
+		#titlewrap input {
+			font-size: 24px !important;
+			padding: 12px !important;
+			border-radius: 6px !important;
+		}
+
+		/* Hint text under the preview */
+		.sz-editor-hint {
+			text-align: center;
+			padding: 8px;
+			color: #888;
+			font-size: 13px;
+			background: #f9f9f9;
+			border-top: 1px solid #eee;
+		}
+
+		/* Responsive: smaller screens */
 		@media screen and (max-width: 782px) {
 			.wp-list-table td,
 			.wp-list-table th {
 				padding: 8px 6px;
 			}
 		}
+
+		<?php endif; ?>
 	</style>
 	<?php
-} );
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 7. LIVE PREVIEW PANEL IN PAGE EDITOR
@@ -418,6 +553,11 @@ function sz_live_preview_html( $post ) {
 				></iframe>
 			</div>
 		<?php endif; ?>
+
+		<div class="sz-editor-hint">
+			👆 Click any block above to jump to its fields below &nbsp;·&nbsp;
+			<kbd style="background:#f0f0f0;padding:2px 6px;border:1px solid #ccc;border-radius:3px;font-size:11px;">Ctrl+Shift+P</kbd> to refresh
+		</div>
 	</div>
 	<?php
 }
@@ -436,6 +576,17 @@ function sz_live_preview_js() {
 	<script>
 	(function () {
 		'use strict';
+
+		/* ── DOM reorder: move preview metabox above ACF fields ── */
+		/* WordPress places metaboxes after ACF despite "high"      */
+		/* priority. Move it to the top of the main content area.   */
+		var previewBox = document.getElementById('sz-live-preview');
+		if (previewBox) {
+			var postBody = document.getElementById('post-body-content');
+			if (postBody && postBody.parentNode) {
+				postBody.parentNode.insertBefore(previewBox, postBody.nextSibling);
+			}
+		}
 
 		var iframe          = document.getElementById('sz-preview-frame');
 		var refreshBtn      = document.getElementById('sz-refresh-preview');
