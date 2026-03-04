@@ -1,0 +1,62 @@
+@use '~/styles/global' as g;
+
+.hero {
+  position: relative;
+  height: 90dvh;
+  min-height: 480px;
+  overflow: hidden;
+}
+
+.heroImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 45%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  text-align: center;
+  padding: 1rem;
+}
+
+.heroTitle {
+  font-family: var(--font-serif);
+  font-size: var(--text-hero);
+  color: var(--color-white);
+  letter-spacing: 0.06em;
+}
+
+.heroTagline {
+  font-size: var(--text-xl);
+  color: var(--color-gold);
+  font-style: italic;
+  letter-spacing: 0.03em;
+}
+
+.heroBtn {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.85rem 2.5rem;
+  background: transparent;
+  color: var(--color-white);
+  border: 2px solid var(--color-gold);
+  font-size: var(--text-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition:
+    background g.$transition-fast,
+    color g.$transition-fast;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--color-gold);
+    color: var(--color-dark);
+  }
+}

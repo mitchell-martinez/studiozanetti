@@ -10,12 +10,18 @@
 # To promote staging to production:
 #   git push origin staging:main   (or merge staging → main via PR)
 #
+# Deployment model
+# ────────────────
+#   All services on the VPS are managed by a single master docker-compose.yml
+#   at /home/deploy/budgeto/. CI simply SSHs in, pulls the new image, and
+#   restarts the appropriate service.
+#
 # Pipeline stages
 # ───────────────
-#   1. ci           — lint, typecheck, unit tests (runs on every push + every PR)
-#   2. build        — build Docker image → push to ghcr.io (push events only)
-#   3. deploy-staging   — pull image on VPS, restart staging container  (staging only)
-#   4. deploy-production — pull image on VPS, restart production container (main only)
+#   1. ci               — lint, typecheck, unit tests (runs on every push + every PR)
+#   2. build            — build Docker image → push to ghcr.io (push events only)
+#   3. deploy-staging   — pull image, restart studiozanetti-staging service (staging only)
+#   4. deploy-production — pull image, restart studiozanetti service (main only)
 #
 # Required GitHub Secrets (Settings → Secrets and variables → Actions)
 # ─────────────────────────────────────────────────────────────────────
@@ -25,9 +31,6 @@
 #                        must be in ~/.ssh/authorized_keys on the VPS
 #   GHCR_TOKEN           GitHub Personal Access Token with read:packages scope
 #                        Used by the VPS to pull Docker images from ghcr.io
-#   WORDPRESS_URL_STAGING  Full URL of the staging WordPress instance (no trailing slash)
-#                          If not set, the site falls back to hardcoded content
-#   WORDPRESS_URL_PROD     Full URL of the production WordPress instance
 # ─────────────────────────────────────────────────────────────────────────────
 
 name: CI & Deploy
@@ -73,7 +76,6 @@ jobs:
   build:
     name: Build image
     needs: ci
-    # Only build on push events, not pull requests
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
@@ -90,9 +92,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Determine the image tag from the branch name:
-      #   refs/heads/main       → ghcr.io/.../studiozanetti:main
-      #   refs/heads/production → ghcr.io/.../studiozanetti:production
       - name: Resolve image tag
         id: tag
         run: |
@@ -108,7 +107,6 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.tag.outputs.value }}
-          # GitHub Actions cache → dramatically faster rebuilds
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -125,8 +123,6 @@ jobs:
       url: https://staging.studiozanetti.mitchellmartinez.tech
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
@@ -134,22 +130,7 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
 
-      # Write the env file locally so the secret value never appears in SSH logs
-      - name: Prepare env file
-        env:
-          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL_STAGING }}
-        run: |
-          printf 'WORDPRESS_URL=%s\nWORDPRESS_CACHE_TTL_SECONDS=60\n' \
-            "${WORDPRESS_URL}" > /tmp/.env.staging
-
-      - name: Copy compose file + env to VPS
-        run: |
-          scp -i ~/.ssh/deploy_key \
-            docker-compose.staging.yml \
-            /tmp/.env.staging \
-            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/zanetti/"
-
-      - name: Pull image and restart staging container
+      - name: Pull image and restart staging service
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           GHCR_USER: ${{ github.repository_owner }}
@@ -158,9 +139,9 @@ jobs:
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
             "GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' bash -s" << 'ENDSSH'
               echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
-              cd /opt/zanetti
-              docker compose -f docker-compose.staging.yml pull
-              docker compose -f docker-compose.staging.yml up -d --remove-orphans
+              cd /home/deploy/budgeto
+              docker compose pull studiozanetti-staging
+              docker compose up -d --no-deps studiozanetti-staging
               docker image prune -f
               docker logout ghcr.io
           ENDSSH
@@ -178,8 +159,6 @@ jobs:
       url: https://studiozanetti.mitchellmartinez.tech
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
@@ -187,21 +166,7 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Prepare env file
-        env:
-          WORDPRESS_URL: ${{ secrets.WORDPRESS_URL_PROD }}
-        run: |
-          printf 'WORDPRESS_URL=%s\nWORDPRESS_CACHE_TTL_SECONDS=60\n' \
-            "${WORDPRESS_URL}" > /tmp/.env.prod
-
-      - name: Copy compose file + env to VPS
-        run: |
-          scp -i ~/.ssh/deploy_key \
-            docker-compose.prod.yml \
-            /tmp/.env.prod \
-            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/zanetti/"
-
-      - name: Pull image and restart production container
+      - name: Pull image and restart production service
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           GHCR_USER: ${{ github.repository_owner }}
@@ -210,9 +175,9 @@ jobs:
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
             "GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' bash -s" << 'ENDSSH'
               echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
-              cd /opt/zanetti
-              docker compose -f docker-compose.prod.yml pull
-              docker compose -f docker-compose.prod.yml up -d --remove-orphans
+              cd /home/deploy/budgeto
+              docker compose pull studiozanetti
+              docker compose up -d --no-deps studiozanetti
               docker image prune -f
               docker logout ghcr.io
           ENDSSH

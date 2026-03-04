@@ -1,0 +1,84 @@
+@use '~/styles/global' as g;
+
+.section {
+  composes: blockSection from '../shared.module.scss';
+}
+
+.inner {
+  composes: blockInner from '../shared.module.scss';
+}
+
+.heading {
+  composes: blockHeading from '../shared.module.scss';
+}
+
+.servicesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.serviceCard {
+  background: var(--color-white);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgb(0 0 0 / 8%);
+  transition:
+    transform g.$transition-mid,
+    box-shadow g.$transition-mid;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  }
+}
+
+.serviceImage {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+
+.serviceBody {
+  padding: 1.5rem;
+}
+
+.serviceTitle {
+  font-size: var(--text-lg);
+  margin-bottom: 0.5rem;
+}
+
+.serviceDesc {
+  color: #666;
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+.servicesCta {
+  text-align: center;
+  margin-top: 3rem;
+}
+
+.ctaBtn {
+  display: inline-block;
+  padding: 0.85rem 2.5rem;
+  background: var(--color-dark);
+  color: var(--color-white);
+  font-size: var(--text-sm);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 2px solid var(--color-dark);
+  transition:
+    background g.$transition-fast,
+    color g.$transition-fast;
+
+  &:hover,
+  &:focus-visible {
+    background: transparent;
+    color: var(--color-dark);
+  }
+}

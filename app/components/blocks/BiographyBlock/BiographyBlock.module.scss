@@ -1,0 +1,42 @@
+@use '~/styles/global' as g;
+
+.section {
+  composes: blockSection from '../shared.module.scss';
+}
+
+.bioInner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 4rem;
+  align-items: start;
+
+  @media (max-width: #{g.$bp-md}) {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.bioImage img {
+  width: 100%;
+  border-radius: 4px;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 12%);
+}
+
+.bioBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bioName {
+  font-size: var(--text-2xl);
+}
+
+.bioRole {
+  color: var(--color-gold);
+  font-style: italic;
+  font-size: var(--text-base);
+  margin-top: -0.5rem;
+}
