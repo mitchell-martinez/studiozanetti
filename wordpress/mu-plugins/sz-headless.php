@@ -471,7 +471,7 @@ add_action( 'admin_head', function () {
 		<?php endif; ?>
 	</style>
 	<?php
-};
+} );
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 7. LIVE PREVIEW PANEL IN PAGE EDITOR
