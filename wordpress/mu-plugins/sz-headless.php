@@ -342,14 +342,17 @@ add_action( 'admin_head', function () {
 // 7. LIVE PREVIEW PANEL IN PAGE EDITOR
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// Shows an iframe of the React front-end inside the WordPress page editor so
-// the admin can see exactly what visitors will see while editing ACF fields.
-// Auto-refreshes on save / autosave and when ACF fields change (debounced).
+// Shows an iframe of the React front-end inside the WordPress page editor.
+// The preview ONLY refreshes when the admin explicitly clicks "Refresh Preview"
+// or uses the Ctrl+Shift+P shortcut. No auto-refresh timers.
+//
+// Clicking a block in the preview scrolls to and highlights the matching
+// ACF Flexible Content layout row in the editor (via postMessage bridge).
 
 add_action( 'add_meta_boxes', function () {
 	add_meta_box(
 		'sz-live-preview',
-		'Live Front-End Preview',
+		'🖥 Live Front-End Preview',
 		'sz_live_preview_html',
 		'page',
 		'normal',
@@ -385,15 +388,14 @@ function sz_live_preview_html( $post ) {
 				↻ Refresh Preview
 			</button>
 			<span id="sz-preview-status" style="color:#666;font-size:13px;">
-				<?php echo $is_new_post ? 'Save this page as a draft first to enable preview.' : 'Ready'; ?>
+				<?php echo $is_new_post
+					? 'Save this page as a draft first to enable preview.'
+					: 'Click "Refresh Preview" after making changes. <kbd style="background:#f0f0f0;padding:2px 6px;border:1px solid #ccc;border-radius:3px;font-size:11px;">Ctrl+Shift+P</kbd>'; ?>
 			</span>
-			<label style="margin-left:auto;font-size:13px;cursor:pointer;">
-				<input type="checkbox" id="sz-auto-refresh" checked> Auto-refresh on changes
-			</label>
 		</div>
 
 		<div id="sz-preview-sizes" style="display:flex;gap:6px;margin-bottom:10px;">
-			<button type="button" class="button sz-size-btn active" data-width="100%">🖥 Desktop</button>
+			<button type="button" class="button button-primary sz-size-btn active" data-width="100%">🖥 Desktop</button>
 			<button type="button" class="button sz-size-btn" data-width="768px">📱 Tablet</button>
 			<button type="button" class="button sz-size-btn" data-width="375px">📱 Mobile</button>
 			<button type="button" class="button" id="sz-fullscreen-btn" style="margin-left:auto;">⛶ Full Screen</button>
@@ -438,7 +440,6 @@ function sz_live_preview_js() {
 		var iframe          = document.getElementById('sz-preview-frame');
 		var refreshBtn      = document.getElementById('sz-refresh-preview');
 		var statusEl        = document.getElementById('sz-preview-status');
-		var autoRefreshCb   = document.getElementById('sz-auto-refresh');
 		var loadingOverlay  = document.getElementById('sz-preview-loading');
 		var frameWrapper    = document.getElementById('sz-preview-frame-wrapper');
 		var fullscreenBtn   = document.getElementById('sz-fullscreen-btn');
@@ -447,7 +448,7 @@ function sz_live_preview_js() {
 
 		/* ── Helpers ─────────────────────────────────────────── */
 		function setStatus(text) {
-			if (statusEl) statusEl.textContent = text;
+			if (statusEl) statusEl.innerHTML = text;
 		}
 
 		function showLoading() {
@@ -461,79 +462,78 @@ function sz_live_preview_js() {
 		/* Hide the loading overlay once iframe loads */
 		iframe.addEventListener('load', function () {
 			hideLoading();
-			setStatus('Updated ' + new Date().toLocaleTimeString());
+			setStatus('Updated ' + new Date().toLocaleTimeString() +
+				' — Click "Refresh Preview" after making changes.');
 		});
 
-		/* ── Refresh logic ───────────────────────────────────── */
+		/* ── Refresh: saves draft first, then reloads iframe ── */
 		function refreshPreview() {
 			showLoading();
-			setStatus('Refreshing…');
-			/* Cache-bust to force reload */
-			var src = iframe.src.replace(/&_cb=\d+/, '');
-			iframe.src = src + '&_cb=' + Date.now();
-		}
-
-		/* Save draft then refresh after a short delay */
-		function saveAndRefresh() {
-			setStatus('Saving…');
+			setStatus('Saving &amp; refreshing…');
+			/* Trigger WP autosave to persist current field values */
 			if (window.wp && wp.autosave && wp.autosave.server) {
 				wp.autosave.server.triggerSave();
 			}
-			/* Allow time for autosave request to complete */
-			setTimeout(refreshPreview, 2000);
+			/* Wait for the save to complete, then reload iframe */
+			setTimeout(function () {
+				var src = iframe.src.replace(/&_cb=\d+/, '');
+				iframe.src = src + '&_cb=' + Date.now();
+			}, 2000);
 		}
 
 		/* ── Manual refresh button ───────────────────────────── */
-		refreshBtn.addEventListener('click', function () {
-			saveAndRefresh();
+		refreshBtn.addEventListener('click', refreshPreview);
+
+		/* ── Keyboard shortcut: Ctrl+Shift+P ─────────────────── */
+		document.addEventListener('keydown', function (e) {
+			if (e.ctrlKey && e.shiftKey && e.key === 'P') {
+				e.preventDefault();
+				refreshPreview();
+			}
 		});
 
-		/* ── ACF field change detection ──────────────────────── */
-		if (typeof acf !== 'undefined') {
-			var debounceTimer;
-			acf.addAction('change', function () {
-				if (!autoRefreshCb || !autoRefreshCb.checked) return;
-				clearTimeout(debounceTimer);
-				setStatus('Change detected — will refresh…');
-				debounceTimer = setTimeout(saveAndRefresh, 3000);
-			});
+		/* ── postMessage bridge: click-to-edit ────────────────── */
+		/* When the admin clicks a block in the iframe preview,   */
+		/* the React app sends { source:'sz-preview', action:     */
+		/* 'focus-block', index: N }. We scroll to and highlight  */
+		/* the Nth ACF Flexible Content layout row in the editor. */
+		window.addEventListener('message', function (event) {
+			var data = event.data;
+			if (!data || data.source !== 'sz-preview') return;
 
-			/* Also listen for Flexible Content layout reorder/add/remove */
-			acf.addAction('append', function () {
-				if (!autoRefreshCb || !autoRefreshCb.checked) return;
-				clearTimeout(debounceTimer);
-				debounceTimer = setTimeout(saveAndRefresh, 2000);
-			});
-			acf.addAction('remove', function () {
-				if (!autoRefreshCb || !autoRefreshCb.checked) return;
-				clearTimeout(debounceTimer);
-				debounceTimer = setTimeout(saveAndRefresh, 2000);
-			});
-			acf.addAction('sortstop', function () {
-				if (!autoRefreshCb || !autoRefreshCb.checked) return;
-				clearTimeout(debounceTimer);
-				debounceTimer = setTimeout(saveAndRefresh, 2000);
-			});
-		}
+			if (data.action === 'focus-block' && typeof data.index === 'number') {
+				/* Find all ACF Flexible Content layout rows */
+				var layouts = document.querySelectorAll('.acf-flexible-content .layout');
+				var target  = layouts[data.index];
 
-		/* ── Refresh after WordPress autosave ────────────────── */
-		if (typeof jQuery !== 'undefined') {
-			jQuery(document).on('after-autosave', function () {
-				if (autoRefreshCb && autoRefreshCb.checked) {
-					setTimeout(refreshPreview, 500);
+				if (!target) return;
+
+				/* Remove previous highlights */
+				layouts.forEach(function (el) {
+					el.style.outline = '';
+					el.style.outlineOffset = '';
+					el.style.transition = '';
+				});
+
+				/* Scroll to & highlight the target layout */
+				target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				target.style.transition = 'outline-color 0.3s';
+				target.style.outline = '3px solid #0073aa';
+				target.style.outlineOffset = '2px';
+
+				/* Open the layout if it's collapsed */
+				if (target.classList.contains('-collapsed')) {
+					var toggle = target.querySelector('.acf-fc-layout-handle');
+					if (toggle) toggle.click();
 				}
-			});
-		}
 
-		/* ── Refresh after manual Publish / Update ───────────── */
-		if (typeof jQuery !== 'undefined') {
-			jQuery(document).on('heartbeat-tick', function (e, data) {
-				if (data['wp-refresh-post-lock']) {
-					/* Another user modified this — refresh */
-					refreshPreview();
-				}
-			});
-		}
+				/* Remove highlight after 3 seconds */
+				setTimeout(function () {
+					target.style.outline = '';
+					target.style.outlineOffset = '';
+				}, 3000);
+			}
+		});
 
 		/* ── Responsive size toggles ─────────────────────────── */
 		document.querySelectorAll('.sz-size-btn').forEach(function (btn) {
@@ -549,9 +549,6 @@ function sz_live_preview_js() {
 				iframe.style.margin = (w === '100%') ? '0' : '0 auto';
 			});
 		});
-		/* Set initial Desktop button as primary */
-		var activeBtn = document.querySelector('.sz-size-btn.active');
-		if (activeBtn) activeBtn.classList.add('button-primary');
 
 		/* ── Full-screen toggle ───────────────────────────────── */
 		if (fullscreenBtn && frameWrapper) {
@@ -573,7 +570,6 @@ function sz_live_preview_js() {
 					frameWrapper.style.borderRadius = '8px';
 					iframe.style.height = '800px';
 					fullscreenBtn.textContent = '⛶ Full Screen';
-					/* Re-apply the active size */
 					var active = document.querySelector('.sz-size-btn.active');
 					if (active) {
 						var w = active.dataset.width;
@@ -582,7 +578,6 @@ function sz_live_preview_js() {
 					}
 				}
 			});
-			/* ESC key to exit full screen */
 			document.addEventListener('keydown', function (e) {
 				if (e.key === 'Escape' && isFullscreen) {
 					fullscreenBtn.click();
@@ -595,7 +590,6 @@ function sz_live_preview_js() {
 		if (placeholder && typeof jQuery !== 'undefined') {
 			jQuery(document).on('after-autosave', function () {
 				if (placeholder.parentNode) {
-					/* Build the iframe dynamically */
 					placeholder.parentNode.removeChild(placeholder);
 					var wrapper = document.createElement('div');
 					wrapper.id = 'sz-preview-frame-wrapper';
@@ -609,12 +603,13 @@ function sz_live_preview_js() {
 						'&secret=<?php echo esc_js( rawurlencode( SZ_PREVIEW_SECRET ) ); ?>&iframe=true&_cb=' + Date.now();
 					wrapper.appendChild(newIframe);
 					document.getElementById('sz-preview-container').appendChild(wrapper);
-					/* Update references */
 					iframe = newIframe;
 					frameWrapper = wrapper;
 					refreshBtn.disabled = false;
 					newIframe.addEventListener('load', function () {
-						setStatus('Updated ' + new Date().toLocaleTimeString());
+						hideLoading();
+						setStatus('Updated ' + new Date().toLocaleTimeString() +
+							' — Click "Refresh Preview" after making changes.');
 					});
 				}
 			});
