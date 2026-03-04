@@ -1,15 +1,16 @@
 @use '~/styles/global' as g;
+@use '../shared.module' as shared;
 
 .section {
-  composes: blockSection from '../shared.module.scss';
+  @include shared.blockSection;
 }
 
 .inner {
-  composes: blockInner from '../shared.module.scss';
+  @include shared.blockInner;
 }
 
 .heading {
-  composes: blockHeading from '../shared.module.scss';
+  @include shared.blockHeading;
 }
 
 .pillars {

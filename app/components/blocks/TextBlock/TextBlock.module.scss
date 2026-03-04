@@ -2,7 +2,7 @@
 @use '../shared.module' as shared;
 
 .section {
-  composes: blockSection from '../shared.module.scss';
+  @include shared.blockSection;
 }
 
 .textContent {
