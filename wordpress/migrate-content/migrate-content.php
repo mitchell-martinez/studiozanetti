@@ -9,10 +9,10 @@
  * ─── USAGE ────────────────────────────────────────────────────────────────────
  *
  *  1. SSH into your server:
- *       ssh root@103.4.234.10
+ *       ssh root@[SERVER IP]
  *
  *  2. SCP the script to the server:
- *       scp wordpress/migrate-content/migrate-content.php root@103.4.234.10:/var/lib/docker/volumes/budgeto_wordpress-data/_data/migrate-content.php
+ *       scp wordpress/migrate-content/migrate-content.php root@[SERVER IP]:/var/lib/docker/volumes/budgeto_wordpress-data/_data/migrate-content.php
  *
  *  3. Run it inside the WordPress container with WP-CLI:
  *
@@ -26,7 +26,7 @@
  *       docker exec -e SZ_EXECUTE=1 -e SZ_PAGE_ID=9347 wordpress wp eval-file /var/www/html/migrate-content.php --allow-root
  *
  *  4. After verifying, delete the script:
- *       ssh root@103.4.234.10 rm /var/lib/docker/volumes/budgeto_wordpress-data/_data/migrate-content.php
+ *       ssh root@[SERVER IP] rm /var/lib/docker/volumes/budgeto_wordpress-data/_data/migrate-content.php
  *
  * ─── WHAT IT DOES ─────────────────────────────────────────────────────────────
  *

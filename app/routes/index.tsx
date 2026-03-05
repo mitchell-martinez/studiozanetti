@@ -1,1 +1,1 @@
-export { loader, meta, ErrorBoundary, default } from './$slug'
+export { ErrorBoundary, default, loader, meta } from './$slug'
