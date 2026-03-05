@@ -1,0 +1,1 @@
+import{j as t}from"./iframe-hncPAmM6.js";const s="_richText_1di6n_1",i={richText:s},r=({html:e})=>t.jsx("div",{className:i.richText,dangerouslySetInnerHTML:{__html:e}});r.__docgenInfo={description:"",methods:[],displayName:"RichText",props:{html:{required:!0,tsType:{name:"string"},description:""}}};export{r as R};

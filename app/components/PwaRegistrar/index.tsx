@@ -4,9 +4,11 @@
  */
 const PwaRegistrar = () => {
   if (typeof window !== 'undefined') {
-    import('virtual:pwa-register').then(({ registerSW }) => {
-      registerSW({ immediate: false })
-    })
+    import('virtual:pwa-register')
+      .then(({ registerSW }) => {
+        registerSW({ immediate: false })
+      })
+      .catch(() => undefined)
   }
   return null
 }
