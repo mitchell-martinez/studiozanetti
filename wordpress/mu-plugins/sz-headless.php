@@ -347,6 +347,36 @@ add_action( 'admin_menu', function () {
 } );
 
 /**
+ * Use ACF-only editing for Pages.
+ *
+ * Disables Gutenberg for pages so editors don't see:
+ * - Block Inserter UI
+ * - "Choose a pattern" modal
+ *
+ * This keeps page authoring aligned with the headless React + ACF workflow.
+ */
+add_filter( 'use_block_editor_for_post_type', function ( $use_block_editor, $post_type ) {
+	if ( $post_type === 'page' ) {
+		return false;
+	}
+
+	return $use_block_editor;
+}, 10, 2 );
+
+/**
+ * Extra safety: disable block patterns globally in admin.
+ */
+add_filter( 'should_load_remote_block_patterns', '__return_false' );
+add_filter( 'should_load_block_patterns', '__return_false' );
+
+/**
+ * Remove the default page content editor; content lives in ACF blocks.
+ */
+add_action( 'init', function () {
+	remove_post_type_support( 'page', 'editor' );
+}, 20 );
+
+/**
  * Redirect the admin default landing page to Pages list
  * instead of the Dashboard (which can look empty/cluttered for a headless site).
  */
@@ -771,7 +801,92 @@ function sz_live_preview_js() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 8. ENSURE ACF FIELDS SHOW IN REST API
+// 8. ACF OPTIONS PAGE — SITE-WIDE SETTINGS (HEADER / FOOTER)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Creates a "Site Settings" options page in the WP admin sidebar.
+// The admin edits these ONCE and the values apply to every page.
+//
+// WORDPRESS SETUP (done automatically by this code if ACF Pro is active):
+//   ACF → Options Page: "Site Settings"
+//   Field Group: "Site Settings" (location: Options Page → Site Settings)
+//     ├── site_name      (Text)       — e.g. "Studio Zanetti"
+//     ├── tagline         (Text)       — e.g. "Capturing moments, creating memories"
+//     ├── copyright_text  (Text)       — e.g. "© 2026 Studio Zanetti. All rights reserved."
+//     │                                  (Leave blank to auto-generate from site_name + year)
+//     └── social_links    (Repeater)
+//           ├── platform  (Text)       — e.g. "Instagram"
+//           └── url       (URL)        — e.g. "https://instagram.com/studiozanetti"
+//
+// REST endpoint: GET /wp-json/sz/v1/site-settings
+//   Returns: { site_name, tagline, copyright_text, social_links: [{platform, url}] }
+
+// Register the Options Page (requires ACF Pro)
+add_action( 'acf/init', function () {
+	if ( ! function_exists( 'acf_add_options_page' ) ) {
+		return;
+	}
+
+	acf_add_options_page( [
+		'page_title' => __( 'Site Settings', 'studio-zanetti' ),
+		'menu_title' => __( 'Site Settings', 'studio-zanetti' ),
+		'menu_slug'  => 'site-settings',
+		'capability' => 'edit_posts',
+		'icon_url'   => 'dashicons-admin-customizer',
+		'position'   => 2, // Near the top of the admin sidebar
+		'redirect'   => false,
+	] );
+} );
+
+// REST endpoint to expose site settings to the React front-end
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'sz/v1', '/site-settings', [
+		'methods'             => 'GET',
+		'callback'            => 'sz_get_site_settings',
+		'permission_callback' => '__return_true',
+	] );
+} );
+
+/**
+ * REST callback: return global site settings from the ACF options page.
+ */
+function sz_get_site_settings() {
+	if ( ! function_exists( 'get_field' ) ) {
+		return new WP_REST_Response( [
+			'site_name'      => get_bloginfo( 'name' ),
+			'tagline'        => get_bloginfo( 'description' ),
+			'copyright_text' => '',
+			'social_links'   => [],
+		], 200 );
+	}
+
+	$site_name      = get_field( 'site_name', 'option' ) ?: get_bloginfo( 'name' );
+	$tagline        = get_field( 'tagline', 'option' ) ?: get_bloginfo( 'description' );
+	$copyright_text = get_field( 'copyright_text', 'option' ) ?: '';
+	$social_raw     = get_field( 'social_links', 'option' ) ?: [];
+
+	$social_links = [];
+	if ( is_array( $social_raw ) ) {
+		foreach ( $social_raw as $link ) {
+			if ( ! empty( $link['platform'] ) && ! empty( $link['url'] ) ) {
+				$social_links[] = [
+					'platform' => sanitize_text_field( $link['platform'] ),
+					'url'      => esc_url_raw( $link['url'] ),
+				];
+			}
+		}
+	}
+
+	return new WP_REST_Response( [
+		'site_name'      => $site_name,
+		'tagline'        => $tagline,
+		'copyright_text' => $copyright_text,
+		'social_links'   => $social_links,
+	], 200 );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 9. ENSURE ACF FIELDS SHOW IN REST API
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -782,7 +897,7 @@ function sz_live_preview_js() {
 add_filter( 'acf/rest_api/field_settings/show_in_rest', '__return_true' );
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 9. CORS — ALLOW FRONT-END ORIGIN
+// 10. CORS — ALLOW FRONT-END ORIGIN
 // ─────────────────────────────────────────────────────────────────────────────
 
 add_action( 'rest_api_init', function () {

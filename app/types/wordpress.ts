@@ -185,3 +185,31 @@ export interface WPMenuItem {
   url: string
   children: WPMenuItem[]
 }
+
+// ─── Site Settings (ACF Options Page) ─────────────────────────────────────────
+//
+// WORDPRESS SETUP — ACF Options Page: "Site Settings"
+//   The mu-plugin auto-registers this page. Create a Field Group with:
+//     Location: Options Page → Site Settings
+//     Fields:
+//       site_name      (Text)    — Brand name shown in header/footer
+//       tagline        (Text)    — Subtitle shown in footer
+//       copyright_text (Text)    — Footer copyright (auto-generated if blank)
+//       social_links   (Repeater)
+//         ├── platform (Text)    — e.g. "Instagram"
+//         └── url      (URL)     — e.g. "https://instagram.com/studiozanetti"
+//
+// Fetched once in root.tsx and passed to Navbar + Footer.
+// REST endpoint: GET /wp-json/sz/v1/site-settings
+
+export interface WPSocialLink {
+  platform: string
+  url: string
+}
+
+export interface WPSiteSettings {
+  site_name: string
+  tagline: string
+  copyright_text: string
+  social_links: WPSocialLink[]
+}

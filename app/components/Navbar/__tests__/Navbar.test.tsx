@@ -19,10 +19,10 @@ const MOCK_ITEMS: WPMenuItem[] = [
   { id: 4, title: 'Contact', url: '/contact', children: [] },
 ]
 
-const renderNavbar = (items: WPMenuItem[] = []) =>
+const renderNavbar = (items: WPMenuItem[] = [], siteName?: string) =>
   render(
     <MemoryRouter initialEntries={['/']}>
-      <Navbar items={items} />
+      <Navbar items={items} siteName={siteName} />
     </MemoryRouter>,
   )
 
@@ -92,5 +92,10 @@ describe('Navbar', () => {
     renderNavbar(MOCK_ITEMS)
     // "About" has no children — no submenu toggle should exist for it
     expect(screen.queryByRole('button', { name: /show about submenu/i })).not.toBeInTheDocument()
+  })
+
+  it('renders custom site name when provided', () => {
+    renderNavbar([], 'My Photography')
+    expect(screen.getByRole('link', { name: /My Photography.*home/i })).toBeInTheDocument()
   })
 })

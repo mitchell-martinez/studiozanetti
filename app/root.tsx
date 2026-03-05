@@ -4,29 +4,33 @@ import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '
 import Footer from '~/components/Footer'
 import Navbar from '~/components/Navbar'
 import OfflineBanner from '~/components/OfflineBanner'
-import { getNavMenu } from '~/lib/wordpress'
+import { getNavMenu, getSiteSettings } from '~/lib/wordpress'
 import globalStyles from '~/styles/global.scss?url'
-import type { WPMenuItem } from '~/types/wordpress'
+import type { WPMenuItem, WPSiteSettings } from '~/types/wordpress'
 
 export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://picsum.photos' },
   { rel: 'stylesheet', href: globalStyles },
 ]
 
-// ─── Root loader — fetches the primary navigation menu from WordPress ─────────
+// ─── Root loader — fetches nav menu + site settings from WordPress ────────────
 interface RootLoaderData {
   navMenu: WPMenuItem[]
+  siteSettings: WPSiteSettings
 }
 
 export async function loader(): Promise<RootLoaderData> {
-  const navMenu = await getNavMenu('primary')
-  return { navMenu }
+  const [navMenu, siteSettings] = await Promise.all([
+    getNavMenu('primary'),
+    getSiteSettings(),
+  ])
+  return { navMenu, siteSettings }
 }
 
 const PwaRegistrar = lazy(() => import('~/components/PwaRegistrar'))
 
 export default function Root() {
-  const { navMenu } = useLoaderData<typeof loader>()
+  const { navMenu, siteSettings } = useLoaderData<typeof loader>()
 
   return (
     <html lang="en">
@@ -40,11 +44,11 @@ export default function Root() {
       <body>
         <OfflineBanner />
         <div className="layout">
-          <Navbar items={navMenu} />
+          <Navbar items={navMenu} siteName={siteSettings.site_name} />
           <main id="main-content" className="main-content" tabIndex={-1}>
             <Outlet />
           </main>
-          <Footer items={navMenu} />
+          <Footer items={navMenu} siteSettings={siteSettings} />
         </div>
         <Suspense>
           <PwaRegistrar />

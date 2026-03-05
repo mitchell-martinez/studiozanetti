@@ -14,7 +14,8 @@ const FALLBACK_ITEMS: WPMenuItem[] = [
 ]
 
 // ─── Component ────────────────────────────────────────────────────────────────
-const Navbar = ({ items }: NavbarProps) => {
+const Navbar = ({ items, siteName }: NavbarProps) => {
+  const brandName = siteName || 'Studio Zanetti'
   const navItems = items.length > 0 ? items : FALLBACK_ITEMS
   const location = useLocation()
 
@@ -73,8 +74,8 @@ const Navbar = ({ items }: NavbarProps) => {
       </a>
 
       <nav className={styles.nav} aria-label="Main navigation">
-        <Link to="/" className={styles.logo} aria-label="Studio Zanetti — home">
-          Studio Zanetti
+        <Link to="/" className={styles.logo} aria-label={`${brandName} \u2014 home`}>
+          {brandName}
         </Link>
 
         <button

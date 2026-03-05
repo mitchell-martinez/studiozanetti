@@ -1,13 +1,23 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
-import type { WPMenuItem } from '~/types/wordpress'
+import type { WPMenuItem, WPSiteSettings } from '~/types/wordpress'
 import Footer from '../index'
 
-const renderFooter = (items: WPMenuItem[] = []) =>
+const DEFAULT_SETTINGS: WPSiteSettings = {
+  site_name: 'Studio Zanetti',
+  tagline: 'Capturing moments, creating memories',
+  copyright_text: '',
+  social_links: [
+    { platform: 'Instagram', url: 'https://instagram.com/studiozanetti' },
+    { platform: 'Facebook', url: 'https://facebook.com/studiozanetti' },
+  ],
+}
+
+const renderFooter = (items: WPMenuItem[] = [], siteSettings: WPSiteSettings = DEFAULT_SETTINGS) =>
   render(
     <MemoryRouter>
-      <Footer items={items} />
+      <Footer items={items} siteSettings={siteSettings} />
     </MemoryRouter>,
   )
 
@@ -43,9 +53,43 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: /facebook.*new tab/i })).toBeInTheDocument()
   })
 
-  it('renders the current year in copyright', () => {
+  it('renders the current year in auto-generated copyright', () => {
     renderFooter()
     const year = new Date().getFullYear().toString()
     expect(screen.getByText(new RegExp(year))).toBeInTheDocument()
+  })
+
+  it('renders custom copyright text when provided', () => {
+    const custom: WPSiteSettings = {
+      ...DEFAULT_SETTINGS,
+      copyright_text: 'Custom copyright line',
+    }
+    renderFooter([], custom)
+    expect(screen.getByText('Custom copyright line')).toBeInTheDocument()
+  })
+
+  it('renders custom site name and tagline from site settings', () => {
+    const custom: WPSiteSettings = {
+      ...DEFAULT_SETTINGS,
+      site_name: 'My Brand',
+      tagline: 'Best photos ever',
+    }
+    renderFooter([], custom)
+    expect(screen.getByText('My Brand')).toBeInTheDocument()
+    expect(screen.getByText('Best photos ever')).toBeInTheDocument()
+  })
+
+  it('renders custom social links from site settings', () => {
+    const custom: WPSiteSettings = {
+      ...DEFAULT_SETTINGS,
+      social_links: [
+        { platform: 'TikTok', url: 'https://tiktok.com/@studio' },
+        { platform: 'YouTube', url: 'https://youtube.com/studio' },
+      ],
+    }
+    renderFooter([], custom)
+    expect(screen.getByRole('link', { name: /tiktok.*new tab/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /youtube.*new tab/i })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /instagram/i })).not.toBeInTheDocument()
   })
 })
