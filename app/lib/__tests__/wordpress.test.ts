@@ -52,9 +52,36 @@ describe('getPageBySlug', () => {
     const result = await getPageBySlug('home')
     expect(result).toEqual(mockPage)
     expect(mockFetch).toHaveBeenCalledWith(
-      `${WP_URL}/wp-json/wp/v2/pages?slug=home&status=publish`,
+      `${WP_URL}/wp-json/wp/v2/pages?slug=home&status=publish&_embed=1`,
       expect.objectContaining({ headers: { Accept: 'application/json' } }),
     )
+  })
+
+  it('maps featured image from embedded media when present', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([
+        {
+          ...mockPage,
+          _embedded: {
+            'wp:featuredmedia': [
+              {
+                source_url: 'https://example.com/featured.jpg',
+                alt_text: 'Featured alt',
+                media_details: { width: 1600, height: 900 },
+              },
+            ],
+          },
+        },
+      ]),
+    )
+
+    const result = await getPageBySlug('home')
+    expect(result?.featured_image).toEqual({
+      url: 'https://example.com/featured.jpg',
+      alt: 'Featured alt',
+      width: 1600,
+      height: 900,
+    })
   })
 
   it('URL-encodes the slug', async () => {

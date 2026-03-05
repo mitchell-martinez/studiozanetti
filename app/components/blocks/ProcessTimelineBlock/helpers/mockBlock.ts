@@ -1,0 +1,10 @@
+import type { ProcessTimelineBlock } from '~/types/wordpress'
+
+export const mockProcessTimelineBlock: ProcessTimelineBlock = {
+  acf_fc_layout: 'process_timeline',
+  heading: 'Our Process',
+  steps: [
+    { title: 'Get in touch', description: 'Tell us your plans.' },
+    { title: 'Wedding day', description: 'We capture your day naturally.' },
+  ],
+}

@@ -13,10 +13,57 @@
   @include shared.blockHeading;
 }
 
+.subheading {
+  text-align: center;
+  color: var(--color-ink-soft);
+  margin: -2rem auto 1.6rem;
+  max-width: 60ch;
+}
+
 .pillars {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2rem;
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-xl}) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
   @media (max-width: #{g.$bp-sm}) {
     grid-template-columns: 1fr;
@@ -38,7 +85,7 @@
 }
 
 .pillarDesc {
-  color: #666;
+  color: var(--color-ink-soft);
   font-size: var(--text-sm);
   line-height: 1.7;
 }

@@ -1,14 +1,29 @@
 import { Link } from 'react-router'
+import { getSectionStyle } from '../helpers/styleOptions'
 import styles from './ServicesGridBlock.module.scss'
 import type { ServicesGridBlockProps } from './types'
 
 const ServicesGridBlock = ({ block }: ServicesGridBlockProps) => (
-  <section className={styles.section} style={{ background: 'var(--color-light-gray)' }}>
+  <section className={styles.section} style={getSectionStyle(block, 'champagne')}>
     <div className={styles.inner}>
       {block.heading && <h2 className={styles.heading}>{block.heading}</h2>}
-      <div className={styles.servicesGrid}>
+      {block.subheading && <p className={styles.subheading}>{block.subheading}</p>}
+      <div
+        className={`${styles.servicesGrid} ${
+          block.columns === 2 ? styles.cols2 : block.columns === 4 ? styles.cols4 : styles.cols3
+        }`}
+      >
         {block.services.map((service) => (
-          <article key={service.title} className={styles.serviceCard}>
+          <article
+            key={service.title}
+            className={`${styles.serviceCard} ${
+              block.card_style === 'outline'
+                ? styles.cardOutline
+                : block.card_style === 'minimal'
+                  ? styles.cardMinimal
+                  : styles.cardElevated
+            }`}
+          >
             {service.image && (
               <img
                 src={service.image.url}

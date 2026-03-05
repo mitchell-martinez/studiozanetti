@@ -13,10 +13,57 @@
   @include shared.blockHeading;
 }
 
+.subheading {
+  text-align: center;
+  color: var(--color-ink-soft);
+  margin: -2rem auto 1.6rem;
+  max-width: 60ch;
+}
+
 .servicesGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2rem;
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-xl}) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 
   @media (max-width: #{g.$bp-sm}) {
     grid-template-columns: 1fr;
@@ -24,18 +71,32 @@
 }
 
 .serviceCard {
-  background: var(--color-white);
   border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 2px 12px rgb(0 0 0 / 8%);
   transition:
     transform g.$transition-mid,
     box-shadow g.$transition-mid;
+}
+
+.cardElevated {
+  background: var(--color-white);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 8%);
 
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
   }
+}
+
+.cardOutline {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+}
+
+.cardMinimal {
+  background: transparent;
+  box-shadow: none;
+  border: 0;
 }
 
 .serviceImage {
@@ -54,7 +115,7 @@
 }
 
 .serviceDesc {
-  color: #666;
+  color: var(--color-ink-soft);
   font-size: var(--text-sm);
   line-height: 1.7;
 }

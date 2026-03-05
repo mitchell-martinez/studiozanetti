@@ -11,6 +11,15 @@ export interface WPImage {
   height?: number
 }
 
+export type BlockTheme = 'light' | 'rose' | 'champagne' | 'dark'
+export type ContentAlign = 'left' | 'center'
+
+export interface BlockStyleOptions {
+  section_theme?: BlockTheme
+  top_spacing?: 'none' | 'sm' | 'md' | 'lg'
+  bottom_spacing?: 'none' | 'sm' | 'md' | 'lg'
+}
+
 // ─── ACF Flexible Content block layouts ──────────────────────────────────────
 //
 // Each interface maps to one Flexible Content layout in WordPress.
@@ -38,28 +47,46 @@ export interface WPImage {
 
 export interface HeroBlock {
   acf_fc_layout: 'hero'
-  background_image: WPImage
+  background_image?: WPImage
+  slides?: WPImage[]
+  use_featured_image?: boolean
   title: string
   tagline?: string
   cta_text?: string
   cta_url?: string
+  secondary_cta_text?: string
+  secondary_cta_url?: string
+  content_align?: ContentAlign
+  height?: 'md' | 'lg' | 'full'
+  overlay_strength?: 'light' | 'medium' | 'strong'
+  auto_rotate_seconds?: number
+  show_slide_dots?: boolean
+  scroll_hint_text?: string
 }
 
-export interface TextBlock {
+export interface TextBlock extends BlockStyleOptions {
   acf_fc_layout: 'text_block'
   heading?: string
   body: string
-  align?: 'left' | 'center'
+  align?: ContentAlign
   cta_text?: string
   cta_url?: string
+  max_width?: 'narrow' | 'normal' | 'wide'
+  eyebrow?: string
 }
 
-export interface ImageTextBlock {
+export interface ImageTextBlock extends BlockStyleOptions {
   acf_fc_layout: 'image_text'
   image: WPImage
+  image_mobile?: WPImage
   heading?: string
   body: string
   image_position?: 'left' | 'right'
+  image_ratio?: 'landscape' | 'portrait' | 'square'
+  image_style?: 'soft' | 'framed' | 'plain'
+  eyebrow?: string
+  cta_text?: string
+  cta_url?: string
 }
 
 export interface WPServiceItem {
@@ -68,20 +95,25 @@ export interface WPServiceItem {
   image?: WPImage
 }
 
-export interface ServicesGridBlock {
+export interface ServicesGridBlock extends BlockStyleOptions {
   acf_fc_layout: 'services_grid'
   heading?: string
+  subheading?: string
   services: WPServiceItem[]
   cta_text?: string
   cta_url?: string
+  columns?: 2 | 3 | 4
+  card_style?: 'elevated' | 'outline' | 'minimal'
 }
 
-export interface BiographyBlock {
+export interface BiographyBlock extends BlockStyleOptions {
   acf_fc_layout: 'biography'
   image?: WPImage
   name: string
   role?: string
   bio: string
+  quote?: string
+  signature_text?: string
 }
 
 export interface WPPillarItem {
@@ -89,10 +121,83 @@ export interface WPPillarItem {
   description: string
 }
 
-export interface PillarGridBlock {
+export interface PillarGridBlock extends BlockStyleOptions {
   acf_fc_layout: 'pillar_grid'
   heading?: string
+  subheading?: string
   pillars: WPPillarItem[]
+  columns?: 2 | 3 | 4
+}
+
+export interface WPTestimonialItem {
+  quote: string
+  name: string
+  context?: string
+  image?: WPImage
+}
+
+export interface TestimonialCarouselBlock extends BlockStyleOptions {
+  acf_fc_layout: 'testimonial_carousel'
+  heading?: string
+  subheading?: string
+  testimonials: WPTestimonialItem[]
+  auto_rotate_seconds?: number
+}
+
+export interface WPFaqItem {
+  question: string
+  answer: string
+}
+
+export interface FaqAccordionBlock extends BlockStyleOptions {
+  acf_fc_layout: 'faq_accordion'
+  heading?: string
+  intro?: string
+  faq_items: WPFaqItem[]
+  open_first_item?: boolean
+}
+
+export interface WPProcessStep {
+  title: string
+  description: string
+  image?: WPImage
+}
+
+export interface ProcessTimelineBlock extends BlockStyleOptions {
+  acf_fc_layout: 'process_timeline'
+  heading?: string
+  intro?: string
+  steps: WPProcessStep[]
+}
+
+export interface WPPackageItem {
+  name: string
+  price_label?: string
+  description?: string
+  inclusions?: string
+  is_featured?: boolean
+  cta_text?: string
+  cta_url?: string
+}
+
+export interface PricingPackagesBlock extends BlockStyleOptions {
+  acf_fc_layout: 'pricing_packages'
+  heading?: string
+  subheading?: string
+  packages: WPPackageItem[]
+}
+
+export interface WPGalleryCategoryItem {
+  title: string
+  subtitle?: string
+  image?: WPImage
+  url: string
+}
+
+export interface GalleryCategoriesBlock extends BlockStyleOptions {
+  acf_fc_layout: 'gallery_categories'
+  heading?: string
+  categories: WPGalleryCategoryItem[]
 }
 
 export type ContentBlock =
@@ -102,6 +207,11 @@ export type ContentBlock =
   | ServicesGridBlock
   | BiographyBlock
   | PillarGridBlock
+  | TestimonialCarouselBlock
+  | FaqAccordionBlock
+  | ProcessTimelineBlock
+  | PricingPackagesBlock
+  | GalleryCategoriesBlock
 
 // ─── Page ACF fields ──────────────────────────────────────────────────────────
 //
@@ -137,6 +247,7 @@ export interface WPPage {
   excerpt: WPRendered
   yoast_head_json?: WPYoastMeta
   acf?: WPPageAcf
+  featured_image?: WPImage
 }
 
 // ─── Gallery Custom Post Type ──────────────────────────────────────────────────

@@ -2,9 +2,20 @@
 
 .hero {
   position: relative;
-  height: 90dvh;
-  min-height: 480px;
+  min-height: 520px;
   overflow: hidden;
+}
+
+.heroMd {
+  height: 68dvh;
+}
+
+.heroLg {
+  height: 86dvh;
+}
+
+.heroFull {
+  height: 100dvh;
 }
 
 .heroImage {
@@ -16,14 +27,33 @@
 .heroOverlay {
   position: absolute;
   inset: 0;
-  background: rgb(0 0 0 / 45%);
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: center;
   gap: 1.25rem;
+  padding: clamp(1.5rem, 4vw, 3rem);
+}
+
+.overlayLight {
+  background: linear-gradient(180deg, rgb(39 22 36 / 28%), rgb(39 22 36 / 35%));
+}
+
+.overlayMedium {
+  background: linear-gradient(180deg, rgb(39 22 36 / 42%), rgb(39 22 36 / 52%));
+}
+
+.overlayStrong {
+  background: linear-gradient(180deg, rgb(39 22 36 / 60%), rgb(39 22 36 / 70%));
+}
+
+.overlayCenter {
+  align-items: center;
   text-align: center;
-  padding: 1rem;
+}
+
+.overlayLeft {
+  align-items: flex-start;
+  text-align: left;
 }
 
 .heroTitle {
@@ -31,32 +61,96 @@
   font-size: var(--text-hero);
   color: var(--color-white);
   letter-spacing: 0.06em;
+  max-width: 16ch;
 }
 
 .heroTagline {
   font-size: var(--text-xl);
-  color: var(--color-gold);
+  color: #ffe6be;
   font-style: italic;
   letter-spacing: 0.03em;
+  max-width: 38ch;
 }
 
-.heroBtn {
-  display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.85rem 2.5rem;
-  background: transparent;
-  color: var(--color-white);
-  border: 2px solid var(--color-gold);
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.heroBtnPrimary,
+.heroBtnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.85rem 2rem;
   font-size: var(--text-sm);
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  border-radius: 999px;
   transition:
     background g.$transition-fast,
-    color g.$transition-fast;
+    color g.$transition-fast,
+    border-color g.$transition-fast;
+}
+
+.heroBtnPrimary {
+  background: var(--color-accent);
+  color: var(--color-white);
+  border: 1px solid var(--color-accent);
 
   &:hover,
   &:focus-visible {
-    background: var(--color-gold);
-    color: var(--color-dark);
+    background: var(--color-accent-strong);
+    border-color: var(--color-accent-strong);
+    color: var(--color-white);
+  }
+}
+
+.heroBtnSecondary {
+  background: transparent;
+  color: var(--color-white);
+  border: 1px solid rgb(255 255 255 / 75%);
+
+  &:hover,
+  &:focus-visible {
+    background: rgb(255 255 255 / 18%);
+    color: var(--color-white);
+    border-color: var(--color-white);
+  }
+}
+
+.dots {
+  display: inline-flex;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 0;
+  background: rgb(255 255 255 / 45%);
+}
+
+.dotActive {
+  background: var(--color-gold);
+}
+
+.scrollHint {
+  margin-top: 0.35rem;
+  font-size: var(--text-sm);
+  color: rgb(255 255 255 / 86%);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+@media (max-width: #{g.$bp-sm}) {
+  .overlayLeft {
+    align-items: center;
+    text-align: center;
   }
 }
