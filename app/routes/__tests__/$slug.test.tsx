@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { describe, expect, it, vi, afterEach } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import CmsPage, { loader } from '../$slug'
 
 vi.mock('~/lib/wordpress', () => ({
@@ -23,7 +23,7 @@ const mockPage = {
 }
 
 const renderCmsPage = (loaderFn: () => unknown) => {
-  const router = createMemoryRouter([{ path: '/:slug', element: <CmsPage />, loader: loaderFn }], {
+  const router = createMemoryRouter([{ path: '/*', element: <CmsPage />, loader: loaderFn }], {
     initialEntries: ['/pricing'],
   })
   render(<RouterProvider router={router} />)
@@ -71,7 +71,7 @@ describe('CmsPage route', () => {
 
   describe('loader', () => {
     const makeArgs = (slug: string) => ({
-      params: { slug },
+      params: { '*': slug },
       request: new Request(`http://localhost/${slug}`),
       context: {},
     })

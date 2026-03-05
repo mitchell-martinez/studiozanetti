@@ -41,3 +41,17 @@
   font-size: var(--text-base);
   margin-top: -0.5rem;
 }
+
+.quote {
+  margin-top: 0.6rem;
+  font-family: var(--font-serif);
+  color: var(--color-ink-strong);
+  font-size: var(--text-lg);
+}
+
+.signature {
+  margin-top: -0.2rem;
+  color: var(--color-accent-strong);
+  font-style: italic;
+  font-weight: 600;
+}

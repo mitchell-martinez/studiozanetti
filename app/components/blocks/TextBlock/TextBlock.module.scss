@@ -6,10 +6,29 @@
 }
 
 .textContent {
-  max-width: 680px;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+.maxNarrow {
+  max-width: 560px;
+}
+
+.maxNormal {
+  max-width: 680px;
+}
+
+.maxWide {
+  max-width: 920px;
+}
+
+.eyebrow {
+  font-size: var(--text-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent-strong);
+  font-weight: 700;
 }
 
 .textCenter {

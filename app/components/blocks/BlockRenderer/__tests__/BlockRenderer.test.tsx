@@ -54,10 +54,71 @@ const pillarBlock: ContentBlock = {
   pillars: [{ title: 'Quality', description: 'High quality work' }],
 }
 
-const renderBlocks = (blocks: ContentBlock[]) =>
+const testimonialBlock: ContentBlock = {
+  acf_fc_layout: 'testimonial_carousel',
+  heading: 'Kind Words',
+  testimonials: [
+    {
+      quote: 'Michael made us feel so comfortable and captured every moment.',
+      name: 'Alix & Richard',
+      context: 'Wedding',
+    },
+  ],
+}
+
+const faqBlock: ContentBlock = {
+  acf_fc_layout: 'faq_accordion',
+  heading: 'Frequently Asked Questions',
+  open_first_item: true,
+  faq_items: [
+    {
+      question: 'Do you travel?',
+      answer: '<p>Yes, throughout Sydney and beyond.</p>',
+    },
+  ],
+}
+
+const processBlock: ContentBlock = {
+  acf_fc_layout: 'process_timeline',
+  heading: 'Our Process',
+  steps: [
+    { title: 'Get in touch', description: 'Reach out and let us know your date.' },
+    { title: 'Wedding day', description: 'We capture your day naturally and candidly.' },
+  ],
+}
+
+const pricingBlock: ContentBlock = {
+  acf_fc_layout: 'pricing_packages',
+  heading: 'Packages',
+  packages: [
+    {
+      name: 'The Essentials',
+      price_label: '$1,980',
+      description: 'Digital only package',
+      inclusions: '<ul><li>High-res edited images</li></ul>',
+      cta_text: 'Send Enquiry',
+      cta_url: '/contact',
+    },
+  ],
+}
+
+const galleryCategoriesBlock: ContentBlock = {
+  acf_fc_layout: 'gallery_categories',
+  heading: 'Explore Galleries',
+  categories: [
+    {
+      title: 'The Brides',
+      subtitle: 'Beautiful dresses & inspiration',
+      image: img,
+      url: '/gallery/stylish-brides',
+    },
+  ],
+}
+
+const renderBlocks = (blocks: ContentBlock[], featuredImage?: typeof img) =>
   render(
     <MemoryRouter>
-      <BlockRenderer blocks={blocks} />
+      <BlockRenderer blocks={blocks} featuredImage={featuredImage} />
     </MemoryRouter>,
   )
 
@@ -105,6 +166,43 @@ describe('BlockRenderer', () => {
     expect(screen.getByText('High quality work')).toBeInTheDocument()
   })
 
+  it('renders a testimonial_carousel block', () => {
+    renderBlocks([testimonialBlock])
+    expect(screen.getByRole('heading', { name: 'Kind Words', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText(/captured every moment/i)).toBeInTheDocument()
+    expect(screen.getByText('Alix & Richard')).toBeInTheDocument()
+  })
+
+  it('renders an faq_accordion block', () => {
+    renderBlocks([faqBlock])
+    expect(
+      screen.getByRole('heading', { name: 'Frequently Asked Questions', level: 2 }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Do you travel?')).toBeInTheDocument()
+    expect(screen.getByText('Yes, throughout Sydney and beyond.')).toBeInTheDocument()
+  })
+
+  it('renders a process_timeline block', () => {
+    renderBlocks([processBlock])
+    expect(screen.getByRole('heading', { name: 'Our Process', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('Get in touch')).toBeInTheDocument()
+    expect(screen.getByText('Wedding day')).toBeInTheDocument()
+  })
+
+  it('renders a pricing_packages block', () => {
+    renderBlocks([pricingBlock])
+    expect(screen.getByRole('heading', { name: 'Packages', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('The Essentials')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Send Enquiry' })).toBeInTheDocument()
+  })
+
+  it('renders a gallery_categories block', () => {
+    renderBlocks([galleryCategoriesBlock])
+    expect(screen.getByRole('heading', { name: 'Explore Galleries', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('The Brides')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /The Brides/i })).toBeInTheDocument()
+  })
+
   it('renders multiple blocks in order', () => {
     renderBlocks([heroBlock, textBlock, servicesBlock])
     expect(screen.getByText('Hero Title')).toBeInTheDocument()
@@ -141,5 +239,23 @@ describe('BlockRenderer', () => {
     renderBlocks([noPic])
     expect(screen.getByText('Jane Doe')).toBeInTheDocument()
     expect(screen.queryByAltText('Jane Doe')).not.toBeInTheDocument()
+  })
+
+  it('uses page featured image when hero is configured with use_featured_image', () => {
+    const featuredOnlyHero: ContentBlock = {
+      acf_fc_layout: 'hero',
+      title: 'Featured Hero',
+      use_featured_image: true,
+    }
+
+    const featured = {
+      url: 'https://example.com/featured.jpg',
+      alt: 'Featured image',
+      width: 1600,
+      height: 900,
+    }
+
+    renderBlocks([featuredOnlyHero], featured)
+    expect(screen.getByAltText('Featured image')).toBeInTheDocument()
   })
 })

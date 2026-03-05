@@ -28,6 +28,38 @@
 
 import type { WPGalleryPhoto, WPMenuItem, WPPage, WPSiteSettings } from '~/types/wordpress'
 
+interface RawWPEmbeddedMedia {
+  source_url?: string
+  alt_text?: string
+  media_details?: {
+    width?: number
+    height?: number
+  }
+}
+
+interface RawWPPage extends WPPage {
+  _embedded?: {
+    'wp:featuredmedia'?: RawWPEmbeddedMedia[]
+  }
+}
+
+function normalizePage(page: RawWPPage): WPPage {
+  const featuredMedia = page._embedded?.['wp:featuredmedia']?.[0]
+  const featured_image = featuredMedia?.source_url
+    ? {
+        url: featuredMedia.source_url,
+        alt: featuredMedia.alt_text || page.title.rendered,
+        width: featuredMedia.media_details?.width,
+        height: featuredMedia.media_details?.height,
+      }
+    : undefined
+
+  return {
+    ...page,
+    featured_image,
+  }
+}
+
 const getWpUrl = (): string | null => process.env.WORDPRESS_URL || null
 
 // In-process cache — avoids hammering WordPress on every SSR request.
@@ -74,15 +106,16 @@ async function wpFetch<T>(path: string): Promise<T | null> {
 
 /** Fetch a single published page by its slug. Returns null when not found or WP is unavailable. */
 export async function getPageBySlug(slug: string): Promise<WPPage | null> {
-  const pages = await wpFetch<WPPage[]>(
-    `/wp/v2/pages?slug=${encodeURIComponent(slug)}&status=publish`,
+  const pages = await wpFetch<RawWPPage[]>(
+    `/wp/v2/pages?slug=${encodeURIComponent(slug)}&status=publish&_embed=1`,
   )
-  return pages?.[0] ?? null
+  return pages?.[0] ? normalizePage(pages[0]) : null
 }
 
 /** Fetch all published pages. Used by react-router.config.ts for dynamic prerendering. */
 export async function getAllPages(): Promise<WPPage[]> {
-  return (await wpFetch<WPPage[]>('/wp/v2/pages?per_page=100&status=publish')) ?? []
+  const pages = await wpFetch<RawWPPage[]>('/wp/v2/pages?per_page=100&status=publish&_embed=1')
+  return (pages ?? []).map(normalizePage)
 }
 
 /** Fetch all gallery photos (CPT: gallery_photo). Returns empty array when WP is unavailable. */

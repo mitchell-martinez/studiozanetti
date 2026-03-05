@@ -17,8 +17,10 @@ interface LoaderData {
 // Michael creates a page in WordPress (e.g. slug: "pricing") and it
 // automatically becomes available at /pricing — no code change needed.
 export async function loader({ params }: LoaderFunctionArgs): Promise<LoaderData> {
-  const slug = params.slug ?? ''
-  const page = await getPageBySlug(slug)
+  const rawPath = params['*'] ?? params.slug ?? ''
+  const slug = rawPath.replace(/^\/+|\/+$/g, '')
+  const lookupSlug = slug || 'home'
+  const page = await getPageBySlug(lookupSlug)
   if (!page) throw new Response('Not Found', { status: 404 })
   return { page }
 }
@@ -45,7 +47,7 @@ const CmsPage = () => {
   // If the page has ACF Flexible Content blocks, render them as structured components.
   // Otherwise fall back to WP's native content.rendered HTML (Gutenberg / Classic editor).
   if (blocks?.length) {
-    return <BlockRenderer blocks={blocks} />
+    return <BlockRenderer blocks={blocks} featuredImage={page.featured_image} />
   }
 
   return (

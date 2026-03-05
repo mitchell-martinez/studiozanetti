@@ -1,8 +1,13 @@
 import BiographyBlock from '../BiographyBlock'
+import FaqAccordionBlock from '../FaqAccordionBlock'
+import GalleryCategoriesBlock from '../GalleryCategoriesBlock'
 import HeroBlock from '../HeroBlock'
 import ImageTextBlock from '../ImageTextBlock'
 import PillarGridBlock from '../PillarGridBlock'
+import PricingPackagesBlock from '../PricingPackagesBlock'
+import ProcessTimelineBlock from '../ProcessTimelineBlock'
 import ServicesGridBlock from '../ServicesGridBlock'
+import TestimonialCarouselBlock from '../TestimonialCarouselBlock'
 import TextBlock from '../TextBlock'
 import type { BlockRendererProps } from './types'
 
@@ -14,6 +19,11 @@ const BLOCK_LABELS: Record<string, string> = {
   services_grid: 'Services Grid',
   biography: 'Biography',
   pillar_grid: 'Pillar Grid',
+  testimonial_carousel: 'Testimonials',
+  faq_accordion: 'FAQ Accordion',
+  process_timeline: 'Process Timeline',
+  pricing_packages: 'Pricing Packages',
+  gallery_categories: 'Gallery Categories',
 }
 
 /**
@@ -110,7 +120,7 @@ const InteractiveBlockWrapper = ({
  * a clickable overlay that communicates with the parent WordPress editor via
  * postMessage, allowing click-to-edit navigation.
  */
-const BlockRenderer = ({ blocks, interactive = false }: BlockRendererProps) => (
+const BlockRenderer = ({ blocks, interactive = false, featuredImage }: BlockRendererProps) => (
   <>
     {blocks.map((block, index) => {
       const key = `${block.acf_fc_layout}-${index}`
@@ -118,7 +128,7 @@ const BlockRenderer = ({ blocks, interactive = false }: BlockRendererProps) => (
 
       switch (block.acf_fc_layout) {
         case 'hero':
-          rendered = <HeroBlock key={key} block={block} />
+          rendered = <HeroBlock key={key} block={block} featuredImage={featuredImage} />
           break
         case 'text_block':
           rendered = <TextBlock key={key} block={block} />
@@ -134,6 +144,21 @@ const BlockRenderer = ({ blocks, interactive = false }: BlockRendererProps) => (
           break
         case 'pillar_grid':
           rendered = <PillarGridBlock key={key} block={block} />
+          break
+        case 'testimonial_carousel':
+          rendered = <TestimonialCarouselBlock key={key} block={block} />
+          break
+        case 'faq_accordion':
+          rendered = <FaqAccordionBlock key={key} block={block} />
+          break
+        case 'process_timeline':
+          rendered = <ProcessTimelineBlock key={key} block={block} />
+          break
+        case 'pricing_packages':
+          rendered = <PricingPackagesBlock key={key} block={block} />
+          break
+        case 'gallery_categories':
+          rendered = <GalleryCategoriesBlock key={key} block={block} />
           break
         default:
           return null

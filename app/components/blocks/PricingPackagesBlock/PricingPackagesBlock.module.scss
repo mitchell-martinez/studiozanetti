@@ -1,0 +1,83 @@
+@use '~/styles/global' as g;
+
+.section {
+  padding: clamp(3rem, 7vw, 5rem) var(--space-page-x);
+  background: var(--color-surface);
+}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.heading {
+  font-size: var(--text-2xl);
+  text-align: center;
+  margin-bottom: 0.8rem;
+  color: var(--color-ink-strong);
+}
+
+.subheading {
+  text-align: center;
+  color: var(--color-ink-soft);
+  margin: 0 auto 1.8rem;
+  max-width: 68ch;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.card {
+  border: 1px solid var(--color-border-soft);
+  border-radius: 1rem;
+  padding: 1.1rem;
+  background: var(--color-surface-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.featured {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-card);
+  background: #fff;
+}
+
+.name {
+  color: var(--color-ink-strong);
+  font-size: var(--text-lg);
+}
+
+.price {
+  color: var(--color-accent-strong);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.description {
+  color: var(--color-ink-soft);
+}
+
+.inclusions {
+  color: var(--color-ink-soft);
+}
+
+.cta {
+  margin-top: auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent-strong);
+  padding: 0.65rem 0.9rem;
+
+  &:hover {
+    background: var(--color-accent);
+    color: #fff;
+  }
+}

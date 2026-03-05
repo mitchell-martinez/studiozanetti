@@ -1,9 +1,10 @@
+import { getSectionStyle } from '../helpers/styleOptions'
 import RichText from '../RichText'
 import styles from './BiographyBlock.module.scss'
 import type { BiographyBlockProps } from './types'
 
 const BiographyBlock = ({ block }: BiographyBlockProps) => (
-  <section className={styles.section}>
+  <section className={styles.section} style={getSectionStyle(block)}>
     <div className={styles.bioInner}>
       {block.image && (
         <div className={styles.bioImage}>
@@ -21,6 +22,8 @@ const BiographyBlock = ({ block }: BiographyBlockProps) => (
         <h2 className={styles.bioName}>{block.name}</h2>
         {block.role && <p className={styles.bioRole}>{block.role}</p>}
         <RichText html={block.bio} />
+        {block.quote && <blockquote className={styles.quote}>“{block.quote}”</blockquote>}
+        {block.signature_text && <p className={styles.signature}>{block.signature_text}</p>}
       </div>
     </div>
   </section>
