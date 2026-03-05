@@ -14,6 +14,7 @@ const meta: Meta<TextArgs> = {
     body: textBlock.body,
     eyebrow: textBlock.eyebrow,
     align: textBlock.align,
+    block_align: textBlock.block_align ?? 'left',
     max_width: textBlock.max_width,
     cta_text: textBlock.cta_text,
     cta_url: textBlock.cta_url,
@@ -29,8 +30,13 @@ const meta: Meta<TextArgs> = {
     cta_url: { control: 'text', description: 'Call-to-action URL' },
     align: {
       control: 'inline-radio',
-      options: ['left', 'center'],
-      description: 'Text alignment',
+      options: ['left', 'center', 'right', 'justify'],
+      description: 'Text alignment within the block',
+    },
+    block_align: {
+      control: 'inline-radio',
+      options: ['left', 'center', 'right'],
+      description: 'Horizontal position of the entire block on the page',
     },
     max_width: {
       control: 'inline-radio',
@@ -48,9 +54,24 @@ type Story = StoryObj<typeof meta>
 /** Default text block with left-aligned body text. */
 export const Default: Story = {}
 
-/** Centred variant on dark background. */
+/** Centred text, centred block on dark background. */
 export const CenteredDark: Story = {
-  args: { align: 'center', section_theme: 'dark' },
+  args: { align: 'center', block_align: 'center', section_theme: 'dark' },
+}
+
+/** Right-aligned text within the block. */
+export const RightAligned: Story = {
+  args: { align: 'right' },
+}
+
+/** Justified text within a narrow, centred block. */
+export const JustifiedNarrowCenter: Story = {
+  args: { align: 'justify', block_align: 'center', max_width: 'narrow' },
+}
+
+/** Block pushed to the right of the page. */
+export const BlockRight: Story = {
+  args: { block_align: 'right', max_width: 'narrow' },
 }
 
 /** Narrow width, no CTA — simple content section. */

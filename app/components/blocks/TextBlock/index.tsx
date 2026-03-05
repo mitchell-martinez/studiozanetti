@@ -4,6 +4,25 @@ import RichText from '../RichText'
 import styles from './TextBlock.module.scss'
 import type { TextBlockProps } from './types'
 
+const textAlignClass: Record<string, string | undefined> = {
+  left: styles.textLeft,
+  center: styles.textCenter,
+  right: styles.textRight,
+  justify: styles.textJustify,
+}
+
+const blockAlignClass: Record<string, string | undefined> = {
+  left: styles.blockLeft,
+  center: styles.blockCenter,
+  right: styles.blockRight,
+}
+
+const widthClass: Record<string, string | undefined> = {
+  narrow: styles.maxNarrow,
+  normal: styles.maxNormal,
+  wide: styles.maxWide,
+}
+
 const TextBlock = ({ block, dark }: TextBlockProps) => (
   <section
     className={styles.section}
@@ -14,13 +33,14 @@ const TextBlock = ({ block, dark }: TextBlockProps) => (
     }
   >
     <div
-      className={`${styles.textContent} ${block.align === 'center' ? styles.textCenter : ''} ${
-        block.max_width === 'narrow'
-          ? styles.maxNarrow
-          : block.max_width === 'wide'
-            ? styles.maxWide
-            : styles.maxNormal
-      }`}
+      className={[
+        styles.textContent,
+        textAlignClass[block.align ?? 'left'],
+        blockAlignClass[block.block_align ?? 'left'],
+        widthClass[block.max_width ?? 'normal'],
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       {block.eyebrow && <p className={styles.eyebrow}>{block.eyebrow}</p>}
       {block.heading && <h2 className={styles.textHeading}>{block.heading}</h2>}

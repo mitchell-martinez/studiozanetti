@@ -13,6 +13,8 @@ export interface WPImage {
 
 export type BlockTheme = 'light' | 'rose' | 'champagne' | 'dark'
 export type ContentAlign = 'left' | 'center'
+export type TextAlign = 'left' | 'center' | 'right' | 'justify'
+export type BlockAlign = 'left' | 'center' | 'right'
 
 export interface BlockStyleOptions {
   section_theme?: BlockTheme
@@ -31,7 +33,9 @@ export interface BlockStyleOptions {
 //     │     background_image (Image), title (Text), tagline (Text),
 //     │     cta_text (Text), cta_url (URL)
 //     ├── Layout: text_block
-//     │     heading (Text), body (WYSIWYG), align (Select: left|center),
+//     │     heading (Text), body (WYSIWYG),
+//     │     align (Select: left|center|right|justify),
+//     │     block_align (Select: left|center|right),
 //     │     cta_text (Text), cta_url (URL)
 //     ├── Layout: image_text
 //     │     image (Image), heading (Text), body (WYSIWYG),
@@ -68,7 +72,8 @@ export interface TextBlock extends BlockStyleOptions {
   acf_fc_layout: 'text_block'
   heading?: string
   body: string
-  align?: ContentAlign
+  align?: TextAlign
+  block_align?: BlockAlign
   cta_text?: string
   cta_url?: string
   max_width?: 'narrow' | 'normal' | 'wide'

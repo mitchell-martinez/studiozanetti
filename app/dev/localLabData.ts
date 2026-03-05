@@ -79,6 +79,7 @@ export const textBlock: TextBlock = {
   heading: 'Photography that feels like your day',
   body: '<p>We blend documentary moments with gentle direction so your photos feel genuine and refined.</p>',
   align: 'left',
+  block_align: 'left',
   max_width: 'normal',
   section_theme: 'light',
   top_spacing: 'md',
