@@ -1,1 +1,0 @@
-const r={none:"0",sm:"2rem",md:"3.5rem",lg:"5rem"},a={light:"var(--color-surface)",rose:"var(--color-surface-soft)",champagne:"var(--color-light-gray)",dark:"var(--color-dark)"};function c(o,t="light"){const e=o?.section_theme??t;return{background:a[e],paddingTop:r[o?.top_spacing??"md"],paddingBottom:r[o?.bottom_spacing??"md"]}}export{c as g};
