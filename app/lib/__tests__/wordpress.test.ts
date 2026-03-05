@@ -7,6 +7,7 @@ import {
   getNavMenu,
   getPageBySlug,
   getPreviewPage,
+  getSiteSettings,
 } from '../wordpress'
 
 const WP_URL = 'https://cms.example.com'
@@ -198,5 +199,47 @@ describe('getPreviewPage', () => {
   it('returns null when the secret is invalid', async () => {
     mockFetch.mockReturnValueOnce(fail(403))
     expect(await getPreviewPage(1, 'wrong-secret')).toBeNull()
+  })
+})
+
+describe('getSiteSettings', () => {
+  const mockSettings = {
+    site_name: 'My Studio',
+    tagline: 'Best photos',
+    copyright_text: '© 2026 My Studio',
+    social_links: [
+      { platform: 'Instagram', url: 'https://instagram.com/mystudio' },
+    ],
+  }
+
+  it('fetches site settings from the options endpoint', async () => {
+    mockFetch.mockReturnValueOnce(ok(mockSettings))
+    const result = await getSiteSettings()
+    expect(result).toEqual(mockSettings)
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${WP_URL}/wp-json/sz/v1/site-settings`,
+      expect.objectContaining({ headers: { Accept: 'application/json' } }),
+    )
+  })
+
+  it('returns defaults when WordPress is unavailable', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('timeout'))
+    const result = await getSiteSettings()
+    expect(result.site_name).toBe('Studio Zanetti')
+    expect(result.tagline).toBe('Capturing moments, creating memories')
+    expect(result.social_links.length).toBeGreaterThan(0)
+  })
+
+  it('fills in defaults for empty fields', async () => {
+    mockFetch.mockReturnValueOnce(ok({
+      site_name: '',
+      tagline: '',
+      copyright_text: '',
+      social_links: [],
+    }))
+    const result = await getSiteSettings()
+    expect(result.site_name).toBe('Studio Zanetti')
+    expect(result.tagline).toBe('Capturing moments, creating memories')
+    expect(result.social_links.length).toBeGreaterThan(0)
   })
 })

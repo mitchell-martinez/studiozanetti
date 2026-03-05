@@ -26,7 +26,7 @@
  *  See app/types/wordpress.ts for the full field schema.
  */
 
-import type { WPGalleryPhoto, WPMenuItem, WPPage } from '~/types/wordpress'
+import type { WPGalleryPhoto, WPMenuItem, WPPage, WPSiteSettings } from '~/types/wordpress'
 
 const getWpUrl = (): string | null => process.env.WORDPRESS_URL || null
 
@@ -105,4 +105,31 @@ export async function getNavMenu(location: string = 'primary'): Promise<WPMenuIt
  */
 export async function getPreviewPage(id: number, secret: string): Promise<WPPage | null> {
   return await wpFetch<WPPage>(`/sz/v1/preview/${id}?secret=${encodeURIComponent(secret)}`)
+}
+
+/** Default site settings used when WP is unavailable or options page not yet configured. */
+const DEFAULT_SITE_SETTINGS: WPSiteSettings = {
+  site_name: 'Studio Zanetti',
+  tagline: 'Capturing moments, creating memories',
+  copyright_text: '',
+  social_links: [
+    { platform: 'Instagram', url: 'https://instagram.com/studiozanetti' },
+    { platform: 'Facebook', url: 'https://facebook.com/studiozanetti' },
+  ],
+}
+
+/**
+ * Fetch global site settings from the ACF Options Page.
+ * These control header branding, footer text, and social links site-wide.
+ * Falls back to sensible defaults when WordPress is unavailable.
+ */
+export async function getSiteSettings(): Promise<WPSiteSettings> {
+  const data = await wpFetch<WPSiteSettings>('/sz/v1/site-settings')
+  if (!data) return DEFAULT_SITE_SETTINGS
+  return {
+    site_name: data.site_name || DEFAULT_SITE_SETTINGS.site_name,
+    tagline: data.tagline || DEFAULT_SITE_SETTINGS.tagline,
+    copyright_text: data.copyright_text || DEFAULT_SITE_SETTINGS.copyright_text,
+    social_links: data.social_links?.length ? data.social_links : DEFAULT_SITE_SETTINGS.social_links,
+  }
 }
