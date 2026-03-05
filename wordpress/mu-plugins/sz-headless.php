@@ -377,6 +377,46 @@ add_action( 'init', function () {
 }, 20 );
 
 /**
+ * Ensure page titles remain available for editors.
+ *
+ * Some themes/plugins can remove title support for pages; we force it on.
+ */
+add_action( 'init', function () {
+	add_post_type_support( 'page', 'title' );
+}, 30 );
+
+/**
+ * Prevent the page title box from being hidden via per-user Screen Options.
+ */
+add_action( 'admin_init', function () {
+	global $pagenow;
+
+	if ( ! in_array( $pagenow, [ 'post.php', 'post-new.php' ], true ) ) {
+		return;
+	}
+
+	$post_type = $_GET['post_type'] ?? null;
+	if ( $pagenow === 'post.php' && isset( $_GET['post'] ) ) {
+		$post_type = get_post_type( (int) $_GET['post'] );
+	}
+
+	if ( $post_type !== 'page' ) {
+		return;
+	}
+
+	$user_id = get_current_user_id();
+	if ( ! $user_id ) {
+		return;
+	}
+
+	$hidden = get_user_option( 'metaboxhidden_page', $user_id );
+	if ( is_array( $hidden ) && in_array( 'titlediv', $hidden, true ) ) {
+		$hidden = array_values( array_diff( $hidden, [ 'titlediv' ] ) );
+		update_user_option( $user_id, 'metaboxhidden_page', $hidden, true );
+	}
+} );
+
+/**
  * Redirect the admin default landing page to Pages list
  * instead of the Dashboard (which can look empty/cluttered for a headless site).
  */
@@ -412,10 +452,8 @@ add_action( 'wp_dashboard_setup', function () {
 // 6. ADMIN CSS — WYSIWYG-STYLE EDITOR LAYOUT
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// On the Pages list: fixes column widths.
-// On the Page editor: creates an immersive layout where the live preview
-// iframe is the dominant element and ACF fields appear as a side panel,
-// making editing feel like working directly on the live site.
+// Keep styling intentionally light and scoped so the classic Page editor
+// remains stable and predictable.
 
 add_action( 'admin_head', function () {
 	global $pagenow;
@@ -426,58 +464,58 @@ add_action( 'admin_head', function () {
 		.wp-list-table .column-author { width: 15%; }
 		.wp-list-table .column-date { width: 15%; }
 
-		/* ── Page editor: immersive preview layout ──────────── */
+		/* ── Page editor: stable scoped layout ──────────────── */
 		<?php if ( in_array( $pagenow, [ 'post.php', 'post-new.php' ], true ) ) : ?>
 
-		/* Move preview to top and make it prominent */
+		body.post-type-page #titlediv,
+		body.post-type-page #titlewrap,
+		body.post-type-page #title {
+			display: block !important;
+			visibility: visible !important;
+			opacity: 1 !important;
+		}
+
+		body.post-type-page #titlediv {
+			margin: 12px 0 16px !important;
+		}
+
+		body.post-type-page #title {
+			font-size: 24px !important;
+			line-height: 1.3 !important;
+			padding: 12px !important;
+			min-height: 52px !important;
+			border-radius: 6px !important;
+		}
+
+		/* Keep preview panel clean but non-invasive */
 		#sz-live-preview {
-			border: none !important;
-			box-shadow: none !important;
-			margin-bottom: 0 !important;
+			border: 1px solid #dcdcde !important;
+			border-radius: 8px !important;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+			margin: 0 0 16px !important;
+			background: #fff !important;
 		}
 		#sz-live-preview .inside {
-			padding: 0 !important;
+			padding: 10px 12px 12px !important;
 			margin: 0 !important;
 		}
-		#sz-live-preview .postbox-header {
-			display: none !important;
-		}
 
-		/* ACF field groups: style as a clean editing panel */
-		.acf-postbox {
-			border: 1px solid #e0e0e0 !important;
-			border-radius: 8px !important;
-			box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
-		}
-		.acf-postbox .postbox-header {
-			background: #f8f9fa !important;
-			border-bottom: 1px solid #e0e0e0 !important;
-			border-radius: 8px 8px 0 0 !important;
-		}
-
-		/* Give ACF flexible content fields more breathing room */
-		.acf-flexible-content .layout {
+		/* ACF block rows: subtle spacing only */
+		body.post-type-page .acf-flexible-content .layout {
 			margin-bottom: 1rem;
 			border: 1px solid #ddd;
 			border-radius: 6px;
 			transition: outline 0.3s;
 		}
-		/* Highlight style for click-to-edit bridge */
-		.acf-flexible-content .layout.sz-highlight {
+
+		body.post-type-page .acf-flexible-content .layout.sz-highlight {
 			outline: 3px solid #0073aa;
 			outline-offset: 2px;
 		}
 
-		/* Hide the default WP content editor (not used for ACF pages) */
-		#postdivrich {
+		/* Hide default content editor region if present */
+		body.post-type-page #postdivrich {
 			display: none !important;
-		}
-
-		/* Make the page title editor cleaner */
-		#titlewrap input {
-			font-size: 24px !important;
-			padding: 12px !important;
-			border-radius: 6px !important;
 		}
 
 		/* Hint text under the preview */
@@ -607,15 +645,24 @@ function sz_live_preview_js() {
 	(function () {
 		'use strict';
 
-		/* ── DOM reorder: move preview metabox above ACF fields ── */
-		/* WordPress places metaboxes after ACF despite "high"      */
-		/* priority. Move it to the top of the main content area.   */
-		var previewBox = document.getElementById('sz-live-preview');
-		if (previewBox) {
-			var postBody = document.getElementById('post-body-content');
-			if (postBody && postBody.parentNode) {
-				postBody.parentNode.insertBefore(previewBox, postBody.nextSibling);
-			}
+		/* ── Force title field visibility (Screen Options safety) ── */
+		var titleDiv = document.getElementById('titlediv');
+		if (titleDiv) {
+			titleDiv.style.display = 'block';
+			titleDiv.style.visibility = 'visible';
+			titleDiv.style.opacity = '1';
+		}
+		var titleWrap = document.getElementById('titlewrap');
+		if (titleWrap) {
+			titleWrap.style.display = 'block';
+			titleWrap.style.visibility = 'visible';
+			titleWrap.style.opacity = '1';
+		}
+		var titleInput = document.getElementById('title');
+		if (titleInput) {
+			titleInput.style.display = 'block';
+			titleInput.style.visibility = 'visible';
+			titleInput.style.opacity = '1';
 		}
 
 		var iframe          = document.getElementById('sz-preview-frame');

@@ -1,14 +1,15 @@
 @use '~/styles/global' as g;
 
 .footer {
-  background-color: var(--color-dark);
-  color: #ccc;
+  background: linear-gradient(180deg, #fff9fb 0%, #fff1f5 100%);
+  color: var(--color-ink);
+  border-top: 1px solid var(--color-border-soft);
 }
 
 .container {
   max-width: #{g.$bp-xl};
   margin: 0 auto;
-  padding: 3rem var(--space-page-x) 2rem;
+  padding: 3.25rem var(--space-page-x) 2rem;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 2rem;
@@ -29,12 +30,12 @@
 .logo {
   font-family: var(--font-serif);
   font-size: var(--text-lg);
-  color: var(--color-white);
+  color: var(--color-ink-strong);
 }
 
 .tagline {
   font-size: var(--text-sm);
-  color: var(--color-gold);
+  color: var(--color-accent-strong);
   font-style: italic;
 }
 
@@ -46,14 +47,14 @@
 
 .link {
   font-size: var(--text-base);
-  color: #ccc;
+  color: var(--color-ink-soft);
   transition: color g.$transition-fast;
   min-height: 44px;
   display: flex;
   align-items: center;
 
   &:hover {
-    color: var(--color-gold);
+    color: var(--color-accent-strong);
   }
 }
 
@@ -65,21 +66,21 @@
 
 .socialLink {
   font-size: var(--text-base);
-  color: #ccc;
+  color: var(--color-ink-soft);
   transition: color g.$transition-fast;
   min-height: 44px;
   display: flex;
   align-items: center;
 
   &:hover {
-    color: var(--color-gold);
+    color: var(--color-accent-strong);
   }
 }
 
 .bottom {
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--color-border-soft);
   padding: 1rem var(--space-page-x);
   text-align: center;
   font-size: var(--text-sm);
-  color: #666;
+  color: var(--color-ink-soft);
 }

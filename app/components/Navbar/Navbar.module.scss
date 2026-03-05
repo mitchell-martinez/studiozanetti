@@ -4,8 +4,10 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: var(--color-dark);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 40%);
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid var(--color-border-soft);
+  box-shadow: 0 8px 24px rgb(218 157 179 / 10%);
+  backdrop-filter: blur(10px);
 }
 
 .nav {
@@ -21,13 +23,13 @@
 .logo {
   font-family: var(--font-serif);
   font-size: var(--text-lg);
-  color: var(--color-white);
+  color: var(--color-ink-strong);
   letter-spacing: 0.05em;
   white-space: nowrap;
   transition: color g.$transition-fast;
 
   &:hover {
-    color: var(--color-gold);
+    color: var(--color-accent-strong);
   }
 }
 
@@ -47,7 +49,7 @@
 }
 
 .navLink {
-  color: #ccc;
+  color: var(--color-ink-soft);
   font-size: var(--text-sm);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -58,13 +60,13 @@
     border-color g.$transition-fast;
 
   &:hover {
-    color: var(--color-white);
+    color: var(--color-ink-strong);
   }
 }
 
 .navLinkActive {
-  color: var(--color-gold);
-  border-bottom-color: var(--color-gold);
+  color: var(--color-accent-strong);
+  border-bottom-color: var(--color-accent);
 }
 
 // ─── Dropdown (desktop: hover flyout, mobile: accordion) ─────────────────────
@@ -77,7 +79,7 @@
   display: none; // Hidden on desktop — dropdown shown via :hover on .hasDropdown
   background: none;
   border: none;
-  color: #ccc;
+  color: var(--color-ink-soft);
   padding: 0.25rem;
   min-width: 44px;
   min-height: 44px;
@@ -86,7 +88,7 @@
   transition: color g.$transition-fast;
 
   &:hover {
-    color: var(--color-white);
+    color: var(--color-ink-strong);
   }
 }
 
@@ -105,12 +107,12 @@
   left: 50%;
   transform: translateX(-50%);
   min-width: 180px;
-  background-color: var(--color-dark);
-  border: 1px solid #333;
-  border-radius: 4px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 12px;
   padding: 0.5rem 0;
   list-style: none;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 50%);
+  box-shadow: var(--shadow-card);
   z-index: 200;
 
   &.dropdownOpen {
@@ -122,7 +124,7 @@
   display: flex;
   align-items: center;
   padding: 0.6rem 1.2rem;
-  color: #ccc;
+  color: var(--color-ink);
   font-size: var(--text-sm);
   letter-spacing: 0.06em;
   white-space: nowrap;
@@ -132,13 +134,13 @@
   min-height: 40px;
 
   &:hover {
-    color: var(--color-white);
-    background-color: rgba(255 255 255 / 0.06);
+    color: var(--color-ink-strong);
+    background-color: var(--color-surface-soft);
   }
 }
 
 .dropdownLinkActive {
-  color: var(--color-gold);
+  color: var(--color-accent-strong);
 }
 
 // ─── Hamburger (single element with CSS bars via ::before / ::after) ──────────
@@ -147,7 +149,7 @@
   background: none;
   border: none;
   padding: 0.4rem;
-  color: var(--color-white);
+  color: var(--color-ink-strong);
   min-width: 44px;
   min-height: 44px;
   align-items: center;
@@ -159,7 +161,7 @@
   position: relative;
   width: 22px;
   height: 2px;
-  background: var(--color-white);
+  background: var(--color-ink-strong);
   border-radius: 2px;
   transition: transform g.$transition-fast;
 
@@ -170,7 +172,7 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background: var(--color-white);
+    background: var(--color-ink-strong);
     border-radius: 2px;
     transition: transform g.$transition-fast;
   }
@@ -210,11 +212,11 @@
     top: 64px;
     left: 0;
     right: 0;
-    background-color: var(--color-dark);
+    background-color: var(--color-surface);
     flex-direction: column;
     gap: 0;
     padding: 0.5rem 0;
-    border-top: 1px solid #333;
+    border-top: 1px solid var(--color-border-soft);
 
     &.navListOpen {
       display: flex;
@@ -253,7 +255,7 @@
     border-radius: 0;
     box-shadow: none;
     padding: 0;
-    background-color: rgba(0 0 0 / 0.2);
+    background-color: var(--color-surface-soft);
 
     &.dropdownOpen {
       display: flex;

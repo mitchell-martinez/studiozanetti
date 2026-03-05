@@ -4,9 +4,9 @@ Converts existing WordPress `post_content` HTML into ACF Flexible Content blocks
 
 ## Prerequisites
 
-- **ACF Pro** installed and activated  
-- The **"Page Blocks"** Flexible Content field group must be registered in ACF with field name `blocks`  
-- WP-CLI available in the WordPress container  
+- **ACF Pro** installed and activated
+- The **"Page Blocks"** Flexible Content field group must be registered in ACF with field name `blocks`
+- WP-CLI available in the WordPress container
 
 ## Quick Start
 
@@ -46,11 +46,11 @@ ssh root@103.4.234.10 rm /var/lib/docker/volumes/budgeto_wordpress-data/_data/mi
 
 For each published page:
 
-| Condition | Action |
-|-----------|--------|
-| `post_content` is empty | **Skip** |
-| Page already has ACF blocks | **Skip** (never overwrites) |
-| `post_content` has HTML | **Parse → Migrate → Clear `post_content`** |
+| Condition                   | Action                                     |
+| --------------------------- | ------------------------------------------ |
+| `post_content` is empty     | **Skip**                                   |
+| Page already has ACF blocks | **Skip** (never overwrites)                |
+| `post_content` has HTML     | **Parse → Migrate → Clear `post_content`** |
 
 ### Parsing Logic
 
@@ -58,11 +58,11 @@ For each published page:
 2. **Splits** on `<h1>`–`<h6>` headings — each heading starts a new section.
 3. Maps sections to ACF layout types:
 
-| Content Pattern | ACF Layout |
-|-----------------|------------|
-| Heading + text (no images) | `text_block` |
-| Heading + text + image | `image_text` |
-| Text only (no headings) | Single `text_block` |
+| Content Pattern            | ACF Layout          |
+| -------------------------- | ------------------- |
+| Heading + text (no images) | `text_block`        |
+| Heading + text + image     | `image_text`        |
+| Text only (no headings)    | Single `text_block` |
 
 4. For `image_text` blocks, the script tries to find the WordPress **attachment ID** by matching the image URL in the media library. If not found, the image field is left empty (a warning is logged).
 
@@ -81,8 +81,8 @@ For each published page:
 
 ## Troubleshooting
 
-| Issue | Fix |
-|-------|-----|
+| Issue                           | Fix                                                                                                       |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `update_field() returned false` | The ACF "blocks" Flexible Content field isn't registered. Create the field group first (see main README). |
-| Images showing as empty | The script couldn't match the image URL to a media library item. Set images manually in the ACF editor. |
-| Old theme HTML in body text | The parser strips common wrapper divs but some custom markup may remain. Edit in ACF to clean up. |
+| Images showing as empty         | The script couldn't match the image URL to a media library item. Set images manually in the ACF editor.   |
+| Old theme HTML in body text     | The parser strips common wrapper divs but some custom markup may remain. Edit in ACF to clean up.         |

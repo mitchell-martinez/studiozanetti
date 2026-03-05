@@ -5,10 +5,14 @@
 }
 
 .pageHeader {
-  background: var(--color-dark);
-  color: var(--color-white);
+  background:
+    radial-gradient(circle at 10% 20%, rgba(255, 201, 214, 0.35), transparent 48%),
+    radial-gradient(circle at 85% 70%, rgba(255, 221, 190, 0.35), transparent 45%),
+    var(--color-surface);
+  color: var(--color-ink-strong);
   text-align: center;
-  padding: 4rem var(--space-page-x) 3rem;
+  border-bottom: 1px solid var(--color-border-soft);
+  padding: 4rem var(--space-page-x) 3.25rem;
 }
 
 .pageTitle {
@@ -20,4 +24,10 @@
   max-width: 760px;
   margin: 0 auto;
   padding: 4rem var(--space-page-x);
+  color: var(--color-ink);
+
+  p,
+  li {
+    color: var(--color-ink-soft);
+  }
 }
