@@ -1,4 +1,4 @@
-import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
+import type { MetaFunction } from 'react-router'
 import { isRouteErrorResponse, useLoaderData, useRouteError } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
 import RichText from '~/components/blocks/RichText'
@@ -7,27 +7,23 @@ import type { WPPage } from '~/types/wordpress'
 import styles from './$slug.module.scss'
 import NotFoundRoute from './404'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 interface LoaderData {
   page: WPPage
 }
 
-// ─── Loader (SSR — called on every request) ───────────────────────────────────
-// This route catches any URL that hasn't matched a specific route above it.
-// Michael creates a page in WordPress (e.g. slug: "pricing") and it
-// automatically becomes available at /pricing — no code change needed.
-export async function loader({ params }: LoaderFunctionArgs): Promise<LoaderData> {
-  const slug = params.slug ?? ''
-  const page = await getPageBySlug(slug)
+export async function loader(): Promise<LoaderData> {
+  const page = await getPageBySlug('home')
   if (!page) throw new Response('Not Found', { status: 404 })
   return { page }
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  if (!data) return [{ title: 'Page Not Found | Studio Zanetti' }]
+  if (!data) return [{ title: 'Home | Studio Zanetti' }]
+
   const { page } = data
   const yoast = page.yoast_head_json
   const metaDescription = yoast?.description ?? `${page.title.rendered} | Studio Zanetti`
+
   return [
     { title: yoast?.title ?? `${page.title.rendered} | Studio Zanetti` },
     { name: 'description', content: metaDescription },
@@ -37,13 +33,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   ]
 }
 
-// ─── Route component ──────────────────────────────────────────────────────────
-const CmsPage = () => {
+const HomePage = () => {
   const { page } = useLoaderData<typeof loader>()
   const blocks = page.acf?.blocks
 
-  // If the page has ACF Flexible Content blocks, render them as structured components.
-  // Otherwise fall back to WP's native content.rendered HTML (Gutenberg / Classic editor).
   if (blocks?.length) {
     return <BlockRenderer blocks={blocks} />
   }
@@ -73,4 +66,4 @@ export function ErrorBoundary() {
   throw error
 }
 
-export default CmsPage
+export default HomePage

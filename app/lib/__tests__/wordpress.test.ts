@@ -207,9 +207,7 @@ describe('getSiteSettings', () => {
     site_name: 'My Studio',
     tagline: 'Best photos',
     copyright_text: '© 2026 My Studio',
-    social_links: [
-      { platform: 'Instagram', url: 'https://instagram.com/mystudio' },
-    ],
+    social_links: [{ platform: 'Instagram', url: 'https://instagram.com/mystudio' }],
   }
 
   it('fetches site settings from the options endpoint', async () => {
@@ -231,12 +229,14 @@ describe('getSiteSettings', () => {
   })
 
   it('fills in defaults for empty fields', async () => {
-    mockFetch.mockReturnValueOnce(ok({
-      site_name: '',
-      tagline: '',
-      copyright_text: '',
-      social_links: [],
-    }))
+    mockFetch.mockReturnValueOnce(
+      ok({
+        site_name: '',
+        tagline: '',
+        copyright_text: '',
+        social_links: [],
+      }),
+    )
     const result = await getSiteSettings()
     expect(result.site_name).toBe('Studio Zanetti')
     expect(result.tagline).toBe('Capturing moments, creating memories')

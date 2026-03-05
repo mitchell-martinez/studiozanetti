@@ -2,7 +2,7 @@
 
 // ─── Shared layout mixins used by multiple block components ───────────────────
 @mixin blockSection {
-  padding: 5rem var(--space-page-x);
+  padding: clamp(3rem, 7vw, 5.5rem) var(--space-page-x);
 }
 
 @mixin blockInner {
@@ -13,5 +13,6 @@
 @mixin blockHeading {
   font-size: var(--text-2xl);
   text-align: center;
-  margin-bottom: 3rem;
+  margin-bottom: clamp(1.8rem, 4vw, 3rem);
+  color: var(--color-ink-strong);
 }

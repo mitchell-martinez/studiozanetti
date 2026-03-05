@@ -20,10 +20,7 @@ interface RootLoaderData {
 }
 
 export async function loader(): Promise<RootLoaderData> {
-  const [navMenu, siteSettings] = await Promise.all([
-    getNavMenu('primary'),
-    getSiteSettings(),
-  ])
+  const [navMenu, siteSettings] = await Promise.all([getNavMenu('primary'), getSiteSettings()])
   return { navMenu, siteSettings }
 }
 

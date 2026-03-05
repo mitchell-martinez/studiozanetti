@@ -130,6 +130,8 @@ export async function getSiteSettings(): Promise<WPSiteSettings> {
     site_name: data.site_name || DEFAULT_SITE_SETTINGS.site_name,
     tagline: data.tagline || DEFAULT_SITE_SETTINGS.tagline,
     copyright_text: data.copyright_text || DEFAULT_SITE_SETTINGS.copyright_text,
-    social_links: data.social_links?.length ? data.social_links : DEFAULT_SITE_SETTINGS.social_links,
+    social_links: data.social_links?.length
+      ? data.social_links
+      : DEFAULT_SITE_SETTINGS.social_links,
   }
 }
