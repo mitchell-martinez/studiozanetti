@@ -944,6 +944,126 @@ function sz_get_site_settings() {
 add_filter( 'acf/rest_api/field_settings/show_in_rest', '__return_true' );
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 9b. NORMALISE ACF IMAGE FIELDS IN REST API RESPONSES
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// ACF image fields may return bare numeric attachment IDs instead of full
+// objects when the field's "Return Format" is set to "Image ID" (the default)
+// in the WordPress admin. This filter intercepts every page REST response and
+// resolves numeric IDs to the { url, alt, width, height } shape the React
+// front-end expects.
+//
+// It also flattens the hero "slides" repeater from [ {image: …}, … ] to a
+// flat array of image objects, matching the front-end WPImage[] type.
+
+add_filter( 'rest_prepare_page', 'sz_normalize_page_images', 20, 3 );
+
+function sz_normalize_page_images( WP_REST_Response $response, WP_Post $post, WP_REST_Request $request ): WP_REST_Response {
+	$data = $response->get_data();
+
+	if ( ! empty( $data['acf']['blocks'] ) && is_array( $data['acf']['blocks'] ) ) {
+		$data['acf']['blocks'] = array_map( 'sz_normalize_block_images', $data['acf']['blocks'] );
+		$response->set_data( $data );
+	}
+
+	return $response;
+}
+
+/**
+ * Walk a single ACF Flexible Content block and resolve every image field.
+ */
+function sz_normalize_block_images( array $block ): array {
+	// Top-level image fields (hero, image_text, biography, gallery_categories)
+	$image_keys = [ 'background_image', 'image', 'image_mobile' ];
+
+	foreach ( $image_keys as $key ) {
+		if ( array_key_exists( $key, $block ) ) {
+			$block[ $key ] = sz_resolve_image( $block[ $key ] );
+		}
+	}
+
+	// Hero slides repeater: [ {image: id|obj}, … ] → [ WPImage, … ]
+	if ( ! empty( $block['slides'] ) && is_array( $block['slides'] ) ) {
+		$block['slides'] = array_values( array_filter( array_map( function ( $slide ) {
+			// Repeater row with an "image" sub-field
+			if ( is_array( $slide ) && array_key_exists( 'image', $slide ) ) {
+				return sz_resolve_image( $slide['image'] );
+			}
+			// Already a flat image (defensive)
+			return sz_resolve_image( $slide );
+		}, $block['slides'] ) ) );
+	}
+
+	// Repeaters whose rows contain an optional "image" sub-field
+	$repeater_keys = [ 'services', 'categories', 'testimonials', 'steps', 'packages' ];
+	foreach ( $repeater_keys as $rk ) {
+		if ( ! empty( $block[ $rk ] ) && is_array( $block[ $rk ] ) ) {
+			$block[ $rk ] = array_map( function ( $row ) {
+				if ( is_array( $row ) && array_key_exists( 'image', $row ) ) {
+					$row['image'] = sz_resolve_image( $row['image'] );
+				}
+				return $row;
+			}, $block[ $rk ] );
+		}
+	}
+
+	return $block;
+}
+
+/**
+ * Resolve a single image value to { url, alt, width, height } or null.
+ *
+ * Handles three formats ACF may return:
+ *   1. Numeric attachment ID  →  look up via WP functions
+ *   2. Full ACF array         →  extract the four fields we use
+ *   3. URL string             →  wrap in { url }
+ *
+ * Returns null for empty / unresolvable values so the front-end can
+ * safely skip rendering.
+ */
+function sz_resolve_image( $value ) {
+	// Empty / false / "0"
+	if ( empty( $value ) ) {
+		return null;
+	}
+
+	// Already a resolved image object (ACF return_format = array)
+	if ( is_array( $value ) && ! empty( $value['url'] ) ) {
+		return [
+			'url'    => $value['url'],
+			'alt'    => $value['alt'] ?? '',
+			'width'  => $value['width'] ?? null,
+			'height' => $value['height'] ?? null,
+		];
+	}
+
+	// Numeric attachment ID (ACF return_format = id, or manual entry)
+	if ( is_numeric( $value ) ) {
+		$id  = (int) $value;
+		$src = wp_get_attachment_image_src( $id, 'full' );
+		if ( ! $src ) {
+			return null;
+		}
+		return [
+			'url'    => $src[0],
+			'alt'    => get_post_meta( $id, '_wp_attachment_image_alt', true ) ?: '',
+			'width'  => $src[1],
+			'height' => $src[2],
+		];
+	}
+
+	// URL string (ACF return_format = url)
+	if ( is_string( $value ) && filter_var( $value, FILTER_VALIDATE_URL ) ) {
+		return [
+			'url' => $value,
+			'alt' => '',
+		];
+	}
+
+	return null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 10. CORS — ALLOW FRONT-END ORIGIN
 // ─────────────────────────────────────────────────────────────────────────────
 

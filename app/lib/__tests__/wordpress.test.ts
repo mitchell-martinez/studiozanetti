@@ -270,3 +270,129 @@ describe('getSiteSettings', () => {
     expect(result.social_links.length).toBeGreaterThan(0)
   })
 })
+
+// ─── Image normalisation ─────────────────────────────────────────────────────
+
+describe('image normalisation in normalizePage', () => {
+  const pageWithBlocks = (blocks: unknown[]) => ({
+    ...mockPage,
+    acf: { blocks },
+  })
+
+  it('passes through valid WPImage objects untouched', async () => {
+    const img = { url: 'https://example.com/photo.jpg', alt: 'Photo', width: 800, height: 600 }
+    mockFetch.mockReturnValueOnce(
+      ok([pageWithBlocks([{ acf_fc_layout: 'biography', name: 'Test', bio: '<p>Bio</p>', image: img }])]),
+    )
+    const page = await getPageBySlug('home')
+    const block = page?.acf?.blocks?.[0]
+    expect(block).toBeDefined()
+    if (block?.acf_fc_layout === 'biography') {
+      expect(block.image).toEqual(img)
+    }
+  })
+
+  it('drops numeric attachment IDs (cannot resolve client-side)', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([pageWithBlocks([{ acf_fc_layout: 'biography', name: 'Test', bio: '<p>Bio</p>', image: 12345 }])]),
+    )
+    const page = await getPageBySlug('home')
+    const block = page?.acf?.blocks?.[0]
+    if (block?.acf_fc_layout === 'biography') {
+      expect(block.image).toBeUndefined()
+    }
+  })
+
+  it('wraps a plain URL string into a WPImage', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([
+        pageWithBlocks([
+          { acf_fc_layout: 'biography', name: 'Test', bio: '<p>Bio</p>', image: 'https://example.com/photo.jpg' },
+        ]),
+      ]),
+    )
+    const page = await getPageBySlug('home')
+    const block = page?.acf?.blocks?.[0]
+    if (block?.acf_fc_layout === 'biography') {
+      expect(block.image).toEqual({ url: 'https://example.com/photo.jpg', alt: '' })
+    }
+  })
+
+  it('normalises hero slides from repeater rows { image: … } to flat WPImage[]', async () => {
+    const imgObj = { url: 'https://example.com/slide.jpg', alt: 'Slide', width: 1920, height: 1080 }
+    mockFetch.mockReturnValueOnce(
+      ok([
+        pageWithBlocks([
+          {
+            acf_fc_layout: 'hero',
+            title: 'Test',
+            slides: [{ image: imgObj }, { image: 99999 }],
+          },
+        ]),
+      ]),
+    )
+    const page = await getPageBySlug('home')
+    const block = page?.acf?.blocks?.[0]
+    if (block?.acf_fc_layout === 'hero') {
+      // Numeric-only slide should be filtered out
+      expect(block.slides).toEqual([imgObj])
+    }
+  })
+
+  it('normalises service images within the services repeater', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([
+        pageWithBlocks([
+          {
+            acf_fc_layout: 'services_grid',
+            services: [
+              { title: 'A', description: 'Desc', image: { url: 'https://example.com/a.jpg', alt: 'A' } },
+              { title: 'B', description: 'Desc', image: 999 },
+              { title: 'C', description: 'Desc', image: '' },
+            ],
+          },
+        ]),
+      ]),
+    )
+    const page = await getPageBySlug('home')
+    const block = page?.acf?.blocks?.[0]
+    if (block?.acf_fc_layout === 'services_grid') {
+      expect(block.services[0].image).toEqual({ url: 'https://example.com/a.jpg', alt: 'A' })
+      expect(block.services[1].image).toBeUndefined()
+      expect(block.services[2].image).toBeUndefined()
+    }
+  })
+
+  it('normalises image_text block image fields', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([
+        pageWithBlocks([
+          {
+            acf_fc_layout: 'image_text',
+            image: { url: 'https://example.com/img.jpg', alt: 'Main', width: 600, height: 400 },
+            image_mobile: 5678,
+            body: '<p>Text</p>',
+          },
+        ]),
+      ]),
+    )
+    const page = await getPageBySlug('home')
+    const block = page?.acf?.blocks?.[0]
+    if (block?.acf_fc_layout === 'image_text') {
+      expect(block.image.url).toBe('https://example.com/img.jpg')
+      expect(block.image_mobile).toBeUndefined()
+    }
+  })
+
+  it('handles pages with no acf blocks gracefully', async () => {
+    mockFetch.mockReturnValueOnce(ok([{ ...mockPage, acf: {} }]))
+    const page = await getPageBySlug('home')
+    expect(page?.acf?.blocks).toBeUndefined()
+  })
+
+  it('handles pages with no acf at all', async () => {
+    mockFetch.mockReturnValueOnce(ok([mockPage]))
+    const page = await getPageBySlug('home')
+    expect(page).toBeDefined()
+  })
+})

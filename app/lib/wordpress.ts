@@ -26,7 +26,7 @@
  *  See app/types/wordpress.ts for the full field schema.
  */
 
-import type { WPGalleryPhoto, WPMenuItem, WPPage, WPSiteSettings } from '~/types/wordpress'
+import type { ContentBlock, WPGalleryPhoto, WPImage, WPMenuItem, WPPage, WPSiteSettings } from '~/types/wordpress'
 
 interface RawWPEmbeddedMedia {
   source_url?: string
@@ -43,6 +43,131 @@ interface RawWPPage extends WPPage {
   }
 }
 
+// ─── Image normalisation ─────────────────────────────────────────────────────
+//
+// ACF image fields may arrive as a numeric attachment ID, a URL string, a
+// full ACF array (with keys like url, alt, width, height, sizes …), or null.
+// The server-side sz-headless.php filter resolves IDs → objects, but as a
+// safety net we also normalise here so the front-end never crashes.
+
+/**
+ * Coerce a raw ACF image value to a WPImage or undefined.
+ *
+ * Accepted inputs:
+ *   - `{ url: '…' }` → returned as WPImage
+ *   - `number` / `string` that is purely numeric → **dropped** (cannot resolve client-side)
+ *   - `'https://…'` → wrapped in `{ url, alt: '' }`
+ *   - anything else → undefined
+ */
+function safeImage(raw: unknown): WPImage | undefined {
+  if (!raw) return undefined
+
+  // Already an object with `url`
+  if (typeof raw === 'object' && raw !== null && 'url' in raw) {
+    const img = raw as Record<string, unknown>
+    if (typeof img.url === 'string' && img.url.length > 0) {
+      return {
+        url: img.url,
+        alt: typeof img.alt === 'string' ? img.alt : '',
+        width: typeof img.width === 'number' ? img.width : undefined,
+        height: typeof img.height === 'number' ? img.height : undefined,
+      }
+    }
+    return undefined
+  }
+
+  // URL string (not a bare numeric ID)
+  if (typeof raw === 'string' && raw.startsWith('http')) {
+    return { url: raw, alt: '' }
+  }
+
+  // Numeric attachment ID — can't resolve client-side, discard
+  return undefined
+}
+
+/**
+ * Walk every block in a page and normalise image fields so components
+ * always receive `WPImage | undefined`, never a bare ID or wrong shape.
+ */
+function normalizeBlockImages(blocks: ContentBlock[]): ContentBlock[] {
+  return blocks.map((block) => {
+    switch (block.acf_fc_layout) {
+      case 'hero':
+        return {
+          ...block,
+          background_image: safeImage(block.background_image),
+          slides: Array.isArray(block.slides)
+            ? (block.slides as unknown[])
+                .map((s) => {
+                  // Handle repeater row { image: … } or flat image
+                  if (
+                    typeof s === 'object' &&
+                    s !== null &&
+                    'image' in s
+                  ) {
+                    return safeImage((s as Record<string, unknown>).image)
+                  }
+                  return safeImage(s)
+                })
+                .filter((img): img is WPImage => img !== undefined)
+            : undefined,
+        }
+
+      case 'image_text':
+        return {
+          ...block,
+          image: safeImage(block.image) ?? { url: '', alt: '' },
+          image_mobile: safeImage(block.image_mobile),
+        }
+
+      case 'biography':
+        return {
+          ...block,
+          image: safeImage(block.image),
+        }
+
+      case 'services_grid':
+        return {
+          ...block,
+          services: block.services.map((svc) => ({
+            ...svc,
+            image: safeImage(svc.image),
+          })),
+        }
+
+      case 'testimonial_carousel':
+        return {
+          ...block,
+          testimonials: block.testimonials.map((t) => ({
+            ...t,
+            image: safeImage(t.image),
+          })),
+        }
+
+      case 'process_timeline':
+        return {
+          ...block,
+          steps: block.steps.map((step) => ({
+            ...step,
+            image: safeImage(step.image),
+          })),
+        }
+
+      case 'gallery_categories':
+        return {
+          ...block,
+          categories: block.categories.map((cat) => ({
+            ...cat,
+            image: safeImage(cat.image),
+          })),
+        }
+
+      default:
+        return block
+    }
+  })
+}
+
 function normalizePage(page: RawWPPage): WPPage {
   const featuredMedia = page._embedded?.['wp:featuredmedia']?.[0]
   const featured_image = featuredMedia?.source_url
@@ -54,9 +179,17 @@ function normalizePage(page: RawWPPage): WPPage {
       }
     : undefined
 
+  const acf = page.acf
+    ? {
+        ...page.acf,
+        blocks: page.acf.blocks ? normalizeBlockImages(page.acf.blocks) : undefined,
+      }
+    : undefined
+
   return {
     ...page,
     featured_image,
+    acf,
   }
 }
 
