@@ -3,27 +3,24 @@ import type { Config } from '@react-router/dev/config'
 export default {
   ssr: true,
   async prerender() {
-    // Always pre-render the core pages.
-    const base = ['/', '/about', '/contact']
-
-    // If WordPress is configured at build time, also pre-render any extra pages
-    // Michael has created there (e.g. /pricing, /services).
+    // All public pages are now WordPress-driven via the catch-all route.
+    // Only prerender paths that actually exist in WordPress at build time.
     const wpUrl = process.env.WORDPRESS_URL
-    if (!wpUrl) return base
+    if (!wpUrl) return []
 
     try {
       const res = await fetch(`${wpUrl}/wp-json/wp/v2/pages?per_page=100&status=publish`, {
         signal: AbortSignal.timeout(5_000),
       })
-      if (!res.ok) return base
+      if (!res.ok) return []
       const pages = (await res.json()) as Array<{ slug: string }>
-      const extra = pages
+      return pages
         .map((p) => (p.slug === 'home' ? '/' : `/${p.slug}`))
-        // gallery is always SSR — exclude it from static pre-rendering
-        .filter((s) => !base.includes(s) && s !== '/gallery')
-      return [...new Set([...base, ...extra])]
+        .filter((s) => s !== '/preview')
+        .filter((s) => s.trim().length > 0)
+        .filter((value, index, arr) => arr.indexOf(value) === index)
     } catch {
-      return base
+      return []
     }
   },
 } satisfies Config
