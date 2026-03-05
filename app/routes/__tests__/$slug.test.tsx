@@ -76,6 +76,13 @@ describe('CmsPage route', () => {
       context: {},
     })
 
+    it('maps root path to the home slug', async () => {
+      vi.mocked(getPageBySlug).mockResolvedValueOnce(mockPage as never)
+      const result = await loader(makeArgs('') as never)
+      expect(result).toEqual({ page: mockPage })
+      expect(getPageBySlug).toHaveBeenCalledWith('home')
+    })
+
     it('returns page data when WordPress returns a match', async () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(mockPage as never)
       const result = await loader(makeArgs('pricing') as never)
