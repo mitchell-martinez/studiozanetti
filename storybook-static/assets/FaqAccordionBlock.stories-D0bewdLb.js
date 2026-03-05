@@ -1,9 +1,0 @@
-import{j as a}from"./iframe-hncPAmM6.js";import{F as i}from"./index-FZEhOlGK.js";import{g as e}from"./localLabData-BcZVdrIL.js";import{b as c}from"./blockArgTypes-D6A-V3JE.js";import"./preload-helper-PPVm8Dsz.js";import"./styleOptions-Bz1aaV6R.js";import"./index-Dzdt7HDB.js";const g={title:"Blocks/FAQ Accordion",tags:["autodocs"],args:{heading:e.heading,intro:e.intro,faq_items:e.faq_items,open_first_item:e.open_first_item,section_theme:e.section_theme,top_spacing:e.top_spacing,bottom_spacing:e.bottom_spacing},argTypes:{heading:{control:"text",description:"Section heading"},intro:{control:"text",description:"Introductory paragraph below the heading"},open_first_item:{control:"boolean",description:"Whether the first accordion item starts expanded"},faq_items:{control:"object",description:"Repeater: array of { question, answer (HTML) }"},...c},render:s=>a.jsx(i,{block:{acf_fc_layout:"faq_accordion",...s}})},r={},t={args:{open_first_item:!1}},o={args:{section_theme:"dark"}};r.parameters={...r.parameters,docs:{...r.parameters?.docs,source:{originalSource:"{}",...r.parameters?.docs?.source},description:{story:"Default: first item open, light theme.",...r.parameters?.docs?.description}}};t.parameters={...t.parameters,docs:{...t.parameters?.docs,source:{originalSource:`{
-  args: {
-    open_first_item: false
-  }
-}`,...t.parameters?.docs?.source},description:{story:"All items collapsed initially.",...t.parameters?.docs?.description}}};o.parameters={...o.parameters,docs:{...o.parameters?.docs,source:{originalSource:`{
-  args: {
-    section_theme: 'dark'
-  }
-}`,...o.parameters?.docs?.source},description:{story:"Dark theme variant.",...o.parameters?.docs?.description}}};const h=["Default","AllCollapsed","DarkTheme"];export{t as AllCollapsed,o as DarkTheme,r as Default,h as __namedExportsOrder,g as default};

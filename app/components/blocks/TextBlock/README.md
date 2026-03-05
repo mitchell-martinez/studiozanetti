@@ -23,13 +23,13 @@ Supports independent **text alignment** (left / centre / right / justified) and 
 
 ### Alignment Tips
 
-| Text Align | Block Align | Visual result |
-|---|---|---|
-| Left | Left | Default — text left-aligned, block sits on the left |
-| Centre | Centre | Centred text in a centred block (great for pull-quotes) |
-| Right | Right | Right-aligned text pushed to the right margin |
-| Justified | Centre | Even paragraph edges in a centred block |
-| Left | Centre | Left-aligned text but the block itself is centred on the page |
+| Text Align | Block Align | Visual result                                                 |
+| ---------- | ----------- | ------------------------------------------------------------- |
+| Left       | Left        | Default — text left-aligned, block sits on the left           |
+| Centre     | Centre      | Centred text in a centred block (great for pull-quotes)       |
+| Right      | Right       | Right-aligned text pushed to the right margin                 |
+| Justified  | Centre      | Even paragraph edges in a centred block                       |
+| Left       | Centre      | Left-aligned text but the block itself is centred on the page |
 
 ---
 

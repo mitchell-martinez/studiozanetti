@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
-import TextBlock from '../index'
 import type { TextBlock as TextBlockType } from '~/types/wordpress'
+import TextBlock from '../index'
 
 const base: TextBlockType = {
   acf_fc_layout: 'text_block',
