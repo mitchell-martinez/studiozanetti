@@ -13,35 +13,6 @@ add_action( 'acf/init', function () {
 		return;
 	}
 
-	$has_existing_page_blocks_group = false;
-	if ( function_exists( 'acf_get_field_groups' ) && function_exists( 'acf_get_fields' ) ) {
-		foreach ( acf_get_field_groups() as $field_group ) {
-			if ( ! is_array( $field_group ) ) {
-				continue;
-			}
-
-			if ( ( $field_group['key'] ?? '' ) === 'group_sz_page_blocks' ) {
-				continue;
-			}
-
-			$fields = acf_get_fields( $field_group );
-			if ( ! is_array( $fields ) ) {
-				continue;
-			}
-
-			foreach ( $fields as $field ) {
-				if ( ! is_array( $field ) ) {
-					continue;
-				}
-
-				if ( ( $field['name'] ?? '' ) === 'blocks' && ( $field['type'] ?? '' ) === 'flexible_content' ) {
-					$has_existing_page_blocks_group = true;
-					break 2;
-				}
-			}
-		}
-	}
-
 	$theme_choices = [
 		'light'     => 'Light',
 		'rose'      => 'Rose',
@@ -278,110 +249,108 @@ add_action( 'acf/init', function () {
 		],
 	], $style_fields( 'sz_gallery_categories' ));
 
-	if ( ! $has_existing_page_blocks_group ) {
-		acf_add_local_field_group([
-			'key' => 'group_sz_page_blocks',
-			'title' => 'Page Blocks',
-			'show_in_rest' => 1,
-			'fields' => [
-				[
-					'key' => 'field_sz_blocks',
-					'label' => 'Blocks',
-					'name' => 'blocks',
-					'type' => 'flexible_content',
-					'button_label' => 'Add Block',
-					'layouts' => [
-						'layout_sz_hero' => [
-							'key' => 'layout_sz_hero',
-							'name' => 'hero',
-							'label' => 'Hero',
-							'display' => 'block',
-							'sub_fields' => $hero_fields,
-						],
-						'layout_sz_text_block' => [
-							'key' => 'layout_sz_text_block',
-							'name' => 'text_block',
-							'label' => 'Text Block',
-							'display' => 'block',
-							'sub_fields' => $text_fields,
-						],
-						'layout_sz_image_text' => [
-							'key' => 'layout_sz_image_text',
-							'name' => 'image_text',
-							'label' => 'Image + Text',
-							'display' => 'block',
-							'sub_fields' => $image_text_fields,
-						],
-						'layout_sz_services_grid' => [
-							'key' => 'layout_sz_services_grid',
-							'name' => 'services_grid',
-							'label' => 'Services Grid',
-							'display' => 'block',
-							'sub_fields' => $services_fields,
-						],
-						'layout_sz_biography' => [
-							'key' => 'layout_sz_biography',
-							'name' => 'biography',
-							'label' => 'Biography',
-							'display' => 'block',
-							'sub_fields' => $biography_fields,
-						],
-						'layout_sz_pillar_grid' => [
-							'key' => 'layout_sz_pillar_grid',
-							'name' => 'pillar_grid',
-							'label' => 'Pillar Grid',
-							'display' => 'block',
-							'sub_fields' => $pillar_fields,
-						],
-						'layout_sz_testimonial_carousel' => [
-							'key' => 'layout_sz_testimonial_carousel',
-							'name' => 'testimonial_carousel',
-							'label' => 'Testimonial Carousel',
-							'display' => 'block',
-							'sub_fields' => $testimonial_fields,
-						],
-						'layout_sz_faq_accordion' => [
-							'key' => 'layout_sz_faq_accordion',
-							'name' => 'faq_accordion',
-							'label' => 'FAQ Accordion',
-							'display' => 'block',
-							'sub_fields' => $faq_fields,
-						],
-						'layout_sz_process_timeline' => [
-							'key' => 'layout_sz_process_timeline',
-							'name' => 'process_timeline',
-							'label' => 'Process Timeline',
-							'display' => 'block',
-							'sub_fields' => $process_fields,
-						],
-						'layout_sz_pricing_packages' => [
-							'key' => 'layout_sz_pricing_packages',
-							'name' => 'pricing_packages',
-							'label' => 'Pricing Packages',
-							'display' => 'block',
-							'sub_fields' => $pricing_fields,
-						],
-						'layout_sz_gallery_categories' => [
-							'key' => 'layout_sz_gallery_categories',
-							'name' => 'gallery_categories',
-							'label' => 'Gallery Categories',
-							'display' => 'block',
-							'sub_fields' => $gallery_categories_fields,
-						],
+	acf_add_local_field_group([
+		'key' => 'group_sz_page_blocks',
+		'title' => 'Page Blocks',
+		'show_in_rest' => 1,
+		'fields' => [
+			[
+				'key' => 'field_sz_blocks',
+				'label' => 'Blocks',
+				'name' => 'blocks',
+				'type' => 'flexible_content',
+				'button_label' => 'Add Block',
+				'layouts' => [
+					'layout_sz_hero' => [
+						'key' => 'layout_sz_hero',
+						'name' => 'hero',
+						'label' => 'Hero',
+						'display' => 'block',
+						'sub_fields' => $hero_fields,
+					],
+					'layout_sz_text_block' => [
+						'key' => 'layout_sz_text_block',
+						'name' => 'text_block',
+						'label' => 'Text Block',
+						'display' => 'block',
+						'sub_fields' => $text_fields,
+					],
+					'layout_sz_image_text' => [
+						'key' => 'layout_sz_image_text',
+						'name' => 'image_text',
+						'label' => 'Image + Text',
+						'display' => 'block',
+						'sub_fields' => $image_text_fields,
+					],
+					'layout_sz_services_grid' => [
+						'key' => 'layout_sz_services_grid',
+						'name' => 'services_grid',
+						'label' => 'Services Grid',
+						'display' => 'block',
+						'sub_fields' => $services_fields,
+					],
+					'layout_sz_biography' => [
+						'key' => 'layout_sz_biography',
+						'name' => 'biography',
+						'label' => 'Biography',
+						'display' => 'block',
+						'sub_fields' => $biography_fields,
+					],
+					'layout_sz_pillar_grid' => [
+						'key' => 'layout_sz_pillar_grid',
+						'name' => 'pillar_grid',
+						'label' => 'Pillar Grid',
+						'display' => 'block',
+						'sub_fields' => $pillar_fields,
+					],
+					'layout_sz_testimonial_carousel' => [
+						'key' => 'layout_sz_testimonial_carousel',
+						'name' => 'testimonial_carousel',
+						'label' => 'Testimonial Carousel',
+						'display' => 'block',
+						'sub_fields' => $testimonial_fields,
+					],
+					'layout_sz_faq_accordion' => [
+						'key' => 'layout_sz_faq_accordion',
+						'name' => 'faq_accordion',
+						'label' => 'FAQ Accordion',
+						'display' => 'block',
+						'sub_fields' => $faq_fields,
+					],
+					'layout_sz_process_timeline' => [
+						'key' => 'layout_sz_process_timeline',
+						'name' => 'process_timeline',
+						'label' => 'Process Timeline',
+						'display' => 'block',
+						'sub_fields' => $process_fields,
+					],
+					'layout_sz_pricing_packages' => [
+						'key' => 'layout_sz_pricing_packages',
+						'name' => 'pricing_packages',
+						'label' => 'Pricing Packages',
+						'display' => 'block',
+						'sub_fields' => $pricing_fields,
+					],
+					'layout_sz_gallery_categories' => [
+						'key' => 'layout_sz_gallery_categories',
+						'name' => 'gallery_categories',
+						'label' => 'Gallery Categories',
+						'display' => 'block',
+						'sub_fields' => $gallery_categories_fields,
 					],
 				],
 			],
-			'location' => [
+		],
+		'location' => [
+			[
 				[
-					[
-						'param' => 'post_type',
-						'operator' => '==',
-						'value' => 'page',
-					],
+					'param' => 'post_type',
+					'operator' => '==',
+					'value' => 'page',
 				],
 			],
-		]);
-	}
+		],
+	]);
 
 	acf_add_local_field_group([
 		'key' => 'group_sz_page_settings',
