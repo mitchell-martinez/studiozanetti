@@ -4,7 +4,7 @@ import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from '
 import Footer from '~/components/Footer'
 import Navbar from '~/components/Navbar'
 import OfflineBanner from '~/components/OfflineBanner'
-import { getNavMenu, getSiteSettings } from '~/lib/wordpress'
+import { getNavMenu, getPageBySlug, getSiteSettings } from '~/lib/wordpress'
 import globalStyles from '~/styles/global.scss?url'
 import type { WPMenuItem, WPSiteSettings } from '~/types/wordpress'
 
@@ -19,8 +19,34 @@ interface RootLoaderData {
   siteSettings: WPSiteSettings
 }
 
-export async function loader(): Promise<RootLoaderData> {
-  const [navMenu, siteSettings] = await Promise.all([getNavMenu('primary'), getSiteSettings()])
+export async function loader({ request }: { request: Request }): Promise<RootLoaderData> {
+  const pathname = new URL(request.url).pathname
+  const normalizedPath = pathname.replace(/^\/+|\/+$/g, '')
+
+  let menuLocation = 'primary'
+
+  // For normal CMS pages, derive slug and read optional ACF menu override.
+  // Preview/admin utility routes keep the primary menu.
+  if (normalizedPath && normalizedPath !== 'preview') {
+    const slug = normalizedPath.split('/').pop() || ''
+    const page = await getPageBySlug(slug)
+    const override = page?.acf?.menu_override?.trim()
+    if (override) {
+      menuLocation = override
+    }
+  }
+
+  const [menuFromLocation, siteSettings] = await Promise.all([
+    getNavMenu(menuLocation),
+    getSiteSettings(),
+  ])
+
+  // Always fallback to primary if override menu does not exist or is empty.
+  const navMenu =
+    menuFromLocation.length > 0 || menuLocation === 'primary'
+      ? menuFromLocation
+      : await getNavMenu('primary')
+
   return { navMenu, siteSettings }
 }
 

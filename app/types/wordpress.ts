@@ -223,6 +223,8 @@ export type ContentBlock =
 export interface WPPageAcf {
   /** Flexible Content page builder blocks */
   blocks?: ContentBlock[]
+  /** Optional nav menu location override for this page (e.g. primary, weddings, events) */
+  menu_override?: string
   /** Contact page — set via "Contact Details" field group */
   contact_email?: string
   contact_phone?: string
