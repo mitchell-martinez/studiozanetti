@@ -223,8 +223,10 @@ add_action( 'acf/init', function () {
 			'sub_fields' => [
 				[ 'key' => 'field_sz_pricing_package_name', 'label' => 'Name', 'name' => 'name', 'type' => 'text', 'required' => 1 ],
 				[ 'key' => 'field_sz_pricing_package_price_label', 'label' => 'Price Label', 'name' => 'price_label', 'type' => 'text' ],
-				[ 'key' => 'field_sz_pricing_package_description', 'label' => 'Description', 'name' => 'description', 'type' => 'textarea' ],
-				[ 'key' => 'field_sz_pricing_package_inclusions', 'label' => 'Inclusions', 'name' => 'inclusions', 'type' => 'wysiwyg' ],
+				[ 'key' => 'field_sz_pricing_package_description', 'label' => 'Description', 'name' => 'description', 'type' => 'textarea', 'instructions' => 'Short clarifier shown below the package name, e.g. "Digital Only Package".' ],
+				[ 'key' => 'field_sz_pricing_package_pricing', 'label' => 'Pricing Tiers', 'name' => 'pricing', 'type' => 'wysiwyg', 'instructions' => 'Pricing options / tiers (shown on the left in horizontal layout).' ],
+				[ 'key' => 'field_sz_pricing_package_inclusions', 'label' => 'Inclusions', 'name' => 'inclusions', 'type' => 'wysiwyg', 'instructions' => 'What is included (shown on the right in horizontal layout).' ],
+				[ 'key' => 'field_sz_pricing_package_tagline', 'label' => 'Tagline', 'name' => 'tagline', 'type' => 'text', 'instructions' => 'Short tagline displayed below all content, e.g. "Perfect for couples who want the full experience."' ],
 				[ 'key' => 'field_sz_pricing_package_is_featured', 'label' => 'Featured', 'name' => 'is_featured', 'type' => 'true_false', 'ui' => 1 ],
 				[ 'key' => 'field_sz_pricing_package_cta_text', 'label' => 'CTA Text', 'name' => 'cta_text', 'type' => 'text' ],
 				[ 'key' => 'field_sz_pricing_package_cta_url', 'label' => 'CTA URL', 'name' => 'cta_url', 'type' => 'url' ],

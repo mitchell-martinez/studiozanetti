@@ -18,3 +18,16 @@ Object.defineProperty(window, 'IntersectionObserver', {
   configurable: true,
   value: MockIntersectionObserver,
 })
+
+// jsdom does not implement ResizeObserver — provide a minimal stub
+class MockResizeObserver implements ResizeObserver {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+}
+
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  configurable: true,
+  value: MockResizeObserver,
+})
