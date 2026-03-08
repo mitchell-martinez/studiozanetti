@@ -135,7 +135,7 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
                     <span className={styles.chevron} aria-hidden="true" />
                   </button>
 
-                  {isOpen && (
+                  <div className={styles.panelBodyWrap}>
                     <div className={styles.panelBody}>
                       {item.pricing && (
                         <div className={styles.panelContent}>
@@ -160,7 +160,7 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
                         </div>
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
               )
             })}

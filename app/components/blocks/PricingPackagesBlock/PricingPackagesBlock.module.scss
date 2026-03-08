@@ -346,6 +346,7 @@
   translate: 0 -50%;
   width: 1.2rem;
   height: 1.2rem;
+  transition: transform 0.5s ease;
   background: transparent;
 
   &::before {
@@ -362,9 +363,25 @@
   }
 }
 
+.panelBodyWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.5s ease;
+}
+
+.panel.panelOpen > .panelBodyWrap {
+  grid-template-rows: 1fr;
+}
+
 .panelBody {
-  padding: 0 1.4rem 1.2rem;
+  overflow: hidden;
+  padding: 0 1.4rem;
   text-align: center;
+  transition: padding 0.5s ease;
+}
+
+.panel.panelOpen > .panelBodyWrap > .panelBody {
+  padding: 0 1.4rem 1.2rem;
 }
 
 .panelContent {
