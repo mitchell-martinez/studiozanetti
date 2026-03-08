@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Link } from 'react-router'
+import { useMediaQuery } from '~/hooks/useMediaQuery'
 import { getSectionStyle } from '../helpers/styleOptions'
 import RichText from '../RichText'
 import styles from './PricingPackagesBlock.module.scss'
@@ -7,17 +9,22 @@ import type { PricingPackagesBlockProps } from './types'
 const HORIZONTAL_THRESHOLD = 5
 
 const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
+  const isMobile = useMediaQuery('(max-width: 768px)')
+  const [openIndex, setOpenIndex] = useState(0)
+
   if (!block.packages?.length) return null
 
-  const isTable = block.packages.length >= HORIZONTAL_THRESHOLD
+  const showTable = block.packages.length >= HORIZONTAL_THRESHOLD && !isMobile
+  const showAccordion = block.packages.length >= HORIZONTAL_THRESHOLD && isMobile
+  const showGrid = block.packages.length < HORIZONTAL_THRESHOLD
 
   return (
     <section className={styles.section} style={getSectionStyle(block)}>
-      <div className={isTable ? styles.innerWide : styles.inner}>
+      <div className={showTable ? styles.innerWide : styles.inner}>
         {block.heading && <h2 className={styles.heading}>{block.heading}</h2>}
         {block.subheading && <p className={styles.subheading}>{block.subheading}</p>}
 
-        {isTable ? (
+        {showTable && (
           <div className={styles.tableWrap}>
             <table className={styles.table} role="table">
               <thead>
@@ -98,7 +105,69 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
               </tbody>
             </table>
           </div>
-        ) : (
+        )}
+
+        {showAccordion && (
+          <div className={styles.accordion}>
+            {block.packages.map((item, i) => {
+              const isOpen = openIndex === i
+              return (
+                <div
+                  key={item.name}
+                  className={`${styles.panel} ${item.is_featured ? styles.panelFeatured : ''} ${isOpen ? styles.panelOpen : ''}`}
+                >
+                  <button
+                    type="button"
+                    className={styles.panelHeader}
+                    aria-expanded={isOpen}
+                    onClick={() => setOpenIndex(isOpen ? -1 : i)}
+                  >
+                    {item.is_featured && <span className={styles.badge}>Most Popular</span>}
+                    <span className={styles.panelTitle}>
+                      <span className={styles.panelName}>{item.name}</span>
+                      {item.price_label && (
+                        <span className={styles.panelPrice}>{item.price_label}</span>
+                      )}
+                      {item.description && (
+                        <span className={styles.panelDesc}>{item.description}</span>
+                      )}
+                    </span>
+                    <span className={styles.chevron} aria-hidden="true" />
+                  </button>
+
+                  {isOpen && (
+                    <div className={styles.panelBody}>
+                      {item.pricing && (
+                        <div className={styles.panelContent}>
+                          <RichText html={item.pricing} />
+                        </div>
+                      )}
+                      {item.inclusions && (
+                        <div className={styles.panelContent}>
+                          <RichText html={item.inclusions} />
+                        </div>
+                      )}
+                      {item.tagline && (
+                        <p className={styles.panelTagline}>
+                          <em>{item.tagline}</em>
+                        </p>
+                      )}
+                      {item.cta_text && item.cta_url && (
+                        <div className={styles.panelCta}>
+                          <Link to={item.cta_url} className={styles.ctaStrong}>
+                            {item.cta_text}
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {showGrid && (
           <div className={styles.grid}>
             {block.packages.map((item) => (
               <article

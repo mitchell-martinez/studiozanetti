@@ -70,6 +70,7 @@
   background: var(--color-accent);
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
+  margin-bottom: 0.25rem;
 }
 
 .name {
@@ -224,7 +225,7 @@
   display: block;
   color: var(--color-ink-soft);
   font-size: 0.8rem;
-  margin-top: 0.15rem;
+  margin: 0.15rem 0;
 }
 
 .td {
@@ -255,4 +256,151 @@
 .empty {
   color: var(--color-ink-soft);
   opacity: 0.35;
+}
+
+// ─── Accordion layout (5+ packages, mobile) ──────────────────────────────────
+
+.accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.panel {
+  border: 1px solid var(--color-border-soft);
+  border-radius: 0.75rem;
+  background: var(--color-surface-soft);
+  overflow: hidden;
+}
+
+.panelFeatured {
+  border-color: var(--color-accent);
+  box-shadow: var(--shadow-card);
+}
+
+.panelOpen {
+  border-color: var(--color-border-soft);
+
+  &.panelFeatured {
+    border-color: var(--color-accent);
+  }
+
+  .chevron {
+    transform: rotate(180deg);
+  }
+}
+
+.panelHeader {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 2.5rem;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+  width: 100%;
+  background: none;
+  border: none;
+  font: inherit;
+  color: inherit;
+
+  &:hover {
+    background: rgba(0 0 0 / 0.015);
+  }
+}
+
+.panelTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.3rem 0.75rem;
+  flex: 1;
+}
+
+.panelName {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-ink-strong);
+}
+
+.panelPrice {
+  color: var(--color-accent-strong);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+}
+
+.panelDesc {
+  color: var(--color-ink-soft);
+  font-size: 0.85rem;
+  flex-basis: 100%;
+  text-align: center;
+}
+
+.chevron {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  translate: 0 -50%;
+  width: 1.2rem;
+  height: 1.2rem;
+  background: transparent;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 35%;
+    left: 25%;
+    width: 50%;
+    height: 50%;
+    border-left: 2px solid var(--color-ink-soft);
+    border-bottom: 2px solid var(--color-ink-soft);
+    transform: rotate(-45deg);
+    transform-origin: center;
+  }
+}
+
+.panelBody {
+  padding: 0 1.4rem 1.2rem;
+  text-align: center;
+}
+
+.panelContent {
+  color: var(--color-ink-soft);
+  padding: 0.4rem 0 1.5rem;
+
+  & + & {
+    border-top: 1px solid var(--color-border-soft);
+    padding-top: 1.5rem;
+  }
+
+  // Zero out trailing margins from RichText so spacing is controlled here
+  :global(.richText) > *:last-child {
+    margin-bottom: 0;
+  }
+
+  :global(ul),
+  :global(ol) {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+  }
+
+  :global(li) {
+    padding: 0.12rem 0;
+    line-height: 1.4;
+    margin-bottom: 0;
+  }
+}
+
+.panelTagline {
+  color: var(--color-ink-soft);
+  font-size: 0.9rem;
+  margin: 0.8rem 0 0.8rem;
+}
+
+.panelCta {
+  padding-top: 1.5rem;
 }

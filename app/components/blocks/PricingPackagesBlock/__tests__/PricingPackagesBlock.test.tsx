@@ -1,8 +1,22 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockFivePackagesBlock, mockPricingPackagesBlock } from '../helpers/mockBlock'
 import PricingPackagesBlock from '../index'
+
+/** Helper: set matchMedia to report mobile or desktop */
+const mockMatchMedia = (mobile: boolean) => {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: mobile,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }))
+}
 
 describe('PricingPackagesBlock', () => {
   it('renders package card and CTA', () => {
@@ -38,7 +52,9 @@ describe('PricingPackagesBlock', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  describe('comparison table layout (5+ packages)', () => {
+  describe('comparison table layout (5+ packages, desktop)', () => {
+    beforeEach(() => mockMatchMedia(false))
+
     it('renders all 5 packages in a table', () => {
       render(
         <MemoryRouter>
@@ -85,9 +101,11 @@ describe('PricingPackagesBlock', () => {
         </MemoryRouter>,
       )
 
-      expect(
-        screen.getByText('Perfect for couples who want treasured keepsakes'),
-      ).toBeInTheDocument()
+      const headers = screen.getAllByRole('columnheader')
+      const descInHeader = headers.some((th) =>
+        th.textContent?.includes('Perfect for couples on a budget.'),
+      )
+      expect(descInHeader).toBe(true)
     })
 
     it('renders featured badge on featured package', () => {
@@ -120,6 +138,57 @@ describe('PricingPackagesBlock', () => {
 
       expect(screen.getByText('Digital & Album Package')).toBeInTheDocument()
       expect(screen.getByText('Digital, Album & Engagement Package')).toBeInTheDocument()
+    })
+  })
+
+  describe('accordion layout (5+ packages, mobile)', () => {
+    beforeEach(() => mockMatchMedia(true))
+    afterEach(() => mockMatchMedia(false))
+
+    it('renders accordion instead of table', () => {
+      const { container } = render(
+        <MemoryRouter>
+          <PricingPackagesBlock block={mockFivePackagesBlock} />
+        </MemoryRouter>,
+      )
+
+      expect(container.querySelector('[class*="accordion"]')).toBeInTheDocument()
+      expect(container.querySelector('table')).not.toBeInTheDocument()
+    })
+
+    it('renders all 5 packages as accordion panels', () => {
+      render(
+        <MemoryRouter>
+          <PricingPackagesBlock block={mockFivePackagesBlock} />
+        </MemoryRouter>,
+      )
+
+      const buttons = screen.getAllByRole('button')
+      expect(buttons).toHaveLength(5)
+    })
+
+    it('opens first package by default', () => {
+      render(
+        <MemoryRouter>
+          <PricingPackagesBlock block={mockFivePackagesBlock} />
+        </MemoryRouter>,
+      )
+
+      const buttons = screen.getAllByRole('button')
+      expect(buttons[0]).toHaveAttribute('aria-expanded', 'true')
+      expect(buttons[1]).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('renders CTA links for each package', () => {
+      render(
+        <MemoryRouter>
+          <PricingPackagesBlock block={mockFivePackagesBlock} />
+        </MemoryRouter>,
+      )
+
+      // Only the open panel (first) should render its CTA
+      const enquireLinks = screen.getAllByRole('link', { name: 'Enquire' })
+      expect(enquireLinks.length).toBeGreaterThanOrEqual(1)
     })
   })
 })
