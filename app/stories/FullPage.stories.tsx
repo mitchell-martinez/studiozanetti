@@ -1,14 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import Footer from '~/components/Footer'
+import demoSiteSettings from '~/components/Footer/__mocks__/demoSiteSettings.json'
 import Navbar from '~/components/Navbar'
+import demoMenu from '~/components/Navbar/__mocks__/demoMenu.json'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
-import {
-  demoMenu,
-  demoSiteSettings,
-  fullPageBlocksA,
-  fullPageBlocksB,
-  heroBlock,
-} from '~/dev/localLabData'
+import heroBlock from '~/components/blocks/HeroBlock/__mocks__/heroBlock.json'
+import { fullPageBlocksA, fullPageBlocksB } from '~/dev/localLabData'
 
 const meta: Meta<typeof BlockRenderer> = {
   title: 'Pages/Full Page Compositions',

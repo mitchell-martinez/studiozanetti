@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import ServicesGridBlock from '~/components/blocks/ServicesGridBlock'
-import { servicesBlock } from '~/dev/localLabData'
+import servicesBlockData from '~/components/blocks/ServicesGridBlock/__mocks__/servicesGridBlock.json'
 import type { ServicesGridBlock as ServicesGridBlockType } from '~/types/wordpress'
+
+const servicesBlock = servicesBlockData as unknown as ServicesGridBlockType
 import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
 type ServicesArgs = Omit<ServicesGridBlockType, 'acf_fc_layout'>

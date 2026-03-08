@@ -1,8 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
-import { mockGalleryCategoriesBlock } from '../helpers/mockBlock'
+import type { GalleryCategoriesBlock as GalleryCategoriesBlockType } from '~/types/wordpress'
+import testGalleryCategoriesBlock from '../__mocks__/testGalleryCategoriesBlock.json'
 import GalleryCategoriesBlock from '../index'
+
+const mockGalleryCategoriesBlock = testGalleryCategoriesBlock as GalleryCategoriesBlockType
 
 describe('GalleryCategoriesBlock', () => {
   it('renders category tile with link', () => {

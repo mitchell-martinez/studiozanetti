@@ -2,13 +2,10 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import type { TextBlock as TextBlockType } from '~/types/wordpress'
+import baseTextBlock from '../__mocks__/baseTextBlock.json'
 import TextBlock from '../index'
 
-const base: TextBlockType = {
-  acf_fc_layout: 'text_block',
-  heading: 'Test Heading',
-  body: '<p>Test body content</p>',
-}
+const base = baseTextBlock as TextBlockType
 
 const renderBlock = (overrides: Partial<TextBlockType> = {}) =>
   render(

@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useEffect } from 'react'
 import Footer from '~/components/Footer'
+import demoSiteSettings from '~/components/Footer/__mocks__/demoSiteSettings.json'
 import GalleryGrid from '~/components/GalleryGrid'
+import demoGalleryImages from '~/components/GalleryGrid/__mocks__/demoGalleryImages.json'
 import Navbar from '~/components/Navbar'
+import demoMenu from '~/components/Navbar/__mocks__/demoMenu.json'
 import OfflineBanner from '~/components/OfflineBanner'
-import { demoGalleryImages, demoMenu, demoSiteSettings } from '~/dev/localLabData'
 import type { GalleryImage } from '~/types/gallery'
 import type { WPMenuItem, WPSiteSettings } from '~/types/wordpress'
 

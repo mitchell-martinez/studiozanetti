@@ -1,0 +1,19 @@
+{
+  "acf_fc_layout": "faq_accordion",
+  "heading": "Frequently Asked Questions",
+  "intro": "A few common questions before booking.",
+  "faq_items": [
+    {
+      "question": "How far in advance should we book?",
+      "answer": "<p>Most couples book 6–12 months ahead.</p>"
+    },
+    {
+      "question": "Do you travel?",
+      "answer": "<p>Yes, we travel across Australia for weddings and events.</p>"
+    }
+  ],
+  "open_first_item": true,
+  "section_theme": "light",
+  "top_spacing": "md",
+  "bottom_spacing": "lg"
+}

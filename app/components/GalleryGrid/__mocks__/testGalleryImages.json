@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "category": "Weddings",
+    "alt": "Wedding ceremony",
+    "thumbnail": "https://picsum.photos/seed/t1/800/600",
+    "src": "https://picsum.photos/seed/t1/1200/900"
+  },
+  {
+    "id": 2,
+    "category": "Portraits",
+    "alt": "Studio portrait",
+    "thumbnail": "https://picsum.photos/seed/t2/800/600",
+    "src": "https://picsum.photos/seed/t2/1200/900"
+  }
+]
