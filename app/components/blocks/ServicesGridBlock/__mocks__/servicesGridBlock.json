@@ -1,0 +1,44 @@
+{
+  "acf_fc_layout": "services_grid",
+  "heading": "Photography Services",
+  "subheading": "Flexible options tailored to your event.",
+  "columns": 3,
+  "card_style": "elevated",
+  "services": [
+    {
+      "title": "Weddings",
+      "description": "Full-day coverage with two photographers.",
+      "image": {
+        "url": "https://picsum.photos/seed/zanetti-5/1600/1000",
+        "alt": "Wedding",
+        "width": 1600,
+        "height": 1000
+      }
+    },
+    {
+      "title": "Engagements",
+      "description": "Relaxed sessions in meaningful locations.",
+      "image": {
+        "url": "https://picsum.photos/seed/zanetti-6/1600/1000",
+        "alt": "Engagement",
+        "width": 1600,
+        "height": 1000
+      }
+    },
+    {
+      "title": "Events",
+      "description": "Corporate, private and milestone coverage.",
+      "image": {
+        "url": "https://picsum.photos/seed/zanetti-7/1600/1000",
+        "alt": "Event",
+        "width": 1600,
+        "height": 1000
+      }
+    }
+  ],
+  "cta_text": "Enquire Now",
+  "cta_url": "/contact",
+  "section_theme": "rose",
+  "top_spacing": "md",
+  "bottom_spacing": "lg"
+}

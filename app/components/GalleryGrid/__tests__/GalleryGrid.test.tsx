@@ -2,24 +2,10 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import type { GalleryImage } from '~/types/gallery'
+import testGalleryImages from '../__mocks__/testGalleryImages.json'
 import GalleryGrid from '../index'
 
-const MOCK_IMAGES: GalleryImage[] = [
-  {
-    id: 1,
-    category: 'Weddings',
-    alt: 'Wedding ceremony',
-    thumbnail: 'https://picsum.photos/seed/t1/800/600',
-    src: 'https://picsum.photos/seed/t1/1200/900',
-  },
-  {
-    id: 2,
-    category: 'Portraits',
-    alt: 'Studio portrait',
-    thumbnail: 'https://picsum.photos/seed/t2/800/600',
-    src: 'https://picsum.photos/seed/t2/1200/900',
-  },
-]
+const MOCK_IMAGES = testGalleryImages as GalleryImage[]
 
 describe('GalleryGrid', () => {
   it('renders all images as list items', () => {

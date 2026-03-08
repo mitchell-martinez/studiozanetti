@@ -8,19 +8,13 @@ vi.mock('~/lib/wordpress', () => ({
 }))
 
 import { getPageBySlug } from '~/lib/wordpress'
+import mockPageData from '../__mocks__/mockPage.json'
 
 afterEach(() => {
   vi.clearAllMocks()
 })
 
-const mockPage = {
-  id: 1,
-  slug: 'pricing',
-  status: 'publish',
-  title: { rendered: 'Pricing' },
-  content: { rendered: '<p>Our pricing details</p>' },
-  excerpt: { rendered: '' },
-}
+const mockPage = { ...mockPageData }
 
 const renderCmsPage = (loaderFn: () => unknown) => {
   const router = createMemoryRouter([{ path: '/*', element: <CmsPage />, loader: loaderFn }], {

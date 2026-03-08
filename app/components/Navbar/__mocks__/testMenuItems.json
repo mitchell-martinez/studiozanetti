@@ -1,0 +1,39 @@
+[
+  {
+    "id": 1,
+    "title": "Home",
+    "url": "/",
+    "children": []
+  },
+  {
+    "id": 2,
+    "title": "Gallery",
+    "url": "/gallery",
+    "children": [
+      {
+        "id": 21,
+        "title": "Weddings",
+        "url": "/gallery?category=Weddings",
+        "children": []
+      },
+      {
+        "id": 22,
+        "title": "Portraits",
+        "url": "/gallery?category=Portraits",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "About",
+    "url": "/about",
+    "children": []
+  },
+  {
+    "id": 4,
+    "title": "Contact",
+    "url": "/contact",
+    "children": []
+  }
+]

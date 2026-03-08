@@ -1,0 +1,14 @@
+{
+  "id": 1,
+  "slug": "pricing",
+  "status": "publish",
+  "title": {
+    "rendered": "Pricing"
+  },
+  "content": {
+    "rendered": "<p>Our pricing details</p>"
+  },
+  "excerpt": {
+    "rendered": ""
+  }
+}

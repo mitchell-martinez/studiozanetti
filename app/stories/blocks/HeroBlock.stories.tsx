@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import HeroBlock from '~/components/blocks/HeroBlock'
-import { heroBlock } from '~/dev/localLabData'
+import heroBlockData from '~/components/blocks/HeroBlock/__mocks__/heroBlock.json'
 import type { HeroBlock as HeroBlockType, WPImage } from '~/types/wordpress'
+
+const heroBlock = heroBlockData as unknown as HeroBlockType
 
 type HeroArgs = Omit<HeroBlockType, 'acf_fc_layout'> & { featuredImage?: WPImage }
 

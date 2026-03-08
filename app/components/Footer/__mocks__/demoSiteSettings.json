@@ -1,0 +1,15 @@
+{
+  "site_name": "Studio Zanetti",
+  "tagline": "Wedding & Event Photography",
+  "copyright_text": "",
+  "social_links": [
+    {
+      "platform": "Instagram",
+      "url": "https://instagram.com"
+    },
+    {
+      "platform": "Facebook",
+      "url": "https://facebook.com"
+    }
+  ]
+}

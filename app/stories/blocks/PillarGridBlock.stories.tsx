@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import PillarGridBlock from '~/components/blocks/PillarGridBlock'
-import { pillarBlock } from '~/dev/localLabData'
+import pillarBlockData from '~/components/blocks/PillarGridBlock/__mocks__/pillarGridBlock.json'
 import type { PillarGridBlock as PillarGridBlockType } from '~/types/wordpress'
+
+const pillarBlock = pillarBlockData as unknown as PillarGridBlockType
 import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
 type PillarArgs = Omit<PillarGridBlockType, 'acf_fc_layout'>

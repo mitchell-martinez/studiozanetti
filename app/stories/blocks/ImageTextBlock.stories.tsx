@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import ImageTextBlock from '~/components/blocks/ImageTextBlock'
-import { imageTextBlock } from '~/dev/localLabData'
+import imageTextBlockData from '~/components/blocks/ImageTextBlock/__mocks__/imageTextBlock.json'
 import type { ImageTextBlock as ImageTextBlockType } from '~/types/wordpress'
+
+const imageTextBlock = imageTextBlockData as unknown as ImageTextBlockType
 import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
 type ImageTextArgs = Omit<ImageTextBlockType, 'acf_fc_layout'>

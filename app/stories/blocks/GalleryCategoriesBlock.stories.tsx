@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import GalleryCategoriesBlock from '~/components/blocks/GalleryCategoriesBlock'
-import { galleryCategoriesBlock } from '~/dev/localLabData'
+import galleryCategoriesBlockData from '~/components/blocks/GalleryCategoriesBlock/__mocks__/galleryCategoriesBlock.json'
 import type { GalleryCategoriesBlock as GalleryCategoriesBlockType } from '~/types/wordpress'
+
+const galleryCategoriesBlock = galleryCategoriesBlockData as unknown as GalleryCategoriesBlockType
 import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
 type GalleryCategoriesArgs = Omit<GalleryCategoriesBlockType, 'acf_fc_layout'>
