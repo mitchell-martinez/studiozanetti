@@ -1,0 +1,21 @@
+[
+  {
+    "id": 1,
+    "title": "Home",
+    "url": "/",
+    "children": []
+  },
+  {
+    "id": 2,
+    "title": "Gallery",
+    "url": "/gallery",
+    "children": [
+      {
+        "id": 21,
+        "title": "Weddings",
+        "url": "/gallery?category=Weddings",
+        "children": []
+      }
+    ]
+  }
+]

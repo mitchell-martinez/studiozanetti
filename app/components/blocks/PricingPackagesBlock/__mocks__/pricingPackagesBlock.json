@@ -1,0 +1,27 @@
+{
+  "acf_fc_layout": "pricing_packages",
+  "heading": "Packages",
+  "subheading": "Choose a package that fits your day.",
+  "packages": [
+    {
+      "name": "Essentials",
+      "price_label": "$2,900",
+      "description": "Perfect for intimate celebrations.",
+      "inclusions": "<ul><li>6 hours coverage</li><li>Online gallery</li></ul>",
+      "cta_text": "Book Essentials",
+      "cta_url": "/contact"
+    },
+    {
+      "name": "Signature",
+      "price_label": "$4,500",
+      "description": "Full day coverage + engagement session.",
+      "inclusions": "<ul><li>10 hours coverage</li><li>Second photographer</li></ul>",
+      "is_featured": true,
+      "cta_text": "Book Signature",
+      "cta_url": "/contact"
+    }
+  ],
+  "section_theme": "light",
+  "top_spacing": "lg",
+  "bottom_spacing": "lg"
+}

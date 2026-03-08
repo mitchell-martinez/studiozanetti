@@ -2,22 +2,10 @@ import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import type { WPMenuItem } from '~/types/wordpress'
+import testMenuItems from '../__mocks__/testMenuItems.json'
 import Navbar from '../index'
 
-const MOCK_ITEMS: WPMenuItem[] = [
-  { id: 1, title: 'Home', url: '/', children: [] },
-  {
-    id: 2,
-    title: 'Gallery',
-    url: '/gallery',
-    children: [
-      { id: 21, title: 'Weddings', url: '/gallery?category=Weddings', children: [] },
-      { id: 22, title: 'Portraits', url: '/gallery?category=Portraits', children: [] },
-    ],
-  },
-  { id: 3, title: 'About', url: '/about', children: [] },
-  { id: 4, title: 'Contact', url: '/contact', children: [] },
-]
+const MOCK_ITEMS = testMenuItems as WPMenuItem[]
 
 const renderNavbar = (items: WPMenuItem[] = [], siteName?: string) =>
   render(

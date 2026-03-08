@@ -1,0 +1,23 @@
+{
+  "acf_fc_layout": "pillar_grid",
+  "heading": "What couples value most",
+  "subheading": "Consistency from planning to final delivery.",
+  "columns": 3,
+  "pillars": [
+    {
+      "title": "Preparation",
+      "description": "Clear guidance before the day."
+    },
+    {
+      "title": "Presence",
+      "description": "Calm direction when it matters."
+    },
+    {
+      "title": "Delivery",
+      "description": "Beautiful gallery turnaround."
+    }
+  ],
+  "section_theme": "champagne",
+  "top_spacing": "md",
+  "bottom_spacing": "md"
+}

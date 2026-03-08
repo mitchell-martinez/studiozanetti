@@ -1,8 +1,13 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { mockFivePackagesBlock, mockPricingPackagesBlock } from '../helpers/mockBlock'
+import type { PricingPackagesBlock as PricingPackagesBlockType } from '~/types/wordpress'
+import testFivePackagesBlock from '../__mocks__/testFivePackagesBlock.json'
+import testPricingPackagesBlock from '../__mocks__/testPricingPackagesBlock.json'
 import PricingPackagesBlock from '../index'
+
+const mockPricingPackagesBlock = testPricingPackagesBlock as PricingPackagesBlockType
+const mockFivePackagesBlock = testFivePackagesBlock as PricingPackagesBlockType
 
 /** Helper: set matchMedia to report mobile or desktop */
 const mockMatchMedia = (mobile: boolean) => {

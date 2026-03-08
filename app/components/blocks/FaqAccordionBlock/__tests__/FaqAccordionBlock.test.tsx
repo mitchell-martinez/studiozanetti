@@ -1,7 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { mockFaqAccordionBlock } from '../helpers/mockBlock'
+import type { FaqAccordionBlock as FaqAccordionBlockType } from '~/types/wordpress'
+import testFaqAccordionBlock from '../__mocks__/testFaqAccordionBlock.json'
 import FaqAccordionBlock from '../index'
+
+const mockFaqAccordionBlock = testFaqAccordionBlock as FaqAccordionBlockType
 
 describe('FaqAccordionBlock', () => {
   it('renders question and toggles answer visibility', () => {

@@ -1,7 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import PricingPackagesBlock from '~/components/blocks/PricingPackagesBlock'
-import { pricingBlock, pricingBlockFivePackages } from '~/dev/localLabData'
+import pricingBlockFivePackagesData from '~/components/blocks/PricingPackagesBlock/__mocks__/pricingFivePackagesBlock.json'
+import pricingBlockData from '~/components/blocks/PricingPackagesBlock/__mocks__/pricingPackagesBlock.json'
 import type { PricingPackagesBlock as PricingBlockType } from '~/types/wordpress'
+
+const pricingBlock = pricingBlockData as unknown as PricingBlockType
+const pricingBlockFivePackages = pricingBlockFivePackagesData as unknown as PricingBlockType
 import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
 type PricingArgs = Omit<PricingBlockType, 'acf_fc_layout'>

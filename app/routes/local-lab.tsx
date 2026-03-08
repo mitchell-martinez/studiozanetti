@@ -1,7 +1,11 @@
 import { useLoaderData } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
 import GalleryGrid from '~/components/GalleryGrid'
-import { demoGalleryImages, fullPageBlocksA, fullPageBlocksB, heroBlock } from '~/dev/localLabData'
+import heroBlock from '~/components/blocks/HeroBlock/__mocks__/heroBlock.json'
+import demoGalleryImages from '~/components/GalleryGrid/__mocks__/demoGalleryImages.json'
+import { fullPageBlocksA, fullPageBlocksB } from '~/dev/localLabData'
+import type { GalleryImage } from '~/types/gallery'
+import type { HeroBlock } from '~/types/wordpress'
 
 interface LocalLabLoaderData {
   allowed: true
@@ -27,12 +31,14 @@ export async function loader({ request }: { request: Request }): Promise<LocalLa
 
 const LocalLabRoute = () => {
   useLoaderData<typeof loader>()
+  const hero = heroBlock as unknown as HeroBlock
+  const galleryImages = demoGalleryImages as unknown as GalleryImage[]
 
   return (
     <div>
-      <BlockRenderer blocks={fullPageBlocksA} featuredImage={heroBlock.slides?.[0]} />
-      <GalleryGrid images={demoGalleryImages} />
-      <BlockRenderer blocks={fullPageBlocksB} featuredImage={heroBlock.slides?.[1]} />
+      <BlockRenderer blocks={fullPageBlocksA} featuredImage={hero.slides?.[0]} />
+      <GalleryGrid images={galleryImages} />
+      <BlockRenderer blocks={fullPageBlocksB} featuredImage={hero.slides?.[1]} />
     </div>
   )
 }

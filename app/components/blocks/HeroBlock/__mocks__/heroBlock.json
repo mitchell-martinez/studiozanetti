@@ -1,0 +1,28 @@
+{
+  "acf_fc_layout": "hero",
+  "title": "Timeless Wedding Photography",
+  "tagline": "Natural storytelling with editorial elegance.",
+  "cta_text": "View Galleries",
+  "cta_url": "/galleries",
+  "secondary_cta_text": "Check Pricing",
+  "secondary_cta_url": "/prices",
+  "slides": [
+    {
+      "url": "https://picsum.photos/seed/zanetti-1/1600/1000",
+      "alt": "Bride and groom portrait",
+      "width": 1600,
+      "height": 1000
+    },
+    {
+      "url": "https://picsum.photos/seed/zanetti-2/1600/1000",
+      "alt": "Ceremony moment",
+      "width": 1600,
+      "height": 1000
+    }
+  ],
+  "content_align": "center",
+  "height": "lg",
+  "overlay_strength": "medium",
+  "show_slide_dots": true,
+  "auto_rotate_seconds": 4
+}

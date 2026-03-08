@@ -1,0 +1,14 @@
+{
+  "id": 1,
+  "slug": "home",
+  "status": "publish",
+  "title": {
+    "rendered": "Home"
+  },
+  "content": {
+    "rendered": "<p>Hello</p>"
+  },
+  "excerpt": {
+    "rendered": ""
+  }
+}
