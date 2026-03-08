@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
-import { fullPageBlocksA, heroBlock } from '~/dev/localLabData'
+import heroBlock from '~/components/blocks/HeroBlock/__mocks__/heroBlock.json'
+import { fullPageBlocksA } from '~/dev/localLabData'
 
 /**
  * Composed BlockRenderer stories that render a full sequence of blocks.

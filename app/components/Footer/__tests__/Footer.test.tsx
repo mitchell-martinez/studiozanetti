@@ -2,17 +2,10 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import type { WPMenuItem, WPSiteSettings } from '~/types/wordpress'
+import testSiteSettings from '../__mocks__/testSiteSettings.json'
 import Footer from '../index'
 
-const DEFAULT_SETTINGS: WPSiteSettings = {
-  site_name: 'Studio Zanetti',
-  tagline: 'Capturing moments, creating memories',
-  copyright_text: '',
-  social_links: [
-    { platform: 'Instagram', url: 'https://instagram.com/studiozanetti' },
-    { platform: 'Facebook', url: 'https://facebook.com/studiozanetti' },
-  ],
-}
+const DEFAULT_SETTINGS = testSiteSettings as WPSiteSettings
 
 const renderFooter = (items: WPMenuItem[] = [], siteSettings: WPSiteSettings = DEFAULT_SETTINGS) =>
   render(

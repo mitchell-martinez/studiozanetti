@@ -1,0 +1,58 @@
+{
+  "acf_fc_layout": "pricing_packages",
+  "heading": "Our Packages",
+  "subheading": "Choose a package that fits your day.",
+  "packages": [
+    {
+      "name": "Ceremony Memories",
+      "price_label": "From $450",
+      "description": "Perfect for couples on a budget.",
+      "pricing": "<ul><li>1 Hour: $450</li><li>Each Additional Hour: $350</li></ul>",
+      "inclusions": "<ul><li>Ceremony &amp; limited location photos</li><li>High-resolution images via secure download</li><li>Online meeting</li></ul>",
+      "tagline": "Perfect for couples on a budget.",
+      "cta_text": "Enquire",
+      "cta_url": "/contact"
+    },
+    {
+      "name": "Short & Sweet",
+      "price_label": "From $970",
+      "description": "Digital Only Package",
+      "pricing": "<ul><li>2 Hours: $970</li><li>3 Hours: $1,170</li></ul>",
+      "inclusions": "<ul><li>High-res images on USB</li><li>Pre wedding meeting</li></ul>",
+      "tagline": "Perfect for couples looking for flexibility and options.",
+      "cta_text": "Enquire",
+      "cta_url": "/contact"
+    },
+    {
+      "name": "The Essentials",
+      "price_label": "From $1,980",
+      "description": "Digital Only Package",
+      "pricing": "<ul><li>Half Day: $1,980</li><li>Full Day: $2,780</li></ul>",
+      "inclusions": "<ul><li>High-res images on USB</li><li>Private online gallery</li></ul>",
+      "tagline": "Perfect for couples looking to capture their special day.",
+      "is_featured": true,
+      "cta_text": "Enquire",
+      "cta_url": "/contact"
+    },
+    {
+      "name": "The Exclusive",
+      "price_label": "From $2,450",
+      "description": "Digital & Album Package",
+      "pricing": "<ul><li>Half Day: $2,450</li><li>Full Day: $3,200</li></ul>",
+      "inclusions": "<ul><li>Print-res images on USB</li><li>25×25cm Bespoke Album</li></ul>",
+      "tagline": "Perfect for couples who want treasured keepsakes.",
+      "cta_text": "Enquire",
+      "cta_url": "/contact"
+    },
+    {
+      "name": "The Ultimate",
+      "price_label": "From $2,900",
+      "description": "Digital, Album & Engagement Package",
+      "pricing": "<ul><li>Half Day: $2,900</li><li>Full Day: $3,700</li></ul>",
+      "inclusions": "<ul><li>Print-res images on USB</li><li>30×30cm Bespoke Album</li><li>Engagement Session</li></ul>",
+      "tagline": "Perfect for couples looking to have every moment captured.",
+      "cta_text": "Enquire",
+      "cta_url": "/contact"
+    }
+  ]
+}

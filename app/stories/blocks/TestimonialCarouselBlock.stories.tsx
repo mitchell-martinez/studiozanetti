@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import TestimonialCarouselBlock from '~/components/blocks/TestimonialCarouselBlock'
-import { testimonialBlock } from '~/dev/localLabData'
+import testimonialBlockData from '~/components/blocks/TestimonialCarouselBlock/__mocks__/testimonialCarouselBlock.json'
 import type { TestimonialCarouselBlock as TestimonialBlockType } from '~/types/wordpress'
+
+const testimonialBlock = testimonialBlockData as unknown as TestimonialBlockType
 import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
 type TestimonialArgs = Omit<TestimonialBlockType, 'acf_fc_layout'>

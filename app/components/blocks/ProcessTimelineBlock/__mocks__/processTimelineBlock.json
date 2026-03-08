@@ -1,0 +1,26 @@
+{
+  "acf_fc_layout": "process_timeline",
+  "heading": "How it works",
+  "intro": "A simple process from first chat to final gallery.",
+  "steps": [
+    {
+      "title": "Discovery Call",
+      "description": "We discuss your vision and priorities."
+    },
+    {
+      "title": "Planning",
+      "description": "Timeline and locations are mapped clearly."
+    },
+    {
+      "title": "Photography Day",
+      "description": "Documentary + directed moments throughout."
+    },
+    {
+      "title": "Delivery",
+      "description": "You receive an edited online gallery."
+    }
+  ],
+  "section_theme": "champagne",
+  "top_spacing": "md",
+  "bottom_spacing": "md"
+}

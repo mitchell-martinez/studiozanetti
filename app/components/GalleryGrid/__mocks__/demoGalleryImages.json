@@ -1,0 +1,65 @@
+[
+  {
+    "id": 1,
+    "category": "Weddings",
+    "alt": "Gallery image 1",
+    "thumbnail": "https://picsum.photos/seed/thumb-1/600/400",
+    "src": "https://picsum.photos/seed/full-1/1800/1200"
+  },
+  {
+    "id": 2,
+    "category": "Events",
+    "alt": "Gallery image 2",
+    "thumbnail": "https://picsum.photos/seed/thumb-2/600/400",
+    "src": "https://picsum.photos/seed/full-2/1800/1200"
+  },
+  {
+    "id": 3,
+    "category": "Weddings",
+    "alt": "Gallery image 3",
+    "thumbnail": "https://picsum.photos/seed/thumb-3/600/400",
+    "src": "https://picsum.photos/seed/full-3/1800/1200"
+  },
+  {
+    "id": 4,
+    "category": "Events",
+    "alt": "Gallery image 4",
+    "thumbnail": "https://picsum.photos/seed/thumb-4/600/400",
+    "src": "https://picsum.photos/seed/full-4/1800/1200"
+  },
+  {
+    "id": 5,
+    "category": "Weddings",
+    "alt": "Gallery image 5",
+    "thumbnail": "https://picsum.photos/seed/thumb-5/600/400",
+    "src": "https://picsum.photos/seed/full-5/1800/1200"
+  },
+  {
+    "id": 6,
+    "category": "Events",
+    "alt": "Gallery image 6",
+    "thumbnail": "https://picsum.photos/seed/thumb-6/600/400",
+    "src": "https://picsum.photos/seed/full-6/1800/1200"
+  },
+  {
+    "id": 7,
+    "category": "Weddings",
+    "alt": "Gallery image 7",
+    "thumbnail": "https://picsum.photos/seed/thumb-7/600/400",
+    "src": "https://picsum.photos/seed/full-7/1800/1200"
+  },
+  {
+    "id": 8,
+    "category": "Events",
+    "alt": "Gallery image 8",
+    "thumbnail": "https://picsum.photos/seed/thumb-8/600/400",
+    "src": "https://picsum.photos/seed/full-8/1800/1200"
+  },
+  {
+    "id": 9,
+    "category": "Weddings",
+    "alt": "Gallery image 9",
+    "thumbnail": "https://picsum.photos/seed/thumb-9/600/400",
+    "src": "https://picsum.photos/seed/full-9/1800/1200"
+  }
+]

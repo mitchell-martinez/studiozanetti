@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import FaqAccordionBlock from '~/components/blocks/FaqAccordionBlock'
-import { faqBlock } from '~/dev/localLabData'
+import faqBlockData from '~/components/blocks/FaqAccordionBlock/__mocks__/faqAccordionBlock.json'
 import type { FaqAccordionBlock as FaqBlockType } from '~/types/wordpress'
+
+const faqBlock = faqBlockData as unknown as FaqBlockType
 import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
 type FaqArgs = Omit<FaqBlockType, 'acf_fc_layout'>

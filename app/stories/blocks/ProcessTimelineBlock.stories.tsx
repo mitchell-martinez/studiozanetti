@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import ProcessTimelineBlock from '~/components/blocks/ProcessTimelineBlock'
-import { processBlock } from '~/dev/localLabData'
+import processBlockData from '~/components/blocks/ProcessTimelineBlock/__mocks__/processTimelineBlock.json'
 import type { ProcessTimelineBlock as ProcessBlockType } from '~/types/wordpress'
+
+const processBlock = processBlockData as unknown as ProcessBlockType
 import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
 type ProcessArgs = Omit<ProcessBlockType, 'acf_fc_layout'>

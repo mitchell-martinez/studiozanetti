@@ -2,118 +2,23 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import type { ContentBlock } from '~/types/wordpress'
+import mockBlocks from '../__mocks__/blocks.json'
 import BlockRenderer from '../index'
 
-const img = { url: 'https://example.com/img.jpg', alt: 'Test image', width: 800, height: 600 }
-
-const heroBlock: ContentBlock = {
-  acf_fc_layout: 'hero',
-  background_image: img,
-  title: 'Hero Title',
-  tagline: 'Hero tagline',
-  cta_text: 'View Gallery',
-  cta_url: '/gallery',
-}
-
-const textBlock: ContentBlock = {
-  acf_fc_layout: 'text_block',
-  heading: 'Text heading',
-  body: '<p>Rich text content</p>',
-  align: 'center',
-  cta_text: 'Read more',
-  cta_url: '/about',
-}
-
-const imageTextBlock: ContentBlock = {
-  acf_fc_layout: 'image_text',
-  image: img,
-  heading: 'Image text heading',
-  body: '<p>Image text body</p>',
-  image_position: 'right',
-}
-
-const servicesBlock: ContentBlock = {
-  acf_fc_layout: 'services_grid',
-  heading: 'Our Services',
-  services: [{ title: 'Weddings', description: 'Wedding photos', image: img }],
-  cta_text: 'Browse work',
-  cta_url: '/gallery',
-}
-
-const biographyBlock: ContentBlock = {
-  acf_fc_layout: 'biography',
-  image: img,
-  name: 'Marco Zanetti',
-  role: 'Lead Photographer',
-  bio: '<p>Bio text here</p>',
-}
-
-const pillarBlock: ContentBlock = {
-  acf_fc_layout: 'pillar_grid',
-  heading: 'Our Approach',
-  pillars: [{ title: 'Quality', description: 'High quality work' }],
-}
-
-const testimonialBlock: ContentBlock = {
-  acf_fc_layout: 'testimonial_carousel',
-  heading: 'Kind Words',
-  testimonials: [
-    {
-      quote: 'Michael made us feel so comfortable and captured every moment.',
-      name: 'Alix & Richard',
-      context: 'Wedding',
-    },
-  ],
-}
-
-const faqBlock: ContentBlock = {
-  acf_fc_layout: 'faq_accordion',
-  heading: 'Frequently Asked Questions',
-  open_first_item: true,
-  faq_items: [
-    {
-      question: 'Do you travel?',
-      answer: '<p>Yes, throughout Sydney and beyond.</p>',
-    },
-  ],
-}
-
-const processBlock: ContentBlock = {
-  acf_fc_layout: 'process_timeline',
-  heading: 'Our Process',
-  steps: [
-    { title: 'Get in touch', description: 'Reach out and let us know your date.' },
-    { title: 'Wedding day', description: 'We capture your day naturally and candidly.' },
-  ],
-}
-
-const pricingBlock: ContentBlock = {
-  acf_fc_layout: 'pricing_packages',
-  heading: 'Packages',
-  packages: [
-    {
-      name: 'The Essentials',
-      price_label: '$1,980',
-      description: 'Digital only package',
-      inclusions: '<ul><li>High-res edited images</li></ul>',
-      cta_text: 'Send Enquiry',
-      cta_url: '/contact',
-    },
-  ],
-}
-
-const galleryCategoriesBlock: ContentBlock = {
-  acf_fc_layout: 'gallery_categories',
-  heading: 'Explore Galleries',
-  categories: [
-    {
-      title: 'The Brides',
-      subtitle: 'Beautiful dresses & inspiration',
-      image: img,
-      url: '/gallery/stylish-brides',
-    },
-  ],
-}
+const {
+  img,
+  heroBlock,
+  textBlock,
+  imageTextBlock,
+  servicesBlock,
+  biographyBlock,
+  pillarBlock,
+  testimonialBlock,
+  faqBlock,
+  processBlock,
+  pricingBlock,
+  galleryCategoriesBlock,
+} = mockBlocks as Record<string, ContentBlock> & { img: typeof mockBlocks.img }
 
 const renderBlocks = (blocks: ContentBlock[], featuredImage?: typeof img) =>
   render(

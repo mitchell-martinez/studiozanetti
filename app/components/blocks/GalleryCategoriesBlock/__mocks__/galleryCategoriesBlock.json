@@ -1,0 +1,42 @@
+{
+  "acf_fc_layout": "gallery_categories",
+  "heading": "Explore galleries",
+  "categories": [
+    {
+      "title": "Weddings",
+      "subtitle": "Romantic storytelling",
+      "image": {
+        "url": "https://picsum.photos/seed/zanetti-9/1600/1000",
+        "alt": "Wedding gallery",
+        "width": 1600,
+        "height": 1000
+      },
+      "url": "/galleries/weddings"
+    },
+    {
+      "title": "Events",
+      "subtitle": "Corporate & private",
+      "image": {
+        "url": "https://picsum.photos/seed/zanetti-10/1600/1000",
+        "alt": "Events gallery",
+        "width": 1600,
+        "height": 1000
+      },
+      "url": "/galleries/events"
+    },
+    {
+      "title": "Portraits",
+      "subtitle": "Natural and editorial",
+      "image": {
+        "url": "https://picsum.photos/seed/zanetti-11/1600/1000",
+        "alt": "Portrait gallery",
+        "width": 1600,
+        "height": 1000
+      },
+      "url": "/galleries/portraits"
+    }
+  ],
+  "section_theme": "dark",
+  "top_spacing": "md",
+  "bottom_spacing": "md"
+}

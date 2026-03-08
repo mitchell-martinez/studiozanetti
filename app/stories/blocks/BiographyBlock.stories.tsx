@@ -1,7 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import BiographyBlock from '~/components/blocks/BiographyBlock'
-import { biographyBlock } from '~/dev/localLabData'
+import biographyBlockData from '~/components/blocks/BiographyBlock/__mocks__/biographyBlock.json'
 import type { BiographyBlock as BiographyBlockType } from '~/types/wordpress'
+
+const biographyBlock = biographyBlockData as unknown as BiographyBlockType
 import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
 type BiographyArgs = Omit<BiographyBlockType, 'acf_fc_layout'>

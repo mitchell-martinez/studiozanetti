@@ -1,0 +1,11 @@
+{
+  "site_name": "My Studio",
+  "tagline": "Best photos",
+  "copyright_text": "© 2026 My Studio",
+  "social_links": [
+    {
+      "platform": "Instagram",
+      "url": "https://instagram.com/mystudio"
+    }
+  ]
+}

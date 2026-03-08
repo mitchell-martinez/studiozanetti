@@ -1,0 +1,17 @@
+{
+  "acf_fc_layout": "biography",
+  "image": {
+    "url": "https://picsum.photos/seed/zanetti-8/1600/1000",
+    "alt": "Photographer portrait",
+    "width": 1600,
+    "height": 1000
+  },
+  "name": "Michael Zanetti",
+  "role": "Lead Photographer",
+  "bio": "<p>I capture real, heartfelt moments with an artistic eye and a calm presence.</p>",
+  "quote": "Your photos should feel like your story, not a template.",
+  "signature_text": "— Michael",
+  "section_theme": "light",
+  "top_spacing": "lg",
+  "bottom_spacing": "lg"
+}

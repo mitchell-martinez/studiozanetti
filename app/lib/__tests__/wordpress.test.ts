@@ -1,4 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import mockGalleryPhotoData from '../__mocks__/mockGalleryPhoto.json'
+import mockNavMenuItemsData from '../__mocks__/mockNavMenuItems.json'
+import mockPageData from '../__mocks__/mockPage.json'
+import mockSettingsData from '../__mocks__/mockSettings.json'
 import {
   _cache,
   clearCache,
@@ -37,14 +41,7 @@ const ok = (body: unknown) =>
 const fail = (status: number) =>
   Promise.resolve({ ok: false, status, statusText: 'Error', json: vi.fn() } as unknown as Response)
 
-const mockPage = {
-  id: 1,
-  slug: 'home',
-  status: 'publish',
-  title: { rendered: 'Home' },
-  content: { rendered: '<p>Hello</p>' },
-  excerpt: { rendered: '' },
-}
+const mockPage = { ...mockPageData }
 
 describe('getPageBySlug', () => {
   it('returns the first page matching the slug', async () => {
@@ -131,14 +128,7 @@ describe('getAllPages', () => {
 
 describe('getGalleryPhotos', () => {
   it('returns gallery photos', async () => {
-    const photo = {
-      id: 1,
-      title: { rendered: 'Wedding ceremony' },
-      acf: {
-        category: 'Weddings',
-        full_image: { url: 'https://example.com/img.jpg', alt: 'Wedding' },
-      },
-    }
+    const photo = { ...mockGalleryPhotoData }
     mockFetch.mockReturnValueOnce(ok([photo]))
     const result = await getGalleryPhotos()
     expect(result).toHaveLength(1)
@@ -178,15 +168,7 @@ describe('caching', () => {
 
 describe('getNavMenu', () => {
   it('fetches the primary navigation menu', async () => {
-    const menuItems = [
-      { id: 1, title: 'Home', url: '/', children: [] },
-      {
-        id: 2,
-        title: 'Gallery',
-        url: '/gallery',
-        children: [{ id: 21, title: 'Weddings', url: '/gallery?category=Weddings', children: [] }],
-      },
-    ]
+    const menuItems = mockNavMenuItemsData
     mockFetch.mockReturnValueOnce(ok(menuItems))
     const result = await getNavMenu('primary')
     expect(result).toEqual(menuItems)
@@ -230,12 +212,7 @@ describe('getPreviewPage', () => {
 })
 
 describe('getSiteSettings', () => {
-  const mockSettings = {
-    site_name: 'My Studio',
-    tagline: 'Best photos',
-    copyright_text: '© 2026 My Studio',
-    social_links: [{ platform: 'Instagram', url: 'https://instagram.com/mystudio' }],
-  }
+  const mockSettings = { ...mockSettingsData }
 
   it('fetches site settings from the options endpoint', async () => {
     mockFetch.mockReturnValueOnce(ok(mockSettings))
@@ -282,7 +259,11 @@ describe('image normalisation in normalizePage', () => {
   it('passes through valid WPImage objects untouched', async () => {
     const img = { url: 'https://example.com/photo.jpg', alt: 'Photo', width: 800, height: 600 }
     mockFetch.mockReturnValueOnce(
-      ok([pageWithBlocks([{ acf_fc_layout: 'biography', name: 'Test', bio: '<p>Bio</p>', image: img }])]),
+      ok([
+        pageWithBlocks([
+          { acf_fc_layout: 'biography', name: 'Test', bio: '<p>Bio</p>', image: img },
+        ]),
+      ]),
     )
     const page = await getPageBySlug('home')
     const block = page?.acf?.blocks?.[0]
@@ -294,7 +275,11 @@ describe('image normalisation in normalizePage', () => {
 
   it('drops numeric attachment IDs (cannot resolve client-side)', async () => {
     mockFetch.mockReturnValueOnce(
-      ok([pageWithBlocks([{ acf_fc_layout: 'biography', name: 'Test', bio: '<p>Bio</p>', image: 12345 }])]),
+      ok([
+        pageWithBlocks([
+          { acf_fc_layout: 'biography', name: 'Test', bio: '<p>Bio</p>', image: 12345 },
+        ]),
+      ]),
     )
     const page = await getPageBySlug('home')
     const block = page?.acf?.blocks?.[0]
@@ -307,7 +292,12 @@ describe('image normalisation in normalizePage', () => {
     mockFetch.mockReturnValueOnce(
       ok([
         pageWithBlocks([
-          { acf_fc_layout: 'biography', name: 'Test', bio: '<p>Bio</p>', image: 'https://example.com/photo.jpg' },
+          {
+            acf_fc_layout: 'biography',
+            name: 'Test',
+            bio: '<p>Bio</p>',
+            image: 'https://example.com/photo.jpg',
+          },
         ]),
       ]),
     )
@@ -346,7 +336,11 @@ describe('image normalisation in normalizePage', () => {
           {
             acf_fc_layout: 'services_grid',
             services: [
-              { title: 'A', description: 'Desc', image: { url: 'https://example.com/a.jpg', alt: 'A' } },
+              {
+                title: 'A',
+                description: 'Desc',
+                image: { url: 'https://example.com/a.jpg', alt: 'A' },
+              },
               { title: 'B', description: 'Desc', image: 999 },
               { title: 'C', description: 'Desc', image: '' },
             ],

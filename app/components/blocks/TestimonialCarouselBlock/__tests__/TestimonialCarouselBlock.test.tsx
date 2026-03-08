@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { mockTestimonialCarouselBlock } from '../helpers/mockBlock'
+import type { TestimonialCarouselBlock as TestimonialCarouselBlockType } from '~/types/wordpress'
+import testTestimonialCarouselBlock from '../__mocks__/testTestimonialCarouselBlock.json'
 import TestimonialCarouselBlock from '../index'
+
+const mockTestimonialCarouselBlock = testTestimonialCarouselBlock as TestimonialCarouselBlockType
 
 describe('TestimonialCarouselBlock', () => {
   it('renders heading and testimonial content', () => {
