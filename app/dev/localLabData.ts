@@ -242,6 +242,79 @@ export const pricingBlock: PricingPackagesBlock = {
   bottom_spacing: 'lg',
 }
 
+export const pricingBlockFivePackages: PricingPackagesBlock = {
+  acf_fc_layout: 'pricing_packages',
+  heading: 'Packages',
+  subheading: 'Choose a package that fits your day.',
+  packages: [
+    {
+      name: 'The Basic',
+      price_label: 'From $450',
+      description: 'Digital Only Package',
+      pricing:
+        '<p><strong>Pricing:</strong></p><ul><li>1 Hour: $450</li><li>Each Additional Hour: $350</li></ul>',
+      inclusions:
+        '<p><strong>Includes:</strong></p><ul><li>Ceremony &amp; limited location photos</li><li>High-resolution images delivered via secure online download</li><li>Online meeting</li></ul>',
+      tagline: 'Perfect for couples on a budget or with only a few guests.',
+      cta_text: 'Send Enquiry',
+      cta_url: '/contact',
+    },
+    {
+      name: 'Short & Sweet',
+      price_label: 'From $970',
+      description: 'Digital Only Package',
+      pricing:
+        '<p><strong>Pricing:</strong></p><ul><li>2 Hours: $970</li><li>3 Hours: $1,170</li><li>4 Hours: $1,370</li><li>Additional Hours: $220 per hour</li></ul>',
+      inclusions:
+        '<p><strong>Includes:</strong></p><ul><li>Professionally edited, high-resolution images on USB in a presentation box</li><li>Pre wedding in person or online meeting</li></ul>',
+      tagline: 'Perfect for couples looking for flexibility and options.',
+      cta_text: 'Send Enquiry',
+      cta_url: '/contact',
+    },
+    {
+      name: 'The Essentials',
+      price_label: 'From $1,980',
+      description: 'Digital Only Package',
+      pricing:
+        '<p><strong>Pricing:</strong></p><ul><li>Half Day, up to 6 hours: $1,980</li><li>Full Day, up to 12 hours: $2,780</li><li>Additional Hours: $220 per hour</li></ul>',
+      inclusions:
+        '<p><strong>Includes:</strong></p><ul><li>Professionally edited, high-resolution images on USB in a presentation box</li><li>Detailed pre-wedding planning session</li><li>Private online gallery with free guest downloads (device resolution)</li></ul>',
+      tagline: 'Perfect for couples looking to capture their special day from start to finish.',
+      is_featured: true,
+      cta_text: 'Send Enquiry',
+      cta_url: '/contact',
+    },
+    {
+      name: 'The Exclusive',
+      price_label: 'From $2,450',
+      description: 'Digital & Album Package',
+      pricing:
+        '<p><strong>Pricing:</strong></p><ul><li>Half Day, up to 6 hours: $2,450</li><li>Full Day, up to 12 hours: $3,200</li><li>Additional Hours: $220 per hour</li></ul>',
+      inclusions:
+        '<p><strong>Includes:</strong></p><ul><li>Professionally edited, print-resolution images on USB in a presentation box</li><li>Pre-wedding planning session</li><li>Private online gallery with free guest downloads (device resolution)</li><li>25×25cm Bespoke Album (30 pages) with choice of linen, leather-like, or photo cover</li></ul>',
+      tagline:
+        'Perfect for couples who want treasured keepsakes they can look back on in years to come.',
+      cta_text: 'Send Enquiry',
+      cta_url: '/contact',
+    },
+    {
+      name: 'The Ultimate',
+      price_label: 'From $2,900',
+      description: 'Digital, Album & Engagement',
+      pricing:
+        '<p><strong>Pricing:</strong></p><ul><li>Half Day, up to 6 hours: $2,900</li><li>Full Day, up to 12 hours: $3,700</li><li>Additional Hours: $220 per hour</li></ul>',
+      inclusions:
+        '<p><strong>Includes:</strong></p><ul><li>Professionally edited, print-resolution images on USB in a presentation box</li><li>Pre-wedding planning session</li><li>Private online gallery with free guest downloads (device resolution)</li><li>30×30cm Bespoke Album (30 pages) with choice of linen, leather-like, or photo cover</li><li>Engagement Session – 2-hour shoot with all images included (perfect for save-the-date cards!)</li></ul>',
+      tagline: 'Perfect for couples looking to have every moment of their journey captured.',
+      cta_text: 'Send Enquiry',
+      cta_url: '/contact',
+    },
+  ],
+  section_theme: 'light',
+  top_spacing: 'lg',
+  bottom_spacing: 'lg',
+}
+
 export const galleryCategoriesBlock: GalleryCategoriesBlock = {
   acf_fc_layout: 'gallery_categories',
   heading: 'Explore galleries',
