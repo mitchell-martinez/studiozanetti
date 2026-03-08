@@ -172,6 +172,7 @@
 
 .table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0.5rem 0;
   min-width: 700px; // ensure readability, scrolls on narrow screens
