@@ -179,7 +179,9 @@ export interface WPPackageItem {
   name: string
   price_label?: string
   description?: string
+  pricing?: string
   inclusions?: string
+  tagline?: string
   is_featured?: boolean
   cta_text?: string
   cta_url?: string

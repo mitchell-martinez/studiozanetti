@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import PricingPackagesBlock from '~/components/blocks/PricingPackagesBlock'
-import { pricingBlock } from '~/dev/localLabData'
+import { pricingBlock, pricingBlockFivePackages } from '~/dev/localLabData'
 import type { PricingPackagesBlock as PricingBlockType } from '~/types/wordpress'
 import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
@@ -23,7 +23,7 @@ const meta: Meta<PricingArgs> = {
     packages: {
       control: 'object',
       description:
-        'Repeater: array of { name, price_label?, description?, inclusions? (HTML), is_featured?, cta_text?, cta_url? }',
+        'Repeater: array of { name, price_label?, description?, pricing? (HTML), inclusions? (HTML), tagline?, is_featured?, cta_text?, cta_url? }',
     },
     ...blockStyleArgTypes,
   },
@@ -33,7 +33,7 @@ const meta: Meta<PricingArgs> = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** Default: two packages, Signature featured. */
+/** Default: two packages in grid layout, Signature featured. */
 export const Default: Story = {}
 
 /** Dark theme variant. */
@@ -41,7 +41,7 @@ export const DarkTheme: Story = {
   args: { section_theme: 'dark' },
 }
 
-/** Three packages — adds a budget tier. */
+/** Three packages in grid — adds a budget tier. */
 export const ThreePackages: Story = {
   args: {
     packages: [
@@ -55,5 +55,34 @@ export const ThreePackages: Story = {
       },
       ...pricingBlock.packages,
     ],
+  },
+}
+
+/** Five packages — auto-switches to horizontal row layout. */
+export const FivePackages: Story = {
+  args: {
+    heading: pricingBlockFivePackages.heading,
+    subheading: pricingBlockFivePackages.subheading,
+    packages: pricingBlockFivePackages.packages,
+  },
+}
+
+/** Five packages on dark theme. */
+export const FivePackagesDark: Story = {
+  args: {
+    heading: pricingBlockFivePackages.heading,
+    subheading: pricingBlockFivePackages.subheading,
+    packages: pricingBlockFivePackages.packages,
+    section_theme: 'dark',
+  },
+}
+
+/** Five packages on champagne theme. */
+export const FivePackagesChampagne: Story = {
+  args: {
+    heading: pricingBlockFivePackages.heading,
+    subheading: pricingBlockFivePackages.subheading,
+    packages: pricingBlockFivePackages.packages,
+    section_theme: 'champagne',
   },
 }
