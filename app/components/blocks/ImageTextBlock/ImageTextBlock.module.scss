@@ -1,0 +1,111 @@
+@use '~/styles/global' as g;
+@use '../shared.module' as shared;
+
+.section {
+  @include shared.blockSection;
+}
+
+.imageText {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 4rem;
+  align-items: start;
+  max-width: 1100px;
+  margin: 0 auto;
+
+  @media (max-width: #{g.$bp-md}) {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.imageRight {
+  grid-template-columns: 1.4fr 1fr;
+
+  .imageTextImage {
+    order: 2;
+  }
+
+  .imageTextBody {
+    order: 1;
+  }
+
+  @media (max-width: #{g.$bp-md}) {
+    grid-template-columns: 1fr;
+
+    .imageTextImage {
+      order: unset;
+    }
+
+    .imageTextBody {
+      order: unset;
+    }
+  }
+}
+
+.imageTextImage img {
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  box-shadow: 0 4px 24px rgb(0 0 0 / 12%);
+  object-fit: cover;
+  object-position: top left;
+}
+
+.imageLandscape .imageTextImage img {
+  aspect-ratio: 4 / 3;
+}
+
+.imagePortrait .imageTextImage img {
+  aspect-ratio: 3 / 4;
+}
+
+.imageSquare .imageTextImage img {
+  aspect-ratio: 1 / 1;
+}
+
+.imageAuto .imageTextImage img {
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+
+.imageSoft .imageTextImage img {
+  border-radius: 12px;
+}
+
+.imageFramed .imageTextImage img {
+  border: 8px solid #fff;
+  border-radius: 14px;
+}
+
+.imagePlain .imageTextImage img {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.imageTextBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.eyebrow {
+  font-size: var(--text-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent-strong);
+  font-weight: 700;
+}
+
+.imageTextHeading {
+  font-size: var(--text-2xl);
+}
+
+.imageCaption {
+  padding-top: 0.6rem;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+  font-style: italic;
+}

@@ -1,0 +1,12 @@
+{
+  "acf_fc_layout": "testimonial_carousel",
+  "heading": "Kind Words",
+  "subheading": "What couples are saying",
+  "testimonials": [
+    {
+      "quote": "the admin captured every moment beautifully.",
+      "name": "Alix & Richard",
+      "context": "Wedding"
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+@use '~/styles/global' as g;
+
+// ─── Image skeleton ────────────────────────────────────────────────────────────
+.imageWrapper {
+  position: absolute;
+  inset: 0;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #e8e8e8 25%, #f0f0f0 50%, #e8e8e8 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+.imgHidden {
+  opacity: 0;
+}
+
+.imgLoaded {
+  opacity: 1;
+  transition: opacity g.$transition-mid;
+}
+
+// ─── Grid ─────────────────────────────────────────────────────────────────────
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+}
+
+.item {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #eee;
+
+  &:focus-visible {
+    outline: 3px solid var(--color-gold);
+    outline-offset: 2px;
+  }
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+
+  .item:hover & {
+    transform: scale(1.05);
+  }
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+  opacity: 0;
+  transition: opacity g.$transition-mid;
+  display: flex;
+  align-items: flex-end;
+  padding: 1rem;
+
+  .item:hover & {
+    opacity: 1;
+  }
+}
+
+.overlayText {
+  color: var(--color-white);
+  font-size: var(--text-sm);
+  letter-spacing: 0.05em;
+}
+
+// ─── Lightbox ─────────────────────────────────────────────────────────────────
+.lightboxBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 92%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.lightbox {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.closeBtn {
+  position: absolute;
+  top: -3rem;
+  right: 0;
+  background: none;
+  border: none;
+  color: var(--color-white);
+  padding: 0.5rem;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color g.$transition-fast;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--color-gold);
+  }
+}
+
+.navBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgb(0 0 0 / 50%);
+  border: none;
+  color: var(--color-white);
+  padding: 0.75rem;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background g.$transition-fast;
+
+  &:hover,
+  &:focus-visible {
+    background: rgb(0 0 0 / 80%);
+  }
+}
+
+.prevBtn {
+  left: -3.5rem;
+
+  @media (max-width: #{g.$bp-md}) {
+    left: -2.5rem;
+  }
+}
+
+.nextBtn {
+  right: -3.5rem;
+
+  @media (max-width: #{g.$bp-md}) {
+    right: -2.5rem;
+  }
+}
+
+.lightboxImage {
+  max-width: 90vw;
+  max-height: 75dvh;
+  object-fit: contain;
+  border-radius: 2px;
+}
+
+.lightboxCaption {
+  color: #ccc;
+  font-size: var(--text-sm);
+  text-align: center;
+}

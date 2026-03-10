@@ -1,0 +1,26 @@
+{
+  "acf_fc_layout": "text_grid",
+  "heading": "Why Choose Us",
+  "subheading": "A few things that set us apart",
+  "items": [
+    {
+      "title": "Timeless Style",
+      "body": "We capture moments that resonate for years — not trends.",
+      "cta_text": "Learn more",
+      "cta_url": "/about"
+    },
+    {
+      "title": "Personal Touch",
+      "body": "Every session is tailored to you and your story.",
+      "cta_text": "Our process",
+      "cta_url": "/process"
+    },
+    {
+      "title": "Fast Turnaround",
+      "body": "Beautifully edited galleries delivered within two weeks."
+    }
+  ],
+  "columns": 3,
+  "card_style": "elevated",
+  "text_align": "center"
+}

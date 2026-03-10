@@ -1,0 +1,149 @@
+@use '~/styles/global' as g;
+@use '../shared.module' as shared;
+
+.section {
+  @include shared.blockSection;
+}
+
+.inner {
+  @include shared.blockInner;
+}
+
+.heading {
+  @include shared.blockHeading;
+}
+
+.subheading {
+  text-align: center;
+  color: var(--color-ink-soft);
+  margin: -2rem auto 1.6rem;
+  max-width: 60ch;
+}
+
+.servicesGrid {
+  --max-cols: 99;
+  display: grid;
+  grid-template-columns: repeat(min(3, var(--max-cols)), minmax(0, 1fr));
+  gap: 2rem;
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols2 {
+  grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols3 {
+  grid-template-columns: repeat(min(3, var(--max-cols)), minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols4 {
+  grid-template-columns: repeat(min(4, var(--max-cols)), minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-xl}) {
+    grid-template-columns: repeat(min(3, var(--max-cols)), minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.serviceCard {
+  border-radius: 4px;
+  overflow: hidden;
+  transition:
+    transform g.$transition-mid,
+    box-shadow g.$transition-mid;
+}
+
+// ─── Clickable card (rendered as <a>) ─────────────────────────────────────────
+.serviceCardLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+// ─── Text alignment variants ──────────────────────────────────────────────────
+.alignLeft {
+  text-align: left;
+}
+
+.alignCenter {
+  text-align: center;
+}
+
+.alignRight {
+  text-align: right;
+}
+
+.cardElevated {
+  background: var(--color-white);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 8%);
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  }
+}
+
+.cardOutline {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+}
+
+.cardMinimal {
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+}
+
+.serviceImage {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+
+.serviceBody {
+  padding: 1.5rem;
+}
+
+.serviceTitle {
+  font-size: var(--text-lg);
+  margin-bottom: 0.5rem;
+}
+
+.serviceDesc {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+.servicesCta {
+  text-align: center;
+  margin-top: 3rem;
+}
+

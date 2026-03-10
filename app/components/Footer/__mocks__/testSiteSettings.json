@@ -1,0 +1,15 @@
+{
+  "site_name": "Studio Zanetti",
+  "tagline": "Capturing moments, creating memories",
+  "copyright_text": "",
+  "social_links": [
+    {
+      "platform": "Instagram",
+      "url": "https://instagram.com/example-studio"
+    },
+    {
+      "platform": "Facebook",
+      "url": "https://facebook.com/example-studio"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+@use '~/styles/global' as g;
+
+.section {
+  padding: clamp(3rem, 7vw, 5rem) var(--space-page-x);
+  background: var(--color-surface);
+}
+
+.inner {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.heading {
+  font-size: var(--text-2xl);
+  text-align: center;
+  color: var(--color-ink-strong);
+  margin-bottom: 0.9rem;
+}
+
+.intro {
+  text-align: center;
+  color: var(--color-ink-soft);
+  margin: 0 auto 1.8rem;
+  max-width: 64ch;
+}
+
+.items {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.item {
+  border: 1px solid var(--color-border-soft);
+  border-radius: 0.85rem;
+  background: var(--color-surface-soft);
+}
+
+.question {
+  width: 100%;
+  min-height: 52px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-strong);
+  font-size: var(--text-base);
+  font-weight: 600;
+}
+
+.chevron {
+  transition: transform g.$transition-fast;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.answer {
+  padding: 0 1rem 1rem;
+  color: var(--color-ink-soft);
+}

@@ -1,0 +1,173 @@
+@use '~/styles/global' as g;
+
+// ─── Base ────────────────────────────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background g.$transition-fast,
+    color g.$transition-fast,
+    border-color g.$transition-fast,
+    box-shadow g.$transition-fast,
+    opacity g.$transition-fast,
+    transform g.$transition-fast;
+
+  &:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+// ─── Size variants ───────────────────────────────────────────────────────────
+.sizeSm {
+  font-size: var(--text-sm);
+  padding: 0.55rem 1.2rem;
+  letter-spacing: 0.08em;
+}
+
+.sizeMd {
+  font-size: var(--text-sm);
+  padding: 0.85rem 2rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.sizeLg {
+  font-size: var(--text-base);
+  padding: 1rem 2.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+// ─── Primary ─────────────────────────────────────────────────────────────────
+.primary {
+  background: var(--color-accent);
+  color: var(--color-white);
+  border-color: var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent-strong);
+    border-color: var(--color-accent-strong);
+  }
+}
+
+// ─── Secondary ───────────────────────────────────────────────────────────────
+.secondary {
+  background: var(--color-surface-soft);
+  color: var(--color-ink);
+  border-color: var(--color-border-soft);
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+// ─── Outline ─────────────────────────────────────────────────────────────────
+.outline {
+  background: transparent;
+  color: var(--color-accent-strong);
+  border-color: var(--color-accent);
+
+  &:hover {
+    background: var(--color-accent);
+    color: var(--color-white);
+  }
+}
+
+// ─── Dark ────────────────────────────────────────────────────────────────────
+.dark {
+  background: var(--color-dark);
+  color: var(--color-white);
+  border-color: var(--color-dark);
+  border-radius: 4px;
+
+  &:hover {
+    background: transparent;
+    color: var(--color-dark);
+  }
+}
+
+// ─── Text (link-style) ──────────────────────────────────────────────────────
+.text {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  min-height: 0;
+  color: var(--color-accent-strong);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: none;
+
+  &:hover {
+    opacity: 0.75;
+  }
+}
+
+// ─── Inverted (for dark / image overlays) ────────────────────────────────────
+.inverted {
+  &.primary {
+    background: var(--color-accent);
+    color: var(--color-white);
+    border-color: var(--color-accent);
+
+    &:hover {
+      background: var(--color-accent-strong);
+      border-color: var(--color-accent-strong);
+    }
+  }
+
+  &.secondary {
+    background: transparent;
+    color: var(--color-white);
+    border-color: rgb(255 255 255 / 75%);
+
+    &:hover {
+      background: rgb(255 255 255 / 18%);
+      border-color: var(--color-white);
+    }
+  }
+
+  &.outline {
+    background: transparent;
+    color: var(--color-white);
+    border-color: rgb(255 255 255 / 75%);
+
+    &:hover {
+      background: rgb(255 255 255 / 18%);
+      border-color: var(--color-white);
+    }
+  }
+
+  &.dark {
+    background: var(--color-white);
+    color: var(--color-dark);
+    border-color: var(--color-white);
+
+    &:hover {
+      background: transparent;
+      color: var(--color-white);
+    }
+  }
+
+  &.text {
+    color: var(--color-white);
+
+    &:hover {
+      opacity: 0.75;
+    }
+  }
+}

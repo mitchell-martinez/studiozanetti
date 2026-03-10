@@ -1,0 +1,35 @@
+{
+  "acf_fc_layout": "galleries",
+  "heading": "Cat Gallery",
+  "desktop_columns": 3,
+  "mobile_columns": 2,
+  "images": [
+    {
+      "image": {
+        "url": "https://loremflickr.com/900/1200/cat?lock=101",
+        "alt": "Cat 101",
+        "width": 900,
+        "height": 1200
+      },
+      "caption": "Cat portrait 101"
+    },
+    {
+      "image": {
+        "url": "https://loremflickr.com/900/720/cat?lock=102",
+        "alt": "Cat 102",
+        "width": 900,
+        "height": 720
+      },
+      "caption": "Cat portrait 102"
+    },
+    {
+      "image": {
+        "url": "https://loremflickr.com/900/980/cat?lock=103",
+        "alt": "Cat 103",
+        "width": 900,
+        "height": 980
+      },
+      "caption": "Cat portrait 103"
+    }
+  ]
+}

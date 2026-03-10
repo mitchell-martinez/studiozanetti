@@ -1,0 +1,15 @@
+@use '~/styles/global' as g;
+
+.banner {
+  position: sticky;
+  top: 64px; // Below the navbar
+  z-index: 99;
+  background: #b45309; // WCAG AA contrast ratio against white text
+  color: var(--color-white);
+  padding: 0.6rem var(--space-page-x);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: var(--text-sm);
+  font-weight: 500;
+}

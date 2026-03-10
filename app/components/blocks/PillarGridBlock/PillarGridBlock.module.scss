@@ -1,0 +1,91 @@
+@use '~/styles/global' as g;
+@use '../shared.module' as shared;
+
+.section {
+  @include shared.blockSection;
+}
+
+.inner {
+  @include shared.blockInner;
+}
+
+.heading {
+  @include shared.blockHeading;
+}
+
+.subheading {
+  text-align: center;
+  color: var(--color-ink-soft);
+  margin: -2rem auto 1.6rem;
+  max-width: 60ch;
+}
+
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-xl}) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pillar {
+  background: var(--color-white);
+  padding: 2rem;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 6%);
+}
+
+.pillarTitle {
+  font-size: var(--text-lg);
+}
+
+.pillarDesc {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}

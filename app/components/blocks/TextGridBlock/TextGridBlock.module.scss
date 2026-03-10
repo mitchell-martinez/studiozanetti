@@ -1,0 +1,129 @@
+@use '~/styles/global' as g;
+@use '../shared.module' as shared;
+
+.section {
+  @include shared.blockSection;
+}
+
+.inner {
+  @include shared.blockInner;
+}
+
+.heading {
+  @include shared.blockHeading;
+}
+
+.subheading {
+  text-align: center;
+  color: var(--color-ink-soft);
+  margin: -2rem auto 1.6rem;
+  max-width: 60ch;
+}
+
+// ─── Grid ────────────────────────────────────────────────────────────────────
+
+.grid {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cols4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+
+  @media (max-width: #{g.$bp-xl}) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (max-width: #{g.$bp-sm}) {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ─── Card ────────────────────────────────────────────────────────────────────
+
+.card {
+  border-radius: 4px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cardElevated {
+  background: var(--color-white);
+  box-shadow: 0 2px 12px rgb(0 0 0 / 8%);
+}
+
+.cardOutline {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+}
+
+.cardMinimal {
+  background: transparent;
+  box-shadow: none;
+}
+
+// ─── Text alignment ─────────────────────────────────────────────────────────
+
+.alignLeft {
+  text-align: left;
+}
+
+.alignCenter {
+  text-align: center;
+}
+
+.alignRight {
+  text-align: right;
+}
+
+// ─── Card content ────────────────────────────────────────────────────────────
+
+.cardTitle {
+  font-size: var(--text-lg);
+  color: var(--color-ink-strong);
+}
+
+.cardBody {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+.cardCta {
+  margin-top: auto;
+}

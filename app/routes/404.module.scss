@@ -1,0 +1,47 @@
+.wrap {
+  min-height: clamp(24rem, 70vh, 40rem);
+  display: grid;
+  place-items: center;
+  padding: clamp(2rem, 6vw, 4rem) var(--space-page-x);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(255, 192, 203, 0.28), transparent 42%),
+    radial-gradient(circle at 85% 90%, rgba(255, 215, 186, 0.3), transparent 45%),
+    var(--color-canvas);
+}
+
+.card {
+  width: min(42rem, 100%);
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: 1.2rem;
+  box-shadow: var(--shadow-card);
+  padding: clamp(1.8rem, 4vw, 3rem);
+}
+
+.kicker {
+  color: var(--color-accent-strong);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-size: var(--text-3xl);
+  color: var(--color-ink-strong);
+  margin-bottom: 1rem;
+}
+
+.text {
+  color: var(--color-ink-soft);
+  max-width: 34ch;
+  margin: 0 auto 1.75rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}

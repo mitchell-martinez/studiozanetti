@@ -1,0 +1,27 @@
+{
+  "acf_fc_layout": "image_text",
+  "eyebrow": "Our Approach",
+  "heading": "Calm guidance, beautiful results",
+  "body": "<p>From timeline planning to final gallery delivery, we make the process simple and enjoyable.</p>",
+  "image": {
+    "url": "https://picsum.photos/seed/zanetti-3/1600/1000",
+    "alt": "Couple portrait at sunset",
+    "width": 1600,
+    "height": 1000
+  },
+  "image_mobile": {
+    "url": "https://picsum.photos/seed/zanetti-4/1600/1000",
+    "alt": "Mobile crop portrait",
+    "width": 1600,
+    "height": 1000
+  },
+  "image_position": "right",
+  "image_ratio": "portrait",
+  "image_style": "soft",
+  "cta_text": "See the Process",
+  "cta_url": "/what-we-do",
+  "image_caption": "Captured at Golden Hour, Yarra Valley",
+  "section_theme": "champagne",
+  "top_spacing": "lg",
+  "bottom_spacing": "lg"
+}

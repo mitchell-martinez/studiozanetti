@@ -1,0 +1,13 @@
+{
+  "id": 1,
+  "title": {
+    "rendered": "Wedding ceremony"
+  },
+  "acf": {
+    "category": "Weddings",
+    "full_image": {
+      "url": "https://example.com/img.jpg",
+      "alt": "Wedding"
+    }
+  }
+}

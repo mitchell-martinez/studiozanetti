@@ -1,0 +1,40 @@
+@use '~/styles/global' as g;
+@use '../shared.module' as shared;
+
+.section {
+  @include shared.blockSection;
+}
+
+// ─── Alignment ───────────────────────────────────────────────────────────────
+
+.alignLeft {
+  justify-content: flex-start;
+}
+
+.alignCenter {
+  justify-content: center;
+}
+
+.alignRight {
+  justify-content: flex-end;
+}
+
+// ─── Button row ──────────────────────────────────────────────────────────────
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.spacingTight .buttonRow {
+  gap: 0.4rem;
+}
+
+.spacingNormal .buttonRow {
+  gap: 0.75rem;
+}
+
+.spacingLoose .buttonRow {
+  gap: 1.4rem;
+}

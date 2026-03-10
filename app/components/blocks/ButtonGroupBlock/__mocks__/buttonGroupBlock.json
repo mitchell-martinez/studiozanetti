@@ -1,0 +1,9 @@
+{
+  "acf_fc_layout": "button_group",
+  "buttons": [
+    { "label": "Send Enquiry", "url": "/contact", "variant": "primary", "size": "md" },
+    { "label": "View Gallery", "url": "/gallery", "variant": "secondary", "size": "md" }
+  ],
+  "alignment": "center",
+  "spacing": "normal"
+}

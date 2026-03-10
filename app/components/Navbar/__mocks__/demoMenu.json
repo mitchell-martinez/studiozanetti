@@ -1,0 +1,39 @@
+[
+  {
+    "id": 1,
+    "title": "Home",
+    "url": "/",
+    "children": []
+  },
+  {
+    "id": 2,
+    "title": "Galleries",
+    "url": "/galleries",
+    "children": [
+      {
+        "id": 21,
+        "title": "Weddings",
+        "url": "/galleries/weddings",
+        "children": []
+      },
+      {
+        "id": 22,
+        "title": "Events",
+        "url": "/galleries/events",
+        "children": []
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "title": "Prices",
+    "url": "/prices",
+    "children": []
+  },
+  {
+    "id": 4,
+    "title": "Contact",
+    "url": "/contact",
+    "children": []
+  }
+]

@@ -1,0 +1,210 @@
+# .github/workflows/deploy.yml
+# ─────────────────────────────────────────────────────────────────────────────
+# CI / CD pipeline for Studio Zanetti
+#
+# Branching strategy
+# ──────────────────
+#   staging    → auto-deploys to STAGING
+#   main       → auto-deploys to PRODUCTION
+#
+# To promote staging to production:
+#   git push origin staging:main   (or merge staging → main via PR)
+#
+# Deployment model
+# ────────────────
+#   All services on the VPS are managed by a single master docker-compose.yml.
+#   CI simply SSHs in, pulls the new image, and
+#   restarts the appropriate service.
+#
+# Pipeline stages
+# ───────────────
+#   1. ci               — lint, typecheck, unit tests (runs on every push + every PR)
+#   2. build            — build Docker image → push to ghcr.io (push events only)
+#   3. deploy-staging   — pull image, restart studiozanetti-staging service (staging only)
+#   4. deploy-production — pull image, restart studiozanetti service (main only)
+#
+# Required GitHub Secrets (Settings → Secrets and variables → Actions → Secrets)
+# ─────────────────────────────────────────────────────────────────────────────
+#   VPS_HOST             IP address or hostname of the VPS
+#   VPS_USER             SSH username (e.g. root or a dedicated deploy user)
+#   VPS_SSH_KEY          Private SSH key (ED25519 recommended) — matching public key
+#                        must be in ~/.ssh/authorized_keys on the VPS
+#   GHCR_TOKEN           GitHub Personal Access Token with read:packages scope
+#                        Used by the VPS to pull Docker images from ghcr.io
+#   WP_MUPLUGINS_PATH    Absolute path on VPS to the WordPress mu-plugins directory
+#                        e.g. /var/lib/docker/volumes/<vol>/_data/wp-content/mu-plugins/
+#   COMPOSE_DIR          Absolute path on VPS to the docker compose project directory
+#                        e.g. /home/deploy/myproject
+#
+# Required GitHub Variables (Settings → Secrets and variables → Actions → Variables)
+# ─────────────────────────────────────────────────────────────────────────────
+#   STAGING_URL          Full URL of the staging environment (used for environment link)
+#   PRODUCTION_URL       Full URL of the production environment (used for environment link)
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: CI & Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  pull_request:
+    branches:
+      - main
+      - staging
+
+jobs:
+  # ─── Stage 1: lint, typecheck, unit tests ────────────────────────────────
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+  # ─── Stage 2: build Docker image and push to ghcr.io ─────────────────────
+  build:
+    name: Build image
+    needs: ci
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve image tag
+        id: tag
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          echo "value=ghcr.io/${{ github.repository }}:${BRANCH}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.tag.outputs.value }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─── Stage 3: deploy to staging ──────────────────────────────────────────
+  deploy-staging:
+    name: Deploy → staging
+    needs: build
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync mu-plugins to WordPress volume
+        run: |
+          rsync -e "ssh -i ~/.ssh/deploy_key" \
+            wordpress/mu-plugins/sz-headless.php \
+            wordpress/mu-plugins/sz-acf-schema.php \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.WP_MUPLUGINS_PATH }}"
+
+      - name: Pull image and restart staging service
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_USER: ${{ github.repository_owner }}
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' bash -s" << 'ENDSSH'
+              echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
+              cd ${{ secrets.COMPOSE_DIR }}
+              docker compose pull studiozanetti-staging
+              docker compose up -d --no-deps studiozanetti-staging
+              docker image prune -f
+              docker logout ghcr.io
+          ENDSSH
+
+  # ─── Stage 4: deploy to production ───────────────────────────────────────
+  deploy-production:
+    name: Deploy → production
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment:
+      name: production
+      url: ${{ vars.PRODUCTION_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync mu-plugins to WordPress volume
+        run: |
+          rsync -e "ssh -i ~/.ssh/deploy_key" \
+            wordpress/mu-plugins/sz-headless.php \
+            wordpress/mu-plugins/sz-acf-schema.php \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.WP_MUPLUGINS_PATH }}"
+
+      - name: Pull image and restart production service
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_USER: ${{ github.repository_owner }}
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' bash -s" << 'ENDSSH'
+              echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
+              cd ${{ secrets.COMPOSE_DIR }}
+              docker compose pull studiozanetti
+              docker compose up -d --no-deps studiozanetti
+              docker image prune -f
+              docker logout ghcr.io
+          ENDSSH

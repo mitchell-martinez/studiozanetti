@@ -1,0 +1,21 @@
+{
+  "acf_fc_layout": "testimonial_carousel",
+  "heading": "Kind words",
+  "subheading": "From recent couples and clients.",
+  "testimonials": [
+    {
+      "quote": "Absolutely incredible from start to finish.",
+      "name": "Emily & Josh",
+      "context": "Wedding Couple"
+    },
+    {
+      "quote": "Beautiful photos and an easy experience.",
+      "name": "Sophie",
+      "context": "Private Event"
+    }
+  ],
+  "auto_rotate_seconds": 5,
+  "section_theme": "rose",
+  "top_spacing": "lg",
+  "bottom_spacing": "lg"
+}

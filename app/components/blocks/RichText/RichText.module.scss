@@ -1,0 +1,101 @@
+// ─── Rich text (WP WYSIWYG / Gutenberg content) ───────────────────────────────
+.richText {
+  color: #555;
+  line-height: 1.8;
+
+  p {
+    margin-bottom: 1em;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-serif);
+    margin: 1.5em 0 0.5em;
+    color: var(--color-dark);
+  }
+
+  a {
+    color: var(--color-gold);
+    text-decoration: underline;
+  }
+
+  ul,
+  ol {
+    padding-left: 1.5rem;
+    margin-bottom: 1em;
+  }
+
+  li {
+    margin-bottom: 0.4em;
+  }
+
+  strong {
+    font-weight: 700;
+  }
+
+  em {
+    font-style: italic;
+  }
+
+  // ─── WordPress image alignment classes (from WYSIWYG editor) ──────────────
+  // WP Classic Editor outputs: <p><strong><img class="aligncenter" …></strong></p>
+  // The class sits on the <img> itself, wrapped in inline elements.
+
+  img:global(.aligncenter) {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  :global(.aligncenter):not(img) {
+    text-align: center;
+
+    img {
+      display: inline-block;
+    }
+  }
+
+  img:global(.alignleft) {
+    display: block;
+    float: left;
+    margin: 0.4em 1.5em 1em 0;
+  }
+
+  img:global(.alignright) {
+    display: block;
+    float: right;
+    margin: 0.4em 0 1em 1.5em;
+  }
+
+  :global(.alignleft):not(img) {
+    float: left;
+    margin: 0.4em 1.5em 1em 0;
+  }
+
+  :global(.alignright):not(img) {
+    float: right;
+    margin: 0.4em 0 1em 1.5em;
+  }
+
+  :global(.alignnone) {
+    display: block;
+  }
+}
+
+// ─── Font-size variants ────────────────────────────────────────────────────────
+.fontSm {
+  font-size: var(--text-base);
+}
+
+.fontMd {
+  font-size: var(--text-lg);
+}
+
+.fontLg {
+  font-size: var(--text-xl);
+}

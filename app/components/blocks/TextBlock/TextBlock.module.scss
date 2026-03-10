@@ -1,0 +1,77 @@
+@use '~/styles/global' as g;
+@use '../shared.module' as shared;
+
+.section {
+  @include shared.blockSection;
+}
+
+.textContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+// ─── Max-width variants ──────────────────────────────────────────────────────
+
+.maxNarrow {
+  max-width: 560px;
+}
+
+.maxNormal {
+  max-width: 680px;
+}
+
+.maxWide {
+  max-width: 920px;
+}
+
+// ─── Text alignment (content within the block) ──────────────────────────────
+
+.textLeft {
+  text-align: left;
+}
+
+.textCenter {
+  text-align: center;
+}
+
+.textRight {
+  text-align: right;
+}
+
+.textJustify {
+  text-align: justify;
+}
+
+// ─── Block alignment (position of the block on the page) ────────────────────
+
+.blockLeft {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+.blockCenter {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.blockRight {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+// ─── Sub-elements ────────────────────────────────────────────────────────────
+
+.eyebrow {
+  font-size: var(--text-sm);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-accent-strong);
+  font-weight: 700;
+}
+
+.textHeading {
+  font-size: var(--text-2xl);
+}
+
+

@@ -1,0 +1,17 @@
+{
+  "acf_fc_layout": "image_block",
+  "image": {
+    "url": "https://picsum.photos/seed/zanetti-image/1600/1000",
+    "alt": "Scenic countryside landscape",
+    "width": 1600,
+    "height": 1000
+  },
+  "height": "lg",
+  "overlay_strength": "light",
+  "title": "Our Story",
+  "subtitle": "A decade of capturing love and light",
+  "overlay_text": "Capturing Life's Beautiful Moments",
+  "text_align": "center",
+  "parallax_scroll": false,
+  "aria_label": "Scenic landscape image"
+}
