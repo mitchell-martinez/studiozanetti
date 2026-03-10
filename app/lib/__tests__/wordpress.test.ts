@@ -349,6 +349,40 @@ describe('image normalisation in normalizePage', () => {
     }
   })
 
+  it('preserves tagline and subtitle on flat hero slides (PHP-normalised format)', async () => {
+    const flatSlide = {
+      url: 'https://example.com/slide.jpg',
+      alt: 'Slide',
+      width: 1920,
+      height: 1080,
+      tagline: 'Flat Tagline',
+      subtitle: 'Flat Subtitle',
+    }
+    mockFetch.mockReturnValueOnce(
+      ok([
+        pageWithBlocks([
+          {
+            acf_fc_layout: 'hero',
+            title: 'Test',
+            slides: [flatSlide],
+          },
+        ]),
+      ]),
+    )
+    const page = await getPageBySlug('home')
+    const block = page?.acf?.blocks?.[0]
+    if (block?.acf_fc_layout === 'hero') {
+      expect(block.slides?.[0]).toEqual({
+        url: flatSlide.url,
+        alt: flatSlide.alt,
+        width: flatSlide.width,
+        height: flatSlide.height,
+        tagline: 'Flat Tagline',
+        subtitle: 'Flat Subtitle',
+      })
+    }
+  })
+
   it('normalises service images within the services repeater', async () => {
     mockFetch.mockReturnValueOnce(
       ok([
