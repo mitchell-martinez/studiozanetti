@@ -1,6 +1,7 @@
 {
   "acf_fc_layout": "galleries",
   "heading": "Cat Gallery",
+  "description": "A curated selection from recent cat sessions, styled in a clean masonry layout.",
   "desktop_columns": 3,
   "mobile_columns": 2,
   "section_theme": "light",

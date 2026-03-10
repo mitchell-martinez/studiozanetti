@@ -99,9 +99,7 @@ async function writeBlocksViaAcfV3({ base, pageId, blocks, authHeader }) {
   const message =
     'ACF REST write endpoint not found. Expected /wp-json/acf/v3/pages/<id> or /wp-json/acf/v3/posts/<id>. Install/enable ACF to REST API (or ACF REST write support) on the WordPress backend.'
 
-  const error = new Error(
-    lastError ? `${message} Last error: ${lastError.message}` : message,
-  )
+  const error = new Error(lastError ? `${message} Last error: ${lastError.message}` : message)
   error.code = 'acf_rest_route_missing'
   throw error
 }

@@ -8,6 +8,8 @@ A Flothemes-style, click-to-expand image gallery block for full-page portfolio s
 - Auto-structures photos into equal-width columns.
 - Uses **3 columns on desktop** and **2 columns on mobile**.
 - Keeps **0.5rem spacing** between columns and items.
+- Applies fixed vertical rhythm using **Small spacing (2rem)** above title, title to description, description to gallery, and below gallery.
+- Applies fixed gallery side padding of **2rem**.
 - Opens each image in a large modal preview on click.
 - Includes a subtle "move into place" load animation.
 
@@ -17,12 +19,14 @@ A Flothemes-style, click-to-expand image gallery block for full-page portfolio s
 2. In **Page Blocks**, add layout **galleries**.
 3. Fill in:
    - **Heading** (optional)
+  - **Description** (optional)
    - **Insert Images** (required repeater)
      - **Image** (required)
      - **Caption** (optional)
    - **Desktop Columns** (optional, defaults to 3)
    - **Mobile Columns** (optional, defaults to 2)
-   - **Section Theme / Spacing** (optional)
+
+Note: spacing around this component is intentionally fixed to keep configuration lightweight.
 
 ## Tips
 

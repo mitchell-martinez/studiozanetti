@@ -299,8 +299,9 @@ add_action( 'acf/init', function () {
 		],
 	], $style_fields( 'sz_gallery_categories' ));
 
-	$galleries_fields = array_merge([
+	$galleries_fields = [
 		[ 'key' => 'field_sz_galleries_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
+		[ 'key' => 'field_sz_galleries_description', 'label' => 'Description', 'name' => 'description', 'type' => 'wysiwyg', 'tabs' => 'visual', 'toolbar' => 'basic', 'media_upload' => 0 ],
 		[ 'key' => 'field_sz_galleries_desktop_columns', 'label' => 'Desktop Columns', 'name' => 'desktop_columns', 'type' => 'number', 'min' => 2, 'max' => 4, 'default_value' => 3 ],
 		[ 'key' => 'field_sz_galleries_mobile_columns', 'label' => 'Mobile Columns', 'name' => 'mobile_columns', 'type' => 'number', 'min' => 1, 'max' => 3, 'default_value' => 2 ],
 		[
@@ -316,7 +317,7 @@ add_action( 'acf/init', function () {
 				[ 'key' => 'field_sz_galleries_image_caption', 'label' => 'Caption', 'name' => 'caption', 'type' => 'text' ],
 			],
 		],
-	], $style_fields( 'sz_galleries' ));
+	];
 
 	$image_block_fields = [
 		[ 'key' => 'field_sz_image_block_image', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'required' => 1 ],

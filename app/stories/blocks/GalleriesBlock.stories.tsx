@@ -2,7 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import GalleriesBlock from '~/components/blocks/GalleriesBlock'
 import galleriesBlockData from '~/components/blocks/GalleriesBlock/__mocks__/galleriesBlock.json'
 import type { GalleriesBlock as GalleriesBlockType } from '~/types/wordpress'
-import { blockStyleArgTypes } from '../helpers/blockArgTypes'
 
 type GalleriesArgs = Omit<GalleriesBlockType, 'acf_fc_layout'>
 const galleriesBlock = galleriesBlockData as GalleriesBlockType
@@ -12,15 +11,14 @@ const meta: Meta<GalleriesArgs> = {
   tags: ['autodocs'],
   args: {
     heading: galleriesBlock.heading,
+    description: galleriesBlock.description,
     images: galleriesBlock.images,
     desktop_columns: galleriesBlock.desktop_columns,
     mobile_columns: galleriesBlock.mobile_columns,
-    section_theme: galleriesBlock.section_theme,
-    top_spacing: galleriesBlock.top_spacing,
-    bottom_spacing: galleriesBlock.bottom_spacing,
   },
   argTypes: {
     heading: { control: 'text', description: 'Section heading above the gallery' },
+    description: { control: 'text', description: 'Optional intro copy between heading and gallery' },
     images: {
       control: 'object',
       description: 'Insert Images repeater list with image + optional caption',
@@ -33,7 +31,6 @@ const meta: Meta<GalleriesArgs> = {
       control: { type: 'number', min: 1, max: 3, step: 1 },
       description: 'Mobile column count (defaults to 2)',
     },
-    ...blockStyleArgTypes,
   },
   render: (args) => <GalleriesBlock block={{ acf_fc_layout: 'galleries', ...args }} />,
 }
@@ -43,8 +40,8 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {}
 
-export const RoseTheme: Story = {
+export const TwoColumnsDesktop: Story = {
   args: {
-    section_theme: 'rose',
+    desktop_columns: 2,
   },
 }

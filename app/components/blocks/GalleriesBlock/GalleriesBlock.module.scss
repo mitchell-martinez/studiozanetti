@@ -6,7 +6,7 @@
 }
 
 .heading {
-  margin: 0 auto 1.5rem;
+  margin: 0 auto 2rem;
   max-width: min(100%, 90rem);
   padding-inline: 0.75rem;
   color: var(--color-ink-strong);
@@ -14,11 +14,20 @@
   text-align: center;
 }
 
+.description {
+  margin: 0 auto 2rem;
+  max-width: 680px;
+  padding-inline: 0.75rem;
+  color: var(--color-ink);
+  text-align: left;
+}
+
 .masonry {
   --column-count: 3;
 
   width: 100%;
-  padding-inline: 0.5rem;
+  padding-inline: 2rem;
+  margin: 0 auto 2rem;
   display: grid;
   grid-template-columns: repeat(var(--column-count), minmax(0, 1fr));
   gap: 0.5rem;
@@ -117,6 +126,12 @@
 .modalActions {
   display: inline-flex;
   gap: 0.45rem;
+}
+
+@media (max-width: 640px) {
+  .masonry {
+    padding-inline: 1rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

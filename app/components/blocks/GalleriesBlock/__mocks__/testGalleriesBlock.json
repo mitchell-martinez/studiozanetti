@@ -1,6 +1,7 @@
 {
   "acf_fc_layout": "galleries",
   "heading": "Cat Gallery",
+  "description": "Three portraits from a recent set.",
   "desktop_columns": 3,
   "mobile_columns": 2,
   "images": [

@@ -228,6 +228,7 @@ export interface WPGalleriesImageItem {
 export interface GalleriesBlock extends BlockStyleOptions {
   acf_fc_layout: 'galleries'
   heading?: string
+  description?: string
   images: WPGalleriesImageItem[]
   desktop_columns?: number
   mobile_columns?: number
