@@ -48,7 +48,7 @@ const meta: Meta<ServicesArgs> = {
     font_size: {
       control: 'inline-radio',
       options: ['sm', 'md', 'lg'],
-      description: 'Font size for service description text (sm by default)',
+      description: 'Font size for card title and description (sm by default)',
     },
     services: {
       control: 'object',

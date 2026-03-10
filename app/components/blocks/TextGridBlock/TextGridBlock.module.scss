@@ -94,8 +94,16 @@
 
 // ─── Font-size variants ─────────────────────────────────────────────────────
 
+.fontMd .cardTitle {
+  font-size: var(--text-xl);
+}
+
 .fontMd .cardBody {
   font-size: var(--text-base);
+}
+
+.fontLg .cardTitle {
+  font-size: var(--text-2xl);
 }
 
 .fontLg .cardBody {

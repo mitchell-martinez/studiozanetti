@@ -180,7 +180,7 @@ add_action( 'acf/init', function () {
 		],
 		[ 'key' => 'field_sz_services_cta_text', 'label' => 'CTA Text', 'name' => 'cta_text', 'type' => 'text' ],
 		[ 'key' => 'field_sz_services_cta_url', 'label' => 'CTA URL', 'name' => 'cta_url', 'type' => 'url' ],
-		[ 'key' => 'field_sz_services_font_size', 'label' => 'Body Font Size', 'name' => 'font_size', 'type' => 'select', 'choices' => [ 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => 'sm', 'instructions' => 'Controls the font size of the service description text.' ],
+		[ 'key' => 'field_sz_services_font_size', 'label' => 'Font Size', 'name' => 'font_size', 'type' => 'select', 'choices' => [ 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => 'sm', 'instructions' => 'Controls the font size of the service card title and description text.' ],
 	], $style_fields( 'sz_services' ));
 
 	$biography_fields = array_merge([
@@ -388,7 +388,7 @@ add_action( 'acf/init', function () {
 				[ 'key' => 'field_sz_text_grid_item_cta_url', 'label' => 'CTA URL', 'name' => 'cta_url', 'type' => 'url', 'instructions' => 'Optional link destination for this card.' ],
 			],
 		],
-		[ 'key' => 'field_sz_text_grid_font_size', 'label' => 'Body Font Size', 'name' => 'font_size', 'type' => 'select', 'choices' => [ 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => 'sm', 'instructions' => 'Controls the font size of the card body text.' ],
+		[ 'key' => 'field_sz_text_grid_font_size', 'label' => 'Font Size', 'name' => 'font_size', 'type' => 'select', 'choices' => [ 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => 'sm', 'instructions' => 'Controls the font size of the card title and body text.' ],
 	], $style_fields( 'sz_text_grid' ));
 
 	$instagram_feed_fields = array_merge([
