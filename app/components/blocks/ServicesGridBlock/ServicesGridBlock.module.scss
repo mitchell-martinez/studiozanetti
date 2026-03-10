@@ -111,8 +111,16 @@
 
 // ─── Font-size variants ─────────────────────────────────────────────────────
 
+.fontMd .serviceTitle {
+  font-size: var(--text-xl);
+}
+
 .fontMd .serviceDesc {
   font-size: var(--text-base);
+}
+
+.fontLg .serviceTitle {
+  font-size: var(--text-2xl);
 }
 
 .fontLg .serviceDesc {

@@ -44,7 +44,7 @@ const meta: Meta<TextGridArgs> = {
     font_size: {
       control: 'inline-radio',
       options: ['sm', 'md', 'lg'],
-      description: 'Font size for card body text (sm by default)',
+      description: 'Font size for card title and body (sm by default)',
     },
     items: {
       control: 'object',
