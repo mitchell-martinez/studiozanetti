@@ -1,5 +1,11 @@
+import type { CSSProperties } from 'react'
 import styles from './ImageBlock.module.scss'
 import type { ImageBlockProps } from './types'
+
+const clampOpacity = (value: number | undefined, fallback: number): number => {
+  if (typeof value !== 'number' || Number.isNaN(value)) return fallback
+  return Math.min(1, Math.max(0, value))
+}
 
 /**
  * Full-width image block with an optional parallax scroll effect.
@@ -53,6 +59,8 @@ const ImageBlock = ({ block }: ImageBlockProps) => {
   const HeadingTag = block.heading_tag ?? 'h2'
 
   const image = block.image
+  const headingOpacity = clampOpacity(block.heading_opacity, 1)
+  const imageShadowStrength = clampOpacity(block.image_shadow_strength, 0)
 
   return (
     <section
@@ -81,8 +89,19 @@ const ImageBlock = ({ block }: ImageBlockProps) => {
 
       {overlayClass && <div className={`${styles.overlay} ${overlayClass}`} />}
 
+      {imageShadowStrength > 0 && (
+        <div
+          className={styles.imageShadow}
+          style={{ '--image-shadow-opacity': imageShadowStrength } as CSSProperties}
+          aria-hidden="true"
+        />
+      )}
+
       {(block.title || block.subtitle || block.overlay_text) && (
-        <div className={`${styles.content} ${alignClass} ${textMaxWidthClass}`}>
+        <div
+          className={`${styles.content} ${alignClass} ${textMaxWidthClass}`}
+          style={{ '--heading-opacity': headingOpacity } as CSSProperties}
+        >
           {block.title && (
             <HeadingTag className={`${styles.title} ${block.title_pop_out ? styles.popOut : ''}`}>
               {block.title}

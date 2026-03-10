@@ -10,6 +10,8 @@
   "overlay_strength": "light",
   "title": "Our Story",
   "subtitle": "A decade of capturing love and light",
+  "heading_opacity": 0.9,
+  "image_shadow_strength": 0.3,
   "overlay_text": "Capturing Life's Beautiful Moments",
   "text_align": "center",
   "parallax_scroll": false,

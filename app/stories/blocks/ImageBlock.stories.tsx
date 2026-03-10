@@ -16,6 +16,8 @@ const meta: Meta<ImageArgs> = {
     overlay_strength: baseBlock.overlay_strength,
     title: baseBlock.title,
     subtitle: baseBlock.subtitle,
+    heading_opacity: baseBlock.heading_opacity,
+    image_shadow_strength: baseBlock.image_shadow_strength,
     overlay_text: baseBlock.overlay_text,
     text_align: baseBlock.text_align,
     parallax_scroll: baseBlock.parallax_scroll,
@@ -36,6 +38,14 @@ const meta: Meta<ImageArgs> = {
     overlay_text: { control: 'text', description: 'Large text displayed over the image' },
     title: { control: 'text', description: 'Centred title text over the image' },
     subtitle: { control: 'text', description: 'Subtitle displayed below the title' },
+    heading_opacity: {
+      control: { type: 'range', min: 0, max: 1, step: 0.05 },
+      description: 'Opacity for title/subtitle text (0 to 1)',
+    },
+    image_shadow_strength: {
+      control: { type: 'range', min: 0, max: 1, step: 0.05 },
+      description: 'Darkens the image itself (0 = none, 1 = black)',
+    },
     heading_tag: {
       control: 'select',
       options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],

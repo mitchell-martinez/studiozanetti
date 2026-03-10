@@ -257,4 +257,30 @@ describe('ImageBlock', () => {
     const content = container.querySelector('[class*="content"]')!
     expect(content.className).toMatch(/textNormal/)
   })
+
+  // ─── Heading opacity + image shadow ───────────────────────────────────────
+
+  it('sets --heading-opacity CSS variable from heading_opacity', () => {
+    const { container } = renderBlock({ title: 'Opacity test', heading_opacity: 0.55 })
+    const content = container.querySelector('[class*="content"]') as HTMLElement
+    expect(content.style.getPropertyValue('--heading-opacity')).toBe('0.55')
+  })
+
+  it('clamps heading_opacity to 1 when value is above range', () => {
+    const { container } = renderBlock({ title: 'Opacity clamp', heading_opacity: 1.5 })
+    const content = container.querySelector('[class*="content"]') as HTMLElement
+    expect(content.style.getPropertyValue('--heading-opacity')).toBe('1')
+  })
+
+  it('renders image shadow layer and sets its strength variable', () => {
+    const { container } = renderBlock({ image_shadow_strength: 0.3 })
+    const shadow = container.querySelector('[class*="imageShadow"]') as HTMLElement
+    expect(shadow).toBeInTheDocument()
+    expect(shadow.style.getPropertyValue('--image-shadow-opacity')).toBe('0.3')
+  })
+
+  it('does not render image shadow layer when strength is zero', () => {
+    const { container } = renderBlock({ image_shadow_strength: 0 })
+    expect(container.querySelector('[class*="imageShadow"]')).toBeNull()
+  })
 })
