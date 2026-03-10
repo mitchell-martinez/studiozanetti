@@ -90,20 +90,22 @@
 }
 
 .slideCredit {
-  margin-top: auto;
+  position: absolute;
+  bottom: clamp(1.5rem, 4vw, 3rem);
+  left: clamp(1.5rem, 4vw, 3rem);
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.3rem;
 }
 
 .slideTagline {
-  font-size: 1rem;
+  font-size: 2rem;
   color: rgb(255 255 255 / 85%);
   letter-spacing: 0.02em;
 }
 
 .slideSubtitle {
-  font-size: 0.75rem;
+  font-size: 1.5rem;
   color: rgb(255 255 255 / 60%);
   letter-spacing: 0.03em;
 }
