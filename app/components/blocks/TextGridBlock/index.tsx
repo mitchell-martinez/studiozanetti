@@ -23,11 +23,7 @@ const TextGridBlock = ({ block }: TextGridBlockProps) => {
   const textAlignClass = alignClass[block.text_align ?? 'left'] ?? ''
 
   const fontSizeClass =
-    block.font_size === 'md'
-      ? styles.fontMd
-      : block.font_size === 'lg'
-        ? styles.fontLg
-        : ''
+    block.font_size === 'md' ? styles.fontMd : block.font_size === 'lg' ? styles.fontLg : ''
 
   const bgImageStyle = getBackgroundImageStyle(block)
 

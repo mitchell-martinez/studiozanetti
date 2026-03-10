@@ -64,7 +64,8 @@ const meta: Meta<ImageTextArgs> = {
     image_caption: { control: 'text', description: 'Short caption centred below the image' },
     url: {
       control: 'text',
-      description: 'Optional URL — makes the entire block clickable. Internal paths use client routing.',
+      description:
+        'Optional URL — makes the entire block clickable. Internal paths use client routing.',
     },
     font_size: {
       control: 'inline-radio',

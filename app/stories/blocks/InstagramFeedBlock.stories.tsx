@@ -25,7 +25,10 @@ const meta: Meta<InstagramArgs> = {
     subheading: { control: 'text', description: 'Subheading below the heading' },
     username: { control: 'text', description: 'Instagram username (without @)' },
     profile_url: { control: 'text', description: 'Full Instagram profile URL' },
-    cta_text: { control: 'text', description: 'Follow button text (defaults to "Follow @username")' },
+    cta_text: {
+      control: 'text',
+      description: 'Follow button text (defaults to "Follow @username")',
+    },
     columns: {
       control: 'inline-radio',
       options: [2, 3, 4, 6],
