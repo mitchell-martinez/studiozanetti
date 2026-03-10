@@ -5,7 +5,7 @@ import Footer from '~/components/Footer'
 import Navbar from '~/components/Navbar'
 import OfflineBanner from '~/components/OfflineBanner'
 import { getSiteUrlFromEnv } from '~/lib/seo'
-import { getNavMenu, getPageBySlug, getSiteSettings } from '~/lib/wordpress'
+import { getNavMenu, getPageByPath, getSiteSettings } from '~/lib/wordpress'
 import globalStyles from '~/styles/global.scss?url'
 import type { WPMenuItem, WPSiteSettings } from '~/types/wordpress'
 
@@ -29,8 +29,7 @@ export async function loader({ request }: { request: Request }): Promise<RootLoa
   // For normal CMS pages, derive slug and read optional ACF menu override.
   // Preview/admin utility routes keep the primary menu.
   if (normalizedPath && normalizedPath !== 'preview') {
-    const slug = normalizedPath.split('/').pop() || ''
-    const page = await getPageBySlug(slug)
+    const page = await getPageByPath(normalizedPath, { requireExactPath: true })
     const override = page?.acf?.menu_override?.trim()
     if (override) {
       menuLocation = override

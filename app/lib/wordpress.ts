@@ -46,9 +46,19 @@ interface RawWPEmbeddedMedia {
 }
 
 interface RawWPPage extends WPPage {
+  link?: string
   _embedded?: {
     'wp:featuredmedia'?: RawWPEmbeddedMedia[]
   }
+}
+
+function normalizePath(path: string): string {
+  return path.replace(/^\/+|\/+$/g, '')
+}
+
+function toTrailingSlashPath(path: string): string {
+  const normalized = normalizePath(path)
+  return normalized ? `/${normalized}/` : '/'
 }
 
 // ─── Image normalisation ─────────────────────────────────────────────────────
@@ -268,6 +278,63 @@ export async function getPageBySlug(slug: string): Promise<WPPage | null> {
     `/wp/v2/pages?slug=${encodeURIComponent(slug)}&status=publish&_embed=1`,
   )
   return pages?.[0] ? normalizePage(pages[0]) : null
+}
+
+export interface GetPageByPathOptions {
+  /**
+   * When true, nested paths must match a WordPress permalink path exactly.
+   * No fallback to first same-slug match.
+   */
+  requireExactPath?: boolean
+}
+
+/**
+ * Resolve a page by full request path.
+ *
+ * Supports nested paths (e.g. `gallery/stylish-brides`) and can be
+ * configured to require exact permalink-path matching.
+ */
+
+export async function getPageByPath(
+  path: string,
+  options: GetPageByPathOptions = {},
+): Promise<WPPage | null> {
+  const normalizedPath = normalizePath(path)
+  const lookupPath = normalizedPath || 'home'
+
+  if (lookupPath === 'home') {
+    return getPageBySlug('home')
+  }
+
+  if (!lookupPath.includes('/')) {
+    return getPageBySlug(lookupPath)
+  }
+
+  const lastSegment = lookupPath.split('/').filter(Boolean).at(-1)
+  if (!lastSegment) return null
+
+  const pages = await wpFetch<RawWPPage[]>(
+    `/wp/v2/pages?slug=${encodeURIComponent(lastSegment)}&status=publish&_embed=1&per_page=100`,
+  )
+
+  if (!pages?.length) return null
+
+  const desiredPath = toTrailingSlashPath(lookupPath)
+  const exactPage = pages.find((page) => {
+    if (!page.link) return false
+    try {
+      return toTrailingSlashPath(new URL(page.link).pathname) === desiredPath
+    } catch {
+      return false
+    }
+  })
+
+  if (options.requireExactPath) {
+    return exactPage ? normalizePage(exactPage) : null
+  }
+
+  // Fallback: if no exact permalink match exists, use first slug match.
+  return normalizePage(exactPage ?? pages[0])
 }
 
 /** Fetch all published pages. Used by react-router.config.ts for dynamic prerendering. */

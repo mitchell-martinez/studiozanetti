@@ -10,21 +10,21 @@ This block is available as an **Image** layout within the **Page Blocks** flexib
 
 ### Fields
 
-| Field               | Type       | Required | Description                                                                                                               |
-| ------------------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
-| Image               | Image      | ✅       | The full-width background image. Use high-resolution landscape images (≥ 1600 × 1000px) for best results.                 |
-| Height              | Select     | —        | Section height: **Medium** (68vh), **Large** (86vh, default), or **Full Screen** (100vh). Same options as the Hero block. |
-| Overlay Strength    | Select     | —        | Optional dark overlay: **Light**, **Medium**, or **Strong**. Leave empty for no overlay.                                  |
-| Overlay Text        | Text       | —        | Optional large text displayed centred over the image.                                                                     |
-| Title               | Text       | —        | Optional centred title over the image.                                                                                    |
-| Title Pop Out       | True/False | —        | Enlarge the title text on mouseover. **On by default**.                                                                   |
-| Subtitle            | Text       | —        | Optional subtitle displayed below the title.                                                                              |
-| Subtitle Pop Out    | True/False | —        | Enlarge the subtitle text on mouseover. **Off by default**.                                                               |
-| Heading Opacity     | Number     | —        | Opacity for title + subtitle text (`0` to `1`). Example: `0.8` = slightly transparent text.                             |
-| Image Shadow Strength | Number   | —        | Darkens the image itself (`0` to `1`). Example: `0.3` = moderate shadow, `1` = fully black image.                       |
-| Text Align          | Select     | —        | Alignment of overlay text: **Centre** (default), **Left**, or **Right**.                                                  |
-| Parallax Scroll     | True/False | —        | Toggle parallax depth effect on or off. **Off by default** (static banner).                                               |
-| Accessibility Label | Text       | —        | Custom `aria-label` for the section. Defaults to "Full-width image banner".                                               |
+| Field                 | Type       | Required | Description                                                                                                               |
+| --------------------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Image                 | Image      | ✅       | The full-width background image. Use high-resolution landscape images (≥ 1600 × 1000px) for best results.                 |
+| Height                | Select     | —        | Section height: **Medium** (68vh), **Large** (86vh, default), or **Full Screen** (100vh). Same options as the Hero block. |
+| Overlay Strength      | Select     | —        | Optional dark overlay: **Light**, **Medium**, or **Strong**. Leave empty for no overlay.                                  |
+| Overlay Text          | Text       | —        | Optional large text displayed centred over the image.                                                                     |
+| Title                 | Text       | —        | Optional centred title over the image.                                                                                    |
+| Title Pop Out         | True/False | —        | Enlarge the title text on mouseover. **On by default**.                                                                   |
+| Subtitle              | Text       | —        | Optional subtitle displayed below the title.                                                                              |
+| Subtitle Pop Out      | True/False | —        | Enlarge the subtitle text on mouseover. **Off by default**.                                                               |
+| Heading Opacity       | Number     | —        | Opacity for title + subtitle text (`0` to `1`). Example: `0.8` = slightly transparent text.                               |
+| Image Shadow Strength | Number     | —        | Darkens the image itself (`0` to `1`). Example: `0.3` = moderate shadow, `1` = fully black image.                         |
+| Text Align            | Select     | —        | Alignment of overlay text: **Centre** (default), **Left**, or **Right**.                                                  |
+| Parallax Scroll       | True/False | —        | Toggle parallax depth effect on or off. **Off by default** (static banner).                                               |
+| Accessibility Label   | Text       | —        | Custom `aria-label` for the section. Defaults to "Full-width image banner".                                               |
 
 ### How to Add
 
