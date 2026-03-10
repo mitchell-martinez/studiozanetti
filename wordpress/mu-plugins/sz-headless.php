@@ -168,6 +168,122 @@ function sz_clean_menu_nodes( array $nodes ): array {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 2b. REST API — PAGE BLOCKS WRITE ENDPOINT (ACF PRO COMPATIBLE)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// POST /wp-json/sz/v1/page-blocks/<id>
+// Body: { "blocks": [ ...acf flexible content rows... ] }
+//
+// This endpoint is used by local migration/import scripts when wp/v2 does not
+// accept writing `acf` fields directly and no acf/v3 write route is available.
+
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'sz/v1', '/page-blocks/(?P<id>\d+)', [
+		'methods'             => 'POST',
+		'callback'            => 'sz_update_page_blocks',
+		'permission_callback' => function ( WP_REST_Request $request ) {
+			$post_id = (int) $request->get_param( 'id' );
+			return $post_id > 0 && current_user_can( 'edit_post', $post_id );
+		},
+		'args'                => [
+			'id' => [
+				'required'          => true,
+				'validate_callback' => function ( $param ) {
+					return is_numeric( $param ) && (int) $param > 0;
+				},
+			],
+		],
+	] );
+} );
+
+/**
+ * REST callback: update `blocks` ACF field for a page.
+ */
+function sz_update_page_blocks( WP_REST_Request $request ) {
+	$post_id = (int) $request->get_param( 'id' );
+	$post    = get_post( $post_id );
+
+	if ( ! $post || $post->post_type !== 'page' ) {
+		return new WP_REST_Response( [ 'message' => 'Page not found.' ], 404 );
+	}
+
+	$params = $request->get_json_params();
+	$blocks = is_array( $params ) && array_key_exists( 'blocks', $params ) ? $params['blocks'] : null;
+
+	if ( ! is_array( $blocks ) ) {
+		return new WP_REST_Response( [ 'message' => 'Invalid request body. Expected "blocks" array.' ], 400 );
+	}
+
+	if ( ! function_exists( 'update_field' ) ) {
+		return new WP_REST_Response( [ 'message' => 'ACF is not available.' ], 500 );
+	}
+
+	// Normalise incoming gallery rows so ACF image subfields receive attachment IDs.
+	$site_url = rtrim( get_site_url(), '/' );
+	$blocks   = array_map( function ( $block ) use ( $site_url ) {
+		if ( ! is_array( $block ) || ( $block['acf_fc_layout'] ?? '' ) !== 'galleries' ) {
+			return $block;
+		}
+
+		if ( empty( $block['images'] ) || ! is_array( $block['images'] ) ) {
+			return $block;
+		}
+
+		$normalised_rows = [];
+		foreach ( $block['images'] as $row ) {
+			if ( ! is_array( $row ) ) {
+				continue;
+			}
+
+			$image = $row['image'] ?? null;
+			$attachment_id = 0;
+
+			if ( is_numeric( $image ) ) {
+				$attachment_id = (int) $image;
+			} elseif ( is_array( $image ) && ! empty( $image['url'] ) && is_string( $image['url'] ) ) {
+				$raw_url = $image['url'];
+				$attachment_id = (int) attachment_url_to_postid( $raw_url );
+
+				// If source domain differs, retry with the current site host + same path.
+				if ( $attachment_id === 0 ) {
+					$path = wp_parse_url( $raw_url, PHP_URL_PATH );
+					if ( is_string( $path ) && $path !== '' ) {
+						$attachment_id = (int) attachment_url_to_postid( $site_url . $path );
+					}
+				}
+			}
+
+			// Keep only rows with a resolvable image ID; image subfield is required.
+			if ( $attachment_id > 0 ) {
+				$normalised_rows[] = [
+					'image'   => $attachment_id,
+					'caption' => isset( $row['caption'] ) ? (string) $row['caption'] : '',
+				];
+			}
+		}
+
+		$block['images'] = $normalised_rows;
+		return $block;
+	}, $blocks );
+
+	// Update by field name. Field group is registered in sz-acf-schema.php.
+	$result = update_field( 'blocks', $blocks, $post_id );
+
+	// update_field can return false when value is unchanged; verify persisted state.
+	$persisted = function_exists( 'get_field' ) ? get_field( 'blocks', $post_id ) : null;
+	if ( $result === false && $persisted !== $blocks ) {
+		return new WP_REST_Response( [ 'message' => 'Failed to update page blocks.' ], 500 );
+	}
+
+	return new WP_REST_Response( [
+		'id'             => $post_id,
+		'status'         => 'updated',
+		'blocks_count'   => count( $blocks ),
+		'persisted'      => $persisted,
+	], 200 );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 3. REST API — PREVIEW ENDPOINT
 // ─────────────────────────────────────────────────────────────────────────────
 //
