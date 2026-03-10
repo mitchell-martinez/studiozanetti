@@ -3,7 +3,7 @@ import { isRouteErrorResponse, useLoaderData, useRouteError } from 'react-router
 import BlockRenderer from '~/components/blocks/BlockRenderer'
 import RichText from '~/components/RichText'
 import { buildPageSchemas, toCanonicalUrl } from '~/lib/seo'
-import { getPageBySlug } from '~/lib/wordpress'
+import { getPageByPath } from '~/lib/wordpress'
 import type { WPPage } from '~/types/wordpress'
 import styles from './$slug.module.scss'
 import NotFoundRoute from './404'
@@ -20,12 +20,11 @@ interface LoaderData {
 // automatically becomes available at /pricing — no code change needed.
 export async function loader({ params }: LoaderFunctionArgs): Promise<LoaderData> {
   const rawPath = params['*'] ?? params.slug ?? ''
-  const slug = rawPath.replace(/^\/+|\/+$/g, '')
-  const lookupSlug = slug || 'home'
-  const page = await getPageBySlug(lookupSlug)
+  const lookupPath = rawPath.replace(/^\/+|\/+$/g, '') || 'home'
+  const page = await getPageByPath(lookupPath, { requireExactPath: true })
   if (!page) throw new Response('Not Found', { status: 404 })
 
-  const pagePath = lookupSlug === 'home' ? '/' : `/${lookupSlug}`
+  const pagePath = lookupPath === 'home' ? '/' : `/${lookupPath}`
   const canonicalUrl = toCanonicalUrl(pagePath)
 
   return { page, canonicalUrl }

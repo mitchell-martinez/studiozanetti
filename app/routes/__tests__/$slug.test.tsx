@@ -4,10 +4,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import CmsPage, { loader } from '../$slug'
 
 vi.mock('~/lib/wordpress', () => ({
-  getPageBySlug: vi.fn(),
+  getPageByPath: vi.fn(),
 }))
 
-import { getPageBySlug } from '~/lib/wordpress'
+import { getPageByPath } from '~/lib/wordpress'
 import mockPageData from '../__mocks__/mockPage.json'
 
 afterEach(() => {
@@ -71,14 +71,14 @@ describe('CmsPage route', () => {
     })
 
     it('maps root path to the home slug', async () => {
-      vi.mocked(getPageBySlug).mockResolvedValueOnce(mockPage as never)
+      vi.mocked(getPageByPath).mockResolvedValueOnce(mockPage as never)
       const result = await loader(makeArgs('') as never)
       expect(result).toEqual({ page: mockPage, canonicalUrl: 'https://www.studiozanetti.com.au' })
-      expect(getPageBySlug).toHaveBeenCalledWith('home')
+      expect(getPageByPath).toHaveBeenCalledWith('home', { requireExactPath: true })
     })
 
     it('returns page data when WordPress returns a match', async () => {
-      vi.mocked(getPageBySlug).mockResolvedValueOnce(mockPage as never)
+      vi.mocked(getPageByPath).mockResolvedValueOnce(mockPage as never)
       const result = await loader(makeArgs('pricing') as never)
       expect(result).toEqual({
         page: mockPage,
@@ -86,13 +86,21 @@ describe('CmsPage route', () => {
       })
     })
 
+    it('passes nested paths through to path lookup', async () => {
+      vi.mocked(getPageByPath).mockResolvedValueOnce(mockPage as never)
+      await loader(makeArgs('gallery/stylish-brides') as never)
+      expect(getPageByPath).toHaveBeenCalledWith('gallery/stylish-brides', {
+        requireExactPath: true,
+      })
+    })
+
     it('throws a 404 Response when the page is not found', async () => {
-      vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
+      vi.mocked(getPageByPath).mockResolvedValueOnce(null)
       await expect(loader(makeArgs('nonexistent') as never)).rejects.toBeInstanceOf(Response)
     })
 
     it('throws a 404 Response when WordPress is unavailable', async () => {
-      vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
+      vi.mocked(getPageByPath).mockResolvedValueOnce(null)
       await expect(loader(makeArgs('pricing') as never)).rejects.toBeInstanceOf(Response)
     })
   })

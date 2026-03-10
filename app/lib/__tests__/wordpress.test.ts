@@ -9,6 +9,7 @@ import {
   getAllPages,
   getGalleryPhotos,
   getNavMenu,
+  getPageByPath,
   getPageBySlug,
   getPreviewPage,
   getSiteSettings,
@@ -110,6 +111,101 @@ describe('getPageBySlug', () => {
   it('returns null when fetch throws a network error', async () => {
     mockFetch.mockRejectedValueOnce(new Error('Network error'))
     expect(await getPageBySlug('home')).toBeNull()
+  })
+})
+
+describe('getPageByPath', () => {
+  it('resolves nested path by matching the page permalink path', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([
+        {
+          ...mockPage,
+          slug: 'stylish-brides',
+          link: 'https://cms.example.com/gallery/stylish-brides/',
+        },
+        {
+          ...mockPage,
+          id: 99,
+          slug: 'stylish-brides',
+          link: 'https://cms.example.com/stylish-brides/',
+        },
+      ]),
+    )
+
+    const result = await getPageByPath('gallery/stylish-brides')
+    expect(result?.id).toBe(mockPage.id)
+    expect(mockFetch).toHaveBeenCalledWith(
+      `${WP_URL}/wp-json/wp/v2/pages?slug=stylish-brides&status=publish&_embed=1&per_page=100`,
+      expect.objectContaining({ headers: { Accept: 'application/json' } }),
+    )
+  })
+
+  it('falls back to first slug match when nested permalink does not exist', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([
+        { ...mockPage, slug: 'stylish-brides', link: 'https://cms.example.com/stylish-brides/' },
+      ]),
+    )
+
+    const result = await getPageByPath('gallery/stylish-brides')
+    expect(result?.slug).toBe('stylish-brides')
+  })
+
+  it('returns null in strict mode when nested permalink does not exist', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([
+        { ...mockPage, slug: 'stylish-brides', link: 'https://cms.example.com/stylish-brides/' },
+      ]),
+    )
+
+    const result = await getPageByPath('gallery/stylish-brides', { requireExactPath: true })
+    expect(result).toBeNull()
+  })
+
+  it('correctly resolves between duplicate leaf slugs on different parent paths', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([
+        {
+          ...mockPage,
+          id: 10,
+          slug: 'stylish-brides',
+          link: 'https://cms.example.com/gallery/stylish-brides/',
+        },
+        {
+          ...mockPage,
+          id: 11,
+          slug: 'stylish-brides',
+          link: 'https://cms.example.com/presentations/stylish-brides/',
+        },
+      ]),
+    )
+
+    const galleryPage = await getPageByPath('gallery/stylish-brides', { requireExactPath: true })
+    expect(galleryPage?.id).toBe(10)
+
+    clearCache()
+
+    mockFetch.mockReturnValueOnce(
+      ok([
+        {
+          ...mockPage,
+          id: 10,
+          slug: 'stylish-brides',
+          link: 'https://cms.example.com/gallery/stylish-brides/',
+        },
+        {
+          ...mockPage,
+          id: 11,
+          slug: 'stylish-brides',
+          link: 'https://cms.example.com/presentations/stylish-brides/',
+        },
+      ]),
+    )
+
+    const presentationsPage = await getPageByPath('presentations/stylish-brides', {
+      requireExactPath: true,
+    })
+    expect(presentationsPage?.id).toBe(11)
   })
 })
 
