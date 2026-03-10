@@ -12,6 +12,7 @@ describe('GalleriesBlock', () => {
     render(<GalleriesBlock block={mockGalleriesBlock} />)
 
     expect(screen.getByRole('heading', { name: 'Cat Gallery', level: 2 })).toBeInTheDocument()
+    expect(screen.getByText('Three portraits from a recent set.')).toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /open image/i })).toHaveLength(3)
   })
 

@@ -1,11 +1,20 @@
 import type { CSSProperties } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Button from '~/components/Button'
+import RichText from '~/components/RichText'
 import { useMediaQuery } from '~/hooks/useMediaQuery'
 import { getSectionStyle } from '../helpers/styleOptions'
 import styles from './GalleriesBlock.module.scss'
 import { distributeImagesIntoColumns } from './helpers/distributeImagesIntoColumns'
 import type { GalleriesBlockProps } from './types'
+
+const toBodyHtml = (value?: string) => {
+  if (!value) return ''
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  const hasHtmlTags = /<\/?[a-z][\s\S]*>/i.test(trimmed)
+  return hasHtmlTags ? trimmed : `<p>${trimmed.replace(/\n/g, '<br />')}</p>`
+}
 
 const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
   const images = useMemo(() => block.images ?? [], [block.images])
@@ -62,10 +71,24 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
   if (!images.length) return null
 
   const currentImage = activeIndex !== null ? images[activeIndex] : null
+  const descriptionHtml = toBodyHtml(block.description)
+  const sectionStyle = getSectionStyle(
+    {
+      ...block,
+      top_spacing: 'sm',
+      bottom_spacing: 'sm',
+    },
+    'light',
+  )
 
   return (
-    <section className={styles.section} style={getSectionStyle(block, 'light')}>
+    <section className={styles.section} style={sectionStyle}>
       {block.heading && <h2 className={styles.heading}>{block.heading}</h2>}
+      {descriptionHtml && (
+        <div className={styles.description}>
+          <RichText html={descriptionHtml} fontSize="sm" />
+        </div>
+      )}
 
       <div
         className={styles.masonry}
