@@ -1,6 +1,6 @@
 import { useState } from 'react'
+import RichText from '~/components/RichText'
 import { getSectionStyle } from '../helpers/styleOptions'
-import RichText from '../RichText'
 import styles from './FaqAccordionBlock.module.scss'
 import type { FaqAccordionBlockProps } from './types'
 

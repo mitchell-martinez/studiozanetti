@@ -1,6 +1,6 @@
 import Button from '~/components/Button'
+import RichText from '~/components/RichText'
 import { getSectionStyle } from '../helpers/styleOptions'
-import RichText from '../RichText'
 import styles from './TextBlock.module.scss'
 import type { TextBlockProps } from './types'
 

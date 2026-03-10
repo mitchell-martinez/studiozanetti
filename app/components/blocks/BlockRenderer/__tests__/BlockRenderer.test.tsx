@@ -11,7 +11,6 @@ const {
   textBlock,
   imageTextBlock,
   servicesBlock,
-  biographyBlock,
   pillarBlock,
   testimonialBlock,
   faqBlock,
@@ -58,13 +57,6 @@ describe('BlockRenderer', () => {
     expect(screen.getByRole('heading', { name: 'Our Services', level: 2 })).toBeInTheDocument()
     expect(screen.getByText('Weddings')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Browse work' })).toBeInTheDocument()
-  })
-
-  it('renders a biography block', () => {
-    renderBlocks([biographyBlock])
-    expect(screen.getByRole('heading', { name: 'Marco Zanetti', level: 2 })).toBeInTheDocument()
-    expect(screen.getByText('Lead Photographer')).toBeInTheDocument()
-    expect(screen.getByText('Bio text here')).toBeInTheDocument()
   })
 
   it('renders a pillar_grid block', () => {
@@ -156,17 +148,6 @@ describe('BlockRenderer', () => {
     renderBlocks([minimal])
     expect(screen.getByText('Minimal Hero')).toBeInTheDocument()
     expect(screen.queryByRole('link')).not.toBeInTheDocument()
-  })
-
-  it('renders biography without optional image', () => {
-    const noPic: ContentBlock = {
-      acf_fc_layout: 'biography',
-      name: 'Jane Doe',
-      bio: '<p>No photo bio</p>',
-    }
-    renderBlocks([noPic])
-    expect(screen.getByText('Jane Doe')).toBeInTheDocument()
-    expect(screen.queryByAltText('Jane Doe')).not.toBeInTheDocument()
   })
 
   it('uses page featured image when hero is configured with use_featured_image', () => {

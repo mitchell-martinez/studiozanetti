@@ -33,7 +33,7 @@ No special configuration needed. Any content written in:
 ## File Structure
 
 ```
-components/blocks/RichText/
+components/RichText/
   index.tsx              ← Main component
   RichText.module.scss   ← Styles
   README.md              ← This file

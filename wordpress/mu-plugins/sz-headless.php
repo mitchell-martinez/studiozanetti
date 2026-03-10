@@ -973,7 +973,7 @@ function sz_normalize_page_images( WP_REST_Response $response, WP_Post $post, WP
  * Walk a single ACF Flexible Content block and resolve every image field.
  */
 function sz_normalize_block_images( array $block ): array {
-	// Top-level image fields (hero, image_text, biography, gallery_categories)
+	// Top-level image fields (hero, image_text, gallery_categories)
 	$image_keys = [ 'background_image', 'image', 'image_mobile' ];
 
 	foreach ( $image_keys as $key ) {

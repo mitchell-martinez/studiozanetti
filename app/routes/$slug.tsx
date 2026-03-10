@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { isRouteErrorResponse, useLoaderData, useRouteError } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
-import RichText from '~/components/blocks/RichText'
+import RichText from '~/components/RichText'
 import { buildPageSchemas, toCanonicalUrl } from '~/lib/seo'
 import { getPageBySlug } from '~/lib/wordpress'
 import type { WPPage } from '~/types/wordpress'

@@ -52,8 +52,6 @@ export interface BlockStyleOptions {
 //     ├── Layout: services_grid
 //     │     heading (Text), cta_text (Text), cta_url (URL),
 //     │     services (Repeater → title (Text), description (Textarea), image (Image))
-//     ├── Layout: biography
-//     │     image (Image), name (Text), role (Text), bio (WYSIWYG)
 //     ├── Layout: image_block
 //     │     image (Image), height (Select: md|lg|full),
 //     │     overlay_strength (Select: light|medium|strong),
@@ -134,16 +132,6 @@ export interface ServicesGridBlock extends BlockStyleOptions {
   card_style?: 'elevated' | 'outline' | 'minimal'
   text_align?: 'left' | 'center' | 'right'
   font_size?: 'sm' | 'md' | 'lg'
-}
-
-export interface BiographyBlock extends BlockStyleOptions {
-  acf_fc_layout: 'biography'
-  image?: WPImage
-  name: string
-  role?: string
-  bio: string
-  quote?: string
-  signature_text?: string
 }
 
 export interface WPPillarItem {
@@ -321,7 +309,6 @@ export type ContentBlock =
   | TextBlock
   | ImageTextBlock
   | ServicesGridBlock
-  | BiographyBlock
   | PillarGridBlock
   | TestimonialCarouselBlock
   | FaqAccordionBlock

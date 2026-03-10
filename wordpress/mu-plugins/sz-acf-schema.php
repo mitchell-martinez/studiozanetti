@@ -183,15 +183,6 @@ add_action( 'acf/init', function () {
 		[ 'key' => 'field_sz_services_font_size', 'label' => 'Font Size', 'name' => 'font_size', 'type' => 'select', 'choices' => [ 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => 'sm', 'instructions' => 'Controls the font size of the service card title and description text.' ],
 	], $style_fields( 'sz_services' ));
 
-	$biography_fields = array_merge([
-		[ 'key' => 'field_sz_bio_image', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array' ],
-		[ 'key' => 'field_sz_bio_name', 'label' => 'Name', 'name' => 'name', 'type' => 'text', 'required' => 1 ],
-		[ 'key' => 'field_sz_bio_role', 'label' => 'Role', 'name' => 'role', 'type' => 'text' ],
-		[ 'key' => 'field_sz_bio_bio', 'label' => 'Bio', 'name' => 'bio', 'type' => 'wysiwyg', 'required' => 1 ],
-		[ 'key' => 'field_sz_bio_quote', 'label' => 'Quote', 'name' => 'quote', 'type' => 'textarea' ],
-		[ 'key' => 'field_sz_bio_signature_text', 'label' => 'Signature Text', 'name' => 'signature_text', 'type' => 'text' ],
-	], $style_fields( 'sz_bio' ));
-
 	$pillar_fields = array_merge([
 		[ 'key' => 'field_sz_pillars_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
 		[ 'key' => 'field_sz_pillars_subheading', 'label' => 'Subheading', 'name' => 'subheading', 'type' => 'text' ],
@@ -451,13 +442,6 @@ add_action( 'acf/init', function () {
 						'label' => 'Services Grid',
 						'display' => 'block',
 						'sub_fields' => $services_fields,
-					],
-					'layout_sz_biography' => [
-						'key' => 'layout_sz_biography',
-						'name' => 'biography',
-						'label' => 'Biography',
-						'display' => 'block',
-						'sub_fields' => $biography_fields,
 					],
 					'layout_sz_pillar_grid' => [
 						'key' => 'layout_sz_pillar_grid',

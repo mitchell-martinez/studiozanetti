@@ -19,7 +19,6 @@ BlockRenderer is the bridge between WordPress ACF Flexible Content fields and th
    - **Text Block** — heading + rich text + optional CTA
    - **Image + Text** — side-by-side image and text
    - **Services Grid** — card grid of services
-   - **Biography** — photo + bio layout
    - **Pillar Grid** — feature/value cards
 4. Fill in each block's fields
 5. Drag blocks to reorder them

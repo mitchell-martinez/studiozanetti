@@ -1,4 +1,3 @@
-import BiographyBlock from '../BiographyBlock'
 import ButtonGroupBlock from '../ButtonGroupBlock'
 import FaqAccordionBlock from '../FaqAccordionBlock'
 import GalleriesBlock from '../GalleriesBlock'
@@ -22,7 +21,6 @@ const BLOCK_LABELS: Record<string, string> = {
   text_block: 'Text Block',
   image_text: 'Image + Text',
   services_grid: 'Services Grid',
-  biography: 'Biography',
   pillar_grid: 'Pillar Grid',
   testimonial_carousel: 'Testimonials',
   faq_accordion: 'FAQ Accordion',
@@ -148,9 +146,6 @@ const BlockRenderer = ({ blocks, interactive = false, featuredImage }: BlockRend
           break
         case 'services_grid':
           rendered = <ServicesGridBlock key={key} block={block} />
-          break
-        case 'biography':
-          rendered = <BiographyBlock key={key} block={block} />
           break
         case 'pillar_grid':
           rendered = <PillarGridBlock key={key} block={block} />

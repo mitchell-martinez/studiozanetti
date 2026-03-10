@@ -56,18 +56,6 @@
     "cta_text": "Browse work",
     "cta_url": "/gallery"
   },
-  "biographyBlock": {
-    "acf_fc_layout": "biography",
-    "image": {
-      "url": "https://example.com/img.jpg",
-      "alt": "Test image",
-      "width": 800,
-      "height": 600
-    },
-    "name": "Marco Zanetti",
-    "role": "Lead Photographer",
-    "bio": "<p>Bio text here</p>"
-  },
   "pillarBlock": {
     "acf_fc_layout": "pillar_grid",
     "heading": "Our Approach",

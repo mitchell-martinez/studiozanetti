@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import RichText from '~/components/blocks/RichText'
+import RichText from '~/components/RichText'
 
 type RichTextArgs = { html: string }
 
 const meta: Meta<RichTextArgs> = {
-  title: 'Blocks/RichText',
+  title: 'Components/RichText',
   tags: ['autodocs'],
   args: {
     html: '<h2>Rich-text preview</h2><p>This verifies <strong>WYSIWYG</strong> rendering, <em>typography</em> styling, and <a href="#">link treatment</a>.</p><ul><li>Bullet one</li><li>Bullet two</li></ul>',

@@ -8,24 +8,24 @@ This block appears in the **Page Blocks** flexible content field as **"Text Grid
 
 ### Fields
 
-| Field                | Type     | Description                                                          |
-| -------------------- | -------- | -------------------------------------------------------------------- |
-| **Heading**          | Text     | Optional section heading                                             |
-| **Subheading**       | Text     | Optional subtitle below the heading                                  |
-| **Items** (Repeater) | Repeater | Grid items (min 1)                                                   |
-| ↳ Title              | Text     | Card heading (required)                                              |
-| ↳ Body               | Textarea | Card body text (required)                                            |
-| ↳ CTA Text           | Text     | Optional link label                                                  |
-| ↳ CTA URL            | URL      | Optional link destination                                            |
-| **Columns**          | Select   | `2` · `3` · `4` — number of columns at widest breakpoint             |
-| **Card Style**       | Select   | `elevated` · `outline` · `minimal`                                   |
-| **Text Align**       | Select   | `left` · `center` · `right`                                          |
-| **Font Size**        | Select   | `Small` (default) · `Medium` · `Large` — font size of card title and body text |
+| Field                | Type     | Description                                                                                            |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| **Heading**          | Text     | Optional section heading                                                                               |
+| **Subheading**       | Text     | Optional subtitle below the heading                                                                    |
+| **Items** (Repeater) | Repeater | Grid items (min 1)                                                                                     |
+| ↳ Title              | Text     | Card heading (required)                                                                                |
+| ↳ Body               | Textarea | Card body text (required)                                                                              |
+| ↳ CTA Text           | Text     | Optional link label                                                                                    |
+| ↳ CTA URL            | URL      | Optional link destination                                                                              |
+| **Columns**          | Select   | `2` · `3` · `4` — number of columns at widest breakpoint                                               |
+| **Card Style**       | Select   | `elevated` · `outline` · `minimal`                                                                     |
+| **Text Align**       | Select   | `left` · `center` · `right`                                                                            |
+| **Font Size**        | Select   | `Small` (default) · `Medium` · `Large` — font size of card title and body text                         |
 | **CTA Button Style** | Select   | `Outline` (default) · `Primary` · `Secondary` · `Dark` · `Text` — visual style of per-card CTA buttons |
-| **CTA Button Size**  | Select   | `Small` (default) · `Medium` · `Large` — size of per-card CTA buttons |
-| Section Theme        | Select   | Light · Rose · Champagne · Dark                                      |
-| Top Spacing          | Select   | None · Small · Medium · Large                                        |
-| Bottom Spacing       | Select   | None · Small · Medium · Large                                        |
+| **CTA Button Size**  | Select   | `Small` (default) · `Medium` · `Large` — size of per-card CTA buttons                                  |
+| Section Theme        | Select   | Light · Rose · Champagne · Dark                                                                        |
+| Top Spacing          | Select   | None · Small · Medium · Large                                                                          |
+| Bottom Spacing       | Select   | None · Small · Medium · Large                                                                          |
 
 ### Usage Tips
 
