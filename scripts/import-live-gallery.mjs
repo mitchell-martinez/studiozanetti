@@ -12,11 +12,27 @@ export function printHelp() {
 
 export function parseArgs(argv) {
   const args = {}
+  const booleanFlags = new Set(['help', 'include-external', 'execute'])
 
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i]
 
     if (!token.startsWith('--')) continue
+
+    // Support --key=value syntax in addition to --key value.
+    const eqIndex = token.indexOf('=')
+    if (eqIndex > 2) {
+      const rawKey = token.slice(2, eqIndex)
+      const rawValue = token.slice(eqIndex + 1)
+
+      if (booleanFlags.has(rawKey)) {
+        args[rawKey === 'include-external' ? 'includeExternal' : rawKey] =
+          rawValue === '' ? true : rawValue !== 'false'
+      } else {
+        args[rawKey] = rawValue
+      }
+      continue
+    }
 
     if (token === '--help') {
       args.help = true
@@ -25,6 +41,11 @@ export function parseArgs(argv) {
 
     if (token === '--include-external') {
       args.includeExternal = true
+      continue
+    }
+
+    if (token === '--execute') {
+      args.execute = true
       continue
     }
 
