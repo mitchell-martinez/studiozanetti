@@ -21,7 +21,7 @@
 }
 
 .servicesGrid {
-  --max-cols: 99;
+  --max-cols: 3;
   display: grid;
   grid-template-columns: repeat(min(3, var(--max-cols)), minmax(0, 1fr));
   gap: 2rem;
@@ -31,43 +31,7 @@
   }
 
   @media (max-width: #{g.$bp-sm}) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.cols2 {
-  grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, 1fr));
-
-  @media (max-width: #{g.$bp-sm}) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.cols3 {
-  grid-template-columns: repeat(min(3, var(--max-cols)), minmax(0, 1fr));
-
-  @media (max-width: #{g.$bp-lg}) {
-    grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, 1fr));
-  }
-
-  @media (max-width: #{g.$bp-sm}) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.cols4 {
-  grid-template-columns: repeat(min(4, var(--max-cols)), minmax(0, 1fr));
-
-  @media (max-width: #{g.$bp-xl}) {
-    grid-template-columns: repeat(min(3, var(--max-cols)), minmax(0, 1fr));
-  }
-
-  @media (max-width: #{g.$bp-lg}) {
-    grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, 1fr));
-  }
-
-  @media (max-width: #{g.$bp-sm}) {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(min(1, var(--max-cols)), minmax(0, 1fr));
   }
 }
 
@@ -146,4 +110,3 @@
   text-align: center;
   margin-top: 3rem;
 }
-

@@ -65,12 +65,17 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
         (block.secondary_cta_text && block.secondary_cta_url) ? (
           <div className={styles.heroActions}>
             {block.cta_text && block.cta_url && (
-              <Button href={block.cta_url} variant="primary" inverted>
+              <Button href={block.cta_url} variant="primary" inverted className={styles.heroCta}>
                 {block.cta_text}
               </Button>
             )}
             {block.secondary_cta_text && block.secondary_cta_url && (
-              <Button href={block.secondary_cta_url} variant="secondary" inverted>
+              <Button
+                href={block.secondary_cta_url}
+                variant="secondary"
+                inverted
+                className={styles.heroCta}
+              >
                 {block.secondary_cta_text}
               </Button>
             )}
@@ -93,6 +98,13 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
 
         {block.scroll_hint_text && (
           <span className={styles.scrollHint}>{block.scroll_hint_text}</span>
+        )}
+
+        {(block.description || block.caption) && (
+          <div className={styles.heroFooter}>
+            {block.description && <p className={styles.heroDescription}>{block.description}</p>}
+            {block.caption && <p className={styles.heroCaption}>{block.caption}</p>}
+          </div>
         )}
       </div>
     </section>

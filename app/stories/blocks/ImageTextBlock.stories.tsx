@@ -62,6 +62,10 @@ const meta: Meta<ImageTextArgs> = {
     cta_text: { control: 'text', description: 'Call-to-action button label' },
     cta_url: { control: 'text', description: 'Call-to-action URL' },
     image_caption: { control: 'text', description: 'Short caption centred below the image' },
+    url: {
+      control: 'text',
+      description: 'Optional URL — makes the entire block clickable. Internal paths use client routing.',
+    },
     font_size: {
       control: 'inline-radio',
       options: ['sm', 'md', 'lg'],
@@ -96,4 +100,14 @@ export const CustomSizing: Story = {
 /** Image with a caption displayed below it. */
 export const WithCaption: Story = {
   args: { image_caption: 'Golden hour at the Yarra Valley' },
+}
+
+/** Entire block is clickable as an internal link. */
+export const ClickableBlock: Story = {
+  args: { url: '/about-us' },
+}
+
+/** Entire block links to an external URL. */
+export const ExternalLink: Story = {
+  args: { url: 'https://studiozanetti.com.au' },
 }

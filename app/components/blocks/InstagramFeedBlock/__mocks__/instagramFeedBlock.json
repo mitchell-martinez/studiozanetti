@@ -1,0 +1,47 @@
+{
+  "acf_fc_layout": "instagram_feed",
+  "heading": "Follow Along",
+  "subheading": "See our latest work on Instagram",
+  "username": "studiozanetti",
+  "profile_url": "https://www.instagram.com/studiozanetti",
+  "cta_text": "Follow on Instagram",
+  "columns": 3,
+  "images": [
+    {
+      "url": "https://picsum.photos/seed/insta-1/600/600",
+      "alt": "Wedding ceremony",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "url": "https://picsum.photos/seed/insta-2/600/600",
+      "alt": "Portrait session",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "url": "https://picsum.photos/seed/insta-3/600/600",
+      "alt": "Engagement shoot",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "url": "https://picsum.photos/seed/insta-4/600/600",
+      "alt": "Event photography",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "url": "https://picsum.photos/seed/insta-5/600/600",
+      "alt": "Landscape shot",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "url": "https://picsum.photos/seed/insta-6/600/600",
+      "alt": "Behind the scenes",
+      "width": 600,
+      "height": 600
+    }
+  ]
+}

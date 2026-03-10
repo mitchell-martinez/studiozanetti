@@ -28,6 +28,8 @@ const meta: Meta<HeroArgs> = {
   argTypes: {
     title: { control: 'text', description: 'Main heading overlay text' },
     tagline: { control: 'text', description: 'Subheading text below title' },
+    description: { control: 'text', description: 'Short description at bottom of hero overlay' },
+    caption: { control: 'text', description: 'Image caption/credit line at bottom of hero' },
     cta_text: { control: 'text', description: 'Primary call-to-action button label' },
     cta_url: { control: 'text', description: 'Primary call-to-action URL' },
     secondary_cta_text: { control: 'text', description: 'Secondary button label' },
@@ -83,4 +85,13 @@ export const LeftAligned: Story = {
 /** Full-viewport hero with a strong overlay for maximum text contrast. */
 export const FullHeightDark: Story = {
   args: { height: 'full', overlay_strength: 'strong' },
+}
+
+/** Hero with description and caption at the bottom. */
+export const WithDescriptionCaption: Story = {
+  args: {
+    description: 'Timeless wedding photography in Melbourne and beyond.',
+    caption: 'Photo: Yarra Valley, 2024',
+    overlay_strength: 'medium',
+  },
 }

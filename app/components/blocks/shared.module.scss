@@ -3,11 +3,14 @@
 // ─── Shared layout mixins used by multiple block components ───────────────────
 @mixin blockSection {
   padding: clamp(3rem, 7vw, 5.5rem) var(--space-page-x);
+  position: relative;
 }
 
 @mixin blockInner {
   max-width: #{g.$bp-xl};
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
 @mixin blockHeading {
@@ -15,4 +18,15 @@
   text-align: center;
   margin-bottom: clamp(1.8rem, 4vw, 3rem);
   color: var(--color-ink-strong);
+}
+
+// Background image overlay for blocks (#25)
+.backgroundImage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
 }

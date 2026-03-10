@@ -20,6 +20,10 @@ export interface BlockStyleOptions {
   section_theme?: BlockTheme
   top_spacing?: 'none' | 'sm' | 'md' | 'lg'
   bottom_spacing?: 'none' | 'sm' | 'md' | 'lg'
+  max_width?: 'narrow' | 'normal' | 'wide'
+  max_width_px?: number
+  background_image?: WPImage
+  background_image_opacity?: number
 }
 
 // ─── ACF Flexible Content block layouts ──────────────────────────────────────
@@ -61,6 +65,8 @@ export interface HeroBlock {
   use_featured_image?: boolean
   title: string
   tagline?: string
+  description?: string
+  caption?: string
   cta_text?: string
   cta_url?: string
   secondary_cta_text?: string
@@ -102,6 +108,7 @@ export interface ImageTextBlock extends BlockStyleOptions {
   cta_url?: string
   image_caption?: string
   font_size?: 'sm' | 'md' | 'lg'
+  url?: string
 }
 
 export interface WPServiceItem {
@@ -118,8 +125,7 @@ export interface ServicesGridBlock extends BlockStyleOptions {
   services: WPServiceItem[]
   cta_text?: string
   cta_url?: string
-  columns?: 2 | 3 | 4
-  max_columns?: 2 | 3 | 4
+  max_columns?: 1 | 2 | 3 | 4
   card_style?: 'elevated' | 'outline' | 'minimal'
   text_align?: 'left' | 'center' | 'right'
 }
@@ -244,6 +250,10 @@ export interface ImageBlock {
   text_align?: 'left' | 'center' | 'right'
   parallax_scroll?: boolean
   aria_label?: string
+  heading_tag?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+  title_pop_out?: boolean
+  subtitle_pop_out?: boolean
+  text_max_width?: 'narrow' | 'semi-narrow' | 'normal' | 'wide' | 'full'
 }
 
 // ─── Shared Button sub-field ─────────────────────────────────────────────────
@@ -268,8 +278,8 @@ export interface ButtonGroupBlock extends BlockStyleOptions {
 // ─── Text Grid block ────────────────────────────────────────────────────────
 
 export interface WPTextGridItem {
-  title: string
-  body: string
+  title?: string
+  body?: string
   cta_text?: string
   cta_url?: string
 }
@@ -279,9 +289,22 @@ export interface TextGridBlock extends BlockStyleOptions {
   heading?: string
   subheading?: string
   items: WPTextGridItem[]
-  columns?: 2 | 3 | 4
+  max_columns?: 1 | 2 | 3 | 4
   card_style?: 'elevated' | 'outline' | 'minimal'
   text_align?: 'left' | 'center' | 'right'
+}
+
+// ─── Instagram Feed block ───────────────────────────────────────────────────
+
+export interface InstagramFeedBlock extends BlockStyleOptions {
+  acf_fc_layout: 'instagram_feed'
+  heading?: string
+  subheading?: string
+  username: string
+  profile_url: string
+  images: WPImage[]
+  cta_text?: string
+  columns?: 2 | 3 | 4 | 6
 }
 
 export type ContentBlock =
@@ -300,6 +323,7 @@ export type ContentBlock =
   | ImageBlock
   | ButtonGroupBlock
   | TextGridBlock
+  | InstagramFeedBlock
 
 // ─── Page ACF fields ──────────────────────────────────────────────────────────
 //
