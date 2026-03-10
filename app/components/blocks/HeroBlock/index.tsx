@@ -103,9 +103,7 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
 
         {(currentImage?.tagline || currentImage?.subtitle) && (
           <div className={styles.slideCredit}>
-            {currentImage.tagline && (
-              <p className={styles.slideTagline}>{currentImage.tagline}</p>
-            )}
+            {currentImage.tagline && <p className={styles.slideTagline}>{currentImage.tagline}</p>}
             {currentImage.subtitle && (
               <p className={styles.slideSubtitle}>{currentImage.subtitle}</p>
             )}

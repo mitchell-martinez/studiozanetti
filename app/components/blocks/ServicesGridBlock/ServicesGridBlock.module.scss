@@ -22,19 +22,19 @@
 
 .servicesGrid {
   --max-cols: 3;
+  --col-max: calc((#{g.$bp-xl} - 4rem) / 3);
   display: grid;
-  grid-template-columns: repeat(min(3, var(--max-cols)), minmax(0, 1fr));
+  grid-template-columns: repeat(min(3, var(--max-cols)), minmax(0, var(--col-max)));
   gap: 2rem;
-  max-width: 100%;
   margin: 0 auto;
   justify-content: center;
 
   @media (max-width: #{g.$bp-lg}) {
-    grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, 1fr));
+    grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, var(--col-max)));
   }
 
   @media (max-width: #{g.$bp-sm}) {
-    grid-template-columns: repeat(min(1, var(--max-cols)), minmax(0, 1fr));
+    grid-template-columns: repeat(min(1, var(--max-cols)), minmax(0, var(--col-max)));
   }
 }
 
