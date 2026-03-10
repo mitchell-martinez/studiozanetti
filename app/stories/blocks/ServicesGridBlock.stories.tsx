@@ -14,7 +14,7 @@ const meta: Meta<ServicesArgs> = {
   args: {
     heading: servicesBlock.heading,
     subheading: servicesBlock.subheading,
-    columns: servicesBlock.columns,
+    max_columns: servicesBlock.max_columns,
     card_style: servicesBlock.card_style,
     text_align: servicesBlock.text_align,
     services: servicesBlock.services,
@@ -29,14 +29,9 @@ const meta: Meta<ServicesArgs> = {
     subheading: { control: 'text', description: 'Subheading below the main heading' },
     cta_text: { control: 'text', description: 'Call-to-action button label' },
     cta_url: { control: 'text', description: 'Call-to-action URL' },
-    columns: {
-      control: 'inline-radio',
-      options: [2, 3, 4],
-      description: 'Number of grid columns',
-    },
     max_columns: {
       control: 'inline-radio',
-      options: [2, 3, 4],
+      options: [1, 2, 3, 4],
       description: 'Maximum number of columns the grid can expand to',
     },
     card_style: {
@@ -66,17 +61,17 @@ export const Default: Story = {}
 
 /** Minimal card style, 2-column layout. */
 export const TwoColumnMinimal: Story = {
-  args: { columns: 2, card_style: 'minimal' },
+  args: { max_columns: 2, card_style: 'minimal' },
 }
 
 /** 4-column outline variant on dark theme. */
 export const FourColumnDark: Story = {
-  args: { columns: 4, card_style: 'outline', section_theme: 'dark' },
+  args: { max_columns: 4, card_style: 'outline', section_theme: 'dark' },
 }
 
-/** 4-column layout restricted to a max of 2 visible columns. */
-export const MaxTwoColumns: Story = {
-  args: { columns: 4, max_columns: 2 },
+/** Single-column layout. */
+export const SingleColumn: Story = {
+  args: { max_columns: 1 },
 }
 
 /** Centre-aligned text inside cards. */

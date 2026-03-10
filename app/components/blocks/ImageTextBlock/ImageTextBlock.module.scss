@@ -109,3 +109,15 @@
   color: var(--color-ink-soft);
   font-style: italic;
 }
+
+// ─── Clickable block link (#8) ──────────────────────────────────────────────
+
+.blockLink {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.clickable {
+  cursor: pointer;
+}

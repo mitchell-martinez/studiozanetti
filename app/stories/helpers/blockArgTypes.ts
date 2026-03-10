@@ -1,8 +1,7 @@
 /**
  * Shared Storybook argType definitions reused across block stories.
  *
- * The three BlockStyleOptions fields (section_theme, top_spacing,
- * bottom_spacing) appear on almost every block layout in WordPress.
+ * The BlockStyleOptions fields appear on almost every block layout in WordPress.
  */
 
 export const blockStyleArgTypes = {
@@ -22,6 +21,27 @@ export const blockStyleArgTypes = {
     control: 'select',
     options: ['none', 'sm', 'md', 'lg'],
     description: 'Padding below the section (WP field: Bottom Spacing)',
+    table: { category: 'Style Options' },
+  },
+  max_width: {
+    control: 'select',
+    options: ['narrow', 'normal', 'wide'],
+    description: 'Constrain block inner width (WP field: Max Width)',
+    table: { category: 'Style Options' },
+  },
+  max_width_px: {
+    control: { type: 'number', min: 0, step: 50 },
+    description: 'Custom max width in pixels (overrides preset)',
+    table: { category: 'Style Options' },
+  },
+  background_image: {
+    control: 'object',
+    description: 'Background image behind the block { url, alt, width, height }',
+    table: { category: 'Style Options' },
+  },
+  background_image_opacity: {
+    control: { type: 'number', min: 0, max: 1, step: 0.1 },
+    description: 'Opacity of the background image (0–1)',
     table: { category: 'Style Options' },
   },
 } as const

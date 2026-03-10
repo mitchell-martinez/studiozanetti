@@ -92,14 +92,69 @@
   align-items: flex-end;
 }
 
+// ─── Text max-width variants (#42) ──────────────────────────────────────────
+
+.textNarrow {
+  .title,
+  .subtitle,
+  .overlayText {
+    max-width: 25%;
+  }
+}
+
+.textSemiNarrow {
+  .title,
+  .subtitle,
+  .overlayText {
+    max-width: 33.333%;
+  }
+}
+
+.textNormal {
+  .title,
+  .subtitle,
+  .overlayText {
+    max-width: 50%;
+  }
+}
+
+.textWide {
+  .title,
+  .subtitle,
+  .overlayText {
+    max-width: 66.666%;
+  }
+}
+
+.textFull {
+  .title,
+  .subtitle,
+  .overlayText {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: #{g.$bp-md}) {
+  .textNarrow,
+  .textSemiNarrow,
+  .textNormal,
+  .textWide {
+    .title,
+    .subtitle,
+    .overlayText {
+      max-width: 90%;
+    }
+  }
+}
+
 .title {
   font-family: var(--font-serif);
   font-size: var(--text-hero);
   color: var(--color-white);
   letter-spacing: 0.06em;
-  max-width: 18ch;
   text-shadow: 0 2px 12px rgb(0 0 0 / 40%);
   transition: transform 0.3s ease;
+  margin: 0;
 
   &:hover {
     transform: scale(1.06);
@@ -108,11 +163,20 @@
 
 .subtitle {
   font-size: var(--text-xl);
-  color: #ffe6be;
+  color: var(--color-white);
   font-style: italic;
   letter-spacing: 0.03em;
-  max-width: 38ch;
   text-shadow: 0 2px 8px rgb(0 0 0 / 30%);
+}
+
+// ─── Pop out effect (#29) ───────────────────────────────────────────────────
+
+.popOut {
+  text-shadow:
+    0 0 20px rgb(255 255 255 / 30%),
+    0 0 40px rgb(255 255 255 / 15%),
+    0 4px 16px rgb(0 0 0 / 50%);
+  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 40%));
 }
 
 .overlayText {
@@ -120,6 +184,5 @@
   font-size: var(--text-3xl);
   color: var(--color-white);
   letter-spacing: 0.06em;
-  max-width: 20ch;
   text-shadow: 0 2px 12px rgb(0 0 0 / 40%);
 }

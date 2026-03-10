@@ -36,6 +36,24 @@ const meta: Meta<ImageArgs> = {
     overlay_text: { control: 'text', description: 'Large text displayed over the image' },
     title: { control: 'text', description: 'Centred title text over the image' },
     subtitle: { control: 'text', description: 'Subtitle displayed below the title' },
+    heading_tag: {
+      control: 'select',
+      options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+      description: 'HTML heading tag for the title (default: h2)',
+    },
+    title_pop_out: {
+      control: 'boolean',
+      description: 'Apply pop-out text shadow effect to title',
+    },
+    subtitle_pop_out: {
+      control: 'boolean',
+      description: 'Apply pop-out text shadow effect to subtitle',
+    },
+    text_max_width: {
+      control: 'select',
+      options: ['narrow', 'semi-narrow', 'normal', 'wide', 'full'],
+      description: 'Maximum width of overlay text content',
+    },
     text_align: {
       control: 'inline-radio',
       options: ['left', 'center', 'right'],
@@ -104,5 +122,49 @@ export const ParallaxScroll: Story = {
   args: {
     parallax_scroll: true,
     overlay_strength: 'light',
+  },
+}
+
+/** Pop-out title and subtitle with strong overlay. */
+export const PopOutText: Story = {
+  args: {
+    title: 'Our Story',
+    subtitle: 'A decade of capturing love and light',
+    title_pop_out: true,
+    subtitle_pop_out: true,
+    overlay_strength: 'medium',
+    overlay_text: undefined,
+  },
+}
+
+/** H1 heading tag for primary page hero usage. */
+export const H1Heading: Story = {
+  args: {
+    title: 'Studio Zanetti',
+    heading_tag: 'h1',
+    overlay_strength: 'medium',
+    overlay_text: undefined,
+  },
+}
+
+/** Narrow text width for minimal captions. */
+export const NarrowText: Story = {
+  args: {
+    title: 'Intimate',
+    subtitle: 'Small moments, big feelings',
+    text_max_width: 'narrow',
+    overlay_strength: 'medium',
+    overlay_text: undefined,
+  },
+}
+
+/** Full-width text for editorial spreads. */
+export const FullWidthText: Story = {
+  args: {
+    title: 'Gallery',
+    subtitle: 'Browse our complete collection of wedding and portrait photography',
+    text_max_width: 'full',
+    overlay_strength: 'medium',
+    overlay_text: undefined,
   },
 }

@@ -40,17 +40,17 @@ const meta: Meta<TextArgs> = {
       options: ['left', 'center', 'right'],
       description: 'Horizontal position of the entire block on the page',
     },
-    max_width: {
-      control: 'inline-radio',
-      options: ['narrow', 'normal', 'wide'],
-      description: 'Maximum width of the text container',
-    },
     font_size: {
       control: 'inline-radio',
       options: ['sm', 'md', 'lg'],
       description: 'Body text font size (sm = default)',
     },
     ...blockStyleArgTypes,
+    max_width: {
+      control: 'inline-radio',
+      options: ['narrow', 'normal', 'wide'],
+      description: 'Maximum width of the text container',
+    },
   },
   render: (args) => <TextBlock block={{ acf_fc_layout: 'text_block', ...args }} />,
 }

@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import Button from '~/components/Button'
-import { getSectionStyle } from '../helpers/styleOptions'
+import { getBackgroundImageStyle, getSectionStyle } from '../helpers/styleOptions'
+import sharedStyles from '../shared.module.scss'
 import styles from './ServicesGridBlock.module.scss'
 import type { ServicesGridBlockProps } from './types'
 
@@ -19,16 +20,18 @@ const ServicesGridBlock = ({ block }: ServicesGridBlockProps) => {
         : styles.cardElevated
 
   const textAlignClass = alignClass[block.text_align ?? 'left'] ?? ''
+  const bgImageStyle = getBackgroundImageStyle(block)
 
   return (
     <section className={styles.section} style={getSectionStyle(block, 'champagne')}>
+      {bgImageStyle && (
+        <div className={sharedStyles.backgroundImage} style={bgImageStyle} aria-hidden="true" />
+      )}
       <div className={styles.inner}>
         {block.heading && <h2 className={styles.heading}>{block.heading}</h2>}
         {block.subheading && <p className={styles.subheading}>{block.subheading}</p>}
         <div
-          className={`${styles.servicesGrid} ${
-            block.columns === 2 ? styles.cols2 : block.columns === 4 ? styles.cols4 : styles.cols3
-          }`}
+          className={styles.servicesGrid}
           style={
             block.max_columns
               ? ({ '--max-cols': block.max_columns } as React.CSSProperties)

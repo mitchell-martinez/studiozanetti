@@ -46,10 +46,33 @@ describe('TextGridBlock', () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it('applies the correct column class', () => {
-    const { container } = renderBlock({ columns: 2 })
-    const grid = container.querySelector('[class*="grid"]')!
-    expect(grid.className).toMatch(/cols2/)
+  it('sets --max-cols CSS variable when max_columns is set', () => {
+    const { container } = renderBlock({ max_columns: 2 })
+    const grid = container.querySelector('[class*="grid"]')! as HTMLElement
+    expect(grid.style.getPropertyValue('--max-cols')).toBe('2')
+  })
+
+  it('does not set --max-cols when max_columns is not set', () => {
+    const { container } = renderBlock({ max_columns: undefined })
+    const grid = container.querySelector('[class*="grid"]')! as HTMLElement
+    expect(grid.style.getPropertyValue('--max-cols')).toBe('')
+  })
+
+  // ─── Optional title/body ──────────────────────────────────────────────────
+
+  it('renders items without a title', () => {
+    renderBlock({
+      items: [{ body: 'body only' }],
+    })
+    expect(screen.getByText('body only')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument()
+  })
+
+  it('renders items without a body', () => {
+    renderBlock({
+      items: [{ title: 'title only' }],
+    })
+    expect(screen.getByText('title only')).toBeInTheDocument()
   })
 
   it('applies elevated card style by default', () => {

@@ -6,6 +6,7 @@ import GalleryCategoriesBlock from '../GalleryCategoriesBlock'
 import HeroBlock from '../HeroBlock'
 import ImageBlock from '../ImageBlock'
 import ImageTextBlock from '../ImageTextBlock'
+import InstagramFeedBlock from '../InstagramFeedBlock'
 import PillarGridBlock from '../PillarGridBlock'
 import PricingPackagesBlock from '../PricingPackagesBlock'
 import ProcessTimelineBlock from '../ProcessTimelineBlock'
@@ -32,6 +33,7 @@ const BLOCK_LABELS: Record<string, string> = {
   image_block: 'Image',
   button_group: 'Button Group',
   text_grid: 'Text Grid',
+  instagram_feed: 'Instagram Feed',
 }
 
 /**
@@ -179,6 +181,9 @@ const BlockRenderer = ({ blocks, interactive = false, featuredImage }: BlockRend
           break
         case 'text_grid':
           rendered = <TextGridBlock key={key} block={block} />
+          break
+        case 'instagram_feed':
+          rendered = <InstagramFeedBlock key={key} block={block} />
           break
         default:
           return null

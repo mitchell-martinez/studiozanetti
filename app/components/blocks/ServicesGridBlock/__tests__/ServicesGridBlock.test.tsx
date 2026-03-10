@@ -133,27 +133,15 @@ describe('ServicesGridBlock', () => {
 
   // ─── Column variants ──────────────────────────────────────────────────────
 
-  it('applies cols2 class for 2 columns', () => {
-    const { container } = renderBlock({ columns: 2 })
-    const grid = container.querySelector('[class*="servicesGrid"]')!
-    expect(grid.className).toMatch(/cols2/)
-  })
-
-  it('applies cols4 class for 4 columns', () => {
-    const { container } = renderBlock({ columns: 4 })
-    const grid = container.querySelector('[class*="servicesGrid"]')!
-    expect(grid.className).toMatch(/cols4/)
-  })
-
-  it('applies cols3 class by default', () => {
-    const { container } = renderBlock()
-    const grid = container.querySelector('[class*="servicesGrid"]')!
-    expect(grid.className).toMatch(/cols3/)
-  })
-
   it('sets --max-cols CSS variable when max_columns is set', () => {
     const { container } = renderBlock({ max_columns: 2 })
     const grid = container.querySelector('[class*="servicesGrid"]')! as HTMLElement
     expect(grid.style.getPropertyValue('--max-cols')).toBe('2')
+  })
+
+  it('does not set --max-cols when max_columns is not set', () => {
+    const { container } = renderBlock({ max_columns: undefined })
+    const grid = container.querySelector('[class*="servicesGrid"]')! as HTMLElement
+    expect(grid.style.getPropertyValue('--max-cols')).toBe('')
   })
 })

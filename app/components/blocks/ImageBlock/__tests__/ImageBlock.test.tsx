@@ -188,4 +188,73 @@ describe('ImageBlock', () => {
     renderBlock({ aria_label: undefined, parallax_scroll: false })
     expect(screen.getByLabelText('Full-width image banner')).toBeInTheDocument()
   })
+
+  // ─── Heading tag ─────────────────────────────────────────────────────────────
+
+  it('renders title as h2 by default', () => {
+    renderBlock({ title: 'Heading Test' })
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Heading Test')
+  })
+
+  it('renders title with a custom heading tag', () => {
+    renderBlock({ title: 'Custom Tag', heading_tag: 'h3' })
+    expect(screen.getByRole('heading', { level: 3 })).toHaveTextContent('Custom Tag')
+  })
+
+  it('renders title as h1 when configured', () => {
+    renderBlock({ title: 'Big Heading', heading_tag: 'h1' })
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Big Heading')
+  })
+
+  // ─── Pop-out effect ──────────────────────────────────────────────────────────
+
+  it('applies popOut class to title when title_pop_out is true', () => {
+    const { container } = renderBlock({ title: 'Pop', title_pop_out: true })
+    const heading = container.querySelector('[class*="title"]')!
+    expect(heading.className).toMatch(/popOut/)
+  })
+
+  it('does not apply popOut class to title when title_pop_out is false', () => {
+    const { container } = renderBlock({ title: 'No Pop', title_pop_out: false })
+    const heading = container.querySelector('[class*="title"]')!
+    expect(heading.className).not.toMatch(/popOut/)
+  })
+
+  it('applies popOut class to subtitle when subtitle_pop_out is true', () => {
+    const { container } = renderBlock({ subtitle: 'Pop Sub', subtitle_pop_out: true })
+    const sub = container.querySelector('[class*="subtitle"]')!
+    expect(sub.className).toMatch(/popOut/)
+  })
+
+  // ─── Text max width ─────────────────────────────────────────────────────────
+
+  it('applies textNarrow class for narrow text width', () => {
+    const { container } = renderBlock({ title: 'T', text_max_width: 'narrow' })
+    const content = container.querySelector('[class*="content"]')!
+    expect(content.className).toMatch(/textNarrow/)
+  })
+
+  it('applies textSemiNarrow class for semi-narrow text width', () => {
+    const { container } = renderBlock({ title: 'T', text_max_width: 'semi-narrow' })
+    const content = container.querySelector('[class*="content"]')!
+    expect(content.className).toMatch(/textSemiNarrow/)
+  })
+
+  it('applies textWide class for wide text width', () => {
+    const { container } = renderBlock({ title: 'T', text_max_width: 'wide' })
+    const content = container.querySelector('[class*="content"]')!
+    expect(content.className).toMatch(/textWide/)
+  })
+
+  it('applies textFull class for full text width', () => {
+    const { container } = renderBlock({ title: 'T', text_max_width: 'full' })
+    const content = container.querySelector('[class*="content"]')!
+    expect(content.className).toMatch(/textFull/)
+  })
+
+  it('applies textNormal class by default', () => {
+    const { container } = renderBlock({ title: 'T' })
+    const content = container.querySelector('[class*="content"]')!
+    expect(content.className).toMatch(/textNormal/)
+  })
 })

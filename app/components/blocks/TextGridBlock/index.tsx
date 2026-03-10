@@ -1,13 +1,8 @@
 import Button from '~/components/Button'
-import { getSectionStyle } from '../helpers/styleOptions'
+import { getBackgroundImageStyle, getSectionStyle } from '../helpers/styleOptions'
+import sharedStyles from '../shared.module.scss'
 import styles from './TextGridBlock.module.scss'
 import type { TextGridBlockProps } from './types'
-
-const colClass: Record<number, string> = {
-  2: styles.cols2,
-  3: styles.cols3,
-  4: styles.cols4,
-}
 
 const alignClass: Record<string, string> = {
   left: styles.alignLeft,
@@ -26,20 +21,31 @@ const TextGridBlock = ({ block }: TextGridBlockProps) => {
         : styles.cardElevated
 
   const textAlignClass = alignClass[block.text_align ?? 'left'] ?? ''
+  const bgImageStyle = getBackgroundImageStyle(block)
 
   return (
     <section className={styles.section} style={getSectionStyle(block)}>
+      {bgImageStyle && (
+        <div className={sharedStyles.backgroundImage} style={bgImageStyle} aria-hidden="true" />
+      )}
       <div className={styles.inner}>
         {block.heading && <h2 className={styles.heading}>{block.heading}</h2>}
         {block.subheading && <p className={styles.subheading}>{block.subheading}</p>}
-        <div className={`${styles.grid} ${colClass[block.columns ?? 3] ?? ''}`}>
-          {block.items.map((item) => (
+        <div
+          className={styles.grid}
+          style={
+            block.max_columns
+              ? ({ '--max-cols': block.max_columns } as React.CSSProperties)
+              : undefined
+          }
+        >
+          {block.items.map((item, index) => (
             <article
-              key={item.title}
+              key={item.title ?? `item-${index}`}
               className={`${styles.card} ${cardStyleClass} ${textAlignClass}`.trim()}
             >
-              <h3 className={styles.cardTitle}>{item.title}</h3>
-              <p className={styles.cardBody}>{item.body}</p>
+              {item.title && <h3 className={styles.cardTitle}>{item.title}</h3>}
+              {item.body && <p className={styles.cardBody}>{item.body}</p>}
               {item.cta_text && item.cta_url && (
                 <div className={styles.cardCta}>
                   <Button href={item.cta_url} variant="text" size="sm">

@@ -16,6 +16,7 @@ import galleriesBlock from '~/components/blocks/GalleriesBlock/__mocks__/galleri
 import galleryCategoriesBlock from '~/components/blocks/GalleryCategoriesBlock/__mocks__/galleryCategoriesBlock.json'
 import heroBlock from '~/components/blocks/HeroBlock/__mocks__/heroBlock.json'
 import imageTextBlock from '~/components/blocks/ImageTextBlock/__mocks__/imageTextBlock.json'
+import instagramFeedBlock from '~/components/blocks/InstagramFeedBlock/__mocks__/instagramFeedBlock.json'
 import pillarBlock from '~/components/blocks/PillarGridBlock/__mocks__/pillarGridBlock.json'
 import pricingBlock from '~/components/blocks/PricingPackagesBlock/__mocks__/pricingPackagesBlock.json'
 import processBlock from '~/components/blocks/ProcessTimelineBlock/__mocks__/processTimelineBlock.json'
@@ -43,4 +44,5 @@ export const fullPageBlocksB: ContentBlock[] = [
   pricingBlock as ContentBlock,
   galleriesBlock as ContentBlock,
   galleryCategoriesBlock as ContentBlock,
+  instagramFeedBlock as ContentBlock,
 ]

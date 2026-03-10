@@ -39,6 +39,19 @@ const ImageBlock = ({ block }: ImageBlockProps) => {
         ? styles.alignRight
         : styles.alignCenter
 
+  const textMaxWidthClass =
+    block.text_max_width === 'narrow'
+      ? styles.textNarrow
+      : block.text_max_width === 'semi-narrow'
+        ? styles.textSemiNarrow
+        : block.text_max_width === 'wide'
+          ? styles.textWide
+          : block.text_max_width === 'full'
+            ? styles.textFull
+            : styles.textNormal
+
+  const HeadingTag = block.heading_tag ?? 'h2'
+
   const image = block.image
 
   return (
@@ -69,9 +82,17 @@ const ImageBlock = ({ block }: ImageBlockProps) => {
       {overlayClass && <div className={`${styles.overlay} ${overlayClass}`} />}
 
       {(block.title || block.subtitle || block.overlay_text) && (
-        <div className={`${styles.content} ${alignClass}`}>
-          {block.title && <h2 className={styles.title}>{block.title}</h2>}
-          {block.subtitle && <p className={styles.subtitle}>{block.subtitle}</p>}
+        <div className={`${styles.content} ${alignClass} ${textMaxWidthClass}`}>
+          {block.title && (
+            <HeadingTag className={`${styles.title} ${block.title_pop_out ? styles.popOut : ''}`}>
+              {block.title}
+            </HeadingTag>
+          )}
+          {block.subtitle && (
+            <p className={`${styles.subtitle} ${block.subtitle_pop_out ? styles.popOut : ''}`}>
+              {block.subtitle}
+            </p>
+          )}
           {block.overlay_text && <p className={styles.overlayText}>{block.overlay_text}</p>}
         </div>
       )}

@@ -110,4 +110,39 @@ describe('ImageTextBlock', () => {
     const richText = container.querySelector('[class*="richText"]')!
     expect(richText.className).toMatch(/fontLg/)
   })
+
+  // ─── Clickable URL wrapping ─────────────────────────────────────────────────
+
+  it('wraps content in a link when url is provided (internal)', () => {
+    const { container } = renderBlock({ url: '/about-us' })
+    const link = container.querySelector('a[class*="blockLink"]')!
+    expect(link).toBeInTheDocument()
+    expect(link.getAttribute('href')).toBe('/about-us')
+  })
+
+  it('wraps content in an external link when url is external', () => {
+    const { container } = renderBlock({ url: 'https://example.com' })
+    const link = container.querySelector('a[class*="blockLink"]')!
+    expect(link).toBeInTheDocument()
+    expect(link.getAttribute('href')).toBe('https://example.com')
+    expect(link.getAttribute('target')).toBe('_blank')
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer')
+  })
+
+  it('applies clickable class when url is provided', () => {
+    const { container } = renderBlock({ url: '/about-us' })
+    const inner = container.querySelector('[class*="imageText"]')!
+    expect(inner.className).toMatch(/clickable/)
+  })
+
+  it('does not apply clickable class when url is absent', () => {
+    const { container } = renderBlock({ url: undefined })
+    const inner = container.querySelector('[class*="imageText"]')!
+    expect(inner.className).not.toMatch(/clickable/)
+  })
+
+  it('suppresses the CTA button when block-level url is set', () => {
+    renderBlock({ url: '/about-us', cta_text: 'Learn more', cta_url: '/about' })
+    expect(screen.queryByText('Learn more')).not.toBeInTheDocument()
+  })
 })

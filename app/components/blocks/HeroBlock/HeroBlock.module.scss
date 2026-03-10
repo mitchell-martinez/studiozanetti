@@ -79,6 +79,38 @@
   margin-top: 0.25rem;
 }
 
+.heroCta {
+  min-width: 200px;
+  text-align: center;
+
+  @media (max-width: #{g.$bp-sm}) {
+    min-width: 180px;
+    width: 100%;
+  }
+}
+
+.heroFooter {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-top: 1.5rem;
+}
+
+.heroDescription {
+  font-size: var(--text-base);
+  color: rgb(255 255 255 / 85%);
+  max-width: 50ch;
+  line-height: 1.6;
+}
+
+.heroCaption {
+  font-size: var(--text-sm);
+  color: rgb(255 255 255 / 60%);
+  font-style: italic;
+  letter-spacing: 0.03em;
+}
+
 .dots {
   display: inline-flex;
   gap: 0.45rem;
