@@ -1016,6 +1016,11 @@ function sz_normalize_block_images( array $block ): array {
 		}
 	}
 
+	// Gallery field (instagram_feed "images"): array of image IDs or objects
+	if ( ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
+		$block['images'] = array_values( array_filter( array_map( 'sz_resolve_image', $block['images'] ) ) );
+	}
+
 	return $block;
 }
 
