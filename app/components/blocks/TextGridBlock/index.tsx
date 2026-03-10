@@ -21,6 +21,14 @@ const TextGridBlock = ({ block }: TextGridBlockProps) => {
         : styles.cardElevated
 
   const textAlignClass = alignClass[block.text_align ?? 'left'] ?? ''
+
+  const fontSizeClass =
+    block.font_size === 'md'
+      ? styles.fontMd
+      : block.font_size === 'lg'
+        ? styles.fontLg
+        : ''
+
   const bgImageStyle = getBackgroundImageStyle(block)
 
   return (
@@ -42,7 +50,7 @@ const TextGridBlock = ({ block }: TextGridBlockProps) => {
           {block.items.map((item, index) => (
             <article
               key={item.title ?? `item-${index}`}
-              className={`${styles.card} ${cardStyleClass} ${textAlignClass}`.trim()}
+              className={`${styles.card} ${cardStyleClass} ${textAlignClass} ${fontSizeClass}`.trim()}
             >
               {item.title && <h3 className={styles.cardTitle}>{item.title}</h3>}
               {item.body && <p className={styles.cardBody}>{item.body}</p>}

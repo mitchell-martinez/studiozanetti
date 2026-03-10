@@ -153,12 +153,7 @@
   color: var(--color-white);
   letter-spacing: 0.06em;
   text-shadow: 0 2px 12px rgb(0 0 0 / 40%);
-  transition: transform 0.3s ease;
   margin: 0;
-
-  &:hover {
-    transform: scale(1.06);
-  }
 }
 
 .subtitle {
@@ -172,11 +167,11 @@
 // ─── Pop out effect (#29) ───────────────────────────────────────────────────
 
 .popOut {
-  text-shadow:
-    0 0 20px rgb(255 255 255 / 30%),
-    0 0 40px rgb(255 255 255 / 15%),
-    0 4px 16px rgb(0 0 0 / 50%);
-  filter: drop-shadow(0 2px 8px rgb(0 0 0 / 40%));
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.06);
+  }
 }
 
 .overlayText {

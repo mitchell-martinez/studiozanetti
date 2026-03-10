@@ -18,6 +18,7 @@ const meta: Meta<TextGridArgs> = {
     max_columns: textGrid.max_columns,
     card_style: textGrid.card_style,
     text_align: textGrid.text_align,
+    font_size: textGrid.font_size,
     section_theme: textGrid.section_theme,
     top_spacing: textGrid.top_spacing,
     bottom_spacing: textGrid.bottom_spacing,
@@ -39,6 +40,11 @@ const meta: Meta<TextGridArgs> = {
       control: 'inline-radio',
       options: ['left', 'center', 'right'],
       description: 'Text alignment inside each card',
+    },
+    font_size: {
+      control: 'inline-radio',
+      options: ['sm', 'md', 'lg'],
+      description: 'Font size for card body text (sm by default)',
     },
     items: {
       control: 'object',

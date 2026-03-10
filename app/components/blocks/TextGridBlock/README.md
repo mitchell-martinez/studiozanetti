@@ -20,6 +20,7 @@ This block appears in the **Page Blocks** flexible content field as **"Text Grid
 | **Columns** | Select | `2` · `3` · `4` — number of columns at widest breakpoint |
 | **Card Style** | Select | `elevated` · `outline` · `minimal` |
 | **Text Align** | Select | `left` · `center` · `right` |
+| **Body Font Size** | Select | `Small` (default) · `Medium` · `Large` — font size of card body text |
 | Section Theme | Select | Light · Rose · Champagne · Dark |
 | Top Spacing | Select | None · Small · Medium · Large |
 | Bottom Spacing | Select | None · Small · Medium · Large |

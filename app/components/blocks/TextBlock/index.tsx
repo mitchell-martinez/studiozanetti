@@ -23,35 +23,41 @@ const widthClass: Record<string, string | undefined> = {
   wide: styles.maxWide,
 }
 
-const TextBlock = ({ block, dark }: TextBlockProps) => (
-  <section
-    className={styles.section}
-    style={
-      dark
-        ? { ...getSectionStyle(block), background: 'var(--color-light-gray)' }
-        : getSectionStyle(block)
-    }
-  >
-    <div
-      className={[
-        styles.textContent,
-        textAlignClass[block.align ?? 'left'],
-        blockAlignClass[block.block_align ?? 'left'],
-        widthClass[block.max_width ?? 'normal'],
-      ]
-        .filter(Boolean)
-        .join(' ')}
+const TextBlock = ({ block, dark }: TextBlockProps) => {
+  // TextBlock uses max_width for its inner text container, not the outer section.
+  // Strip it so getSectionStyle doesn't constrain the full-width section background.
+  const { max_width: _textWidth, ...sectionOptions } = block
+
+  return (
+    <section
+      className={styles.section}
+      style={
+        dark
+          ? { ...getSectionStyle(sectionOptions), background: 'var(--color-light-gray)' }
+          : getSectionStyle(sectionOptions)
+      }
     >
-      {block.eyebrow && <p className={styles.eyebrow}>{block.eyebrow}</p>}
-      {block.heading && <h2 className={styles.textHeading}>{block.heading}</h2>}
-      <RichText html={block.body} fontSize={block.font_size} />
-      {block.cta_text && block.cta_url && (
-        <Button href={block.cta_url} variant="text" size="sm">
-          {block.cta_text} →
-        </Button>
-      )}
-    </div>
-  </section>
-)
+      <div
+        className={[
+          styles.textContent,
+          textAlignClass[block.align ?? 'left'],
+          blockAlignClass[block.block_align ?? 'left'],
+          widthClass[block.max_width ?? 'normal'],
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {block.eyebrow && <p className={styles.eyebrow}>{block.eyebrow}</p>}
+        {block.heading && <h2 className={styles.textHeading}>{block.heading}</h2>}
+        <RichText html={block.body} fontSize={block.font_size} />
+        {block.cta_text && block.cta_url && (
+          <Button href={block.cta_url} variant="text" size="sm">
+            {block.cta_text} →
+          </Button>
+        )}
+      </div>
+    </section>
+  )
+}
 
 export default TextBlock

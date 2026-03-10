@@ -11,13 +11,17 @@
       "url": "https://picsum.photos/seed/zanetti-1/1600/1000",
       "alt": "Bride and groom portrait",
       "width": 1600,
-      "height": 1000
+      "height": 1000,
+      "tagline": "Yarra Valley, Victoria",
+      "subtitle": "Spring 2024"
     },
     {
       "url": "https://picsum.photos/seed/zanetti-2/1600/1000",
       "alt": "Ceremony moment",
       "width": 1600,
-      "height": 1000
+      "height": 1000,
+      "tagline": "Mornington Peninsula",
+      "subtitle": "Autumn 2024"
     }
   ],
   "content_align": "center",

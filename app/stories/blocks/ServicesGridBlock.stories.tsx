@@ -17,6 +17,7 @@ const meta: Meta<ServicesArgs> = {
     max_columns: servicesBlock.max_columns,
     card_style: servicesBlock.card_style,
     text_align: servicesBlock.text_align,
+    font_size: servicesBlock.font_size,
     services: servicesBlock.services,
     cta_text: servicesBlock.cta_text,
     cta_url: servicesBlock.cta_url,
@@ -43,6 +44,11 @@ const meta: Meta<ServicesArgs> = {
       control: 'inline-radio',
       options: ['left', 'center', 'right'],
       description: 'Text alignment inside each service card',
+    },
+    font_size: {
+      control: 'inline-radio',
+      options: ['sm', 'md', 'lg'],
+      description: 'Font size for service description text (sm by default)',
     },
     services: {
       control: 'object',

@@ -112,6 +112,8 @@ add_action( 'acf/init', function () {
 			'button_label' => 'Add Slide',
 			'sub_fields' => [
 				[ 'key' => 'field_sz_hero_slide_image', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array' ],
+				[ 'key' => 'field_sz_hero_slide_tagline', 'label' => 'Slide Tagline', 'name' => 'tagline', 'type' => 'text', 'instructions' => 'Optional tagline for this slide, displayed at the bottom of the hero.' ],
+				[ 'key' => 'field_sz_hero_slide_subtitle', 'label' => 'Slide Subtitle', 'name' => 'subtitle', 'type' => 'text', 'instructions' => 'Optional smaller subtitle for this slide, displayed below the tagline.' ],
 			],
 		],
 		[ 'key' => 'field_sz_hero_cta_text', 'label' => 'CTA Text', 'name' => 'cta_text', 'type' => 'text' ],
@@ -178,6 +180,7 @@ add_action( 'acf/init', function () {
 		],
 		[ 'key' => 'field_sz_services_cta_text', 'label' => 'CTA Text', 'name' => 'cta_text', 'type' => 'text' ],
 		[ 'key' => 'field_sz_services_cta_url', 'label' => 'CTA URL', 'name' => 'cta_url', 'type' => 'url' ],
+		[ 'key' => 'field_sz_services_font_size', 'label' => 'Body Font Size', 'name' => 'font_size', 'type' => 'select', 'choices' => [ 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => 'sm', 'instructions' => 'Controls the font size of the service description text.' ],
 	], $style_fields( 'sz_services' ));
 
 	$biography_fields = array_merge([
@@ -331,9 +334,9 @@ add_action( 'acf/init', function () {
 		[ 'key' => 'field_sz_image_block_overlay_text', 'label' => 'Overlay Text', 'name' => 'overlay_text', 'type' => 'text', 'instructions' => 'Optional large text displayed over the image.' ],
 		[ 'key' => 'field_sz_image_block_title', 'label' => 'Title', 'name' => 'title', 'type' => 'text', 'instructions' => 'Optional centred title over the image.' ],
 		[ 'key' => 'field_sz_image_block_heading_tag', 'label' => 'Heading Tag', 'name' => 'heading_tag', 'type' => 'select', 'choices' => [ 'h1' => 'H1', 'h2' => 'H2 (default)', 'h3' => 'H3', 'h4' => 'H4', 'h5' => 'H5', 'h6' => 'H6' ], 'default_value' => 'h2', 'instructions' => 'HTML heading level for the title. Choose based on page hierarchy.' ],
-		[ 'key' => 'field_sz_image_block_title_pop_out', 'label' => 'Title Pop Out', 'name' => 'title_pop_out', 'type' => 'true_false', 'ui' => 1, 'instructions' => 'Apply a glowing pop-out effect to the title text.' ],
+		[ 'key' => 'field_sz_image_block_title_pop_out', 'label' => 'Title Pop Out', 'name' => 'title_pop_out', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1, 'instructions' => 'Enlarge the title text on mouseover. Enabled by default.' ],
 		[ 'key' => 'field_sz_image_block_subtitle', 'label' => 'Subtitle', 'name' => 'subtitle', 'type' => 'text', 'instructions' => 'Optional subtitle displayed below the title.' ],
-		[ 'key' => 'field_sz_image_block_subtitle_pop_out', 'label' => 'Subtitle Pop Out', 'name' => 'subtitle_pop_out', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1, 'instructions' => 'Apply a glowing pop-out effect to the subtitle text. Enabled by default.' ],
+		[ 'key' => 'field_sz_image_block_subtitle_pop_out', 'label' => 'Subtitle Pop Out', 'name' => 'subtitle_pop_out', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0, 'instructions' => 'Enlarge the subtitle text on mouseover. Disabled by default.' ],
 		[ 'key' => 'field_sz_image_block_text_align', 'label' => 'Text Align', 'name' => 'text_align', 'type' => 'select', 'choices' => [ 'center' => 'Centre', 'left' => 'Left', 'right' => 'Right' ], 'default_value' => 'center' ],
 		[ 'key' => 'field_sz_image_block_text_max_width', 'label' => 'Text Max Width', 'name' => 'text_max_width', 'type' => 'select', 'choices' => [ 'narrow' => 'Narrow (1/4)', 'semi-narrow' => 'Semi-Narrow (1/3)', 'normal' => 'Normal (1/2)', 'wide' => 'Wide (2/3)', 'full' => 'Full Length' ], 'default_value' => 'normal', 'instructions' => 'Maximum width of the text overlay, as a fraction of the image width.' ],
 		[ 'key' => 'field_sz_image_block_parallax_scroll', 'label' => 'Parallax Scroll', 'name' => 'parallax_scroll', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0, 'instructions' => 'Enable parallax depth scrolling (CSS fixed background). When off, the image displays as a static full-width banner. Note: on iOS Safari this gracefully falls back to a static image.' ],
@@ -385,6 +388,7 @@ add_action( 'acf/init', function () {
 				[ 'key' => 'field_sz_text_grid_item_cta_url', 'label' => 'CTA URL', 'name' => 'cta_url', 'type' => 'url', 'instructions' => 'Optional link destination for this card.' ],
 			],
 		],
+		[ 'key' => 'field_sz_text_grid_font_size', 'label' => 'Body Font Size', 'name' => 'font_size', 'type' => 'select', 'choices' => [ 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => 'sm', 'instructions' => 'Controls the font size of the card body text.' ],
 	], $style_fields( 'sz_text_grid' ));
 
 	$instagram_feed_fields = array_merge([
