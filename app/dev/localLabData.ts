@@ -9,7 +9,6 @@
 
 import type { ContentBlock } from '~/types/wordpress'
 
-import biographyBlock from '~/components/blocks/BiographyBlock/__mocks__/biographyBlock.json'
 import buttonGroupBlock from '~/components/blocks/ButtonGroupBlock/__mocks__/buttonGroupBlock.json'
 import faqBlock from '~/components/blocks/FaqAccordionBlock/__mocks__/faqAccordionBlock.json'
 import galleriesBlock from '~/components/blocks/GalleriesBlock/__mocks__/galleriesBlock.json'
@@ -37,7 +36,6 @@ export const fullPageBlocksA: ContentBlock[] = [
 
 export const fullPageBlocksB: ContentBlock[] = [
   heroBlock as ContentBlock,
-  biographyBlock as ContentBlock,
   pillarBlock as ContentBlock,
   textGridBlock as ContentBlock,
   processBlock as ContentBlock,

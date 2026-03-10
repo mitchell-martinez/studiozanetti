@@ -49,7 +49,7 @@ Built with **React Router 7** (SSR) + **WordPress** as a headless CMS.
 │  BlockRenderer dispatches by acf_fc_layout field:       │
 │    "hero"          → HeroBlock.tsx                      │
 │    "services_grid" → ServicesGridBlock.tsx              │
-│    "biography"     → BiographyBlock.tsx   … etc.        │
+│    "pillar_grid"   → PillarGridBlock.tsx  … etc.        │
 └─────────────────────────────────────────────────────────┘
                            │
               ┌────────────┴────────────┐
@@ -165,7 +165,7 @@ Open [http://localhost:5173](http://localhost:5173).
 | URL        | Renders from           | Block types exercised                               |
 | ---------- | ---------------------- | --------------------------------------------------- |
 | `/`        | `PAGE_HOME` fixture    | `hero`, `services_grid`, `text_block`               |
-| `/about`   | `PAGE_ABOUT` fixture   | `biography`, `pillar_grid`                          |
+| `/about`   | `PAGE_ABOUT` fixture   | `pillar_grid`                                       |
 | `/contact` | `PAGE_CONTACT` fixture | ACF contact-details fields                          |
 | `/gallery` | 12 mock gallery photos | Gallery CPT                                         |
 | `/pricing` | `PAGE_PRICING` fixture | `image_text`, `pillar_grid` (dynamic `:slug` route) |
@@ -350,7 +350,6 @@ Field: `blocks` (Flexible Content)
 | `text_block`    | `heading` (Text), `body` (WYSIWYG), `align` (Select: left/center), `cta_text` (Text), `cta_url` (URL)         |
 | `image_text`    | `image` (Image), `heading` (Text), `body` (WYSIWYG), `image_position` (Select: left/right)                    |
 | `services_grid` | `heading` (Text), `cta_text` (Text), `cta_url` (URL), `services` (Repeater → `title`, `description`, `image`) |
-| `biography`     | `image` (Image), `name` (Text), `role` (Text), `bio` (WYSIWYG)                                                |
 | `pillar_grid`   | `heading` (Text), `pillars` (Repeater → `title`, `description`)                                               |
 
 #### "Contact Details" — Applied to: Page slug = `contact`
@@ -405,7 +404,7 @@ Registers all ACF field groups for headless flexible content blocks **via code**
 
 **What it does:**
 
-- Defines the "Page Blocks" flexible content field group with all block layouts (hero, text, image_text, services_grid, biography, pillar_grid, testimonial_carousel, FAQ accordion, pricing packages, process timeline, galleries, gallery categories, image, button group, and text grid).
+- Defines the "Page Blocks" flexible content field group with all block layouts (hero, text, image_text, services_grid, pillar_grid, testimonial_carousel, FAQ accordion, pricing packages, process timeline, galleries, gallery categories, image, button group, and text grid).
 - Each layout includes shared style fields (section theme, top/bottom spacing) for a consistent admin experience.
 - Defines the "Gallery Photo" field group for the `gallery_photo` custom post type.
 - Defines the "Contact Details" field group for pages with the `contact` slug.
@@ -426,7 +425,6 @@ All block components live in `app/components/blocks/`.
 | `TextBlock.tsx`         | `text_block`     | Heading + WYSIWYG body + optional CTA; left or center aligned                         |
 | `ImageTextBlock.tsx`    | `image_text`     | Side-by-side image and text; image position configurable                              |
 | `ServicesGridBlock.tsx` | `services_grid`  | Responsive grid of service cards with image, title, description                       |
-| `BiographyBlock.tsx`    | `biography`      | Photographer portrait, name, role, WYSIWYG bio                                        |
 | `PillarGridBlock.tsx`   | `pillar_grid`    | Grid of value/approach cards                                                          |
 | `RichText.tsx`          | _(shared)_       | Renders trusted WP WYSIWYG HTML                                                       |
 | `BlockRenderer.tsx`     | _(dispatcher)_   | Reads `acf_fc_layout` → calls the correct component; unknown layouts silently skipped |

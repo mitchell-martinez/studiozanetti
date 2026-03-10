@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { useLoaderData } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
-import RichText from '~/components/blocks/RichText'
+import RichText from '~/components/RichText'
 import { getPreviewPage } from '~/lib/wordpress'
 import type { WPPage } from '~/types/wordpress'
 import styles from './preview.module.scss'

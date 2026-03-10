@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import Button from '~/components/Button'
+import RichText from '~/components/RichText'
 import { getSectionStyle } from '../helpers/styleOptions'
-import RichText from '../RichText'
 import styles from './ImageTextBlock.module.scss'
 import type { ImageTextBlockProps } from './types'
 

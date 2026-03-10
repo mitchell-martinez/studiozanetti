@@ -129,7 +129,7 @@ const PAGE_HOME = {
   },
 }
 
-/** About page — exercises biography and pillar_grid. */
+/** About page — exercises pillar_grid. */
 const PAGE_ABOUT = {
   id: 2,
   slug: 'about',
@@ -144,13 +144,6 @@ const PAGE_ABOUT = {
   },
   acf: {
     blocks: [
-      {
-        acf_fc_layout: 'biography',
-        image: img('zanetti-about', 600, 700, 'Marco Zanetti, lead photographer, at work'),
-        name: 'Marco Zanetti',
-        role: 'Lead Photographer & Founder',
-        bio: "<p>Marco Zanetti has been capturing life's most meaningful moments for over 15 years. Born and raised in Florence, Italy, his love of art and beauty deeply informs his photographic style — blending classical composition with a modern, natural touch.</p><p>After studying fine arts at the Accademia di Belle Arti, Marco travelled Europe honing his craft before founding Studio Zanetti with a simple mission: to create photographs that feel as true as the moments they preserve.</p><p>Today, Studio Zanetti serves clients across Italy and internationally, bringing the same dedication to every project — whether a grand destination wedding or an intimate family portrait session.</p>",
-      },
       {
         acf_fc_layout: 'pillar_grid',
         heading: 'Our Approach',

@@ -259,32 +259,25 @@ describe('image normalisation in normalizePage', () => {
   it('passes through valid WPImage objects untouched', async () => {
     const img = { url: 'https://example.com/photo.jpg', alt: 'Photo', width: 800, height: 600 }
     mockFetch.mockReturnValueOnce(
-      ok([
-        pageWithBlocks([
-          { acf_fc_layout: 'biography', name: 'Test', bio: '<p>Bio</p>', image: img },
-        ]),
-      ]),
+      ok([pageWithBlocks([{ acf_fc_layout: 'image_text', image: img, body: '<p>Text</p>' }])]),
     )
     const page = await getPageBySlug('home')
     const block = page?.acf?.blocks?.[0]
     expect(block).toBeDefined()
-    if (block?.acf_fc_layout === 'biography') {
+    if (block?.acf_fc_layout === 'image_text') {
       expect(block.image).toEqual(img)
     }
   })
 
   it('drops numeric attachment IDs (cannot resolve client-side)', async () => {
     mockFetch.mockReturnValueOnce(
-      ok([
-        pageWithBlocks([
-          { acf_fc_layout: 'biography', name: 'Test', bio: '<p>Bio</p>', image: 12345 },
-        ]),
-      ]),
+      ok([pageWithBlocks([{ acf_fc_layout: 'image_text', image: 12345, body: '<p>Text</p>' }])]),
     )
     const page = await getPageBySlug('home')
     const block = page?.acf?.blocks?.[0]
-    if (block?.acf_fc_layout === 'biography') {
-      expect(block.image).toBeUndefined()
+    if (block?.acf_fc_layout === 'image_text') {
+      // Falls back to { url: '', alt: '' } for image_text since image is required
+      expect(block.image).toEqual({ url: '', alt: '' })
     }
   })
 
@@ -293,17 +286,16 @@ describe('image normalisation in normalizePage', () => {
       ok([
         pageWithBlocks([
           {
-            acf_fc_layout: 'biography',
-            name: 'Test',
-            bio: '<p>Bio</p>',
+            acf_fc_layout: 'image_text',
             image: 'https://example.com/photo.jpg',
+            body: '<p>Text</p>',
           },
         ]),
       ]),
     )
     const page = await getPageBySlug('home')
     const block = page?.acf?.blocks?.[0]
-    if (block?.acf_fc_layout === 'biography') {
+    if (block?.acf_fc_layout === 'image_text') {
       expect(block.image).toEqual({ url: 'https://example.com/photo.jpg', alt: '' })
     }
   })
@@ -348,7 +340,11 @@ describe('image normalisation in normalizePage', () => {
     const page = await getPageBySlug('home')
     const block = page?.acf?.blocks?.[0]
     if (block?.acf_fc_layout === 'hero') {
-      expect(block.slides?.[0]).toEqual({ ...imgObj, tagline: 'My Tagline', subtitle: 'My Subtitle' })
+      expect(block.slides?.[0]).toEqual({
+        ...imgObj,
+        tagline: 'My Tagline',
+        subtitle: 'My Subtitle',
+      })
       expect(block.slides?.[1]).toEqual(imgObj)
     }
   })

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import Button from '~/components/Button'
+import RichText from '~/components/RichText'
 import { useMediaQuery } from '~/hooks/useMediaQuery'
 import { getSectionStyle } from '../helpers/styleOptions'
-import RichText from '../RichText'
 import styles from './PricingPackagesBlock.module.scss'
 import type { PricingPackagesBlockProps } from './types'
 

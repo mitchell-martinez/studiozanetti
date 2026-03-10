@@ -130,12 +130,6 @@ function normalizeBlockImages(blocks: ContentBlock[]): ContentBlock[] {
           image_mobile: safeImage(block.image_mobile),
         }
 
-      case 'biography':
-        return {
-          ...block,
-          image: safeImage(block.image),
-        }
-
       case 'services_grid':
         return {
           ...block,
@@ -170,6 +164,16 @@ function normalizeBlockImages(blocks: ContentBlock[]): ContentBlock[] {
             ...cat,
             image: safeImage(cat.image),
           })),
+        }
+
+      case 'instagram_feed':
+        return {
+          ...block,
+          images: Array.isArray(block.images)
+            ? (block.images as unknown[])
+                .map((img) => safeImage(img))
+                .filter((img): img is WPImage => img !== undefined)
+            : [],
         }
 
       default:
