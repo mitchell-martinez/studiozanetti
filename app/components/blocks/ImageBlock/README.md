@@ -20,6 +20,8 @@ This block is available as an **Image** layout within the **Page Blocks** flexib
 | Title Pop Out       | True/False | —        | Enlarge the title text on mouseover. **On by default**.                                                                   |
 | Subtitle            | Text       | —        | Optional subtitle displayed below the title.                                                                              |
 | Subtitle Pop Out    | True/False | —        | Enlarge the subtitle text on mouseover. **Off by default**.                                                               |
+| Heading Opacity     | Number     | —        | Opacity for title + subtitle text (`0` to `1`). Example: `0.8` = slightly transparent text.                             |
+| Image Shadow Strength | Number   | —        | Darkens the image itself (`0` to `1`). Example: `0.3` = moderate shadow, `1` = fully black image.                       |
 | Text Align          | Select     | —        | Alignment of overlay text: **Centre** (default), **Left**, or **Right**.                                                  |
 | Parallax Scroll     | True/False | —        | Toggle parallax depth effect on or off. **Off by default** (static banner).                                               |
 | Accessibility Label | Text       | —        | Custom `aria-label` for the section. Defaults to "Full-width image banner".                                               |
@@ -40,6 +42,8 @@ This block is available as an **Image** layout within the **Page Blocks** flexib
 - **Static mode**: Leave Parallax Scroll off for a simple full-width banner — great as a visual divider between content blocks.
 - **Overlay text**: Keep it short — 3–6 words works best for visual impact.
 - **Overlay strength**: If using text, set an overlay strength of at least "Light" to ensure readability.
+- **Heading opacity**: Use values between `0.75` and `1` for subtle fading while keeping text legible.
+- **Image shadow strength**: Start around `0.25` to `0.35` for a moderate darkening effect.
 - **Accessibility**: The block respects the `prefers-reduced-motion` system setting — parallax is automatically disabled (background scrolls normally) for users who have motion reduction enabled.
 - **Mobile**: On iOS Safari, `background-attachment: fixed` is not supported. The image will display as a static background instead. This is expected behaviour and provides a good fallback experience.
 - **Height**: Use "Medium" for section dividers between content blocks, "Large" or "Full Screen" for more dramatic visual breaks.

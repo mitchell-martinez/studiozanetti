@@ -248,6 +248,8 @@ export interface ImageBlock {
   title_pop_out?: boolean
   subtitle_pop_out?: boolean
   text_max_width?: 'narrow' | 'semi-narrow' | 'normal' | 'wide' | 'full'
+  heading_opacity?: number
+  image_shadow_strength?: number
 }
 
 // ─── Shared Button sub-field ─────────────────────────────────────────────────

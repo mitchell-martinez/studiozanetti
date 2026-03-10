@@ -54,6 +54,15 @@
   pointer-events: none;
 }
 
+.imageShadow {
+  --image-shadow-opacity: 0;
+
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgb(0 0 0 / var(--image-shadow-opacity));
+}
+
 .overlayLight {
   background: linear-gradient(180deg, rgb(39 22 36 / 18%), rgb(39 22 36 / 25%));
 }
@@ -68,6 +77,8 @@
 
 // ─── Text content ────────────────────────────────────────────────────────────
 .content {
+  --heading-opacity: 1;
+
   position: absolute;
   inset: 0;
   display: flex;
@@ -155,6 +166,7 @@
   letter-spacing: 0.06em;
   text-shadow: 0 2px 12px rgb(0 0 0 / 40%);
   margin: 0;
+  opacity: var(--heading-opacity);
 }
 
 .subtitle {
@@ -163,6 +175,7 @@
   font-style: italic;
   letter-spacing: 0.03em;
   text-shadow: 0 2px 8px rgb(0 0 0 / 30%);
+  opacity: var(--heading-opacity);
 }
 
 // ─── Pop out effect (#29) ───────────────────────────────────────────────────
