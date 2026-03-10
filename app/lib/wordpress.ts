@@ -28,6 +28,7 @@
 
 import type {
   ContentBlock,
+  HeroSlide,
   WPGalleryPhoto,
   WPImage,
   WPMenuItem,
@@ -106,9 +107,11 @@ function normalizeBlockImages(blocks: ContentBlock[]): ContentBlock[] {
           slides: Array.isArray(block.slides)
             ? (block.slides as unknown[])
                 .map((s) => {
-                  // Handle repeater row { image: …, tagline?: …, subtitle?: … } or flat image
-                  if (typeof s === 'object' && s !== null && 'image' in s) {
-                    const row = s as Record<string, unknown>
+                  if (typeof s !== 'object' || s === null) return safeImage(s)
+                  const row = s as Record<string, unknown>
+
+                  // Handle repeater row { image: …, tagline?: …, subtitle?: … }
+                  if ('image' in row) {
                     const img = safeImage(row.image)
                     if (!img) return undefined
                     return {
@@ -117,9 +120,17 @@ function normalizeBlockImages(blocks: ContentBlock[]): ContentBlock[] {
                       subtitle: typeof row.subtitle === 'string' ? row.subtitle : undefined,
                     }
                   }
-                  return safeImage(s)
+
+                  // Flat image { url, alt, …, tagline?, subtitle? } (from PHP normalisation)
+                  const img = safeImage(row)
+                  if (!img) return undefined
+                  return {
+                    ...img,
+                    tagline: typeof row.tagline === 'string' ? row.tagline : undefined,
+                    subtitle: typeof row.subtitle === 'string' ? row.subtitle : undefined,
+                  }
                 })
-                .filter((img): img is WPImage => img !== undefined)
+                .filter((img): img is HeroSlide => img !== undefined)
             : undefined,
         }
 

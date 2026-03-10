@@ -987,7 +987,16 @@ function sz_normalize_block_images( array $block ): array {
 		$block['slides'] = array_values( array_filter( array_map( function ( $slide ) {
 			// Repeater row with an "image" sub-field
 			if ( is_array( $slide ) && array_key_exists( 'image', $slide ) ) {
-				return sz_resolve_image( $slide['image'] );
+				$img = sz_resolve_image( $slide['image'] );
+				if ( ! $img ) return null;
+				// Preserve tagline and subtitle from the repeater row
+				if ( ! empty( $slide['tagline'] ) ) {
+					$img['tagline'] = $slide['tagline'];
+				}
+				if ( ! empty( $slide['subtitle'] ) ) {
+					$img['subtitle'] = $slide['subtitle'];
+				}
+				return $img;
 			}
 			// Already a flat image (defensive)
 			return sz_resolve_image( $slide );
