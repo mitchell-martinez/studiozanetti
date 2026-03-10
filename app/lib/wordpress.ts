@@ -177,6 +177,23 @@ function normalizeBlockImages(blocks: ContentBlock[]): ContentBlock[] {
           })),
         }
 
+      case 'galleries':
+        return {
+          ...block,
+          images: Array.isArray(block.images)
+            ? block.images
+                .map((row) => {
+                  const image = safeImage(row?.image)
+                  if (!image) return null
+                  return {
+                    ...row,
+                    image,
+                  }
+                })
+                .filter((row): row is NonNullable<typeof row> => row !== null)
+            : [],
+        }
+
       case 'instagram_feed':
         return {
           ...block,
@@ -295,7 +312,8 @@ export async function getNavMenu(location: string = 'primary'): Promise<WPMenuIt
  * Used by the /preview route to render draft content from WordPress.
  */
 export async function getPreviewPage(id: number, secret: string): Promise<WPPage | null> {
-  return await wpFetch<WPPage>(`/sz/v1/preview/${id}?secret=${encodeURIComponent(secret)}`)
+  const page = await wpFetch<RawWPPage>(`/sz/v1/preview/${id}?secret=${encodeURIComponent(secret)}`)
+  return page ? normalizePage(page) : null
 }
 
 /** Default site settings used when WP is unavailable or options page not yet configured. */
