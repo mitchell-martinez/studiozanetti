@@ -389,6 +389,8 @@ add_action( 'acf/init', function () {
 			],
 		],
 		[ 'key' => 'field_sz_text_grid_font_size', 'label' => 'Font Size', 'name' => 'font_size', 'type' => 'select', 'choices' => [ 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => 'sm', 'instructions' => 'Controls the font size of the card title and body text.' ],
+		[ 'key' => 'field_sz_text_grid_cta_variant', 'label' => 'CTA Button Style', 'name' => 'cta_variant', 'type' => 'select', 'choices' => [ 'outline' => 'Outline', 'primary' => 'Primary (Accent Fill)', 'secondary' => 'Secondary (Soft Fill)', 'dark' => 'Dark', 'text' => 'Text (Link-style)' ], 'default_value' => 'outline', 'instructions' => 'Visual style of the per-card CTA buttons.' ],
+		[ 'key' => 'field_sz_text_grid_cta_size', 'label' => 'CTA Button Size', 'name' => 'cta_size', 'type' => 'select', 'choices' => [ 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => 'sm', 'instructions' => 'Size of the per-card CTA buttons.' ],
 	], $style_fields( 'sz_text_grid' ));
 
 	$instagram_feed_fields = array_merge([

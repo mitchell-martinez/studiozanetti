@@ -299,6 +299,8 @@ export interface TextGridBlock extends BlockStyleOptions {
   card_style?: 'elevated' | 'outline' | 'minimal'
   text_align?: 'left' | 'center' | 'right'
   font_size?: 'sm' | 'md' | 'lg'
+  cta_variant?: 'primary' | 'secondary' | 'outline' | 'dark' | 'text'
+  cta_size?: 'sm' | 'md' | 'lg'
 }
 
 // ─── Instagram Feed block ───────────────────────────────────────────────────

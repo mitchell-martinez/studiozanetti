@@ -329,6 +329,30 @@ describe('image normalisation in normalizePage', () => {
     }
   })
 
+  it('preserves tagline and subtitle on hero slides', async () => {
+    const imgObj = { url: 'https://example.com/slide.jpg', alt: 'Slide', width: 1920, height: 1080 }
+    mockFetch.mockReturnValueOnce(
+      ok([
+        pageWithBlocks([
+          {
+            acf_fc_layout: 'hero',
+            title: 'Test',
+            slides: [
+              { image: imgObj, tagline: 'My Tagline', subtitle: 'My Subtitle' },
+              { image: imgObj },
+            ],
+          },
+        ]),
+      ]),
+    )
+    const page = await getPageBySlug('home')
+    const block = page?.acf?.blocks?.[0]
+    if (block?.acf_fc_layout === 'hero') {
+      expect(block.slides?.[0]).toEqual({ ...imgObj, tagline: 'My Tagline', subtitle: 'My Subtitle' })
+      expect(block.slides?.[1]).toEqual(imgObj)
+    }
+  })
+
   it('normalises service images within the services repeater', async () => {
     mockFetch.mockReturnValueOnce(
       ok([
