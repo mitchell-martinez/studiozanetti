@@ -1132,8 +1132,29 @@ function sz_normalize_block_images( array $block ): array {
 		}
 	}
 
-	// Gallery field (instagram_feed "images"): array of image IDs or objects
-	if ( ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
+	// Galleries block repeater: images[] rows contain { image, caption }.
+	if ( ( $block['acf_fc_layout'] ?? '' ) === 'galleries' && ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
+		$rows = [];
+		foreach ( $block['images'] as $row ) {
+			if ( ! is_array( $row ) || ! array_key_exists( 'image', $row ) ) {
+				continue;
+			}
+
+			$img = sz_resolve_image( $row['image'] );
+			if ( ! $img ) {
+				continue;
+			}
+
+			$rows[] = [
+				'image'   => $img,
+				'caption' => isset( $row['caption'] ) ? $row['caption'] : '',
+			];
+		}
+		$block['images'] = $rows;
+	}
+
+	// Instagram feed block: images[] is a flat image array.
+	if ( ( $block['acf_fc_layout'] ?? '' ) === 'instagram_feed' && ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
 		$block['images'] = array_values( array_filter( array_map( 'sz_resolve_image', $block['images'] ) ) );
 	}
 
