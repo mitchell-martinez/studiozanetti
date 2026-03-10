@@ -27,6 +27,9 @@
   display: grid;
   gap: 2rem;
   grid-template-columns: repeat(min(3, var(--max-cols)), minmax(0, 1fr));
+  max-width: 100%;
+  margin: 0 auto;
+  justify-content: center;
 
   @media (max-width: #{g.$bp-lg}) {
     grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, 1fr));
@@ -87,6 +90,16 @@
   color: var(--color-ink-soft);
   font-size: var(--text-sm);
   line-height: 1.7;
+}
+
+// ─── Font-size variants ─────────────────────────────────────────────────────
+
+.fontMd .cardBody {
+  font-size: var(--text-base);
+}
+
+.fontLg .cardBody {
+  font-size: var(--text-lg);
 }
 
 .cardCta {

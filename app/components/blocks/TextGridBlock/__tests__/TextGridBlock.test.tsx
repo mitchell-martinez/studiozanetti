@@ -98,4 +98,25 @@ describe('TextGridBlock', () => {
     const card = container.querySelector('article')!
     expect(card.className).toMatch(/alignCenter/)
   })
+
+  // ─── Font size ─────────────────────────────────────────────────────────────────
+
+  it('does not apply font-size class by default (sm)', () => {
+    const { container } = renderBlock()
+    const card = container.querySelector('article')!
+    expect(card.className).not.toMatch(/fontMd/)
+    expect(card.className).not.toMatch(/fontLg/)
+  })
+
+  it('applies fontMd class when font_size is md', () => {
+    const { container } = renderBlock({ font_size: 'md' })
+    const card = container.querySelector('article')!
+    expect(card.className).toMatch(/fontMd/)
+  })
+
+  it('applies fontLg class when font_size is lg', () => {
+    const { container } = renderBlock({ font_size: 'lg' })
+    const card = container.querySelector('article')!
+    expect(card.className).toMatch(/fontLg/)
+  })
 })

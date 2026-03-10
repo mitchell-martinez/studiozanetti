@@ -59,7 +59,11 @@ const meta: Meta<HeroArgs> = {
       control: 'boolean',
       description: 'Use the page featured image as the hero background',
     },
-    slides: { control: 'object', description: 'Carousel slide images (WPImage[])' },
+    slides: {
+      control: 'object',
+      description:
+        'Carousel slides — each entry supports { url, alt, width, height, tagline?, subtitle? }',
+    },
     background_image: { control: 'object', description: 'Single static background (WPImage)' },
     featuredImage: {
       control: 'object',

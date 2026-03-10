@@ -43,11 +43,11 @@ const meta: Meta<ImageArgs> = {
     },
     title_pop_out: {
       control: 'boolean',
-      description: 'Apply pop-out text shadow effect to title',
+      description: 'Enlarge the title text on mouseover (enabled by default)',
     },
     subtitle_pop_out: {
       control: 'boolean',
-      description: 'Apply pop-out text shadow effect to subtitle',
+      description: 'Enlarge the subtitle text on mouseover (disabled by default)',
     },
     text_max_width: {
       control: 'select',

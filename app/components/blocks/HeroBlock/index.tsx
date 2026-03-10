@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import Button from '~/components/Button'
+import type { HeroSlide } from '~/types/wordpress'
 import styles from './HeroBlock.module.scss'
 import type { HeroBlockProps } from './types'
 
 const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
-  const slides = useMemo(() => {
+  const slides = useMemo<HeroSlide[]>(() => {
     const configuredSlides = block.slides ?? []
     if (configuredSlides.length > 0) return configuredSlides
     if (block.background_image?.url) return [block.background_image]
@@ -98,6 +99,17 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
 
         {block.scroll_hint_text && (
           <span className={styles.scrollHint}>{block.scroll_hint_text}</span>
+        )}
+
+        {(currentImage?.tagline || currentImage?.subtitle) && (
+          <div className={styles.slideCredit}>
+            {currentImage.tagline && (
+              <p className={styles.slideTagline}>{currentImage.tagline}</p>
+            )}
+            {currentImage.subtitle && (
+              <p className={styles.slideSubtitle}>{currentImage.subtitle}</p>
+            )}
+          </div>
         )}
 
         {(block.description || block.caption) && (

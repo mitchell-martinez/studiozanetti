@@ -11,6 +11,11 @@ export interface WPImage {
   height?: number
 }
 
+export interface HeroSlide extends WPImage {
+  tagline?: string
+  subtitle?: string
+}
+
 export type BlockTheme = 'light' | 'rose' | 'champagne' | 'dark'
 export type ContentAlign = 'left' | 'center'
 export type TextAlign = 'left' | 'center' | 'right' | 'justify'
@@ -61,7 +66,7 @@ export interface BlockStyleOptions {
 export interface HeroBlock {
   acf_fc_layout: 'hero'
   background_image?: WPImage
-  slides?: WPImage[]
+  slides?: HeroSlide[]
   use_featured_image?: boolean
   title: string
   tagline?: string
@@ -128,6 +133,7 @@ export interface ServicesGridBlock extends BlockStyleOptions {
   max_columns?: 1 | 2 | 3 | 4
   card_style?: 'elevated' | 'outline' | 'minimal'
   text_align?: 'left' | 'center' | 'right'
+  font_size?: 'sm' | 'md' | 'lg'
 }
 
 export interface BiographyBlock extends BlockStyleOptions {
@@ -292,6 +298,7 @@ export interface TextGridBlock extends BlockStyleOptions {
   max_columns?: 1 | 2 | 3 | 4
   card_style?: 'elevated' | 'outline' | 'minimal'
   text_align?: 'left' | 'center' | 'right'
+  font_size?: 'sm' | 'md' | 'lg'
 }
 
 // ─── Instagram Feed block ───────────────────────────────────────────────────

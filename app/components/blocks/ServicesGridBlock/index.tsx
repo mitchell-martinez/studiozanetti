@@ -20,6 +20,14 @@ const ServicesGridBlock = ({ block }: ServicesGridBlockProps) => {
         : styles.cardElevated
 
   const textAlignClass = alignClass[block.text_align ?? 'left'] ?? ''
+
+  const fontSizeClass =
+    block.font_size === 'md'
+      ? styles.fontMd
+      : block.font_size === 'lg'
+        ? styles.fontLg
+        : ''
+
   const bgImageStyle = getBackgroundImageStyle(block)
 
   return (
@@ -59,16 +67,18 @@ const ServicesGridBlock = ({ block }: ServicesGridBlockProps) => {
 
             const className = `${styles.serviceCard} ${cardStyleClass} ${textAlignClass}`.trim()
 
+            const cardClassName = `${className} ${fontSizeClass}`.trim()
+
             return service.url ? (
               <Link
                 key={service.title}
                 to={service.url}
-                className={`${className} ${styles.serviceCardLink}`}
+                className={`${cardClassName} ${styles.serviceCardLink}`}
               >
                 {cardContent}
               </Link>
             ) : (
-              <article key={service.title} className={className}>
+              <article key={service.title} className={cardClassName}>
                 {cardContent}
               </article>
             )

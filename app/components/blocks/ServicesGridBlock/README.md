@@ -14,8 +14,7 @@ Responsive grid of service cards with images, titles, descriptions, and an optio
    - **Columns** (optional): 2, 3, or 4 column layout (default 3)
    - **Maximum Columns** (optional): Caps the grid to fewer columns than the layout allows
    - **Card Style** (optional): `Elevated` (default, shadow + hover lift), `Outline` (bordered), `Minimal` (no border/shadow)
-   - **Text Align** (optional): `Left` (default), `Centre`, or `Right` — controls horizontal text alignment inside each card
-   - **Services** (repeater): Click "Add Row" for each service:
+   - **Text Align** (optional): `Left` (default), `Centre`, or `Right` — controls horizontal text alignment inside each card   - **Body Font Size** (optional): `Small` (default), `Medium`, or `Large` — controls the font size of the service description text   - **Services** (repeater): Click "Add Row" for each service:
      - **Title** (required): Service name
      - **Description** (required): Short description
      - **Image** (optional): Service photo
