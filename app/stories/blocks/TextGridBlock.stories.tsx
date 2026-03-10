@@ -19,6 +19,8 @@ const meta: Meta<TextGridArgs> = {
     card_style: textGrid.card_style,
     text_align: textGrid.text_align,
     font_size: textGrid.font_size,
+    cta_variant: textGrid.cta_variant,
+    cta_size: textGrid.cta_size,
     section_theme: textGrid.section_theme,
     top_spacing: textGrid.top_spacing,
     bottom_spacing: textGrid.bottom_spacing,
@@ -45,6 +47,16 @@ const meta: Meta<TextGridArgs> = {
       control: 'inline-radio',
       options: ['sm', 'md', 'lg'],
       description: 'Font size for card title and body (sm by default)',
+    },
+    cta_variant: {
+      control: 'inline-radio',
+      options: ['primary', 'secondary', 'outline', 'dark', 'text'],
+      description: 'Visual style of per-card CTA buttons (outline by default)',
+    },
+    cta_size: {
+      control: 'inline-radio',
+      options: ['sm', 'md', 'lg'],
+      description: 'Size of per-card CTA buttons (sm by default)',
     },
     items: {
       control: 'object',

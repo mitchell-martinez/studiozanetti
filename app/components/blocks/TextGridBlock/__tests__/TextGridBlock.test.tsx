@@ -119,4 +119,36 @@ describe('TextGridBlock', () => {
     const card = container.querySelector('article')!
     expect(card.className).toMatch(/fontLg/)
   })
+
+  // ─── CTA button style ─────────────────────────────────────────────────────
+
+  it('renders CTA buttons with outline variant by default', () => {
+    const { container } = renderBlock()
+    const btn = container.querySelector('[class*="cardCta"] a')!
+    expect(btn.className).toMatch(/outline/)
+  })
+
+  it('renders CTA buttons with primary variant when set', () => {
+    const { container } = renderBlock({ cta_variant: 'primary' })
+    const btn = container.querySelector('[class*="cardCta"] a')!
+    expect(btn.className).toMatch(/primary/)
+  })
+
+  it('renders CTA buttons with text variant when set', () => {
+    const { container } = renderBlock({ cta_variant: 'text' })
+    const btn = container.querySelector('[class*="cardCta"] a')!
+    expect(btn.className).toMatch(/text/)
+  })
+
+  it('renders CTA buttons with sm size by default', () => {
+    const { container } = renderBlock()
+    const btn = container.querySelector('[class*="cardCta"] a')!
+    expect(btn.className).toMatch(/sizeSm/)
+  })
+
+  it('renders CTA buttons with md size when set', () => {
+    const { container } = renderBlock({ cta_size: 'md' })
+    const btn = container.querySelector('[class*="cardCta"] a')!
+    expect(btn.className).toMatch(/sizeMd/)
+  })
 })

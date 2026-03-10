@@ -21,6 +21,8 @@ This block appears in the **Page Blocks** flexible content field as **"Text Grid
 | **Card Style**       | Select   | `elevated` · `outline` · `minimal`                                   |
 | **Text Align**       | Select   | `left` · `center` · `right`                                          |
 | **Font Size**        | Select   | `Small` (default) · `Medium` · `Large` — font size of card title and body text |
+| **CTA Button Style** | Select   | `Outline` (default) · `Primary` · `Secondary` · `Dark` · `Text` — visual style of per-card CTA buttons |
+| **CTA Button Size**  | Select   | `Small` (default) · `Medium` · `Large` — size of per-card CTA buttons |
 | Section Theme        | Select   | Light · Rose · Champagne · Dark                                      |
 | Top Spacing          | Select   | None · Small · Medium · Large                                        |
 | Bottom Spacing       | Select   | None · Small · Medium · Large                                        |
@@ -31,7 +33,7 @@ This block appears in the **Page Blocks** flexible content field as **"Text Grid
 - Use **2 columns** for longer descriptions or alongside other narrow blocks.
 - Cards without a CTA URL will simply omit the link — no empty button is rendered.
 - The `minimal` card style removes all card chrome — perfect when used with the Dark theme.
-- Each card CTA uses the `text` button variant (link-style) for a subtle, non-intrusive look.
+- Each card CTA uses the Button component — configure the style and size at the block level for consistent appearance across all cards.
 
 ### Difference from PillarGrid
 
