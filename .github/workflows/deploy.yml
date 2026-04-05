@@ -4,11 +4,7 @@
 #
 # Branching strategy
 # ──────────────────
-#   staging    → auto-deploys to STAGING
 #   main       → auto-deploys to PRODUCTION
-#
-# To promote staging to production:
-#   git push origin staging:main   (or merge staging → main via PR)
 #
 # Deployment model
 # ────────────────
@@ -20,7 +16,6 @@
 # ───────────────
 #   1. ci               — lint, typecheck, unit tests (runs on every push + every PR)
 #   2. build            — build Docker image → push to ghcr.io (push events only)
-#   3. deploy-staging   — pull image, restart studiozanetti-staging service (staging only)
 #   4. deploy-production — pull image, restart studiozanetti service (main only)
 #
 # Required GitHub Secrets (Settings → Secrets and variables → Actions → Secrets)
@@ -38,7 +33,6 @@
 #
 # Required GitHub Variables (Settings → Secrets and variables → Actions → Variables)
 # ─────────────────────────────────────────────────────────────────────────────
-#   STAGING_URL          Full URL of the staging environment (used for environment link)
 #   PRODUCTION_URL       Full URL of the production environment (used for environment link)
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -48,11 +42,9 @@ on:
   push:
     branches:
       - main
-      - staging
   pull_request:
     branches:
       - main
-      - staging
 
 jobs:
   # ─── Stage 1: lint, typecheck, unit tests ────────────────────────────────
@@ -119,52 +111,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # ─── Stage 3: deploy to staging ──────────────────────────────────────────
-  deploy-staging:
-    name: Deploy → staging
-    needs: build
-    if: github.ref == 'refs/heads/staging'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    environment:
-      name: staging
-      url: ${{ vars.STAGING_URL }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up SSH
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
-
-      - name: Sync mu-plugins to WordPress volume
-        run: |
-          rsync -e "ssh -i ~/.ssh/deploy_key" \
-            wordpress/mu-plugins/sz-headless.php \
-            wordpress/mu-plugins/sz-acf-schema.php \
-            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.WP_MUPLUGINS_PATH }}"
-
-      - name: Pull image and restart staging service
-        env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          GHCR_USER: ${{ github.repository_owner }}
-        run: |
-          ssh -i ~/.ssh/deploy_key \
-            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            "GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' bash -s" << 'ENDSSH'
-              echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
-              cd ${{ secrets.COMPOSE_DIR }}
-              docker compose pull studiozanetti-staging
-              docker compose up -d --no-deps studiozanetti-staging
-              docker image prune -f
-              docker logout ghcr.io
-          ENDSSH
-
-  # ─── Stage 4: deploy to production ───────────────────────────────────────
+  # ─── Stage 3: deploy to production ───────────────────────────────────────
   deploy-production:
     name: Deploy → production
     needs: build
