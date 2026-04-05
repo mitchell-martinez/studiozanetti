@@ -19,3 +19,4 @@ Visual category tiles linking to gallery/category pages.
 
 - Good for sections like `The Brides`, `The Grooms`, `Candid`, `Engagements`.
 - Use strong vertical images and clear short labels.
+- This block pairs well with hierarchical gallery pages — see the [GalleriesBlock README](../GalleriesBlock/README.md#setting-up-gallery-pages-hierarchical-urls) for setup instructions on creating a parent "Gallery" page with child gallery pages underneath.

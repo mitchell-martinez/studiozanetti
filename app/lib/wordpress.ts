@@ -27,13 +27,13 @@
  */
 
 import type {
-  ContentBlock,
-  HeroSlide,
-  WPGalleryPhoto,
-  WPImage,
-  WPMenuItem,
-  WPPage,
-  WPSiteSettings,
+    ContentBlock,
+    HeroSlide,
+    WPGalleryPhoto,
+    WPImage,
+    WPMenuItem,
+    WPPage,
+    WPSiteSettings,
 } from '~/types/wordpress'
 
 interface RawWPEmbeddedMedia {
@@ -287,10 +287,61 @@ export async function getPageBySlug(slug: string): Promise<WPPage | null> {
   return pages?.[0] ? normalizePage(pages[0]) : null
 }
 
+/**
+ * Resolve a hierarchical page path like "gallery/stylish-brides".
+ *
+ * Walks each segment left to right: finds "gallery" → gets its ID → finds
+ * "stylish-brides" with that parent. Returns the deepest page, or null if
+ * any segment in the chain doesn't exist.
+ */
+export async function getPageByPath(path: string): Promise<WPPage | null> {
+  const segments = path.split('/').filter(Boolean)
+  if (segments.length === 0) return null
+
+  // Single segment — just a flat lookup
+  if (segments.length === 1) return getPageBySlug(segments[0])
+
+  let parentId = 0
+  let page: WPPage | null = null
+
+  for (const segment of segments) {
+    const parentParam = parentId ? `&parent=${parentId}` : ''
+    const pages = await wpFetch<RawWPPage[]>(
+      `/wp/v2/pages?slug=${encodeURIComponent(segment)}&status=publish${parentParam}&_embed=1`,
+    )
+    page = pages?.[0] ? normalizePage(pages[0]) : null
+    if (!page) return null
+    parentId = page.id
+  }
+
+  return page
+}
+
 /** Fetch all published pages. Used by react-router.config.ts for dynamic prerendering. */
 export async function getAllPages(): Promise<WPPage[]> {
   const pages = await wpFetch<RawWPPage[]>('/wp/v2/pages?per_page=100&status=publish&_embed=1')
   return (pages ?? []).map(normalizePage)
+}
+
+/**
+ * Build a slug→full-path map for all pages, respecting parent hierarchy.
+ * E.g. a page with slug "stylish-brides" whose parent is "gallery" → "gallery/stylish-brides"
+ */
+export function buildPagePaths(pages: WPPage[]): Map<number, string> {
+  const byId = new Map(pages.map((p) => [p.id, p]))
+  const paths = new Map<number, string>()
+
+  function resolve(page: WPPage): string {
+    const cached = paths.get(page.id)
+    if (cached) return cached
+    const parent = page.parent ? byId.get(page.parent) : undefined
+    const path = parent ? `${resolve(parent)}/${page.slug}` : page.slug
+    paths.set(page.id, path)
+    return path
+  }
+
+  for (const page of pages) resolve(page)
+  return paths
 }
 
 /** Fetch all gallery photos (CPT: gallery_photo). Returns empty array when WP is unavailable. */

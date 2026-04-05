@@ -1,5 +1,5 @@
 import { toCanonicalUrl } from '~/lib/seo'
-import { getAllPages } from '~/lib/wordpress'
+import { buildPagePaths, getAllPages } from '~/lib/wordpress'
 
 function xmlEscape(value: string): string {
   return value
@@ -12,10 +12,16 @@ function xmlEscape(value: string): string {
 
 export async function loader() {
   const pages = await getAllPages()
+  const pagePaths = buildPagePaths(pages)
   const now = new Date().toISOString()
 
   const pageUrls = pages
-    .map((page) => (page.slug === 'home' ? '/' : `/${page.slug}`))
+    .filter((page) => !page.acf?.container_only)
+    .map((page) => {
+      if (page.slug === 'home') return '/'
+      const fullPath = pagePaths.get(page.id) ?? page.slug
+      return `/${fullPath}`
+    })
     .filter((path, index, all) => all.indexOf(path) === index)
 
   if (!pageUrls.includes('/')) {

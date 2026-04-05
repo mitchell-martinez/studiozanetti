@@ -4,14 +4,16 @@ import mockNavMenuItemsData from '../__mocks__/mockNavMenuItems.json'
 import mockPageData from '../__mocks__/mockPage.json'
 import mockSettingsData from '../__mocks__/mockSettings.json'
 import {
-  _cache,
-  clearCache,
-  getAllPages,
-  getGalleryPhotos,
-  getNavMenu,
-  getPageBySlug,
-  getPreviewPage,
-  getSiteSettings,
+    _cache,
+    buildPagePaths,
+    clearCache,
+    getAllPages,
+    getGalleryPhotos,
+    getNavMenu,
+    getPageByPath,
+    getPageBySlug,
+    getPreviewPage,
+    getSiteSettings,
 } from '../wordpress'
 
 const WP_URL = 'https://cms.example.com'
@@ -245,6 +247,96 @@ describe('getSiteSettings', () => {
     expect(result.site_name).toBe('Studio Zanetti')
     expect(result.tagline).toBe('Capturing moments, creating memories')
     expect(result.social_links.length).toBeGreaterThan(0)
+  })
+})
+
+describe('getPageByPath', () => {
+  const parentPage = { ...mockPage, id: 10, slug: 'gallery', parent: 0 }
+  const childPage = {
+    ...mockPage,
+    id: 20,
+    slug: 'stylish-brides',
+    parent: 10,
+    title: { rendered: 'Stylish Brides' },
+  }
+
+  it('resolves a single-segment path via getPageBySlug', async () => {
+    mockFetch.mockReturnValueOnce(ok([parentPage]))
+    const result = await getPageByPath('gallery')
+    expect(result).toEqual(parentPage)
+  })
+
+  it('resolves a two-segment hierarchical path', async () => {
+    // First call: find "gallery" (no parent filter)
+    mockFetch.mockReturnValueOnce(ok([parentPage]))
+    // Second call: find "stylish-brides" with parent=10
+    mockFetch.mockReturnValueOnce(ok([childPage]))
+
+    const result = await getPageByPath('gallery/stylish-brides')
+    expect(result).toEqual(childPage)
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+    expect(mockFetch).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('slug=stylish-brides&status=publish&parent=10'),
+      expect.any(Object),
+    )
+  })
+
+  it('returns null when a parent segment does not exist', async () => {
+    mockFetch.mockReturnValueOnce(ok([]))
+    const result = await getPageByPath('nonexistent/child')
+    expect(result).toBeNull()
+  })
+
+  it('returns null when the child segment does not exist under the parent', async () => {
+    mockFetch.mockReturnValueOnce(ok([parentPage]))
+    mockFetch.mockReturnValueOnce(ok([]))
+    const result = await getPageByPath('gallery/nonexistent')
+    expect(result).toBeNull()
+  })
+
+  it('returns null for an empty path', async () => {
+    const result = await getPageByPath('')
+    expect(result).toBeNull()
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('buildPagePaths', () => {
+  it('returns flat slugs for top-level pages', () => {
+    const pages = [
+      { ...mockPage, id: 1, slug: 'home', parent: 0 },
+      { ...mockPage, id: 2, slug: 'about', parent: 0 },
+    ]
+    const paths = buildPagePaths(pages)
+    expect(paths.get(1)).toBe('home')
+    expect(paths.get(2)).toBe('about')
+  })
+
+  it('builds hierarchical paths for child pages', () => {
+    const pages = [
+      { ...mockPage, id: 10, slug: 'gallery', parent: 0 },
+      { ...mockPage, id: 20, slug: 'stylish-brides', parent: 10 },
+      { ...mockPage, id: 30, slug: 'classic-elegance', parent: 10 },
+    ]
+    const paths = buildPagePaths(pages)
+    expect(paths.get(10)).toBe('gallery')
+    expect(paths.get(20)).toBe('gallery/stylish-brides')
+    expect(paths.get(30)).toBe('gallery/classic-elegance')
+  })
+
+  it('handles deeply nested pages', () => {
+    const pages = [
+      { ...mockPage, id: 1, slug: 'services', parent: 0 },
+      { ...mockPage, id: 2, slug: 'weddings', parent: 1 },
+      { ...mockPage, id: 3, slug: 'packages', parent: 2 },
+    ]
+    const paths = buildPagePaths(pages)
+    expect(paths.get(3)).toBe('services/weddings/packages')
+  })
+
+  it('returns an empty map for no pages', () => {
+    expect(buildPagePaths([])).toEqual(new Map())
   })
 })
 

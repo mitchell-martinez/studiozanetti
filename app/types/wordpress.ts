@@ -336,6 +336,8 @@ export interface WPPageAcf {
   blocks?: ContentBlock[]
   /** Optional nav menu location override for this page (e.g. primary, weddings, events) */
   menu_override?: string
+  /** When true, this page exists only for URL hierarchy — direct access returns 404 */
+  container_only?: boolean
   /** Contact page — set via "Contact Details" field group */
   contact_email?: string
   contact_phone?: string
@@ -354,6 +356,7 @@ export interface WPYoastMeta {
 export interface WPPage {
   id: number
   slug: string
+  parent: number
   status: string
   title: WPRendered
   content: WPRendered

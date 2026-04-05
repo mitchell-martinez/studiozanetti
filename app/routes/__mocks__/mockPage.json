@@ -1,6 +1,7 @@
 {
   "id": 1,
   "slug": "pricing",
+  "parent": 0,
   "status": "publish",
   "title": {
     "rendered": "Pricing"

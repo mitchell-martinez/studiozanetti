@@ -49,3 +49,19 @@ npm run gallery:import-live-to-wp -- --source-url https://studiozanetti.com.au/g
 ```
 
 For full options and file output examples, see `docs/import-live-gallery.md`.
+
+## Setting Up Gallery Pages (Hierarchical URLs)
+
+To get clean URLs like `/gallery/stylish-brides/`, use WordPress page hierarchy:
+
+1. Create a **parent page** called "Gallery" (slug: `gallery`).
+   - This page acts as a container. Add a `GalleryCategoriesBlock` to it so visitors can browse all galleries, or leave it empty and set it to **noindex** via Yoast.
+2. Create **child pages** for each gallery (e.g. "Stylish Brides").
+   - In the page editor, under **Page Attributes → Parent**, select "Gallery".
+   - Add a `GalleriesBlock` with the gallery images.
+3. The frontend automatically resolves hierarchical paths — no code changes needed.
+
+This approach means:
+- The admin can create, rename, reorder, and delete gallery pages freely.
+- SEO (canonical URLs, sitemap, Yoast meta) all work automatically for nested pages.
+- There is no hard-coded `/gallery` route in the frontend.

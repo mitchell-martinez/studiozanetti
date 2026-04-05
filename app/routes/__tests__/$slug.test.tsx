@@ -5,9 +5,10 @@ import CmsPage, { loader } from '../$slug'
 
 vi.mock('~/lib/wordpress', () => ({
   getPageBySlug: vi.fn(),
+  getPageByPath: vi.fn(),
 }))
 
-import { getPageBySlug } from '~/lib/wordpress'
+import { getPageByPath, getPageBySlug } from '~/lib/wordpress'
 import mockPageData from '../__mocks__/mockPage.json'
 
 afterEach(() => {
@@ -94,6 +95,45 @@ describe('CmsPage route', () => {
     it('throws a 404 Response when WordPress is unavailable', async () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
       await expect(loader(makeArgs('pricing') as never)).rejects.toBeInstanceOf(Response)
+    })
+
+    it('falls back to getPageByPath for hierarchical slugs', async () => {
+      const galleryChild = {
+        ...mockPage,
+        id: 20,
+        slug: 'stylish-brides',
+        parent: 10,
+        title: { rendered: 'Stylish Brides' },
+      }
+      // getPageBySlug returns null for "gallery/stylish-brides"
+      vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
+      // getPageByPath resolves the hierarchical path
+      vi.mocked(getPageByPath).mockResolvedValueOnce(galleryChild as never)
+
+      const result = await loader(makeArgs('gallery/stylish-brides') as never)
+      expect(result).toEqual({
+        page: galleryChild,
+        canonicalUrl: 'https://www.studiozanetti.com.au/gallery/stylish-brides',
+      })
+      expect(getPageByPath).toHaveBeenCalledWith('gallery/stylish-brides')
+    })
+
+    it('does not call getPageByPath for single-segment slugs', async () => {
+      vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
+      await expect(loader(makeArgs('pricing') as never)).rejects.toBeInstanceOf(Response)
+      expect(getPageByPath).not.toHaveBeenCalled()
+    })
+
+    it('throws a 404 for container_only pages', async () => {
+      const containerPage = {
+        ...mockPage,
+        id: 10,
+        slug: 'gallery',
+        parent: 0,
+        acf: { container_only: true },
+      }
+      vi.mocked(getPageBySlug).mockResolvedValueOnce(containerPage as never)
+      await expect(loader(makeArgs('gallery') as never)).rejects.toBeInstanceOf(Response)
     })
   })
 })

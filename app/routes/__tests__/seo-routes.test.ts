@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 
-vi.mock('~/lib/wordpress', () => ({
-  getAllPages: vi.fn(),
-}))
+vi.mock('~/lib/wordpress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('~/lib/wordpress')>()
+  return {
+    ...actual,
+    getAllPages: vi.fn(),
+  }
+})
 
 import { getAllPages } from '~/lib/wordpress'
 import { loader as robotsLoader } from '../robots.txt'
@@ -32,6 +36,7 @@ describe('SEO route loaders', () => {
       {
         id: 1,
         slug: 'home',
+        parent: 0,
         status: 'publish',
         title: { rendered: 'Home' },
         content: { rendered: '<p>Home</p>' },
@@ -40,6 +45,7 @@ describe('SEO route loaders', () => {
       {
         id: 2,
         slug: 'pricing',
+        parent: 0,
         status: 'publish',
         title: { rendered: 'Pricing' },
         content: { rendered: '<p>Pricing</p>' },

@@ -549,6 +549,15 @@ add_action( 'acf/init', function () {
 				'type' => 'text',
 				'instructions' => 'Optional. Example: primary, weddings, events. Falls back to primary when empty/invalid.',
 			],
+			[
+				'key' => 'field_sz_container_only',
+				'label' => 'Container Only (no direct access)',
+				'name' => 'container_only',
+				'type' => 'true_false',
+				'default_value' => 0,
+				'ui' => 1,
+				'instructions' => 'When enabled, this page exists only for URL hierarchy (e.g. /gallery/) — visiting the page directly returns a 404. Child pages underneath it still work normally.',
+			],
 		],
 		'location' => [
 			[
