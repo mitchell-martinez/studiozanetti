@@ -6,9 +6,12 @@ import CmsPage, { loader } from '../$slug'
 vi.mock('~/lib/wordpress', () => ({
   getPageBySlug: vi.fn(),
   getPageByPath: vi.fn(),
+  getPostBySlug: vi.fn(),
+  getPostsByCategories: vi.fn(),
+  getRelatedPosts: vi.fn(),
 }))
 
-import { getPageByPath, getPageBySlug } from '~/lib/wordpress'
+import { getPageByPath, getPageBySlug, getPostBySlug } from '~/lib/wordpress'
 import mockPageData from '../__mocks__/mockPage.json'
 
 afterEach(() => {
@@ -27,7 +30,7 @@ const renderCmsPage = (loaderFn: () => unknown) => {
 describe('CmsPage route', () => {
   describe('rendering', () => {
     it('renders a page with native WP content (no ACF blocks)', async () => {
-      renderCmsPage(() => ({ page: mockPage }))
+      renderCmsPage(() => ({ type: 'page', page: mockPage }))
       await waitFor(() =>
         expect(screen.getByRole('heading', { name: 'Pricing', level: 1 })).toBeInTheDocument(),
       )
@@ -47,7 +50,7 @@ describe('CmsPage route', () => {
           ],
         },
       }
-      renderCmsPage(() => ({ page: pageWithBlocks }))
+      renderCmsPage(() => ({ type: 'page', page: pageWithBlocks }))
       await waitFor(() =>
         expect(
           screen.getByRole('heading', { name: 'Block Heading', level: 2 }),
@@ -57,7 +60,7 @@ describe('CmsPage route', () => {
 
     it('falls back to content.rendered when blocks array is empty', async () => {
       const pageNoBlocks = { ...mockPage, acf: { blocks: [] } }
-      renderCmsPage(() => ({ page: pageNoBlocks }))
+      renderCmsPage(() => ({ type: 'page', page: pageNoBlocks }))
       await waitFor(() =>
         expect(screen.getByRole('heading', { name: 'Pricing', level: 1 })).toBeInTheDocument(),
       )
@@ -74,7 +77,7 @@ describe('CmsPage route', () => {
     it('maps root path to the home slug', async () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(mockPage as never)
       const result = await loader(makeArgs('') as never)
-      expect(result).toEqual({ page: mockPage, canonicalUrl: 'https://www.studiozanetti.com.au' })
+      expect(result).toEqual({ type: 'page', page: mockPage, canonicalUrl: 'https://www.studiozanetti.com.au' })
       expect(getPageBySlug).toHaveBeenCalledWith('home')
     })
 
@@ -82,6 +85,7 @@ describe('CmsPage route', () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(mockPage as never)
       const result = await loader(makeArgs('pricing') as never)
       expect(result).toEqual({
+        type: 'page',
         page: mockPage,
         canonicalUrl: 'https://www.studiozanetti.com.au/pricing',
       })
@@ -89,11 +93,13 @@ describe('CmsPage route', () => {
 
     it('throws a 404 Response when the page is not found', async () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
+      vi.mocked(getPostBySlug).mockResolvedValueOnce(null)
       await expect(loader(makeArgs('nonexistent') as never)).rejects.toBeInstanceOf(Response)
     })
 
     it('throws a 404 Response when WordPress is unavailable', async () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
+      vi.mocked(getPostBySlug).mockResolvedValueOnce(null)
       await expect(loader(makeArgs('pricing') as never)).rejects.toBeInstanceOf(Response)
     })
 
@@ -112,6 +118,7 @@ describe('CmsPage route', () => {
 
       const result = await loader(makeArgs('gallery/stylish-brides') as never)
       expect(result).toEqual({
+        type: 'page',
         page: galleryChild,
         canonicalUrl: 'https://www.studiozanetti.com.au/gallery/stylish-brides',
       })
@@ -120,6 +127,7 @@ describe('CmsPage route', () => {
 
     it('does not call getPageByPath for single-segment slugs', async () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
+      vi.mocked(getPostBySlug).mockResolvedValueOnce(null)
       await expect(loader(makeArgs('pricing') as never)).rejects.toBeInstanceOf(Response)
       expect(getPageByPath).not.toHaveBeenCalled()
     })
@@ -133,6 +141,7 @@ describe('CmsPage route', () => {
         acf: { container_only: true },
       }
       vi.mocked(getPageBySlug).mockResolvedValueOnce(containerPage as never)
+      vi.mocked(getPostBySlug).mockResolvedValueOnce(null)
       await expect(loader(makeArgs('gallery') as never)).rejects.toBeInstanceOf(Response)
     })
   })

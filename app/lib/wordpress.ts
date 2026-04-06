@@ -27,12 +27,14 @@
  */
 
 import type {
+    BlogPostsData,
     ContentBlock,
     HeroSlide,
     WPGalleryPhoto,
     WPImage,
     WPMenuItem,
     WPPage,
+    WPPost,
     WPSiteSettings,
 } from '~/types/wordpress'
 
@@ -373,8 +375,8 @@ const DEFAULT_SITE_SETTINGS: WPSiteSettings = {
   tagline: 'Capturing moments, creating memories',
   copyright_text: '',
   social_links: [
-    { platform: 'Instagram', url: 'https://instagram.com/example-studio' },
-    { platform: 'Facebook', url: 'https://facebook.com/example-studio' },
+    { platform: 'Instagram', url: 'https://instagram.com/studiozanetti' },
+    { platform: 'Facebook', url: 'https://facebook.com/studiozanetti' },
   ],
 }
 
@@ -394,4 +396,63 @@ export async function getSiteSettings(): Promise<WPSiteSettings> {
       ? data.social_links
       : DEFAULT_SITE_SETTINGS.social_links,
   }
+}
+
+// ─── Blog post helpers ──────────────────────────────────────────────────────
+
+/**
+ * Fetch paginated posts, optionally filtered by category IDs.
+ * Uses the custom `sz/v1/blog-posts` endpoint which returns an envelope
+ * with `{ posts, total, total_pages, page }`.
+ */
+export async function getPostsByCategories(
+  categoryIds: number[] = [],
+  page: number = 1,
+  perPage: number = 6,
+): Promise<BlogPostsData> {
+  const empty: BlogPostsData = { posts: [], total: 0, total_pages: 0, page: 1 }
+  const params = new URLSearchParams({
+    page: String(page),
+    per_page: String(perPage),
+  })
+  if (categoryIds.length > 0) {
+    params.set('categories', categoryIds.join(','))
+  }
+  const data = await wpFetch<BlogPostsData>(`/sz/v1/blog-posts?${params}`)
+  if (!data) return empty
+  // Safety: ensure we always have the expected envelope shape
+  if (Array.isArray(data)) return { posts: data as unknown as WPPost[], total: (data as unknown[]).length, total_pages: 1, page }
+  if (!Array.isArray(data.posts)) return empty
+  return data
+}
+
+/** Fetch a single published post by slug. Returns null when not found. */
+export async function getPostBySlug(slug: string): Promise<WPPost | null> {
+  const posts = await wpFetch<WPPost[]>(
+    `/wp/v2/posts?slug=${encodeURIComponent(slug)}&status=publish`,
+  )
+  return posts?.[0] ?? null
+}
+
+/** Fetch related posts (same categories, excluding the current post). */
+export async function getRelatedPosts(
+  postId: number,
+  categoryIds: number[],
+  limit: number = 3,
+): Promise<WPPost[]> {
+  if (categoryIds.length === 0) return []
+  const cats = categoryIds.join(',')
+  const posts = await wpFetch<WPPost[]>(
+    `/wp/v2/posts?categories=${cats}&exclude=${postId}&per_page=${limit}&status=publish`,
+  )
+  return posts ?? []
+}
+
+/**
+ * Fetch all post slugs — used for prerendering and sitemap generation.
+ * Uses the lightweight custom endpoint that returns only slugs.
+ */
+export async function getAllPostSlugs(): Promise<string[]> {
+  const data = await wpFetch<Array<{ slug: string }>>('/sz/v1/all-posts')
+  return (data ?? []).map((p) => p.slug)
 }

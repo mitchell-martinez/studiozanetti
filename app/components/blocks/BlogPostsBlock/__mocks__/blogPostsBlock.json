@@ -1,0 +1,15 @@
+{
+  "acf_fc_layout": "blog_posts",
+  "heading": "Latest Posts",
+  "subheading": "Photography tips and studio news",
+  "categories": [],
+  "posts_per_page": 3,
+  "show_pagination": true,
+  "layout": "grid",
+  "max_columns": 3,
+  "card_style": "elevated",
+  "show_excerpt": true,
+  "show_featured_image": true,
+  "show_date": true,
+  "show_reading_time": true
+}

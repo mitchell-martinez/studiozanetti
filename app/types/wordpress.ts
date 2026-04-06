@@ -307,6 +307,54 @@ export interface InstagramFeedBlock extends BlockStyleOptions {
   columns?: 2 | 3 | 4 | 6
 }
 
+// ─── Blog Posts block ───────────────────────────────────────────────────────
+
+export interface BlogPostsBlock extends BlockStyleOptions {
+  acf_fc_layout: 'blog_posts'
+  heading?: string
+  subheading?: string
+  categories?: number[]
+  posts_per_page?: number
+  show_pagination?: boolean
+  layout?: 'grid' | 'list'
+  max_columns?: 2 | 3 | 4
+  card_style?: 'elevated' | 'outline' | 'minimal'
+  show_excerpt?: boolean
+  show_featured_image?: boolean
+  show_date?: boolean
+  show_reading_time?: boolean
+}
+
+// ─── WordPress Post (blog) ─────────────────────────────────────────────────
+
+export interface WPCategory {
+  id: number
+  name: string
+  slug: string
+}
+
+export interface WPPost {
+  id: number
+  slug: string
+  title: WPRendered
+  content: WPRendered
+  excerpt: WPRendered
+  date: string
+  modified: string
+  featured_image?: WPImage
+  categories: WPCategory[]
+  reading_time?: number
+  yoast_head_json?: WPYoastMeta
+}
+
+/** Paginated response from the custom blog-posts endpoint. */
+export interface BlogPostsData {
+  posts: WPPost[]
+  total: number
+  total_pages: number
+  page: number
+}
+
 export type ContentBlock =
   | HeroBlock
   | TextBlock
@@ -323,6 +371,7 @@ export type ContentBlock =
   | ButtonGroupBlock
   | TextGridBlock
   | InstagramFeedBlock
+  | BlogPostsBlock
 
 // ─── Page ACF fields ──────────────────────────────────────────────────────────
 //
@@ -424,7 +473,7 @@ export interface WPMenuItem {
 //       copyright_text (Text)    — Footer copyright (auto-generated if blank)
 //       social_links   (Repeater)
 //         ├── platform (Text)    — e.g. "Instagram"
-//         └── url      (URL)     — e.g. "https://instagram.com/example-studio"
+//         └── url      (URL)     — e.g. "https://instagram.com/studiozanetti"
 //
 // Fetched once in root.tsx and passed to Navbar + Footer.
 // REST endpoint: GET /wp-json/sz/v1/site-settings

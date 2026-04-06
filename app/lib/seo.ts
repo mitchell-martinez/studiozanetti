@@ -1,4 +1,4 @@
-import type { ContentBlock, WPPage } from '~/types/wordpress'
+import type { ContentBlock, WPPage, WPPost } from '~/types/wordpress'
 
 const FALLBACK_SITE_URL = 'https://www.studiozanetti.com.au'
 
@@ -192,4 +192,44 @@ export function buildPageSchemas(
   return [webpageSchema, faqSchema, serviceSchema, breadcrumbSchema].filter(
     (schema): schema is Record<string, unknown> => schema !== null,
   )
+}
+
+export function buildPostSchemas(
+  post: WPPost,
+  canonicalUrl: string,
+  pathname: string,
+): Record<string, unknown>[] {
+  const postTitle = plainText(post.title.rendered)
+  const description =
+    post.yoast_head_json?.description ?? plainText(post.excerpt.rendered)
+
+  const blogPosting: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: postTitle,
+    url: canonicalUrl,
+    datePublished: post.date,
+    dateModified: post.modified,
+    ...(description ? { description } : {}),
+    ...(post.featured_image?.url
+      ? { image: toAbsoluteImageUrl(post.featured_image.url) }
+      : {}),
+    ...(post.reading_time
+      ? { timeRequired: `PT${post.reading_time}M` }
+      : {}),
+    author: {
+      '@type': 'Organization',
+      name: 'Studio Zanetti',
+      url: getSiteUrlFromEnv(),
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Studio Zanetti',
+      url: getSiteUrlFromEnv(),
+    },
+  }
+
+  const breadcrumbSchema = buildBreadcrumbSchema(pathname, postTitle)
+
+  return [blogPosting, breadcrumbSchema]
 }

@@ -1,0 +1,36 @@
+[
+  {
+    "id": 202,
+    "slug": "behind-the-scenes-studio-portraits",
+    "title": { "rendered": "Behind the Scenes: Studio Portraits" },
+    "content": { "rendered": "<p>Studio portraits can feel intimidating for clients.</p>" },
+    "excerpt": { "rendered": "<p>A look at how we set up studio portrait sessions.</p>" },
+    "date": "2025-02-10T09:30:00",
+    "modified": "2025-02-10T09:30:00",
+    "featured_image": {
+      "url": "https://picsum.photos/seed/post-studio/800/500",
+      "alt": "Studio Portraits",
+      "width": 800,
+      "height": 500
+    },
+    "categories": [{ "id": 2, "name": "Portraits", "slug": "portraits" }],
+    "reading_time": 4
+  },
+  {
+    "id": 203,
+    "slug": "event-photography-checklist",
+    "title": { "rendered": "Event Photography Checklist" },
+    "content": { "rendered": "<p>Events move fast.</p>" },
+    "excerpt": { "rendered": "<p>Essential gear and planning tips.</p>" },
+    "date": "2025-03-05T14:00:00",
+    "modified": "2025-03-05T14:00:00",
+    "featured_image": {
+      "url": "https://picsum.photos/seed/post-event/800/500",
+      "alt": "Event Photography",
+      "width": 800,
+      "height": 500
+    },
+    "categories": [{ "id": 1, "name": "Weddings", "slug": "weddings" }],
+    "reading_time": 3
+  }
+]

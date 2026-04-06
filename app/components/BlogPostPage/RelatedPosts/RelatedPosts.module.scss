@@ -1,0 +1,23 @@
+@use '~/styles/global' as g;
+
+.related {
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.heading {
+  font-size: var(--text-xl);
+  color: var(--color-ink-strong);
+  margin-bottom: 1.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+
+  @media (min-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

@@ -1,3 +1,4 @@
+import BlogPostsBlock from '../BlogPostsBlock'
 import ButtonGroupBlock from '../ButtonGroupBlock'
 import FaqAccordionBlock from '../FaqAccordionBlock'
 import GalleriesBlock from '../GalleriesBlock'
@@ -32,6 +33,7 @@ const BLOCK_LABELS: Record<string, string> = {
   button_group: 'Button Group',
   text_grid: 'Text Grid',
   instagram_feed: 'Instagram Feed',
+  blog_posts: 'Blog Posts',
 }
 
 /**
@@ -128,7 +130,7 @@ const InteractiveBlockWrapper = ({
  * a clickable overlay that communicates with the parent WordPress editor via
  * postMessage, allowing click-to-edit navigation.
  */
-const BlockRenderer = ({ blocks, interactive = false, featuredImage }: BlockRendererProps) => (
+const BlockRenderer = ({ blocks, interactive = false, featuredImage, blogPostsData }: BlockRendererProps) => (
   <>
     {blocks.map((block, index) => {
       const key = `${block.acf_fc_layout}-${index}`
@@ -179,6 +181,11 @@ const BlockRenderer = ({ blocks, interactive = false, featuredImage }: BlockRend
           break
         case 'instagram_feed':
           rendered = <InstagramFeedBlock key={key} block={block} />
+          break
+        case 'blog_posts':
+          rendered = blogPostsData ? (
+            <BlogPostsBlock key={key} block={block} blogPostsData={blogPostsData} />
+          ) : null
           break
         default:
           return null

@@ -9,14 +9,31 @@ export default {
     if (!wpUrl) return []
 
     try {
-      const res = await fetch(`${wpUrl}/wp-json/wp/v2/pages?per_page=100&status=publish`, {
-        signal: AbortSignal.timeout(5_000),
-      })
-      if (!res.ok) return []
-      const pages = (await res.json()) as Array<{ slug: string }>
-      return pages
-        .map((p) => (p.slug === 'home' ? '/' : `/${p.slug}`))
-        .filter((s) => s !== '/preview')
+      const [pagesRes, postsRes] = await Promise.all([
+        fetch(`${wpUrl}/wp-json/wp/v2/pages?per_page=100&status=publish`, {
+          signal: AbortSignal.timeout(5_000),
+        }),
+        fetch(`${wpUrl}/wp-json/sz/v1/all-posts`, {
+          signal: AbortSignal.timeout(5_000),
+        }),
+      ])
+
+      const pagePaths: string[] = []
+      if (pagesRes.ok) {
+        const pages = (await pagesRes.json()) as Array<{ slug: string }>
+        pagePaths.push(
+          ...pages
+            .map((p) => (p.slug === 'home' ? '/' : `/${p.slug}`))
+            .filter((s) => s !== '/preview'),
+        )
+      }
+
+      if (postsRes.ok) {
+        const posts = (await postsRes.json()) as Array<{ slug: string }>
+        pagePaths.push(...posts.map((p) => `/${p.slug}`))
+      }
+
+      return pagePaths
         .filter((s) => s.trim().length > 0)
         .filter((value, index, arr) => arr.indexOf(value) === index)
     } catch {

@@ -2,14 +2,15 @@ import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { useLoaderData } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
 import RichText from '~/components/RichText'
-import { getPreviewPage } from '~/lib/wordpress'
-import type { WPPage } from '~/types/wordpress'
+import { getPostsByCategories, getPreviewPage } from '~/lib/wordpress'
+import type { BlogPostsData, WPPage } from '~/types/wordpress'
 import styles from './preview.module.scss'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface PreviewLoaderData {
   page: WPPage
   isIframe: boolean
+  blogPostsData?: BlogPostsData
 }
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
@@ -29,7 +30,20 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<PreviewLo
   const page = await getPreviewPage(Number(id), secret)
   if (!page) throw new Response('Preview not found or secret invalid', { status: 404 })
 
-  return { page, isIframe }
+  // If the page has a blog_posts block, pre-fetch posts for preview
+  let blogPostsData: BlogPostsData | undefined
+  const blogBlock = page.acf?.blocks?.find((b) => b.acf_fc_layout === 'blog_posts')
+  if (blogBlock) {
+    const perPage =
+      'posts_per_page' in blogBlock ? (blogBlock.posts_per_page ?? 6) : 6
+    const categoryIds =
+      'categories' in blogBlock && Array.isArray(blogBlock.categories)
+        ? blogBlock.categories
+        : []
+    blogPostsData = await getPostsByCategories(categoryIds, 1, perPage)
+  }
+
+  return { page, isIframe, blogPostsData }
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -42,7 +56,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 // ─── Route component ──────────────────────────────────────────────────────────
 const PreviewPage = () => {
-  const { page, isIframe } = useLoaderData<typeof loader>()
+  const { page, isIframe, blogPostsData } = useLoaderData<typeof loader>()
   const blocks = page.acf?.blocks
 
   return (
@@ -58,7 +72,7 @@ const PreviewPage = () => {
       )}
 
       {blocks?.length ? (
-        <BlockRenderer blocks={blocks} interactive={isIframe} />
+        <BlockRenderer blocks={blocks} interactive={isIframe} blogPostsData={blogPostsData} />
       ) : (
         <div className={styles.page}>
           <header className={styles.pageHeader}>

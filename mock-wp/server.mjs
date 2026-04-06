@@ -249,6 +249,99 @@ const PAGE_PRICING = {
 /** All pages list — used by react-router.config.ts to discover slugs for prerendering. */
 const ALL_PAGES = [PAGE_HOME, PAGE_ABOUT, PAGE_CONTACT, PAGE_PRICING]
 
+// ─── Blog post fixtures ───────────────────────────────────────────────────────
+
+const makePost = (id, slug, title, excerpt, content, date, categoryIds, seeds) => ({
+  id,
+  slug,
+  title: { rendered: title },
+  content: { rendered: content },
+  excerpt: { rendered: `<p>${excerpt}</p>` },
+  date,
+  modified: date,
+  featured_image: seeds ? img(seeds, 800, 500, title) : undefined,
+  categories: categoryIds.map((cid) => ({ id: cid, name: `Category ${cid}`, slug: `cat-${cid}` })),
+  reading_time: Math.ceil(content.split(' ').length / 200) || 3,
+})
+
+const MOCK_POSTS = [
+  makePost(
+    201, 'golden-hour-wedding-shoot', 'Golden Hour Wedding Shoot',
+    'Tips for capturing stunning golden hour portraits on a wedding day.',
+    '<p>Golden hour — that magical window just before sunset — is the holy grail of wedding photography. The warm, diffused light flatters every skin tone and wraps the couple in a warm, romantic glow.</p><p>In this post, we share our favourite techniques for making the most of those precious 30 minutes: choosing the right aperture, managing lens flare creatively, and posing naturally in fading light.</p><p>We also discuss how to communicate timing with wedding coordinators so you never miss the window, and how to use reflectors when the light drops lower than expected.</p>',
+    '2025-01-15T10:00:00', [1], 'post-golden',
+  ),
+  makePost(
+    202, 'behind-the-scenes-studio-portraits', 'Behind the Scenes: Studio Portraits',
+    'A look at how we set up studio portrait sessions for natural, relaxed results.',
+    '<p>Studio portraits can feel intimidating for clients, but the environment is one we can control completely. In this behind-the-scenes tour, we walk through our lighting setup, backdrop choices, and the warm-up routine we use to help subjects relax in front of the camera.</p><p>From continuous lights to strobes, we discuss the trade-offs and explain why we lean towards a two-light setup with a large softbox key and a subtle rim accent.</p>',
+    '2025-02-10T09:30:00', [2], 'post-studio',
+  ),
+  makePost(
+    203, 'event-photography-checklist', 'Event Photography Checklist',
+    'Essential gear and planning tips for corporate and social event photography.',
+    '<p>Events move fast. There are no second chances for the keynote speaker moment or the surprise toast. This checklist covers everything from dual-body setups to backup memory cards, plus a pre-event questionnaire template you can send to clients.</p><p>We also share our post-event workflow for culling, colour-grading, and delivering a polished gallery within 48 hours.</p>',
+    '2025-03-05T14:00:00', [1, 2], 'post-event',
+  ),
+  makePost(
+    204, 'choosing-your-wedding-photographer', 'How to Choose Your Wedding Photographer',
+    'A guide for couples navigating the process of selecting the right photographer.',
+    '<p>Choosing a wedding photographer is one of the most personal decisions you will make during the planning process. Unlike flowers or décor, your photos are the lasting record of the day.</p><p>In this guide, we break down what to look for in a portfolio, questions to ask during the consultation, red flags to watch for in contracts, and how to judge whether a photographer\'s style truly matches your vision.</p>',
+    '2025-04-01T08:00:00', [1], 'post-choose',
+  ),
+  makePost(
+    205, 'spring-mini-sessions', 'Spring Mini Sessions Now Open',
+    'Book your 30-minute spring portrait session before spots fill up.',
+    '<p>Spring is here, and with it comes fresh blooms, soft light, and the perfect backdrop for family and couple portraits. Our annual spring mini sessions are live — each one is a focused 30-minute session at a hand-picked outdoor location.</p><p>You\'ll receive 15 edited digital images and a printable favourite within one week. Sessions book out fast, so we recommend reserving your slot early.</p>',
+    '2025-04-20T11:00:00', [2], 'post-spring',
+  ),
+  makePost(
+    206, 'editing-workflow-lightroom', 'Our Editing Workflow in Lightroom',
+    'A peek into the post-processing pipeline we use to achieve our signature look.',
+    '<p>Post-processing is where a good photo becomes a great one. In this post, we open up our Lightroom Classic workflow — from RAW import and star-rating culling to our custom preset stack and final export settings.</p><p>We cover colour theory basics, how to maintain skin-tone consistency, and the subtle split-toning technique that gives our images their warm, filmic quality.</p>',
+    '2025-05-12T16:00:00', [1, 2], 'post-editing',
+  ),
+]
+
+// Map posts to their parent page IDs (mock: all posts belong to a "blog" page with id 5)
+const PAGE_BLOG = {
+  id: 5,
+  slug: 'blog',
+  status: 'publish',
+  title: { rendered: 'Blog' },
+  content: { rendered: '' },
+  excerpt: { rendered: '' },
+  yoast_head_json: {
+    title: 'Blog | Studio Zanetti',
+    description: 'Photography tips, behind-the-scenes stories, and studio news from Studio Zanetti.',
+  },
+  acf: {
+    blocks: [
+      {
+        acf_fc_layout: 'hero',
+        title: 'Blog',
+        tagline: 'Stories, tips, and inspiration from the studio',
+      },
+      {
+        acf_fc_layout: 'blog_posts',
+        heading: 'Latest Posts',
+        categories: [],
+        posts_per_page: 4,
+        show_pagination: true,
+        layout: 'grid',
+        max_columns: 3,
+        card_style: 'elevated',
+        show_excerpt: true,
+        show_featured_image: true,
+        show_date: true,
+        show_reading_time: true,
+      },
+    ],
+  },
+}
+
+ALL_PAGES.push(PAGE_BLOG)
+
 // ─── Gallery photo fixtures ───────────────────────────────────────────────────
 //
 // These match the WPGalleryPhoto interface in app/types/wordpress.ts.
@@ -334,6 +427,52 @@ function handlePreview(id) {
   return page ?? null
 }
 
+function handleBlogPosts(searchParams) {
+  const page = parseInt(searchParams.get('page') ?? '1', 10)
+  const perPage = parseInt(searchParams.get('per_page') ?? '6', 10)
+  const categories = searchParams.get('categories')
+
+  let matchingPosts = [...MOCK_POSTS]
+  if (categories) {
+    const catIds = categories.split(',').map(Number)
+    matchingPosts = matchingPosts.filter((p) =>
+      p.categories.some((c) => catIds.includes(c.id)),
+    )
+  }
+
+  const sorted = matchingPosts.sort((a, b) => new Date(b.date) - new Date(a.date))
+  const total = sorted.length
+  const totalPages = Math.ceil(total / perPage)
+  const start = (page - 1) * perPage
+  const posts = sorted.slice(start, start + perPage)
+  return { posts, total, total_pages: totalPages, page }
+}
+
+function handleAllPosts() {
+  return MOCK_POSTS.map((p) => ({ slug: p.slug }))
+}
+
+function handleWpPosts(searchParams) {
+  const slug = searchParams.get('slug')
+  if (slug) {
+    const post = MOCK_POSTS.find((p) => p.slug === slug)
+    return post ? [post] : []
+  }
+  const exclude = searchParams.get('exclude')
+  const categories = searchParams.get('categories')
+  const perPage = parseInt(searchParams.get('per_page') ?? '10', 10)
+  let filtered = [...MOCK_POSTS]
+  if (exclude) {
+    const excludeId = parseInt(exclude, 10)
+    filtered = filtered.filter((p) => p.id !== excludeId)
+  }
+  if (categories) {
+    const catIds = categories.split(',').map(Number)
+    filtered = filtered.filter((p) => p.categories.some((c) => catIds.includes(c.id)))
+  }
+  return filtered.slice(0, perPage)
+}
+
 // ─── HTTP server ──────────────────────────────────────────────────────────────
 
 const CORS_HEADERS = {
@@ -383,6 +522,15 @@ const server = createServer((req, res) => {
       body = { message: 'Preview not found', id }
     }
     console.log(`[mock-wp] GET preview/${id} → ${body ? 'found' : '404'}`)
+  } else if (path === '/wp-json/sz/v1/blog-posts') {
+    body = handleBlogPosts(url.searchParams)
+    console.log(`[mock-wp] GET blog-posts → ${body.posts.length} post(s)`)
+  } else if (path === '/wp-json/sz/v1/all-posts') {
+    body = handleAllPosts()
+    console.log(`[mock-wp] GET all-posts → ${body.length} slug(s)`)
+  } else if (path === '/wp-json/wp/v2/posts') {
+    body = handleWpPosts(url.searchParams)
+    console.log(`[mock-wp] GET posts slug=${url.searchParams.get('slug') ?? '(query)'} → ${body.length} item(s)`)
   } else {
     status = 404
     body = { message: 'Route not found', path }
@@ -403,8 +551,9 @@ server.listen(PORT, () => {
   Point the dev server at this mock by setting:
     WORDPRESS_URL=http://localhost:${PORT}
 
-  Mocked pages: home, about, contact, pricing
+  Mocked pages: home, about, contact, pricing, blog
   Gallery photos: ${GALLERY_PHOTOS.length} items (Weddings, Portraits, Events)
+  Blog posts: ${MOCK_POSTS.length} items
   Nav menu: primary (${NAV_MENU_PRIMARY.length} top-level items)
   Preview: /wp-json/sz/v1/preview/:id?secret=...
 

@@ -1,4 +1,4 @@
-import type { ContentBlock, WPImage } from '~/types/wordpress'
+import type { BlogPostsData, ContentBlock, WPImage } from '~/types/wordpress'
 
 export interface BlockRendererProps {
   blocks: ContentBlock[]
@@ -6,4 +6,6 @@ export interface BlockRendererProps {
   interactive?: boolean
   /** Optional page featured image for hero fallback/slider use */
   featuredImage?: WPImage
+  /** Pre-fetched blog posts data, threaded to BlogPostsBlock */
+  blogPostsData?: BlogPostsData
 }

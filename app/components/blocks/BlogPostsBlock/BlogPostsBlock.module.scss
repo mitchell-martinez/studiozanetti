@@ -1,0 +1,52 @@
+@use '~/styles/global' as g;
+@use '../shared.module.scss' as shared;
+
+.section {
+  @include shared.blockSection;
+}
+
+.inner {
+  @include shared.blockInner;
+}
+
+.heading {
+  @include shared.blockHeading;
+}
+
+.subheading {
+  text-align: center;
+  color: var(--color-ink-subtle);
+  font-size: var(--text-base);
+  margin-top: -1rem;
+  margin-bottom: 2rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  transition: opacity 0.2s ease;
+
+  @media (min-width: #{g.$bp-lg}) {
+    grid-template-columns: repeat(var(--max-cols, 3), 1fr);
+  }
+}
+
+.listLayout {
+  grid-template-columns: 1fr;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.empty {
+  text-align: center;
+  color: var(--color-ink-subtle);
+  font-size: var(--text-base);
+  padding: 3rem 0;
+}

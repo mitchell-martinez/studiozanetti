@@ -58,6 +58,10 @@ add_action( 'after_setup_theme', function () {
 	register_nav_menus( [
 		'primary' => __( 'Primary Navigation', 'studio-zanetti' ),
 	] );
+
+	// Enable the Featured Image meta box for posts (and pages).
+	// Without this, the Classic Editor hides the thumbnail panel entirely.
+	add_theme_support( 'post-thumbnails' );
 } );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -407,6 +411,13 @@ add_action( 'template_redirect', function () {
 		exit;
 	}
 
+	// For single posts (blog), redirect to /{slug}
+	if ( is_single() ) {
+		$slug = get_post_field( 'post_name', get_queried_object_id() );
+		wp_redirect( $frontend_url . '/' . $slug, 302 );
+		exit;
+	}
+
 	// Fallback: redirect with the current request URI
 	wp_redirect( $frontend_url . $request_uri, 302 );
 	exit;
@@ -449,16 +460,29 @@ add_filter( 'page_link', function ( $link, $post_id ) {
 	return $frontend . '/' . $slug;
 }, 10, 2 );
 
+/**
+ * Rewrite "View Post" permalink in admin to point at the React front-end.
+ */
+add_filter( 'post_link', function ( $link, $post ) {
+	if ( ! defined( 'SZ_FRONTEND_URL' ) || ! is_admin() ) {
+		return $link;
+	}
+	$slug = $post->post_name;
+	if ( ! $slug ) {
+		return $link;
+	}
+	return rtrim( SZ_FRONTEND_URL, '/' ) . '/' . $slug;
+}, 10, 2 );
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 5. ADMIN CLEANUP — HIDE POSTS, DECLUTTER DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Hide the "Posts" menu item. Studio Zanetti uses Pages + CPTs, not blog posts.
- * This prevents the "squished blog posts" issue in the admin.
+ * Hide the Comments menu item — not used on this site.
+ * Posts are now visible for blog functionality.
  */
 add_action( 'admin_menu', function () {
-	remove_menu_page( 'edit.php' );           // Posts
 	remove_menu_page( 'edit-comments.php' );  // Comments
 } );
 
@@ -472,7 +496,7 @@ add_action( 'admin_menu', function () {
  * This keeps page authoring aligned with the headless React + ACF workflow.
  */
 add_filter( 'use_block_editor_for_post_type', function ( $use_block_editor, $post_type ) {
-	if ( $post_type === 'page' ) {
+	if ( $post_type === 'page' || $post_type === 'post' ) {
 		return false;
 	}
 
@@ -652,9 +676,37 @@ add_action( 'admin_head', function () {
 			}
 		}
 
+		/* ── Post editor: font consistency with live site ──── */
+		body.post-type-post #title {
+			font-family: Georgia, 'Times New Roman', serif;
+			font-size: 24px;
+			line-height: 1.3;
+		}
+
+		body.post-type-post #titlediv {
+			margin: 12px 0 16px;
+		}
+
 		<?php endif; ?>
 	</style>
 	<?php
+} );
+
+/**
+ * Inject live-site fonts into the Classic Editor (TinyMCE) iframe so the
+ * editing experience matches the front-end typography.
+ */
+add_filter( 'tiny_mce_before_init', function ( $settings ) {
+	$font_css  = 'body { font-family: \'Segoe UI\', system-ui, -apple-system, sans-serif; font-size: 16px; line-height: 1.6; color: #4a3b4f; }';
+	$font_css .= ' h1, h2, h3, h4 { font-family: Georgia, \'Times New Roman\', serif; line-height: 1.2; }';
+
+	if ( ! empty( $settings['content_style'] ) ) {
+		$settings['content_style'] .= ' ' . $font_css;
+	} else {
+		$settings['content_style'] = $font_css;
+	}
+
+	return $settings;
 } );
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -979,7 +1031,7 @@ function sz_live_preview_js() {
 //     │                                  (Leave blank to auto-generate from site_name + year)
 //     └── social_links    (Repeater)
 //           ├── platform  (Text)       — e.g. "Instagram"
-//           └── url       (URL)        — e.g. "https://instagram.com/example-studio"
+//           └── url       (URL)        — e.g. "https://instagram.com/studiozanetti"
 //
 // REST endpoint: GET /wp-json/sz/v1/site-settings
 //   Returns: { site_name, tagline, copyright_text, social_links: [{platform, url}] }
@@ -1215,7 +1267,190 @@ function sz_resolve_image( $value ) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 10. CORS — ALLOW FRONT-END ORIGIN
+// 10. REST API — BLOG POSTS ENDPOINTS
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// GET /wp-json/sz/v1/blog-posts?categories=1,2&page=1&per_page=6
+//   Returns posts filtered by category (optional), with paginated envelope.
+//   When categories is empty/omitted, returns all published posts.
+//
+// GET /wp-json/sz/v1/all-posts
+//   Lightweight list of all published post slugs (for prerender / sitemap).
+
+add_action( 'rest_api_init', function () {
+	register_rest_route( 'sz/v1', '/blog-posts', [
+		'methods'             => 'GET',
+		'callback'            => 'sz_get_blog_posts',
+		'permission_callback' => '__return_true',
+		'args'                => [
+			'categories' => [
+				'default'           => '',
+				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'page' => [
+				'default'           => 1,
+				'validate_callback' => function ( $param ) {
+					return is_numeric( $param ) && (int) $param >= 1;
+				},
+			],
+			'per_page' => [
+				'default'           => 6,
+				'validate_callback' => function ( $param ) {
+					return is_numeric( $param ) && (int) $param >= 1 && (int) $param <= 100;
+				},
+			],
+		],
+	] );
+
+	register_rest_route( 'sz/v1', '/all-posts', [
+		'methods'             => 'GET',
+		'callback'            => 'sz_get_all_post_slugs',
+		'permission_callback' => '__return_true',
+	] );
+} );
+
+/**
+ * REST callback: return paginated posts, optionally filtered by categories.
+ */
+function sz_get_blog_posts( WP_REST_Request $request ) {
+	$paged      = (int) ( $request->get_param( 'page' ) ?? 1 );
+	$per_page   = (int) ( $request->get_param( 'per_page' ) ?? 6 );
+	$categories = $request->get_param( 'categories' );
+
+	$query_args = [
+		'post_type'      => 'post',
+		'post_status'    => 'publish',
+		'posts_per_page' => $per_page,
+		'paged'          => $paged,
+		'orderby'        => 'date',
+		'order'          => 'DESC',
+	];
+
+	if ( ! empty( $categories ) ) {
+		$cat_ids = array_filter( array_map( 'intval', explode( ',', $categories ) ) );
+		if ( ! empty( $cat_ids ) ) {
+			$query_args['category__in'] = $cat_ids;
+		}
+	}
+
+	$query = new WP_Query( $query_args );
+	$posts = array_map( 'sz_format_post_for_rest', $query->posts );
+
+	return new WP_REST_Response( [
+		'posts'       => $posts,
+		'total'       => (int) $query->found_posts,
+		'total_pages' => (int) $query->max_num_pages,
+		'page'        => $paged,
+	], 200 );
+}
+
+/**
+ * REST callback: return list of all published post slugs.
+ */
+function sz_get_all_post_slugs() {
+	$posts = get_posts( [
+		'post_type'      => 'post',
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+	] );
+
+	$slugs = array_map( function ( $id ) {
+		return [
+			'slug'     => get_post_field( 'post_name', $id ),
+			'modified' => get_post_modified_time( 'c', true, $id ),
+		];
+	}, $posts );
+
+	return new WP_REST_Response( $slugs, 200 );
+}
+
+/**
+ * Format a WP_Post into the shape the React front-end expects (WPPost).
+ */
+function sz_format_post_for_rest( WP_Post $post ): array {
+	$featured_image = null;
+	$thumb_id       = get_post_thumbnail_id( $post->ID );
+	if ( $thumb_id ) {
+		$featured_image = sz_resolve_image( $thumb_id );
+	}
+
+	$raw_cat_ids = wp_get_post_categories( $post->ID );
+	$categories  = array_values( array_filter( array_map( function ( $cat_id ) {
+		$term = get_term( $cat_id, 'category' );
+		if ( ! $term || is_wp_error( $term ) ) return null;
+		return [
+			'id'   => $term->term_id,
+			'name' => $term->name,
+			'slug' => $term->slug,
+		];
+	}, is_array( $raw_cat_ids ) ? $raw_cat_ids : [] ) ) );
+
+	$tags = wp_get_post_tags( $post->ID, [ 'fields' => 'ids' ] );
+
+	// Yoast SEO meta if available
+	$yoast = null;
+	if ( class_exists( 'WPSEO_Meta' ) ) {
+		$yoast = [
+			'title'       => WPSEO_Meta::get_value( 'title', $post->ID ) ?: '',
+			'description' => WPSEO_Meta::get_value( 'metadesc', $post->ID ) ?: '',
+		];
+	}
+
+	return [
+		'id'              => $post->ID,
+		'slug'            => $post->post_name,
+		'status'          => $post->post_status,
+		'title'           => [ 'rendered' => get_the_title( $post ) ],
+		'content'         => [ 'rendered' => apply_filters( 'the_content', $post->post_content ) ],
+		'excerpt'         => [ 'rendered' => get_the_excerpt( $post ) ],
+		'date'            => get_the_date( 'c', $post ),
+		'modified'        => get_the_modified_date( 'c', $post ),
+		'featured_image'  => $featured_image,
+		'reading_time'    => max( 1, (int) round( str_word_count( wp_strip_all_tags( $post->post_content ) ) / 200 ) ),
+		'categories'      => $categories,
+		'tags'            => is_array( $tags ) ? $tags : [],
+		'yoast_head_json' => $yoast,
+	];
+}
+
+/**
+ * Also normalise images in standard WP REST post responses (wp/v2/posts).
+ * This ensures getPostBySlug() and getRelatedPosts() (which use wp/v2/posts)
+ * return featured images in the expected { url, alt, width, height } format.
+ */
+add_filter( 'rest_prepare_post', function ( WP_REST_Response $response, WP_Post $post ) {
+	$data = $response->get_data();
+
+	// Add featured_image in our standard format
+	$thumb_id = get_post_thumbnail_id( $post->ID );
+	if ( $thumb_id ) {
+		$data['featured_image'] = sz_resolve_image( $thumb_id );
+	}
+
+	// Normalise categories from integer IDs → { id, name, slug } objects
+	if ( isset( $data['categories'] ) && is_array( $data['categories'] ) ) {
+		$data['categories'] = array_values( array_filter( array_map( function ( $cat_id ) {
+			if ( is_array( $cat_id ) && isset( $cat_id['id'] ) ) return $cat_id; // already an object
+			$term = get_term( (int) $cat_id, 'category' );
+			if ( ! $term || is_wp_error( $term ) ) return null;
+			return [
+				'id'   => $term->term_id,
+				'name' => $term->name,
+				'slug' => $term->slug,
+			];
+		}, $data['categories'] ) ) );
+	}
+
+	// Add reading_time estimate (200 WPM)
+	$data['reading_time'] = max( 1, (int) round( str_word_count( wp_strip_all_tags( $post->post_content ) ) / 200 ) );
+
+	$response->set_data( $data );
+	return $response;
+}, 20, 2 );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 11. CORS — ALLOW FRONT-END ORIGIN
 // ─────────────────────────────────────────────────────────────────────────────
 
 add_action( 'rest_api_init', function () {

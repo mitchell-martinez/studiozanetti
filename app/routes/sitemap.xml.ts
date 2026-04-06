@@ -1,5 +1,5 @@
 import { toCanonicalUrl } from '~/lib/seo'
-import { buildPagePaths, getAllPages } from '~/lib/wordpress'
+import { buildPagePaths, getAllPages, getAllPostSlugs } from '~/lib/wordpress'
 
 function xmlEscape(value: string): string {
   return value
@@ -11,7 +11,7 @@ function xmlEscape(value: string): string {
 }
 
 export async function loader() {
-  const pages = await getAllPages()
+  const [pages, postSlugs] = await Promise.all([getAllPages(), getAllPostSlugs()])
   const pagePaths = buildPagePaths(pages)
   const now = new Date().toISOString()
 
@@ -28,7 +28,10 @@ export async function loader() {
     pageUrls.unshift('/')
   }
 
-  const urlEntries = pageUrls
+  const postUrls = postSlugs.map((slug) => `/${slug}`)
+  const allUrls = [...pageUrls, ...postUrls]
+
+  const urlEntries = allUrls
     .map((path) => {
       const loc = toCanonicalUrl(path)
       return `<url><loc>${xmlEscape(loc)}</loc><lastmod>${now}</lastmod><changefreq>weekly</changefreq></url>`

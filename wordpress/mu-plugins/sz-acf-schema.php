@@ -406,6 +406,30 @@ add_action( 'acf/init', function () {
 		],
 	], $style_fields( 'sz_instagram_feed' ));
 
+	// ─── Blog Posts block ────────────────────────────────────────────────────
+	//
+	// A dynamic listing block that automatically displays posts tagged for the
+	// page it sits on. The admin does NOT choose posts here — they assign pages
+	// to each post via the "Blog Post Settings" field group on the Post editor.
+	//
+	// This block provides display configuration: layout, card style, pagination,
+	// and which metadata to show.
+
+	$blog_posts_fields = array_merge([
+		[ 'key' => 'field_sz_blog_posts_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text', 'instructions' => 'Optional heading displayed above the posts grid.' ],
+		[ 'key' => 'field_sz_blog_posts_subheading', 'label' => 'Subheading', 'name' => 'subheading', 'type' => 'text' ],
+		[ 'key' => 'field_sz_blog_posts_categories', 'label' => 'Categories', 'name' => 'categories', 'type' => 'taxonomy', 'taxonomy' => 'category', 'field_type' => 'multi_select', 'return_format' => 'id', 'add_term' => 0, 'allow_null' => 1, 'instructions' => 'Select one or more categories to filter posts. Leave empty to show all posts.' ],
+		[ 'key' => 'field_sz_blog_posts_per_page', 'label' => 'Posts Per Page', 'name' => 'posts_per_page', 'type' => 'number', 'default_value' => 6, 'min' => 1, 'max' => 50, 'instructions' => 'Number of posts to show per page.' ],
+		[ 'key' => 'field_sz_blog_posts_show_pagination', 'label' => 'Show Pagination', 'name' => 'show_pagination', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1, 'instructions' => 'Show page navigation when there are more posts than the per-page limit.' ],
+		[ 'key' => 'field_sz_blog_posts_layout', 'label' => 'Layout', 'name' => 'layout', 'type' => 'select', 'choices' => [ 'grid' => 'Grid', 'list' => 'List' ], 'default_value' => 'grid' ],
+		[ 'key' => 'field_sz_blog_posts_max_columns', 'label' => 'Maximum Columns', 'name' => 'max_columns', 'type' => 'select', 'choices' => [ '' => 'Default (3)', 2 => '2', 3 => '3', 4 => '4' ], 'instructions' => 'Maximum columns in grid layout. Ignored in list layout.' ],
+		[ 'key' => 'field_sz_blog_posts_card_style', 'label' => 'Card Style', 'name' => 'card_style', 'type' => 'select', 'choices' => [ 'elevated' => 'Elevated', 'outline' => 'Outline', 'minimal' => 'Minimal' ], 'default_value' => 'elevated' ],
+		[ 'key' => 'field_sz_blog_posts_show_excerpt', 'label' => 'Show Excerpt', 'name' => 'show_excerpt', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1 ],
+		[ 'key' => 'field_sz_blog_posts_show_featured_image', 'label' => 'Show Featured Image', 'name' => 'show_featured_image', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1 ],
+		[ 'key' => 'field_sz_blog_posts_show_date', 'label' => 'Show Date', 'name' => 'show_date', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1 ],
+		[ 'key' => 'field_sz_blog_posts_show_reading_time', 'label' => 'Show Reading Time', 'name' => 'show_reading_time', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1 ],
+	], $style_fields( 'sz_blog_posts' ));
+
 	acf_add_local_field_group([
 		'key' => 'group_sz_page_blocks',
 		'title' => 'Page Blocks',
@@ -523,6 +547,13 @@ add_action( 'acf/init', function () {
 						'display' => 'block',
 						'sub_fields' => $instagram_feed_fields,
 					],
+					'layout_sz_blog_posts' => [
+						'key' => 'layout_sz_blog_posts',
+						'name' => 'blog_posts',
+						'label' => 'Blog Posts',
+						'display' => 'block',
+						'sub_fields' => $blog_posts_fields,
+					],
 				],
 			],
 		],
@@ -569,4 +600,5 @@ add_action( 'acf/init', function () {
 			],
 		],
 	]);
+
 } );

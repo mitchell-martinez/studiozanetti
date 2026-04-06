@@ -1,0 +1,17 @@
+{
+  "id": 201,
+  "slug": "golden-hour-wedding-shoot",
+  "title": { "rendered": "Golden Hour Wedding Shoot" },
+  "content": { "rendered": "<p>Golden hour — that magical window just before sunset — is the holy grail of wedding photography. The warm, diffused light flatters every skin tone and wraps the couple in a warm, romantic glow.</p><p>In this post, we share our favourite techniques for making the most of those precious 30 minutes.</p>" },
+  "excerpt": { "rendered": "<p>Tips for capturing stunning golden hour portraits on a wedding day.</p>" },
+  "date": "2025-01-15T10:00:00",
+  "modified": "2025-01-15T10:00:00",
+  "featured_image": {
+    "url": "https://picsum.photos/seed/post-golden/800/500",
+    "alt": "Golden Hour Wedding Shoot",
+    "width": 800,
+    "height": 500
+  },
+  "categories": [{ "id": 1, "name": "Weddings", "slug": "weddings" }],
+  "reading_time": 3
+}

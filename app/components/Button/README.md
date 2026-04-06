@@ -11,7 +11,7 @@ import Button from '~/components/Button'
 <Button href="/contact" variant="primary">Send Enquiry</Button>
 
 // External link (uses <a target="_blank">)
-<Button href="https://instagram.com/example-studio" variant="outline">Instagram</Button>
+<Button href="https://instagram.com/studiozanetti" variant="outline">Instagram</Button>
 
 // Native <button> (no href)
 <Button onClick={handleSubmit} variant="primary" type="submit">Submit</Button>
