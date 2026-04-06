@@ -20,6 +20,9 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const triggerRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
   const lastTriggerIndexRef = useRef<number | null>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const announcerRef = useRef<HTMLSpanElement>(null)
   const isMobile = useMediaQuery('(max-width: 920px)')
 
   const desktopColumns = Math.max(2, Math.min(4, block.desktop_columns ?? 3))
@@ -31,11 +34,28 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
     [images, activeColumnCount],
   )
 
+  const prevActiveRef = useRef<number | null>(null)
+
+  const announce = useCallback((message: string) => {
+    if (announcerRef.current) announcerRef.current.textContent = message
+  }, [])
+
   useEffect(() => {
     if (activeIndex === null) return
 
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
+
+    const img = images[activeIndex]
+    const caption = img?.caption || img?.image.alt || `Gallery image ${activeIndex + 1}`
+
+    if (prevActiveRef.current === null) {
+      requestAnimationFrame(() => closeRef.current?.focus())
+      announce(`Lightbox opened, image ${activeIndex + 1} of ${images.length}: ${caption}`)
+    } else {
+      announce(`Image ${activeIndex + 1} of ${images.length}: ${caption}`)
+    }
+    prevActiveRef.current = activeIndex
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -44,9 +64,30 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
       }
       if (event.key === 'ArrowRight') {
         setActiveIndex((prev) => (prev === null ? prev : Math.min(images.length - 1, prev + 1)))
+        return
       }
       if (event.key === 'ArrowLeft') {
         setActiveIndex((prev) => (prev === null ? prev : Math.max(0, prev - 1)))
+        return
+      }
+
+      // Focus trap: cycle Tab through modal buttons
+      if (event.key === 'Tab') {
+        const modal = modalRef.current
+        if (!modal) return
+        const focusable = modal.querySelectorAll<HTMLElement>('button')
+        if (!focusable.length) return
+
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
+        }
       }
     }
 
@@ -56,16 +97,21 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
       document.body.style.overflow = previousOverflow
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [activeIndex, images.length])
+  }, [activeIndex, images, announce])
 
   useEffect(() => {
     if (activeIndex !== null) return
+
+    if (prevActiveRef.current !== null) {
+      announce('Lightbox closed')
+      prevActiveRef.current = null
+    }
 
     if (lastTriggerIndexRef.current !== null) {
       triggerRefs.current.get(lastTriggerIndexRef.current)?.focus()
       lastTriggerIndexRef.current = null
     }
-  }, [activeIndex])
+  }, [activeIndex, announce])
 
   const touchStartX = useRef<number | null>(null)
   const SWIPE_THRESHOLD = 50
@@ -135,7 +181,7 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
                       if (element) triggerRefs.current.set(sourceIndex, element)
                       else triggerRefs.current.delete(sourceIndex)
                     }}
-                    aria-label={`Open image ${sourceIndex + 1} of ${images.length}`}
+                    aria-label={`Open image ${sourceIndex + 1} of ${images.length}: ${item.image.alt || item.caption || 'Untitled'}`}
                   >
                     <img
                       className={styles.image}
@@ -160,15 +206,21 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
           role="dialog"
           aria-modal="true"
           aria-label="Gallery image preview"
+          aria-describedby="lightbox-instructions"
           onClick={() => setActiveIndex(null)}
         >
+          <span id="lightbox-instructions" className={styles.srOnly}>
+            Use arrow keys or swipe to navigate between images. Press Escape to close.
+          </span>
           <div
+            ref={modalRef}
             className={styles.modal}
             onClick={(event) => event.stopPropagation()}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
             <button
+              ref={closeRef}
               className={styles.closeBtn}
               type="button"
               onClick={() => setActiveIndex(null)}
@@ -213,9 +265,8 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
             <img
               className={styles.modalImage}
               src={currentImage.image.url}
-              alt={
-                currentImage.image.alt || currentImage.caption || `Gallery image ${activeIndex + 1}`
-              }
+              alt={currentImage.image.alt || currentImage.caption || `Gallery image ${activeIndex + 1}`}
+              aria-labelledby="gallery-modal-caption"
             />
 
             {activeIndex < images.length - 1 && (
@@ -243,10 +294,14 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
               </button>
             )}
 
-            <p className={styles.modalCaption}>{currentImage.caption || currentImage.image.alt}</p>
+            <p id="gallery-modal-caption" className={styles.modalCaption} aria-live="polite">
+              {currentImage.caption || currentImage.image.alt}
+            </p>
           </div>
         </div>
       )}
+
+      <span ref={announcerRef} className={styles.srOnly} aria-live="assertive" aria-atomic="true" />
     </section>
   )
 }
