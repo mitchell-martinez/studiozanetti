@@ -9,6 +9,7 @@
     "build": "react-router build",
     "start": "react-router-serve ./build/server/index.js",
     "storybook": "storybook dev -p 6006",
+    "storybook:network": "LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null) && echo \"\\n  Storybook will be available at: http://$LOCAL_IP:6006\\n\" && storybook dev -p 6006 --host 0.0.0.0",
     "build-storybook": "storybook build",
     "typecheck": "tsc",
     "lint": "eslint .",

@@ -35,6 +35,9 @@ const config: StorybookConfig = {
       '~': resolve(__dirname, '../app'),
     }
 
+    config.server ??= {}
+    config.server.allowedHosts = true
+
     return config
   },
 }

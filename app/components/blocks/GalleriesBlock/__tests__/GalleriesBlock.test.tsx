@@ -36,4 +36,35 @@ describe('GalleriesBlock', () => {
 
     expect(container.firstChild).toBeNull()
   })
+
+  it('navigates between images using arrow buttons', async () => {
+    const user = userEvent.setup()
+
+    render(<GalleriesBlock block={mockGalleriesBlock} />)
+
+    await user.click(screen.getByRole('button', { name: 'Open image 1 of 3' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Previous image' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next image' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Next image' }))
+    expect(screen.getByRole('button', { name: 'Previous image' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next image' })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Next image' }))
+    expect(screen.getByRole('button', { name: 'Previous image' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Next image' })).not.toBeInTheDocument()
+  })
+
+  it('closes modal via the close button', async () => {
+    const user = userEvent.setup()
+
+    render(<GalleriesBlock block={mockGalleriesBlock} />)
+
+    await user.click(screen.getByRole('button', { name: 'Open image 1 of 3' }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Close preview' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
 })

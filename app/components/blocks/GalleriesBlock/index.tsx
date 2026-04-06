@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import Button from '~/components/Button'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import RichText from '~/components/RichText'
 import { useMediaQuery } from '~/hooks/useMediaQuery'
 import { getSectionStyle } from '../helpers/styleOptions'
@@ -67,6 +66,29 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
       lastTriggerIndexRef.current = null
     }
   }, [activeIndex])
+
+  const touchStartX = useRef<number | null>(null)
+  const SWIPE_THRESHOLD = 50
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX
+  }, [])
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (touchStartX.current === null) return
+      const dx = e.changedTouches[0].clientX - touchStartX.current
+      touchStartX.current = null
+
+      if (Math.abs(dx) < SWIPE_THRESHOLD) return
+      if (dx < 0) {
+        setActiveIndex((prev) => (prev === null ? prev : Math.min(images.length - 1, prev + 1)))
+      } else {
+        setActiveIndex((prev) => (prev === null ? prev : Math.max(0, prev - 1)))
+      }
+    },
+    [images.length],
+  )
 
   if (!images.length) return null
 
@@ -140,7 +162,54 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
           aria-label="Gallery image preview"
           onClick={() => setActiveIndex(null)}
         >
-          <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
+          <div
+            className={styles.modal}
+            onClick={(event) => event.stopPropagation()}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <button
+              className={styles.closeBtn}
+              type="button"
+              onClick={() => setActiveIndex(null)}
+              aria-label="Close preview"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="24"
+                height="24"
+                aria-hidden="true"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
+              </svg>
+            </button>
+
+            {activeIndex > 0 && (
+              <button
+                className={`${styles.navBtn} ${styles.prevBtn}`}
+                type="button"
+                onClick={() =>
+                  setActiveIndex((prev) => (prev === null ? prev : Math.max(0, prev - 1)))
+                }
+                aria-label="Previous image"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path d="M15 18 9 12l6-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
+
             <img
               className={styles.modalImage}
               src={currentImage.image.url}
@@ -149,38 +218,32 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
               }
             />
 
-            <p className={styles.modalCaption}>{currentImage.caption || currentImage.image.alt}</p>
+            {activeIndex < images.length - 1 && (
+              <button
+                className={`${styles.navBtn} ${styles.nextBtn}`}
+                type="button"
+                onClick={() =>
+                  setActiveIndex((prev) =>
+                    prev === null ? prev : Math.min(images.length - 1, prev + 1),
+                  )
+                }
+                aria-label="Next image"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="24"
+                  height="24"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path d="M9 18 15 12 9 6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
 
-            <div className={styles.modalActions}>
-              {activeIndex > 0 && (
-                <Button
-                  variant="outline"
-                  inverted
-                  size="sm"
-                  onClick={() =>
-                    setActiveIndex((prev) => (prev === null ? prev : Math.max(0, prev - 1)))
-                  }
-                  ariaLabel="Previous image"
-                >
-                  Prev
-                </Button>
-              )}
-              {activeIndex < images.length - 1 && (
-                <Button
-                  variant="outline"
-                  inverted
-                  size="sm"
-                  onClick={() =>
-                    setActiveIndex((prev) =>
-                      prev === null ? prev : Math.min(images.length - 1, prev + 1),
-                    )
-                  }
-                  ariaLabel="Next image"
-                >
-                  Next
-                </Button>
-              )}
-            </div>
+            <p className={styles.modalCaption}>{currentImage.caption || currentImage.image.alt}</p>
           </div>
         </div>
       )}
