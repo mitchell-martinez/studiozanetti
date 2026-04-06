@@ -81,15 +81,18 @@ add_action( 'after_setup_theme', function () {
 // ]
 
 add_action( 'rest_api_init', function () {
-	register_rest_route( 'sz/v1', '/nav-menu/(?P<location>[a-zA-Z0-9_-]+)', [
+	register_rest_route( 'sz/v1', '/nav-menu/(?P<location>[a-zA-Z0-9_\-\+%]+)', [
 		'methods'             => 'GET',
 		'callback'            => 'sz_get_nav_menu',
 		'permission_callback' => '__return_true',
 		'args'                => [
 			'location' => [
 				'required'          => true,
+				'sanitize_callback' => function ( $param ) {
+					return sanitize_text_field( urldecode( $param ) );
+				},
 				'validate_callback' => function ( $param ) {
-					return is_string( $param ) && preg_match( '/^[a-zA-Z0-9_-]+$/', $param );
+					return is_string( $param ) && strlen( $param ) <= 200;
 				},
 			],
 		],
@@ -103,12 +106,26 @@ function sz_get_nav_menu( WP_REST_Request $request ) {
 	$location  = $request->get_param( 'location' );
 	$locations = get_nav_menu_locations();
 
-	if ( empty( $locations[ $location ] ) ) {
+	$menu_id = null;
+
+	// 1. Try registered theme location first.
+	if ( ! empty( $locations[ $location ] ) ) {
+		$menu_id = $locations[ $location ];
+	} else {
+		// 2. Fall back to looking up a menu by name or slug directly.
+		//    This lets the menu_override ACF field accept either a theme
+		//    location slug OR a menu name/slug from Appearance → Menus.
+		$menu_obj = wp_get_nav_menu_object( $location );
+		if ( $menu_obj ) {
+			$menu_id = $menu_obj->term_id;
+		}
+	}
+
+	if ( ! $menu_id ) {
 		return new WP_REST_Response( [], 200 );
 	}
 
-	$menu_id = $locations[ $location ];
-	$items   = wp_get_nav_menu_items( $menu_id );
+	$items = wp_get_nav_menu_items( $menu_id );
 
 	if ( ! $items ) {
 		return new WP_REST_Response( [], 200 );

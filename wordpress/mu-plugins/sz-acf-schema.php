@@ -575,10 +575,10 @@ add_action( 'acf/init', function () {
 		'fields' => [
 			[
 				'key' => 'field_sz_menu_override',
-				'label' => 'Menu Override (location slug)',
+				'label' => 'Menu Override',
 				'name' => 'menu_override',
 				'type' => 'text',
-				'instructions' => 'Optional. Example: primary, weddings, events. Falls back to primary when empty/invalid.',
+				'instructions' => 'Optional. Enter a menu name or slug from Appearance → Menus (e.g. SSM, weddings). Also accepts a registered theme location slug (e.g. primary). Falls back to primary when empty or not found.',
 			],
 			[
 				'key' => 'field_sz_container_only',
