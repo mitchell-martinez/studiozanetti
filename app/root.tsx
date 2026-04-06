@@ -1,6 +1,16 @@
 import { lazy, Suspense } from 'react'
 import type { LinksFunction } from 'react-router'
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from 'react-router'
+import {
+    isRouteErrorResponse,
+    Links,
+    Meta,
+    Outlet,
+    Scripts,
+    ScrollRestoration,
+    useRouteError,
+    useRouteLoaderData,
+} from 'react-router'
+import ErrorPage from '~/components/ErrorPage'
 import Footer from '~/components/Footer'
 import Navbar from '~/components/Navbar'
 import OfflineBanner from '~/components/OfflineBanner'
@@ -53,18 +63,31 @@ export async function loader({ request }: { request: Request }): Promise<RootLoa
 
 const PwaRegistrar = lazy(() => import('~/components/PwaRegistrar'))
 
-export default function Root() {
-  const { navMenu, siteSettings } = useLoaderData<typeof loader>()
+/**
+ * Layout wraps both the default component and the ErrorBoundary so the HTML
+ * shell (head, scripts, etc.) is never duplicated.  When the root loader
+ * throws (e.g. WP is down) loader data is unavailable — we render a minimal
+ * shell without the Navbar / Footer so the ErrorBoundary still looks clean.
+ */
+export function Layout({ children }: { children: React.ReactNode }) {
+  // useRouteLoaderData returns undefined (instead of throwing) when the
+  // loader errored, so it's safe to call inside the shared Layout.
+  const data = useRouteLoaderData('root') as RootLoaderData | undefined
+  const navMenu = data?.navMenu ?? []
+  const siteSettings = data?.siteSettings
+
   const siteUrl = getSiteUrlFromEnv()
-  const organizationSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'ProfessionalService',
-    name: siteSettings.site_name || 'Studio Zanetti',
-    url: siteUrl,
-    sameAs: siteSettings.social_links
-      .map((link) => link.url)
-      .filter((url) => url.trim().length > 0),
-  }
+  const organizationSchema = siteSettings
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'ProfessionalService',
+        name: siteSettings.site_name || 'Studio Zanetti',
+        url: siteUrl,
+        sameAs: siteSettings.social_links
+          .map((link) => link.url)
+          .filter((url) => url.trim().length > 0),
+      }
+    : null
 
   return (
     <html lang="en">
@@ -72,21 +95,27 @@ export default function Root() {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
-        />
+        {organizationSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+          />
+        )}
         <Meta />
         <Links />
       </head>
       <body>
         <OfflineBanner />
         <div className="layout">
-          <Navbar items={navMenu} siteName={siteSettings.site_name} />
+          {siteSettings && navMenu.length > 0 && (
+            <Navbar items={navMenu} siteName={siteSettings.site_name} />
+          )}
           <main id="main-content" className="main-content" tabIndex={-1}>
-            <Outlet />
+            {children}
           </main>
-          <Footer items={navMenu} siteSettings={siteSettings} />
+          {siteSettings && navMenu.length > 0 && (
+            <Footer items={navMenu} siteSettings={siteSettings} />
+          )}
         </div>
         <Suspense>
           <PwaRegistrar />
@@ -96,4 +125,44 @@ export default function Root() {
       </body>
     </html>
   )
+}
+
+export default function Root() {
+  return <Outlet />
+}
+
+/**
+ * Determines whether a thrown error looks like a network / fetch failure
+ * (as opposed to a coded HTTP error response from the server).
+ */
+function looksLikeNetworkError(error: unknown): boolean {
+  if (error instanceof TypeError) return true
+  if (error instanceof Error && /fetch|network|abort/i.test(error.message)) return true
+  return false
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError()
+  const isOffline = typeof navigator !== 'undefined' && !navigator.onLine
+
+  // Client-side navigation while offline — show offline page
+  if (isOffline) {
+    return <ErrorPage variant="offline" />
+  }
+
+  // Server returned an HTTP error (e.g. 502, 500)
+  if (isRouteErrorResponse(error)) {
+    if (error.status === 404) {
+      // This only fires if somehow a 404 bubbles past child error boundaries
+      return <ErrorPage variant="generic" status={404} />
+    }
+    return <ErrorPage variant="server" status={error.status} />
+  }
+
+  // TypeError / network failure when navigator still reports online
+  if (looksLikeNetworkError(error)) {
+    return <ErrorPage variant="server" />
+  }
+
+  return <ErrorPage variant="generic" />
 }

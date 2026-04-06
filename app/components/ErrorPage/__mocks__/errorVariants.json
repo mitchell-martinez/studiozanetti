@@ -1,0 +1,18 @@
+[
+  {
+    "variant": "offline",
+    "expectedTitle": "You're offline",
+    "expectedText": "It looks like you've lost your internet connection."
+  },
+  {
+    "variant": "server",
+    "status": 502,
+    "expectedTitle": "We're having trouble connecting",
+    "expectedText": "Our server isn't responding right now."
+  },
+  {
+    "variant": "generic",
+    "expectedTitle": "Something went wrong",
+    "expectedText": "An unexpected error occurred."
+  }
+]

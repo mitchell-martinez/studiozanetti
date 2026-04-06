@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { isRouteErrorResponse, useLoaderData, useRouteError } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
 import BlogPostPage from '~/components/BlogPostPage'
+import ErrorPage from '~/components/ErrorPage'
 import RichText from '~/components/RichText'
 import { stripHtml } from '~/lib/html'
 import { buildPageSchemas, buildPostSchemas, toCanonicalUrl } from '~/lib/seo'
@@ -210,12 +211,29 @@ const CmsPage = () => {
 
 export function ErrorBoundary() {
   const error = useRouteError()
+  const isOffline = typeof navigator !== 'undefined' && !navigator.onLine
 
   if (isRouteErrorResponse(error) && error.status === 404) {
     return <NotFoundRoute />
   }
 
-  throw error
+  if (isOffline) {
+    return <ErrorPage variant="offline" />
+  }
+
+  if (isRouteErrorResponse(error)) {
+    return <ErrorPage variant="server" status={error.status} />
+  }
+
+  // Network / fetch failures when still reporting online
+  if (
+    error instanceof TypeError ||
+    (error instanceof Error && /fetch|network|abort/i.test(error.message))
+  ) {
+    return <ErrorPage variant="server" />
+  }
+
+  return <ErrorPage variant="generic" />
 }
 
 export default CmsPage
