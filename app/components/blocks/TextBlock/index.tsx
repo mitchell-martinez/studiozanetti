@@ -25,8 +25,8 @@ const widthClass: Record<string, string | undefined> = {
 
 const TextBlock = ({ block, dark }: TextBlockProps) => {
   // TextBlock uses max_width for its inner text container, not the outer section.
-  // Strip it so getSectionStyle doesn't constrain the full-width section background.
-  const { max_width: _textWidth, ...sectionOptions } = block
+  // Strip both so getSectionStyle doesn't constrain the full-width section background.
+  const { max_width: _textWidth, max_width_px: _textWidthPx, ...sectionOptions } = block
 
   return (
     <section
@@ -40,12 +40,13 @@ const TextBlock = ({ block, dark }: TextBlockProps) => {
       <div
         className={[
           styles.textContent,
-          textAlignClass[block.align ?? 'left'],
-          blockAlignClass[block.block_align ?? 'left'],
-          widthClass[block.max_width ?? 'normal'],
+          textAlignClass[block.align ?? 'center'],
+          blockAlignClass[block.block_align ?? 'center'],
+          !block.max_width_px ? widthClass[block.max_width ?? 'normal'] : undefined,
         ]
           .filter(Boolean)
           .join(' ')}
+        style={block.max_width_px ? { maxWidth: `${block.max_width_px}px` } : undefined}
       >
         {block.eyebrow && <p className={styles.eyebrow}>{block.eyebrow}</p>}
         {block.heading && <h2 className={styles.textHeading}>{block.heading}</h2>}

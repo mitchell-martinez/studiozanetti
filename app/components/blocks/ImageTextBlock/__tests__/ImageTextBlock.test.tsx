@@ -77,6 +77,86 @@ describe('ImageTextBlock', () => {
     expect(grid.className).not.toMatch(/imageRight/)
   })
 
+  // ─── Image alignment ────────────────────────────────────────────────────────
+
+  it('does not apply imgAlignCenter or imgAlignRight class by default (left)', () => {
+    const { container } = renderBlock()
+    const imgWrap = container.querySelector('[class*="imageTextImage"]')!
+    expect(imgWrap.className).not.toMatch(/imgAlignCenter/)
+    expect(imgWrap.className).not.toMatch(/imgAlignRight/)
+  })
+
+  it('applies imgAlignCenter class when image_alignment is center', () => {
+    const { container } = renderBlock({ image_alignment: 'center' })
+    const imgWrap = container.querySelector('[class*="imageTextImage"]')!
+    expect(imgWrap.className).toMatch(/imgAlignCenter/)
+  })
+
+  it('applies imgAlignRight class when image_alignment is right', () => {
+    const { container } = renderBlock({ image_alignment: 'right' })
+    const imgWrap = container.querySelector('[class*="imageTextImage"]')!
+    expect(imgWrap.className).toMatch(/imgAlignRight/)
+  })
+
+  // ─── Vertical alignment ─────────────────────────────────────────────────────
+
+  it('applies alignMiddle class by default', () => {
+    const { container } = renderBlock()
+    const grid = container.querySelector('[class*="imageText"]')!
+    expect(grid.className).toMatch(/alignMiddle/)
+  })
+
+  it('applies alignTop class when text_vertical_align is top', () => {
+    const { container } = renderBlock({ text_vertical_align: 'top' })
+    const grid = container.querySelector('[class*="imageText"]')!
+    expect(grid.className).toMatch(/alignTop/)
+  })
+
+  it('applies alignBottom class when text_vertical_align is bottom', () => {
+    const { container } = renderBlock({ text_vertical_align: 'bottom' })
+    const grid = container.querySelector('[class*="imageText"]')!
+    expect(grid.className).toMatch(/alignBottom/)
+  })
+
+  // ─── Horizontal alignment ───────────────────────────────────────────────────
+
+  it('does not apply textCenter or textRight class by default (left)', () => {
+    const { container } = renderBlock()
+    const body = container.querySelector('[class*="imageTextBody"]')!
+    expect(body.className).not.toMatch(/textCenter/)
+    expect(body.className).not.toMatch(/textRight/)
+  })
+
+  it('applies textCenter class when text_horizontal_align is center', () => {
+    const { container } = renderBlock({ text_horizontal_align: 'center' })
+    const body = container.querySelector('[class*="imageTextBody"]')!
+    expect(body.className).toMatch(/textCenter/)
+  })
+
+  it('applies textRight class when text_horizontal_align is right', () => {
+    const { container } = renderBlock({ text_horizontal_align: 'right' })
+    const body = container.querySelector('[class*="imageTextBody"]')!
+    expect(body.className).toMatch(/textRight/)
+  })
+
+  // ─── Heading-only / Body-only alignment ─────────────────────────────────────
+
+  it('applies headingOnly class when heading present but no body', () => {
+    const { container } = renderBlock({ heading: 'Title', body: '' })
+    const body = container.querySelector('[class*="imageTextBody"]')!
+    expect(body.className).toMatch(/headingOnly/)
+  })
+
+  it('applies bodyOnly class when body present but no heading or eyebrow', () => {
+    const { container } = renderBlock({
+      heading: undefined,
+      eyebrow: undefined,
+      body: '<p>Text</p>',
+    })
+    const body = container.querySelector('[class*="imageTextBody"]')!
+    expect(body.className).toMatch(/bodyOnly/)
+  })
+
   // ─── Image loading ──────────────────────────────────────────────────────────
 
   it('sets loading="lazy" on the image', () => {

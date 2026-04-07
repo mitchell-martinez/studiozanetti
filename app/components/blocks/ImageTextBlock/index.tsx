@@ -18,12 +18,48 @@ const ratioClass = (ratio?: string) => {
   }
 }
 
+const imageAlignClass = (align?: string) => {
+  switch (align) {
+    case 'center':
+      return styles.imgAlignCenter
+    case 'right':
+      return styles.imgAlignRight
+    default:
+      return ''
+  }
+}
+
+const verticalAlignClass = (align?: string) => {
+  switch (align) {
+    case 'middle':
+      return styles.alignMiddle
+    case 'bottom':
+      return styles.alignBottom
+    default:
+      return styles.alignTop
+  }
+}
+
+const horizontalAlignClass = (align?: string) => {
+  switch (align) {
+    case 'center':
+      return styles.textCenter
+    case 'right':
+      return styles.textRight
+    default:
+      return ''
+  }
+}
+
 const ImageTextBlock = ({ block }: ImageTextBlockProps) => {
   const imgStyle: React.CSSProperties = {}
   if (block.image_max_width) imgStyle.maxWidth = `${block.image_max_width}px`
   if (block.image_max_height) imgStyle.maxHeight = `${block.image_max_height}px`
 
   const isExternal = block.url && /^https?:\/\/|^\/\//.test(block.url)
+
+  const hasHeading = Boolean(block.eyebrow || block.heading)
+  const hasBody = Boolean(block.body)
 
   const content = (
     <div
@@ -33,9 +69,9 @@ const ImageTextBlock = ({ block }: ImageTextBlockProps) => {
           : block.image_style === 'plain'
             ? styles.imagePlain
             : styles.imageSoft
-      } ${block.url ? styles.clickable : ''}`}
+      } ${block.url ? styles.clickable : ''} ${verticalAlignClass(block.text_vertical_align)}`}
     >
-      <div className={styles.imageTextImage}>
+      <div className={`${styles.imageTextImage} ${imageAlignClass(block.image_alignment)}`}>
         <picture>
           {block.image_mobile?.url && (
             <source media="(max-width: 768px)" srcSet={block.image_mobile.url} />
@@ -52,7 +88,15 @@ const ImageTextBlock = ({ block }: ImageTextBlockProps) => {
         </picture>
         {block.image_caption && <p className={styles.imageCaption}>{block.image_caption}</p>}
       </div>
-      <div className={styles.imageTextBody}>
+      <div
+        className={`${styles.imageTextBody} ${horizontalAlignClass(block.text_horizontal_align)} ${
+          hasHeading && !hasBody
+            ? styles.headingOnly
+            : !hasHeading && hasBody
+              ? styles.bodyOnly
+              : ''
+        }`}
+      >
         {block.eyebrow && <p className={styles.eyebrow}>{block.eyebrow}</p>}
         {block.heading && <h2 className={styles.imageTextHeading}>{block.heading}</h2>}
         <RichText html={block.body} fontSize={block.font_size} />

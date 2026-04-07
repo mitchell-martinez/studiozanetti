@@ -9,7 +9,7 @@
   display: grid;
   grid-template-columns: 1fr 1.4fr;
   gap: 4rem;
-  align-items: start;
+  align-items: center;
   max-width: 1100px;
   margin: 0 auto;
 
@@ -18,6 +18,22 @@
     gap: 2rem;
   }
 }
+
+// ─── Vertical alignment ────────────────────────────────────────────────────
+
+.alignTop {
+  align-items: start;
+}
+
+.alignMiddle {
+  align-items: center;
+}
+
+.alignBottom {
+  align-items: end;
+}
+
+// ─── Image position ────────────────────────────────────────────────────────
 
 .imageRight {
   grid-template-columns: 1.4fr 1fr;
@@ -49,7 +65,17 @@
   border-radius: 4px;
   box-shadow: 0 4px 24px rgb(0 0 0 / 12%);
   object-fit: cover;
-  object-position: top left;
+  object-position: left center;
+}
+
+// ─── Image horizontal alignment ────────────────────────────────────────────
+
+.imgAlignCenter img {
+  object-position: center center;
+}
+
+.imgAlignRight img {
+  object-position: right center;
 }
 
 .imageLandscape .imageTextImage img {
@@ -88,6 +114,26 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  justify-content: center;
+}
+
+// When only heading/eyebrow exists (no body), or only body (no heading),
+// the single element should sit perfectly centred in the text column.
+.headingOnly,
+.bodyOnly {
+  justify-content: center;
+}
+
+// ─── Horizontal text alignment ──────────────────────────────────────────────
+
+.textCenter {
+  text-align: center;
+  align-items: center;
+}
+
+.textRight {
+  text-align: right;
+  align-items: flex-end;
 }
 
 .eyebrow {

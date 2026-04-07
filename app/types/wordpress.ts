@@ -104,6 +104,7 @@ export interface ImageTextBlock extends BlockStyleOptions {
   image_position?: 'left' | 'right'
   image_ratio?: 'landscape' | 'portrait' | 'square' | 'auto'
   image_style?: 'soft' | 'framed' | 'plain'
+  image_alignment?: 'left' | 'center' | 'right'
   image_max_width?: number
   image_max_height?: number
   eyebrow?: string
@@ -112,6 +113,8 @@ export interface ImageTextBlock extends BlockStyleOptions {
   image_caption?: string
   font_size?: 'sm' | 'md' | 'lg'
   url?: string
+  text_vertical_align?: 'top' | 'middle' | 'bottom'
+  text_horizontal_align?: 'left' | 'center' | 'right'
 }
 
 export interface WPServiceItem {

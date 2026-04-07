@@ -20,6 +20,9 @@ const meta: Meta<ImageTextArgs> = {
     image_position: imageTextBlock.image_position,
     image_ratio: imageTextBlock.image_ratio,
     image_style: imageTextBlock.image_style,
+    image_alignment: imageTextBlock.image_alignment,
+    text_vertical_align: imageTextBlock.text_vertical_align,
+    text_horizontal_align: imageTextBlock.text_horizontal_align,
     cta_text: imageTextBlock.cta_text,
     cta_url: imageTextBlock.cta_url,
     image_caption: imageTextBlock.image_caption,
@@ -51,6 +54,12 @@ const meta: Meta<ImageTextArgs> = {
       options: ['soft', 'framed', 'plain'],
       description: 'Visual treatment for the image',
     },
+    image_alignment: {
+      control: 'inline-radio',
+      options: ['left', 'center', 'right'],
+      description:
+        'Horizontal alignment of the image within its frame (most visible when cropped to a ratio)',
+    },
     image_max_width: {
       control: { type: 'number', min: 0, step: 50 },
       description: 'Optional max width in px. Height scales proportionally.',
@@ -71,6 +80,16 @@ const meta: Meta<ImageTextArgs> = {
       control: 'inline-radio',
       options: ['sm', 'md', 'lg'],
       description: 'Body text font size (sm = default)',
+    },
+    text_vertical_align: {
+      control: 'inline-radio',
+      options: ['top', 'middle', 'bottom'],
+      description: 'Vertical alignment of the text column relative to the image (default: middle)',
+    },
+    text_horizontal_align: {
+      control: 'inline-radio',
+      options: ['left', 'center', 'right'],
+      description: 'Horizontal alignment of text content (default: left)',
     },
     ...blockStyleArgTypes,
   },
@@ -111,4 +130,44 @@ export const ClickableBlock: Story = {
 /** Entire block links to an external URL. */
 export const ExternalLink: Story = {
   args: { url: 'https://studiozanetti.com.au' },
+}
+
+/** Image centred within its frame. */
+export const ImageAlignCentre: Story = {
+  args: { image_alignment: 'center' },
+}
+
+/** Image right-aligned within its frame. */
+export const ImageAlignRight: Story = {
+  args: { image_alignment: 'right' },
+}
+
+/** Text vertically aligned to the top of the image. */
+export const TextAlignTop: Story = {
+  args: { text_vertical_align: 'top' },
+}
+
+/** Text vertically aligned to the bottom of the image. */
+export const TextAlignBottom: Story = {
+  args: { text_vertical_align: 'bottom' },
+}
+
+/** Centre-aligned text. */
+export const TextHorizontalCentre: Story = {
+  args: { text_horizontal_align: 'center' },
+}
+
+/** Right-aligned text. */
+export const TextHorizontalRight: Story = {
+  args: { text_horizontal_align: 'right' },
+}
+
+/** Heading only — no body content — centred vertically. */
+export const HeadingOnly: Story = {
+  args: { body: '', text_vertical_align: 'middle' },
+}
+
+/** Body only — no heading or eyebrow. */
+export const BodyOnly: Story = {
+  args: { heading: undefined, eyebrow: undefined, text_vertical_align: 'middle' },
 }

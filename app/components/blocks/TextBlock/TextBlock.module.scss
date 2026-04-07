@@ -14,15 +14,15 @@
 // ─── Max-width variants ──────────────────────────────────────────────────────
 
 .maxNarrow {
-  max-width: 560px;
-}
-
-.maxNormal {
   max-width: 680px;
 }
 
+.maxNormal {
+  max-width: 1200px;
+}
+
 .maxWide {
-  max-width: 920px;
+  max-width: 1440px;
 }
 
 // ─── Text alignment (content within the block) ──────────────────────────────
@@ -73,5 +73,3 @@
 .textHeading {
   font-size: var(--text-2xl);
 }
-
-
