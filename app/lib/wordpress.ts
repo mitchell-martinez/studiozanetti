@@ -27,15 +27,15 @@
  */
 
 import type {
-    BlogPostsData,
-    ContentBlock,
-    HeroSlide,
-    WPGalleryPhoto,
-    WPImage,
-    WPMenuItem,
-    WPPage,
-    WPPost,
-    WPSiteSettings,
+  BlogPostsData,
+  ContentBlock,
+  HeroSlide,
+  WPGalleryPhoto,
+  WPImage,
+  WPMenuItem,
+  WPPage,
+  WPPost,
+  WPSiteSettings,
 } from '~/types/wordpress'
 
 interface RawWPEmbeddedMedia {
@@ -149,24 +149,6 @@ function normalizeBlockImages(blocks: ContentBlock[]): ContentBlock[] {
           services: block.services.map((svc) => ({
             ...svc,
             image: safeImage(svc.image),
-          })),
-        }
-
-      case 'testimonial_carousel':
-        return {
-          ...block,
-          testimonials: block.testimonials.map((t) => ({
-            ...t,
-            image: safeImage(t.image),
-          })),
-        }
-
-      case 'process_timeline':
-        return {
-          ...block,
-          steps: block.steps.map((step) => ({
-            ...step,
-            image: safeImage(step.image),
           })),
         }
 
@@ -421,7 +403,13 @@ export async function getPostsByCategories(
   const data = await wpFetch<BlogPostsData>(`/sz/v1/blog-posts?${params}`)
   if (!data) return empty
   // Safety: ensure we always have the expected envelope shape
-  if (Array.isArray(data)) return { posts: data as unknown as WPPost[], total: (data as unknown[]).length, total_pages: 1, page }
+  if (Array.isArray(data))
+    return {
+      posts: data as unknown as WPPost[],
+      total: (data as unknown[]).length,
+      total_pages: 1,
+      page,
+    }
   if (!Array.isArray(data.posts)) return empty
   return data
 }

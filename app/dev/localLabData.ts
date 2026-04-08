@@ -18,9 +18,7 @@ import imageTextBlock from '~/components/blocks/ImageTextBlock/__mocks__/imageTe
 import instagramFeedBlock from '~/components/blocks/InstagramFeedBlock/__mocks__/instagramFeedBlock.json'
 import pillarBlock from '~/components/blocks/PillarGridBlock/__mocks__/pillarGridBlock.json'
 import pricingBlock from '~/components/blocks/PricingPackagesBlock/__mocks__/pricingPackagesBlock.json'
-import processBlock from '~/components/blocks/ProcessTimelineBlock/__mocks__/processTimelineBlock.json'
 import servicesBlock from '~/components/blocks/ServicesGridBlock/__mocks__/servicesGridBlock.json'
-import testimonialBlock from '~/components/blocks/TestimonialCarouselBlock/__mocks__/testimonialCarouselBlock.json'
 import textBlock from '~/components/blocks/TextBlock/__mocks__/textBlock.json'
 import textGridBlock from '~/components/blocks/TextGridBlock/__mocks__/textGridBlock.json'
 
@@ -30,7 +28,6 @@ export const fullPageBlocksA: ContentBlock[] = [
   imageTextBlock as ContentBlock,
   servicesBlock as ContentBlock,
   buttonGroupBlock as ContentBlock,
-  testimonialBlock as ContentBlock,
   faqBlock as ContentBlock,
 ]
 
@@ -38,7 +35,6 @@ export const fullPageBlocksB: ContentBlock[] = [
   heroBlock as ContentBlock,
   pillarBlock as ContentBlock,
   textGridBlock as ContentBlock,
-  processBlock as ContentBlock,
   pricingBlock as ContentBlock,
   galleriesBlock as ContentBlock,
   galleryCategoriesBlock as ContentBlock,

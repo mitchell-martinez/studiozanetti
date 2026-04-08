@@ -204,26 +204,6 @@ add_action( 'acf/init', function () {
 		],
 	], $style_fields( 'sz_pillars' ));
 
-	$testimonial_fields = array_merge([
-		[ 'key' => 'field_sz_testimonial_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
-		[ 'key' => 'field_sz_testimonial_subheading', 'label' => 'Subheading', 'name' => 'subheading', 'type' => 'text' ],
-		[ 'key' => 'field_sz_testimonial_rotate_seconds', 'label' => 'Auto Rotate Seconds', 'name' => 'auto_rotate_seconds', 'type' => 'number', 'min' => 3 ],
-		[
-			'key' => 'field_sz_testimonial_items',
-			'label' => 'Testimonials',
-			'name' => 'testimonials',
-			'type' => 'repeater',
-			'layout' => 'row',
-			'button_label' => 'Add Testimonial',
-			'sub_fields' => [
-				[ 'key' => 'field_sz_testimonial_quote', 'label' => 'Quote', 'name' => 'quote', 'type' => 'textarea', 'required' => 1 ],
-				[ 'key' => 'field_sz_testimonial_name', 'label' => 'Name', 'name' => 'name', 'type' => 'text', 'required' => 1 ],
-				[ 'key' => 'field_sz_testimonial_context', 'label' => 'Context', 'name' => 'context', 'type' => 'text' ],
-				[ 'key' => 'field_sz_testimonial_image', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array' ],
-			],
-		],
-	], $style_fields( 'sz_testimonial' ));
-
 	$faq_fields = array_merge([
 		[ 'key' => 'field_sz_faq_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
 		[ 'key' => 'field_sz_faq_intro', 'label' => 'Intro', 'name' => 'intro', 'type' => 'textarea' ],
@@ -241,24 +221,6 @@ add_action( 'acf/init', function () {
 			],
 		],
 	], $style_fields( 'sz_faq' ));
-
-	$process_fields = array_merge([
-		[ 'key' => 'field_sz_process_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
-		[ 'key' => 'field_sz_process_intro', 'label' => 'Intro', 'name' => 'intro', 'type' => 'textarea' ],
-		[
-			'key' => 'field_sz_process_steps',
-			'label' => 'Steps',
-			'name' => 'steps',
-			'type' => 'repeater',
-			'layout' => 'row',
-			'button_label' => 'Add Step',
-			'sub_fields' => [
-				[ 'key' => 'field_sz_process_step_title', 'label' => 'Title', 'name' => 'title', 'type' => 'text', 'required' => 1 ],
-				[ 'key' => 'field_sz_process_step_description', 'label' => 'Description', 'name' => 'description', 'type' => 'textarea', 'required' => 1 ],
-				[ 'key' => 'field_sz_process_step_image', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array' ],
-			],
-		],
-	], $style_fields( 'sz_process' ));
 
 	$pricing_fields = array_merge([
 		[ 'key' => 'field_sz_pricing_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
@@ -480,26 +442,12 @@ add_action( 'acf/init', function () {
 						'display' => 'block',
 						'sub_fields' => $pillar_fields,
 					],
-					'layout_sz_testimonial_carousel' => [
-						'key' => 'layout_sz_testimonial_carousel',
-						'name' => 'testimonial_carousel',
-						'label' => 'Testimonial Carousel',
-						'display' => 'block',
-						'sub_fields' => $testimonial_fields,
-					],
 					'layout_sz_faq_accordion' => [
 						'key' => 'layout_sz_faq_accordion',
 						'name' => 'faq_accordion',
 						'label' => 'FAQ Accordion',
 						'display' => 'block',
 						'sub_fields' => $faq_fields,
-					],
-					'layout_sz_process_timeline' => [
-						'key' => 'layout_sz_process_timeline',
-						'name' => 'process_timeline',
-						'label' => 'Process Timeline',
-						'display' => 'block',
-						'sub_fields' => $process_fields,
 					],
 					'layout_sz_pricing_packages' => [
 						'key' => 'layout_sz_pricing_packages',

@@ -150,21 +150,6 @@ export interface PillarGridBlock extends BlockStyleOptions {
   columns?: 2 | 3 | 4
 }
 
-export interface WPTestimonialItem {
-  quote: string
-  name: string
-  context?: string
-  image?: WPImage
-}
-
-export interface TestimonialCarouselBlock extends BlockStyleOptions {
-  acf_fc_layout: 'testimonial_carousel'
-  heading?: string
-  subheading?: string
-  testimonials: WPTestimonialItem[]
-  auto_rotate_seconds?: number
-}
-
 export interface WPFaqItem {
   question: string
   answer: string
@@ -176,19 +161,6 @@ export interface FaqAccordionBlock extends BlockStyleOptions {
   intro?: string
   faq_items: WPFaqItem[]
   open_first_item?: boolean
-}
-
-export interface WPProcessStep {
-  title: string
-  description: string
-  image?: WPImage
-}
-
-export interface ProcessTimelineBlock extends BlockStyleOptions {
-  acf_fc_layout: 'process_timeline'
-  heading?: string
-  intro?: string
-  steps: WPProcessStep[]
 }
 
 export interface WPPackageItem {
@@ -365,9 +337,7 @@ export type ContentBlock =
   | ImageTextBlock
   | ServicesGridBlock
   | PillarGridBlock
-  | TestimonialCarouselBlock
   | FaqAccordionBlock
-  | ProcessTimelineBlock
   | PricingPackagesBlock
   | GalleryCategoriesBlock
   | GalleriesBlock

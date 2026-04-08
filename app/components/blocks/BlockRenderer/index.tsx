@@ -9,9 +9,7 @@ import ImageTextBlock from '../ImageTextBlock'
 import InstagramFeedBlock from '../InstagramFeedBlock'
 import PillarGridBlock from '../PillarGridBlock'
 import PricingPackagesBlock from '../PricingPackagesBlock'
-import ProcessTimelineBlock from '../ProcessTimelineBlock'
 import ServicesGridBlock from '../ServicesGridBlock'
-import TestimonialCarouselBlock from '../TestimonialCarouselBlock'
 import TextBlock from '../TextBlock'
 import TextGridBlock from '../TextGridBlock'
 import type { BlockRendererProps } from './types'
@@ -23,9 +21,7 @@ const BLOCK_LABELS: Record<string, string> = {
   image_text: 'Image + Text',
   services_grid: 'Services Grid',
   pillar_grid: 'Pillar Grid',
-  testimonial_carousel: 'Testimonials',
   faq_accordion: 'FAQ Accordion',
-  process_timeline: 'Process Timeline',
   pricing_packages: 'Pricing Packages',
   gallery_categories: 'Gallery Categories',
   galleries: 'Galleries',
@@ -130,7 +126,12 @@ const InteractiveBlockWrapper = ({
  * a clickable overlay that communicates with the parent WordPress editor via
  * postMessage, allowing click-to-edit navigation.
  */
-const BlockRenderer = ({ blocks, interactive = false, featuredImage, blogPostsData }: BlockRendererProps) => (
+const BlockRenderer = ({
+  blocks,
+  interactive = false,
+  featuredImage,
+  blogPostsData,
+}: BlockRendererProps) => (
   <>
     {blocks.map((block, index) => {
       const key = `${block.acf_fc_layout}-${index}`
@@ -152,14 +153,8 @@ const BlockRenderer = ({ blocks, interactive = false, featuredImage, blogPostsDa
         case 'pillar_grid':
           rendered = <PillarGridBlock key={key} block={block} />
           break
-        case 'testimonial_carousel':
-          rendered = <TestimonialCarouselBlock key={key} block={block} />
-          break
         case 'faq_accordion':
           rendered = <FaqAccordionBlock key={key} block={block} />
-          break
-        case 'process_timeline':
-          rendered = <ProcessTimelineBlock key={key} block={block} />
           break
         case 'pricing_packages':
           rendered = <PricingPackagesBlock key={key} block={block} />
