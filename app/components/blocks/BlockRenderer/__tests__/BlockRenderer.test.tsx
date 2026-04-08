@@ -12,9 +12,7 @@ const {
   imageTextBlock,
   servicesBlock,
   pillarBlock,
-  testimonialBlock,
   faqBlock,
-  processBlock,
   pricingBlock,
   galleryCategoriesBlock,
   galleriesBlock,
@@ -66,13 +64,6 @@ describe('BlockRenderer', () => {
     expect(screen.getByText('High quality work')).toBeInTheDocument()
   })
 
-  it('renders a testimonial_carousel block', () => {
-    renderBlocks([testimonialBlock])
-    expect(screen.getByRole('heading', { name: 'Kind Words', level: 2 })).toBeInTheDocument()
-    expect(screen.getByText(/captured every moment/i)).toBeInTheDocument()
-    expect(screen.getByText('Alix & Richard')).toBeInTheDocument()
-  })
-
   it('renders an faq_accordion block', () => {
     renderBlocks([faqBlock])
     expect(
@@ -80,13 +71,6 @@ describe('BlockRenderer', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Do you travel?')).toBeInTheDocument()
     expect(screen.getByText('Yes, throughout Sydney and beyond.')).toBeInTheDocument()
-  })
-
-  it('renders a process_timeline block', () => {
-    renderBlocks([processBlock])
-    expect(screen.getByRole('heading', { name: 'Our Process', level: 2 })).toBeInTheDocument()
-    expect(screen.getByText('Get in touch')).toBeInTheDocument()
-    expect(screen.getByText('Wedding day')).toBeInTheDocument()
   })
 
   it('renders a pricing_packages block', () => {

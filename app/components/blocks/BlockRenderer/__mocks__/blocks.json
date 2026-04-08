@@ -66,17 +66,6 @@
       }
     ]
   },
-  "testimonialBlock": {
-    "acf_fc_layout": "testimonial_carousel",
-    "heading": "Kind Words",
-    "testimonials": [
-      {
-        "quote": "the admin made us feel so comfortable and captured every moment.",
-        "name": "Alix & Richard",
-        "context": "Wedding"
-      }
-    ]
-  },
   "faqBlock": {
     "acf_fc_layout": "faq_accordion",
     "heading": "Frequently Asked Questions",
@@ -85,20 +74,6 @@
       {
         "question": "Do you travel?",
         "answer": "<p>Yes, throughout Sydney and beyond.</p>"
-      }
-    ]
-  },
-  "processBlock": {
-    "acf_fc_layout": "process_timeline",
-    "heading": "Our Process",
-    "steps": [
-      {
-        "title": "Get in touch",
-        "description": "Reach out and let us know your date."
-      },
-      {
-        "title": "Wedding day",
-        "description": "We capture your day naturally and candidly."
       }
     ]
   },

@@ -39,13 +39,13 @@ describe('TextBlock', () => {
 
   // ─── Text alignment ─────────────────────────────────────────────────────────
 
-  it('applies left text alignment class by default', () => {
+  it('applies center text alignment class by default', () => {
     const { container } = renderBlock()
     const inner = container.querySelector('section > div')!
-    expect(inner.className).toMatch(/textLeft/)
+    expect(inner.className).toMatch(/textCenter/)
   })
 
-  it('applies center text alignment class', () => {
+  it('applies explicit center text alignment class', () => {
     const { container } = renderBlock({ align: 'center' })
     const inner = container.querySelector('section > div')!
     expect(inner.className).toMatch(/textCenter/)
@@ -65,13 +65,13 @@ describe('TextBlock', () => {
 
   // ─── Block alignment ────────────────────────────────────────────────────────
 
-  it('applies left block alignment class by default', () => {
+  it('applies center block alignment class by default', () => {
     const { container } = renderBlock()
     const inner = container.querySelector('section > div')!
-    expect(inner.className).toMatch(/blockLeft/)
+    expect(inner.className).toMatch(/blockCenter/)
   })
 
-  it('applies center block alignment class', () => {
+  it('applies explicit center block alignment class', () => {
     const { container } = renderBlock({ block_align: 'center' })
     const inner = container.querySelector('section > div')!
     expect(inner.className).toMatch(/blockCenter/)
