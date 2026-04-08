@@ -97,6 +97,13 @@ add_action( 'rest_api_init', function () {
 			],
 		],
 	] );
+
+	// ── List all available menus (for admin dropdowns & frontend discovery) ──
+	register_rest_route( 'sz/v1', '/menus', [
+		'methods'             => 'GET',
+		'callback'            => 'sz_list_menus',
+		'permission_callback' => '__return_true',
+	] );
 } );
 
 /**
@@ -188,8 +195,71 @@ function sz_clean_menu_nodes( array $nodes ): array {
 	}, $nodes ) );
 }
 
+/**
+ * REST callback: list all available menus.
+ *
+ * Returns registered theme locations and all menus created in Appearance → Menus.
+ * Used by the ACF `acf/load_field` filter to populate menu_override dropdowns,
+ * and can also be consumed by the React front-end for future use.
+ *
+ * GET /wp-json/sz/v1/menus
+ *
+ * Response:
+ * {
+ *   "locations": { "primary": "Primary Navigation" },
+ *   "menus": [
+ *     { "id": 5, "name": "SSM", "slug": "ssm" },
+ *     { "id": 6, "name": "Weddings", "slug": "weddings" }
+ *   ]
+ * }
+ */
+function sz_list_menus(): WP_REST_Response {
+	// Registered theme locations (slug → label)
+	$registered  = get_registered_nav_menus();
+
+	// All menus created in Appearance → Menus
+	$nav_menus = wp_get_nav_menus();
+	$menus     = [];
+	foreach ( $nav_menus as $menu ) {
+		$menus[] = [
+			'id'   => (int) $menu->term_id,
+			'name' => $menu->name,
+			'slug' => $menu->slug,
+		];
+	}
+
+	return new WP_REST_Response( [
+		'locations' => $registered,
+		'menus'     => $menus,
+	], 200 );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// 2b. REST API — PAGE BLOCKS WRITE ENDPOINT (ACF PRO COMPATIBLE)
+// 2c. REST API — EXPOSE CATEGORY MENU OVERRIDE
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Adds a `menu_override` field to the WP REST category response so the
+// front-end can read a category's preferred header menu without extra calls.
+// The value is set via the "Category Settings" ACF field group.
+
+add_action( 'rest_api_init', function () {
+	register_rest_field( 'category', 'menu_override', [
+		'get_callback' => function ( $term_arr ) {
+			if ( ! function_exists( 'get_field' ) ) {
+				return '';
+			}
+			$value = get_field( 'menu_override', 'term_' . $term_arr['id'] );
+			return is_string( $value ) ? $value : '';
+		},
+		'schema' => [
+			'description' => 'Optional menu slug override for this category.',
+			'type'        => 'string',
+		],
+	] );
+} );
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2d. REST API — PAGE BLOCKS WRITE ENDPOINT (ACF PRO COMPATIBLE)
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // POST /wp-json/sz/v1/page-blocks/<id>
@@ -1396,10 +1466,12 @@ function sz_format_post_for_rest( WP_Post $post ): array {
 	$categories  = array_values( array_filter( array_map( function ( $cat_id ) {
 		$term = get_term( $cat_id, 'category' );
 		if ( ! $term || is_wp_error( $term ) ) return null;
+		$menu = function_exists( 'get_field' ) ? get_field( 'menu_override', 'term_' . $term->term_id ) : '';
 		return [
-			'id'   => $term->term_id,
-			'name' => $term->name,
-			'slug' => $term->slug,
+			'id'            => $term->term_id,
+			'name'          => $term->name,
+			'slug'          => $term->slug,
+			'menu_override' => is_string( $menu ) ? $menu : '',
 		];
 	}, is_array( $raw_cat_ids ) ? $raw_cat_ids : [] ) ) );
 
@@ -1451,10 +1523,12 @@ add_filter( 'rest_prepare_post', function ( WP_REST_Response $response, WP_Post 
 			if ( is_array( $cat_id ) && isset( $cat_id['id'] ) ) return $cat_id; // already an object
 			$term = get_term( (int) $cat_id, 'category' );
 			if ( ! $term || is_wp_error( $term ) ) return null;
+			$menu = function_exists( 'get_field' ) ? get_field( 'menu_override', 'term_' . $term->term_id ) : '';
 			return [
-				'id'   => $term->term_id,
-				'name' => $term->name,
-				'slug' => $term->slug,
+				'id'            => $term->term_id,
+				'name'          => $term->name,
+				'slug'          => $term->slug,
+				'menu_override' => is_string( $menu ) ? $menu : '',
 			];
 		}, $data['categories'] ) ) );
 	}

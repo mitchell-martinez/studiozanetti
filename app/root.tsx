@@ -1,21 +1,21 @@
 import { lazy, Suspense } from 'react'
 import type { LinksFunction } from 'react-router'
 import {
-    isRouteErrorResponse,
-    Links,
-    Meta,
-    Outlet,
-    Scripts,
-    ScrollRestoration,
-    useRouteError,
-    useRouteLoaderData,
+  isRouteErrorResponse,
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useRouteError,
+  useRouteLoaderData,
 } from 'react-router'
 import ErrorPage from '~/components/ErrorPage'
 import Footer from '~/components/Footer'
 import Navbar from '~/components/Navbar'
 import OfflineBanner from '~/components/OfflineBanner'
 import { getSiteUrlFromEnv } from '~/lib/seo'
-import { getNavMenu, getPageBySlug, getSiteSettings } from '~/lib/wordpress'
+import { getNavMenu, getPageBySlug, getPostBySlug, getSiteSettings } from '~/lib/wordpress'
 import globalStyles from '~/styles/global.scss?url'
 import type { WPMenuItem, WPSiteSettings } from '~/types/wordpress'
 
@@ -44,6 +44,16 @@ export async function loader({ request }: { request: Request }): Promise<RootLoa
     const override = page?.acf?.menu_override?.trim()
     if (override) {
       menuLocation = override
+    } else if (!page && !slug.includes('/')) {
+      // No page matched — try as a blog post and inherit menu from its
+      // primary category (first category with a menu_override wins).
+      const post = await getPostBySlug(slug)
+      const catOverride = post?.categories
+        ?.find((c) => c.menu_override?.trim())
+        ?.menu_override?.trim()
+      if (catOverride) {
+        menuLocation = catOverride
+      }
     }
   }
 

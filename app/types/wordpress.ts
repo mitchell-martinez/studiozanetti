@@ -334,6 +334,7 @@ export interface WPCategory {
   id: number
   name: string
   slug: string
+  menu_override?: string
 }
 
 export interface WPPost {

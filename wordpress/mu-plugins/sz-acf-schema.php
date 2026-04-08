@@ -580,8 +580,11 @@ add_action( 'acf/init', function () {
 				'key' => 'field_sz_menu_override',
 				'label' => 'Menu Override',
 				'name' => 'menu_override',
-				'type' => 'text',
-				'instructions' => 'Optional. Enter a menu name or slug from Appearance → Menus (e.g. SSM, weddings). Also accepts a registered theme location slug (e.g. primary). Falls back to primary when empty or not found.',
+				'type' => 'select',
+				'allow_null' => 1,
+				'ui' => 1,
+				'choices' => [],
+				'instructions' => 'Optional. Choose a menu from Appearance → Menus to display in the header instead of the primary menu. Falls back to Primary when empty or not found.',
 			],
 			[
 				'key' => 'field_sz_container_only',
@@ -604,4 +607,77 @@ add_action( 'acf/init', function () {
 		],
 	]);
 
+	// ─── Category Settings ──────────────────────────────────────────────────
+	//
+	// Adds a menu override to post categories so that blog posts inherit
+	// the header menu from their primary category. This lets the admin
+	// configure e.g. "Weddings" category → show the weddings header menu
+	// on all wedding blog posts.
+
+	acf_add_local_field_group([
+		'key' => 'group_sz_category_settings',
+		'title' => 'Category Settings',
+		'show_in_rest' => 1,
+		'fields' => [
+			[
+				'key' => 'field_sz_cat_menu_override',
+				'label' => 'Menu Override',
+				'name' => 'menu_override',
+				'type' => 'select',
+				'allow_null' => 1,
+				'ui' => 1,
+				'choices' => [],
+				'instructions' => 'Optional. Choose a menu from Appearance → Menus to display in the header when viewing blog posts in this category. Falls back to Primary when empty.',
+			],
+		],
+		'location' => [
+			[
+				[
+					'param' => 'taxonomy',
+					'operator' => '==',
+					'value' => 'category',
+				],
+			],
+		],
+	]);
+
 } );
+
+// ─── Dynamic menu choices for menu_override select fields ────────────────────
+//
+// Populates the menu_override dropdowns at render time with all menus from
+// Appearance → Menus plus registered theme locations. If an existing saved
+// value doesn't match any current menu (e.g. a text-based legacy value),
+// it is preserved as an extra choice to prevent data loss.
+
+add_filter( 'acf/load_field/key=field_sz_menu_override', 'sz_populate_menu_override_choices' );
+add_filter( 'acf/load_field/key=field_sz_cat_menu_override', 'sz_populate_menu_override_choices' );
+
+function sz_populate_menu_override_choices( array $field ): array {
+	$choices = [];
+
+	// 1. Add registered theme locations
+	$locations = get_registered_nav_menus();
+	foreach ( $locations as $slug => $label ) {
+		$choices[ $slug ] = $label . ' (' . $slug . ')';
+	}
+
+	// 2. Add all menus created in Appearance → Menus
+	$nav_menus = wp_get_nav_menus();
+	foreach ( $nav_menus as $menu ) {
+		$slug = $menu->slug;
+		// Avoid duplicate if a menu slug matches a theme location slug
+		if ( ! isset( $choices[ $slug ] ) ) {
+			$choices[ $slug ] = $menu->name . ' (' . $slug . ')';
+		}
+	}
+
+	// 3. Preserve any existing saved value that doesn't match current menus
+	//    (backward compatibility for legacy text-based overrides)
+	if ( ! empty( $field['value'] ) && is_string( $field['value'] ) && ! isset( $choices[ $field['value'] ] ) ) {
+		$choices[ $field['value'] ] = $field['value'] . ' (legacy)';
+	}
+
+	$field['choices'] = $choices;
+	return $field;
+}
