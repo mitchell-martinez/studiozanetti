@@ -138,12 +138,14 @@ jobs:
           rsync -e "ssh -i ~/.ssh/deploy_key" \
             wordpress/mu-plugins/sz-headless.php \
             wordpress/mu-plugins/sz-acf-schema.php \
+            wordpress/mu-plugins/sz-duplicate-page.php \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/sz-mu-plugins/"
 
           ssh -i ~/.ssh/deploy_key \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
             'docker cp /tmp/sz-mu-plugins/sz-headless.php wordpress:/var/www/html/wp-content/mu-plugins/ && \
              docker cp /tmp/sz-mu-plugins/sz-acf-schema.php wordpress:/var/www/html/wp-content/mu-plugins/ && \
+             docker cp /tmp/sz-mu-plugins/sz-duplicate-page.php wordpress:/var/www/html/wp-content/mu-plugins/ && \
              rm -rf /tmp/sz-mu-plugins'
 
       - name: Pull image and restart production service
