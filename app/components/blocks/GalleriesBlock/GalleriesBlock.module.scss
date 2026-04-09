@@ -7,7 +7,7 @@
 
 .heading {
   margin: 0 auto 2rem;
-  max-width: min(100%, 90rem);
+  max-width: 1200px;
   padding-inline: 0.75rem;
   color: var(--color-ink-strong);
   font-size: clamp(1.7rem, 2.6vw, 2.4rem);
@@ -16,7 +16,7 @@
 
 .description {
   margin: 0 auto 2rem;
-  max-width: 680px;
+  max-width: 1200px;
   padding-inline: 0.75rem;
   color: var(--color-ink);
   text-align: left;
