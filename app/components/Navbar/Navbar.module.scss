@@ -203,7 +203,7 @@
 
 // ─── Mobile ───────────────────────────────────────────────────────────────────
 
-@media (max-width: #{g.$bp-sm}) {
+@media (max-width: #{g.$bp-lg}) {
   .menuToggle {
     display: flex;
   }
