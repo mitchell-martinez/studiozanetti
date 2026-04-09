@@ -129,6 +129,8 @@ button {
 
 .main-content {
   flex: 1;
+  // Compensate for fixed navbar height
+  padding-top: 64px;
 
   // Remove default focus outline; focus is managed manually per component
   &:focus {

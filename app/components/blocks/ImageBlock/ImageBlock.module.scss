@@ -10,15 +10,15 @@
 
 // Height variants (same as HeroBlock)
 .heightMd {
-  height: 68dvh;
+  height: 68svh;
 }
 
 .heightLg {
-  height: 86dvh;
+  height: 86svh;
 }
 
 .heightFull {
-  height: 100dvh;
+  height: 100svh;
 }
 
 // ─── Parallax background (CSS fixed attachment) ──────────────────────────────
@@ -33,6 +33,13 @@
   background-size: cover;
 
   @media (prefers-reduced-motion: reduce) {
+    background-attachment: scroll;
+  }
+
+  // iOS Safari doesn't support background-attachment:fixed properly —
+  // it sizes the image relative to the viewport causing extreme zoom.
+  // Fall back to scroll on touch-only devices.
+  @media (hover: none) {
     background-attachment: scroll;
   }
 }

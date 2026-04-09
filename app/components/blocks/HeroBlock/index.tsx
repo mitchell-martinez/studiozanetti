@@ -16,16 +16,17 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
   const [activeSlide, setActiveSlide] = useState(0)
   const hasMultipleSlides = slides.length > 1
   const rotateSeconds = Math.max(2, block.auto_rotate_seconds ?? 4)
+  const slideCount = slides.length
 
   useEffect(() => {
     if (!hasMultipleSlides) return
 
     const id = window.setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % slides.length)
+      setActiveSlide((prev) => (prev + 1) % slideCount)
     }, rotateSeconds * 1000)
 
     return () => window.clearInterval(id)
-  }, [hasMultipleSlides, rotateSeconds, slides.length])
+  }, [hasMultipleSlides, rotateSeconds, slideCount])
 
   const overlayClass =
     block.overlay_strength === 'light'
@@ -47,17 +48,21 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
 
   return (
     <section className={`${styles.hero} ${heightClass}`} aria-label="Hero">
-      {currentImage && (
+      {/* Render all slides; only the active one is visible via CSS opacity.
+          This prevents flicker caused by the browser loading a new src. */}
+      {slides.map((slide, index) => (
         <img
-          src={currentImage.url}
-          alt={currentImage.alt || block.title}
-          className={styles.heroImage}
-          fetchPriority="high"
-          decoding="sync"
-          width={currentImage.width ?? 1600}
-          height={currentImage.height ?? 900}
+          key={slide.url}
+          src={slide.url}
+          alt={index === activeSlide ? slide.alt || block.title : ''}
+          className={`${styles.heroImage} ${index === activeSlide ? styles.heroImageActive : ''}`}
+          fetchPriority={index === 0 ? 'high' : 'low'}
+          decoding={index === 0 ? 'sync' : 'async'}
+          loading={index === 0 ? 'eager' : 'lazy'}
+          width={slide.width ?? 1600}
+          height={slide.height ?? 900}
         />
-      )}
+      ))}
       <div className={`${styles.heroOverlay} ${overlayClass} ${alignClass}`}>
         <h1 className={styles.heroTitle}>{block.title}</h1>
         {block.tagline && <p className={styles.heroTagline}>{block.tagline}</p>}
