@@ -36,15 +36,15 @@ describe('PricingPackagesBlock', () => {
     expect(screen.getByRole('link', { name: 'Send Enquiry' })).toBeInTheDocument()
   })
 
-  it('renders grid layout for 4 or fewer packages', () => {
+  it('renders table layout on desktop for any number of packages', () => {
     const { container } = render(
       <MemoryRouter>
         <PricingPackagesBlock block={mockPricingPackagesBlock} />
       </MemoryRouter>,
     )
 
-    expect(container.querySelector('[class*="grid"]')).toBeInTheDocument()
-    expect(container.querySelector('[class*="stack"]')).not.toBeInTheDocument()
+    expect(container.querySelector('table')).toBeInTheDocument()
+    expect(container.querySelector('[class*="accordion"]')).not.toBeInTheDocument()
   })
 
   it('renders nothing when packages are empty', () => {
@@ -57,7 +57,7 @@ describe('PricingPackagesBlock', () => {
     expect(container.innerHTML).toBe('')
   })
 
-  describe('comparison table layout (5+ packages, desktop)', () => {
+  describe('comparison table layout (desktop)', () => {
     beforeEach(() => mockMatchMedia(false))
 
     it('renders all 5 packages in a table', () => {
@@ -146,7 +146,7 @@ describe('PricingPackagesBlock', () => {
     })
   })
 
-  describe('accordion layout (5+ packages, mobile)', () => {
+  describe('accordion layout (mobile)', () => {
     beforeEach(() => mockMatchMedia(true))
     afterEach(() => mockMatchMedia(false))
 

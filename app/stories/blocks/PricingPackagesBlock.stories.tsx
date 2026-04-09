@@ -37,7 +37,7 @@ const meta: Meta<PricingArgs> = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** Default: two packages in grid layout, Signature featured. */
+/** Default: two packages in table layout, Signature featured. */
 export const Default: Story = {}
 
 /** Dark theme variant. */
@@ -45,7 +45,7 @@ export const DarkTheme: Story = {
   args: { section_theme: 'dark' },
 }
 
-/** Three packages in grid — adds a budget tier. */
+/** Three packages — adds a budget tier. */
 export const ThreePackages: Story = {
   args: {
     packages: [
@@ -62,7 +62,7 @@ export const ThreePackages: Story = {
   },
 }
 
-/** Five packages — auto-switches to horizontal row layout. */
+/** Five packages in table layout. */
 export const FivePackages: Story = {
   args: {
     heading: pricingBlockFivePackages.heading,

@@ -1,12 +1,10 @@
 import { useState } from 'react'
-import Button from '~/components/Button'
-import RichText from '~/components/RichText'
+import { Link } from 'react-router'
 import { useMediaQuery } from '~/hooks/useMediaQuery'
 import { getSectionStyle } from '../helpers/styleOptions'
+import RichText from '~/components/RichText'
 import styles from './PricingPackagesBlock.module.scss'
 import type { PricingPackagesBlockProps } from './types'
-
-const HORIZONTAL_THRESHOLD = 5
 
 const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
   const isMobile = useMediaQuery('(max-width: 768px)')
@@ -14,17 +12,13 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
 
   if (!block.packages?.length) return null
 
-  const showTable = block.packages.length >= HORIZONTAL_THRESHOLD && !isMobile
-  const showAccordion = block.packages.length >= HORIZONTAL_THRESHOLD && isMobile
-  const showGrid = block.packages.length < HORIZONTAL_THRESHOLD
-
   return (
     <section className={styles.section} style={getSectionStyle(block)}>
-      <div className={showTable ? styles.innerWide : styles.inner}>
+      <div className={styles.innerWide}>
         {block.heading && <h2 className={styles.heading}>{block.heading}</h2>}
         {block.subheading && <p className={styles.subheading}>{block.subheading}</p>}
 
-        {showTable && (
+        {!isMobile && (
           <div className={styles.tableWrap}>
             <table className={styles.table} role="table">
               <thead>
@@ -95,9 +89,9 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
                       className={`${styles.td} ${styles.tdCta} ${item.is_featured ? styles.tdFeatured : ''}`}
                     >
                       {item.cta_text && item.cta_url && (
-                        <Button href={item.cta_url} variant="primary" size="sm">
+                        <Link to={item.cta_url} className={styles.ctaStrong}>
                           {item.cta_text}
-                        </Button>
+                        </Link>
                       )}
                     </td>
                   ))}
@@ -107,7 +101,7 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
           </div>
         )}
 
-        {showAccordion && (
+        {isMobile && (
           <div className={styles.accordion}>
             {block.packages.map((item, i) => {
               const isOpen = openIndex === i
@@ -154,9 +148,9 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
                       )}
                       {item.cta_text && item.cta_url && (
                         <div className={styles.panelCta}>
-                          <Button href={item.cta_url} variant="primary" size="sm">
+                          <Link to={item.cta_url} className={styles.ctaStrong}>
                             {item.cta_text}
-                          </Button>
+                          </Link>
                         </div>
                       )}
                     </div>
@@ -167,37 +161,6 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
           </div>
         )}
 
-        {showGrid && (
-          <div className={styles.grid}>
-            {block.packages.map((item) => (
-              <article
-                key={item.name}
-                className={`${styles.card} ${item.is_featured ? styles.featured : ''}`}
-              >
-                {item.is_featured && <span className={styles.badge}>Most Popular</span>}
-                <h3 className={styles.name}>{item.name}</h3>
-                {item.price_label && <p className={styles.price}>{item.price_label}</p>}
-                {item.description && <p className={styles.description}>{item.description}</p>}
-                {item.pricing && (
-                  <div className={styles.inclusions}>
-                    <RichText html={item.pricing} />
-                  </div>
-                )}
-                {item.inclusions && (
-                  <div className={styles.inclusions}>
-                    <RichText html={item.inclusions} />
-                  </div>
-                )}
-                {item.tagline && <p className={styles.tagline}>{item.tagline}</p>}
-                {item.cta_text && item.cta_url && (
-                  <Button href={item.cta_url} variant="outline" size="sm">
-                    {item.cta_text}
-                  </Button>
-                )}
-              </article>
-            ))}
-          </div>
-        )}
       </div>
     </section>
   )
