@@ -196,4 +196,21 @@ describe('PricingPackagesBlock', () => {
       expect(enquireLinks.length).toBeGreaterThanOrEqual(1)
     })
   })
+
+  // ─── Corporate theme ────────────────────────────────────────────────────────
+
+  it('applies corporate CSS variables when section_theme is corporate', () => {
+    const { container } = render(
+      <MemoryRouter>
+        <PricingPackagesBlock
+          block={{ ...mockPricingPackagesBlock, section_theme: 'corporate' }}
+        />
+      </MemoryRouter>,
+    )
+
+    const section = container.querySelector('section') as HTMLElement
+    expect(section.style.getPropertyValue('--color-accent')).toBe('#333333')
+    expect(section.style.getPropertyValue('--color-accent-strong')).toBe('#1a1a1a')
+    expect(section.style.getPropertyValue('--color-border-soft')).toBe('#d0d0d0')
+  })
 })

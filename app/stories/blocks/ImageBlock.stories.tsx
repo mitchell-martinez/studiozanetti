@@ -74,6 +74,11 @@ const meta: Meta<ImageArgs> = {
       description: 'Enable parallax depth scroll effect (CSS background-attachment: fixed)',
     },
     aria_label: { control: 'text', description: 'Custom aria-label for the section' },
+    color_theme: {
+      control: 'select',
+      options: ['default', 'corporate'],
+      description: 'Colour theme for the block (corporate = neutral greys and blacks)',
+    },
   },
   render: (args) => (
     <>
@@ -175,6 +180,17 @@ export const FullWidthText: Story = {
     subtitle: 'Browse our complete collection of wedding and portrait photography',
     text_max_width: 'full',
     overlay_strength: 'medium',
+    overlay_text: undefined,
+  },
+}
+
+/** Corporate theme — pure black overlays, non-italic subtitle. */
+export const Corporate: Story = {
+  args: {
+    color_theme: 'corporate',
+    overlay_strength: 'medium',
+    title: 'Corporate Photography',
+    subtitle: 'Professional headshots and brand imagery',
     overlay_text: undefined,
   },
 }

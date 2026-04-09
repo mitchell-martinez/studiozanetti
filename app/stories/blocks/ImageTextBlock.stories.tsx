@@ -178,3 +178,8 @@ export const HeadingOnly: Story = {
 export const BodyOnly: Story = {
   args: { heading: undefined, eyebrow: undefined, text_vertical_align: 'middle' },
 }
+
+/** Corporate theme — neutral accent colours, no pink. */
+export const Corporate: Story = {
+  args: { section_theme: 'corporate' },
+}

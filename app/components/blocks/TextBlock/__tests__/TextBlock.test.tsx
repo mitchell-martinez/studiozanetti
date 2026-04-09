@@ -125,4 +125,13 @@ describe('TextBlock', () => {
     const richText = container.querySelector('[class*="richText"]')!
     expect(richText.className).toMatch(/fontLg/)
   })
+
+  // ─── Corporate theme ────────────────────────────────────────────────────────
+
+  it('applies corporate CSS variables via section style when section_theme is corporate', () => {
+    const { container } = renderBlock({ section_theme: 'corporate' })
+    const section = container.querySelector('section') as HTMLElement
+    expect(section.style.getPropertyValue('--color-accent')).toBe('#333333')
+    expect(section.style.getPropertyValue('--color-accent-strong')).toBe('#1a1a1a')
+  })
 })

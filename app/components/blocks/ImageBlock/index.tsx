@@ -62,9 +62,11 @@ const ImageBlock = ({ block }: ImageBlockProps) => {
   const headingOpacity = clampOpacity(block.heading_opacity, 1)
   const imageShadowStrength = clampOpacity(block.image_shadow_strength, 0)
 
+  const isCorporate = block.color_theme === 'corporate'
+
   return (
     <section
-      className={`${styles.imageBlock} ${heightClass}`}
+      className={`${styles.imageBlock} ${heightClass} ${isCorporate ? styles.corporate : ''}`}
       aria-label={block.aria_label || (isParallax ? 'Parallax image' : 'Full-width image banner')}
     >
       {image?.url &&

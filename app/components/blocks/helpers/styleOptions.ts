@@ -13,6 +13,7 @@ const SECTION_BG_MAP: Record<NonNullable<BlockStyleOptions['section_theme']>, st
   rose: 'var(--color-surface-soft)',
   champagne: 'var(--color-light-gray)',
   dark: 'var(--color-dark)',
+  corporate: 'var(--color-surface)',
 }
 
 const MAX_WIDTH_MAP: Record<NonNullable<BlockStyleOptions['max_width']>, string> = {
@@ -26,10 +27,20 @@ export function getSectionStyle(
   fallbackTheme: NonNullable<BlockStyleOptions['section_theme']> = 'light',
 ): CSSProperties {
   const theme = options?.section_theme ?? fallbackTheme
-  const style: CSSProperties = {
+  const style: CSSProperties & Record<string, string> = {
     background: SECTION_BG_MAP[theme],
     paddingTop: SPACING_MAP[options?.top_spacing ?? 'md'],
     paddingBottom: SPACING_MAP[options?.bottom_spacing ?? 'md'],
+  }
+
+  if (theme === 'corporate') {
+    style['--color-accent'] = '#333333'
+    style['--color-accent-strong'] = '#1a1a1a'
+    style['--color-accent-rgb'] = '51 51 51'
+    style['--color-surface-soft'] = '#f5f5f5'
+    style['--color-border-soft'] = '#d0d0d0'
+    style['--shadow-card'] = '0 10px 30px rgb(0 0 0 / 12%)'
+    style['--color-ink-soft'] = '#555555'
   }
 
   if (options?.max_width_px) {

@@ -16,7 +16,7 @@ export interface HeroSlide extends WPImage {
   subtitle?: string
 }
 
-export type BlockTheme = 'light' | 'rose' | 'champagne' | 'dark'
+export type BlockTheme = 'light' | 'rose' | 'champagne' | 'dark' | 'corporate'
 export type ContentAlign = 'left' | 'center'
 export type TextAlign = 'left' | 'center' | 'right' | 'justify'
 export type BlockAlign = 'left' | 'center' | 'right'
@@ -227,6 +227,7 @@ export interface ImageBlock {
   text_max_width?: 'narrow' | 'semi-narrow' | 'normal' | 'wide' | 'full'
   heading_opacity?: number
   image_shadow_strength?: number
+  color_theme?: 'default' | 'corporate'
 }
 
 // ─── Shared Button sub-field ─────────────────────────────────────────────────

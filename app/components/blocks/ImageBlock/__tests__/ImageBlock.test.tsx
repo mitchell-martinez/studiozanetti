@@ -283,4 +283,24 @@ describe('ImageBlock', () => {
     const { container } = renderBlock({ image_shadow_strength: 0 })
     expect(container.querySelector('[class*="imageShadow"]')).toBeNull()
   })
+
+  // ─── Corporate colour theme ─────────────────────────────────────────────────
+
+  it('applies corporate class when color_theme is corporate', () => {
+    const { container } = renderBlock({ color_theme: 'corporate' })
+    const section = container.querySelector('section')!
+    expect(section.className).toMatch(/corporate/)
+  })
+
+  it('does not apply corporate class when color_theme is default', () => {
+    const { container } = renderBlock({ color_theme: 'default' })
+    const section = container.querySelector('section')!
+    expect(section.className).not.toMatch(/corporate/)
+  })
+
+  it('does not apply corporate class when color_theme is undefined', () => {
+    const { container } = renderBlock({ color_theme: undefined })
+    const section = container.querySelector('section')!
+    expect(section.className).not.toMatch(/corporate/)
+  })
 })

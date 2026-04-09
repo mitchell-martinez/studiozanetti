@@ -122,7 +122,8 @@
   padding: 0.65rem 0.9rem;
   text-decoration: none;
 
-  &:hover {
+  &:hover,
+  &:active {
     background: var(--color-accent);
     color: #fff;
   }
@@ -148,10 +149,10 @@
     color 0.2s ease,
     box-shadow 0.2s ease;
 
-  &:hover {
-    background: var(--color-accent-strong);
-    border-color: var(--color-accent-strong);
-    box-shadow: 0 2px 8px rgb(0 0 0 / 0.12);
+  &:hover,
+  &:active {
+    background: transparent;
+    color: var(--color-accent);
   }
 
   &:focus-visible {

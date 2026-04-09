@@ -99,3 +99,18 @@ export const FivePackagesChampagne: Story = {
     section_theme: 'champagne',
   },
 }
+
+/** Corporate theme — neutral greys and blacks, no pink accents. */
+export const Corporate: Story = {
+  args: { section_theme: 'corporate' },
+}
+
+/** Five packages on corporate theme. */
+export const FivePackagesCorporate: Story = {
+  args: {
+    heading: pricingBlockFivePackages.heading,
+    subheading: pricingBlockFivePackages.subheading,
+    packages: pricingBlockFivePackages.packages,
+    section_theme: 'corporate',
+  },
+}

@@ -18,6 +18,7 @@ add_action( 'acf/init', function () {
 		'rose'      => 'Rose',
 		'champagne' => 'Champagne',
 		'dark'      => 'Dark',
+		'corporate' => 'Corporate',
 	];
 
 	$spacing_choices = [
@@ -301,6 +302,7 @@ add_action( 'acf/init', function () {
 		[ 'key' => 'field_sz_image_block_text_max_width', 'label' => 'Text Max Width', 'name' => 'text_max_width', 'type' => 'select', 'choices' => [ 'narrow' => 'Narrow (1/4)', 'semi-narrow' => 'Semi-Narrow (1/3)', 'normal' => 'Normal (1/2)', 'wide' => 'Wide (2/3)', 'full' => 'Full Length' ], 'default_value' => 'normal', 'instructions' => 'Maximum width of the text overlay, as a fraction of the image width.' ],
 		[ 'key' => 'field_sz_image_block_parallax_scroll', 'label' => 'Parallax Scroll', 'name' => 'parallax_scroll', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0, 'instructions' => 'Enable parallax depth scrolling (CSS fixed background). When off, the image displays as a static full-width banner. Note: on iOS Safari this gracefully falls back to a static image.' ],
 		[ 'key' => 'field_sz_image_block_aria_label', 'label' => 'Accessibility Label', 'name' => 'aria_label', 'type' => 'text', 'instructions' => 'Custom aria-label for screen readers. Defaults to "Full-width image banner".' ],
+		[ 'key' => 'field_sz_image_block_color_theme', 'label' => 'Colour Theme', 'name' => 'color_theme', 'type' => 'select', 'choices' => [ '' => 'Default', 'corporate' => 'Corporate' ], 'default_value' => '', 'instructions' => 'Choose a colour theme. Corporate replaces soft pink tones with sharp greys and blacks.' ],
 	];
 
 	// ─── Shared reusable button sub-fields (used in button_group repeater) ───

@@ -7,7 +7,7 @@
 export const blockStyleArgTypes = {
   section_theme: {
     control: 'select',
-    options: ['light', 'rose', 'champagne', 'dark'],
+    options: ['light', 'rose', 'champagne', 'dark', 'corporate'],
     description: 'Block colour theme (WP field: Section Theme)',
     table: { category: 'Style Options' },
   },

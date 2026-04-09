@@ -85,3 +85,8 @@ export const BlockRight: Story = {
 export const NarrowNoCta: Story = {
   args: { max_width: 'narrow', cta_text: '', cta_url: '' },
 }
+
+/** Corporate theme — neutral greys and blacks, no pink accents. */
+export const Corporate: Story = {
+  args: { section_theme: 'corporate' },
+}
