@@ -793,6 +793,11 @@ add_filter( 'tiny_mce_before_init', function ( $settings ) {
 		$settings['content_style'] = $font_css;
 	}
 
+	// Force Enter key to create <p> tags instead of <br> or &nbsp;
+	$settings['forced_root_block'] = 'p';
+	$settings['force_br_newlines'] = false;
+	$settings['force_p_newlines']  = true;
+
 	return $settings;
 } );
 

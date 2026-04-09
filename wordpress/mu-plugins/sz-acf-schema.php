@@ -132,7 +132,7 @@ add_action( 'acf/init', function () {
 	$text_fields = array_merge([
 		[ 'key' => 'field_sz_text_eyebrow', 'label' => 'Eyebrow', 'name' => 'eyebrow', 'type' => 'text' ],
 		[ 'key' => 'field_sz_text_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
-		[ 'key' => 'field_sz_text_body', 'label' => 'Body', 'name' => 'body', 'type' => 'wysiwyg' ],
+		[ 'key' => 'field_sz_text_body', 'label' => 'Body', 'name' => 'body', 'type' => 'wysiwyg', 'tabs' => 'all', 'toolbar' => 'full', 'media_upload' => 1 ],
 		[ 'key' => 'field_sz_text_align', 'label' => 'Text Align', 'name' => 'align', 'type' => 'select', 'choices' => [ 'left' => 'Left', 'center' => 'Centre', 'right' => 'Right', 'justify' => 'Justified' ], 'default_value' => 'center', 'instructions' => 'Alignment of text content within the block.' ],
 		[ 'key' => 'field_sz_text_block_align', 'label' => 'Block Align', 'name' => 'block_align', 'type' => 'select', 'choices' => [ 'left' => 'Left', 'center' => 'Centre', 'right' => 'Right' ], 'default_value' => 'center', 'instructions' => 'Horizontal position of the entire block on the page.' ],
 		[ 'key' => 'field_sz_text_max_width', 'label' => 'Max Width', 'name' => 'max_width', 'type' => 'select', 'choices' => [ 'narrow' => 'Narrow', 'normal' => 'Normal', 'wide' => 'Wide' ] ],
@@ -144,7 +144,7 @@ add_action( 'acf/init', function () {
 	$image_text_fields = array_merge([
 		[ 'key' => 'field_sz_image_text_eyebrow', 'label' => 'Eyebrow', 'name' => 'eyebrow', 'type' => 'text' ],
 		[ 'key' => 'field_sz_image_text_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
-		[ 'key' => 'field_sz_image_text_body', 'label' => 'Body', 'name' => 'body', 'type' => 'wysiwyg' ],
+		[ 'key' => 'field_sz_image_text_body', 'label' => 'Body', 'name' => 'body', 'type' => 'wysiwyg', 'tabs' => 'all', 'toolbar' => 'full', 'media_upload' => 1 ],
 		[ 'key' => 'field_sz_image_text_image', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'required' => 1 ],
 		[ 'key' => 'field_sz_image_text_image_mobile', 'label' => 'Image (Mobile)', 'name' => 'image_mobile', 'type' => 'image', 'return_format' => 'array' ],
 		[ 'key' => 'field_sz_image_text_image_position', 'label' => 'Image Position', 'name' => 'image_position', 'type' => 'select', 'choices' => [ 'left' => 'Left', 'right' => 'Right' ] ],
@@ -219,7 +219,7 @@ add_action( 'acf/init', function () {
 			'button_label' => 'Add FAQ Item',
 			'sub_fields' => [
 				[ 'key' => 'field_sz_faq_question', 'label' => 'Question', 'name' => 'question', 'type' => 'text', 'required' => 1 ],
-				[ 'key' => 'field_sz_faq_answer', 'label' => 'Answer', 'name' => 'answer', 'type' => 'wysiwyg', 'required' => 1 ],
+				[ 'key' => 'field_sz_faq_answer', 'label' => 'Answer', 'name' => 'answer', 'type' => 'wysiwyg', 'required' => 1, 'tabs' => 'all', 'toolbar' => 'full', 'media_upload' => 0 ],
 			],
 		],
 	], $style_fields( 'sz_faq' ));
@@ -238,8 +238,8 @@ add_action( 'acf/init', function () {
 				[ 'key' => 'field_sz_pricing_package_name', 'label' => 'Name', 'name' => 'name', 'type' => 'text', 'required' => 1 ],
 				[ 'key' => 'field_sz_pricing_package_price_label', 'label' => 'Price Label', 'name' => 'price_label', 'type' => 'text' ],
 				[ 'key' => 'field_sz_pricing_package_description', 'label' => 'Description', 'name' => 'description', 'type' => 'textarea', 'instructions' => 'Short clarifier shown below the package name, e.g. "Digital Only Package".' ],
-				[ 'key' => 'field_sz_pricing_package_pricing', 'label' => 'Pricing Tiers', 'name' => 'pricing', 'type' => 'wysiwyg', 'instructions' => 'Pricing options / tiers (shown on the left in horizontal layout).' ],
-				[ 'key' => 'field_sz_pricing_package_inclusions', 'label' => 'Inclusions', 'name' => 'inclusions', 'type' => 'wysiwyg', 'instructions' => 'What is included (shown on the right in horizontal layout).' ],
+				[ 'key' => 'field_sz_pricing_package_pricing', 'label' => 'Pricing Tiers', 'name' => 'pricing', 'type' => 'wysiwyg', 'tabs' => 'all', 'toolbar' => 'full', 'media_upload' => 0, 'instructions' => 'Pricing options / tiers (shown on the left in horizontal layout).' ],
+				[ 'key' => 'field_sz_pricing_package_inclusions', 'label' => 'Inclusions', 'name' => 'inclusions', 'type' => 'wysiwyg', 'tabs' => 'all', 'toolbar' => 'full', 'media_upload' => 0, 'instructions' => 'What is included (shown on the right in horizontal layout).' ],
 				[ 'key' => 'field_sz_pricing_package_tagline', 'label' => 'Tagline', 'name' => 'tagline', 'type' => 'text', 'instructions' => 'Short tagline displayed below all content, e.g. "Perfect for couples who want the full experience."' ],
 				[ 'key' => 'field_sz_pricing_package_is_featured', 'label' => 'Featured', 'name' => 'is_featured', 'type' => 'true_false', 'ui' => 1 ],
 				[ 'key' => 'field_sz_pricing_package_cta_text', 'label' => 'CTA Text', 'name' => 'cta_text', 'type' => 'text' ],
