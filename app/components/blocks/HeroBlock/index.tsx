@@ -58,7 +58,9 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
           className={`${styles.heroImage} ${index === activeSlide ? styles.heroImageActive : ''}`}
           fetchPriority={index === 0 ? 'high' : 'low'}
           decoding={index === 0 ? 'sync' : 'async'}
-          loading={index === 0 ? 'eager' : 'lazy'}
+          // All slides use eager loading — lazy+opacity:0 causes Safari to
+          // never load non-active slides since it thinks they're offscreen.
+          loading="eager"
           width={slide.width ?? 1600}
           height={slide.height ?? 900}
         />

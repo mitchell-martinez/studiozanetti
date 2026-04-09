@@ -18,7 +18,8 @@
 }
 
 .heightFull {
-  height: 100svh;
+  // Subtract fixed navbar height so the block fills exactly the visible area
+  height: calc(100svh - 64px);
 }
 
 // ─── Parallax background (CSS fixed attachment) ──────────────────────────────
@@ -28,7 +29,7 @@
   width: 100%;
   height: 100%;
   background-attachment: fixed;
-  background-position: top left;
+  background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
 
@@ -51,7 +52,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: top left;
+  object-position: center center;
+
+  @media (max-width: #{g.$bp-sm}) {
+    object-position: center center;
+  }
 }
 
 // ─── Overlay scrim ───────────────────────────────────────────────────────────

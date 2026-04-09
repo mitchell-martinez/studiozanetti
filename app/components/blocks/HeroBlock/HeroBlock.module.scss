@@ -15,7 +15,8 @@
 }
 
 .heroFull {
-  height: 100svh;
+  // Subtract fixed navbar height so the hero fills exactly the visible area
+  height: calc(100svh - 64px);
 }
 
 .heroImage {
@@ -24,6 +25,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center center;
   opacity: 0;
   transition: opacity 0.8s ease;
 }
