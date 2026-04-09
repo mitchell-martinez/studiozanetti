@@ -193,7 +193,7 @@
 .th {
   vertical-align: bottom;
   text-align: center;
-  padding: 1rem 0.6rem 0.8rem;
+  padding: 1.2rem 1rem 1rem;
   border-bottom: 2px solid var(--color-border-soft);
   background: var(--color-surface-soft);
   border-radius: 0.75rem 0.75rem 0 0;
@@ -231,7 +231,7 @@
 .td {
   vertical-align: top;
   text-align: center;
-  padding: 0.6rem 0.6rem;
+  padding: 0.8rem 1rem;
   border-bottom: 1px solid var(--color-border-soft);
   color: var(--color-ink-soft);
   font-size: 0.88rem;
@@ -248,7 +248,7 @@
 }
 
 .tdCta {
-  padding: 0.8rem 0.6rem 1rem;
+  padding: 1rem 1rem 1.2rem;
   border-bottom: none;
   border-radius: 0 0 0.75rem 0.75rem;
 }

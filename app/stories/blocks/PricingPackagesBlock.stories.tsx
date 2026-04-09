@@ -62,6 +62,15 @@ export const ThreePackages: Story = {
   },
 }
 
+/** Four packages — drops the budget tier from the five-package set. */
+export const FourPackages: Story = {
+  args: {
+    heading: pricingBlockFivePackages.heading,
+    subheading: pricingBlockFivePackages.subheading,
+    packages: pricingBlockFivePackages.packages.slice(1),
+  },
+}
+
 /** Five packages in table layout. */
 export const FivePackages: Story = {
   args: {
