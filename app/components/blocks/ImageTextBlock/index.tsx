@@ -29,6 +29,17 @@ const imageAlignClass = (align?: string) => {
   }
 }
 
+const imageVAlignClass = (align?: string) => {
+  switch (align) {
+    case 'middle':
+      return styles.imgVAlignMiddle
+    case 'bottom':
+      return styles.imgVAlignBottom
+    default:
+      return styles.imgVAlignTop
+  }
+}
+
 const verticalAlignClass = (align?: string) => {
   switch (align) {
     case 'middle':
@@ -71,7 +82,7 @@ const ImageTextBlock = ({ block }: ImageTextBlockProps) => {
             : styles.imageSoft
       } ${block.url ? styles.clickable : ''} ${verticalAlignClass(block.text_vertical_align)}`}
     >
-      <div className={`${styles.imageTextImage} ${imageAlignClass(block.image_alignment)}`}>
+      <div className={`${styles.imageTextImage} ${imageAlignClass(block.image_alignment)} ${imageVAlignClass(block.image_vertical_align)}`}>
         <picture>
           {block.image_mobile?.url && (
             <source media="(max-width: 768px)" srcSet={block.image_mobile.url} />

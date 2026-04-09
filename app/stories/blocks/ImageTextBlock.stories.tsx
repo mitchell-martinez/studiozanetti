@@ -21,6 +21,7 @@ const meta: Meta<ImageTextArgs> = {
     image_ratio: imageTextBlock.image_ratio,
     image_style: imageTextBlock.image_style,
     image_alignment: imageTextBlock.image_alignment,
+    image_vertical_align: imageTextBlock.image_vertical_align ?? 'top',
     text_vertical_align: imageTextBlock.text_vertical_align,
     text_horizontal_align: imageTextBlock.text_horizontal_align,
     cta_text: imageTextBlock.cta_text,
@@ -59,6 +60,12 @@ const meta: Meta<ImageTextArgs> = {
       options: ['left', 'center', 'right'],
       description:
         'Horizontal alignment of the image within its frame (most visible when cropped to a ratio)',
+    },
+    image_vertical_align: {
+      control: 'inline-radio',
+      options: ['top', 'middle', 'bottom'],
+      description:
+        'Vertical crop position of the image within its frame (default: top, most visible when cropped to a ratio)',
     },
     image_max_width: {
       control: { type: 'number', min: 0, step: 50 },

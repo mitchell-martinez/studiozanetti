@@ -105,6 +105,7 @@ export interface ImageTextBlock extends BlockStyleOptions {
   image_ratio?: 'landscape' | 'portrait' | 'square' | 'auto'
   image_style?: 'soft' | 'framed' | 'plain'
   image_alignment?: 'left' | 'center' | 'right'
+  image_vertical_align?: 'top' | 'middle' | 'bottom'
   image_max_width?: number
   image_max_height?: number
   eyebrow?: string

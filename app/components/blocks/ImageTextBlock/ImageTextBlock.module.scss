@@ -65,7 +65,6 @@
   border-radius: 4px;
   box-shadow: 0 4px 24px rgb(0 0 0 / 12%);
   object-fit: cover;
-  object-position: left center;
 }
 
 // ─── Image horizontal alignment ────────────────────────────────────────────
@@ -76,6 +75,45 @@
 
 .imgAlignRight img {
   object-position: right center;
+}
+
+// ─── Image vertical alignment ──────────────────────────────────────────────
+
+.imgVAlignTop img {
+  object-position: left top;
+}
+
+.imgVAlignMiddle img {
+  object-position: left center;
+}
+
+.imgVAlignBottom img {
+  object-position: left bottom;
+}
+
+// When both horizontal and vertical are set, compose them:
+.imgAlignCenter.imgVAlignTop img {
+  object-position: center top;
+}
+
+.imgAlignCenter.imgVAlignMiddle img {
+  object-position: center center;
+}
+
+.imgAlignCenter.imgVAlignBottom img {
+  object-position: center bottom;
+}
+
+.imgAlignRight.imgVAlignTop img {
+  object-position: right top;
+}
+
+.imgAlignRight.imgVAlignMiddle img {
+  object-position: right center;
+}
+
+.imgAlignRight.imgVAlignBottom img {
+  object-position: right bottom;
 }
 
 .imageLandscape .imageTextImage img {

@@ -98,6 +98,26 @@ describe('ImageTextBlock', () => {
     expect(imgWrap.className).toMatch(/imgAlignRight/)
   })
 
+  // ─── Image vertical alignment ───────────────────────────────────────────────
+
+  it('applies imgVAlignTop class by default', () => {
+    const { container } = renderBlock()
+    const imgWrap = container.querySelector('[class*="imageTextImage"]')!
+    expect(imgWrap.className).toMatch(/imgVAlignTop/)
+  })
+
+  it('applies imgVAlignMiddle class when image_vertical_align is middle', () => {
+    const { container } = renderBlock({ image_vertical_align: 'middle' })
+    const imgWrap = container.querySelector('[class*="imageTextImage"]')!
+    expect(imgWrap.className).toMatch(/imgVAlignMiddle/)
+  })
+
+  it('applies imgVAlignBottom class when image_vertical_align is bottom', () => {
+    const { container } = renderBlock({ image_vertical_align: 'bottom' })
+    const imgWrap = container.querySelector('[class*="imageTextImage"]')!
+    expect(imgWrap.className).toMatch(/imgVAlignBottom/)
+  })
+
   // ─── Vertical alignment ─────────────────────────────────────────────────────
 
   it('applies alignMiddle class by default', () => {
