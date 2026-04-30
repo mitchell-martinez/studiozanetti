@@ -1,6 +1,7 @@
 import BlogPostsBlock from '../BlogPostsBlock'
 import ButtonGroupBlock from '../ButtonGroupBlock'
 import FaqAccordionBlock from '../FaqAccordionBlock'
+import FormBlock from '../FormBlock'
 import GalleriesBlock from '../GalleriesBlock'
 import GalleryCategoriesBlock from '../GalleryCategoriesBlock'
 import HeroBlock from '../HeroBlock'
@@ -22,6 +23,7 @@ const BLOCK_LABELS: Record<string, string> = {
   services_grid: 'Services Grid',
   pillar_grid: 'Pillar Grid',
   faq_accordion: 'FAQ Accordion',
+  form_block: 'Form',
   pricing_packages: 'Pricing Packages',
   gallery_categories: 'Gallery Categories',
   galleries: 'Galleries',
@@ -155,6 +157,9 @@ const BlockRenderer = ({
           break
         case 'faq_accordion':
           rendered = <FaqAccordionBlock key={key} block={block} />
+          break
+        case 'form_block':
+          rendered = <FormBlock key={key} block={block} />
           break
         case 'pricing_packages':
           rendered = <PricingPackagesBlock key={key} block={block} />

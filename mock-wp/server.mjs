@@ -28,6 +28,7 @@
  *   GET /wp-json/wp/v2/pages?slug=home
  *   GET /wp-json/wp/v2/pages?slug=about
  *   GET /wp-json/wp/v2/pages?slug=contact
+ *   GET /wp-json/wp/v2/pages?slug=get-in-touch
  *   GET /wp-json/wp/v2/pages?slug=pricing      ← dynamic /:slug demo page
  *   GET /wp-json/wp/v2/pages?per_page=100      ← prerender discovery
  *   GET /wp-json/wp/v2/gallery_photo?per_page=100
@@ -195,6 +196,117 @@ const PAGE_CONTACT = {
   },
 }
 
+/** Get in touch page — exercises the new form_block layout. */
+const PAGE_GET_IN_TOUCH = {
+  id: 6,
+  slug: 'get-in-touch',
+  status: 'publish',
+  title: { rendered: 'Get in Touch' },
+  content: { rendered: '' },
+  excerpt: { rendered: '' },
+  yoast_head_json: {
+    title: 'Get in Touch | Studio Zanetti',
+    description:
+      'Tell us what you are planning and Studio Zanetti will get back to you promptly.',
+  },
+  acf: {
+    blocks: [
+      {
+        acf_fc_layout: 'text_block',
+        heading: 'Tell us what you need',
+        body: '<p>Please fill out the form below and include anything relevant to your plans. If you would rather speak directly, you can still email or call us using the details above.</p>',
+        align: 'left',
+        block_align: 'left',
+        max_width: 'narrow',
+      },
+      {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        heading: 'Get in touch',
+        heading_tag: 'h2',
+        heading_align: 'left',
+        intro: '<p>Please fill in what is relevant to your needs and we will get back to you promptly.</p>',
+        submit_text: 'Send message',
+        submit_alignment: 'center',
+        success_message: 'Thanks for reaching out. We will reply as soon as possible.',
+        email_subject: 'New enquiry from Studio Zanetti',
+        email_to: 'hello@example.com',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            placeholder: 'Your full name',
+            autocomplete: 'name',
+            required: true,
+          },
+          {
+            field_id: 'email',
+            label: 'Email',
+            type: 'email',
+            placeholder: 'you@example.com',
+            autocomplete: 'email',
+            required: true,
+          },
+          {
+            field_id: 'mobile_number',
+            label: 'Mobile number',
+            type: 'tel',
+            placeholder: '+61',
+            autocomplete: 'tel',
+          },
+          {
+            field_id: 'company',
+            label: 'Company',
+            type: 'text',
+          },
+          {
+            field_id: 'date_required',
+            label: 'Date photography required',
+            type: 'date',
+          },
+          {
+            field_id: 'location',
+            label: 'Location of event',
+            type: 'text',
+          },
+          {
+            field_id: 'attendees',
+            label: 'How many attendees',
+            type: 'number',
+            min: 0,
+            step: 1,
+          },
+          {
+            field_id: 'preferred_contact',
+            label: 'Preferred contact method',
+            type: 'radio',
+            required: true,
+            options: [
+              { label: 'Email', value: 'email' },
+              { label: 'Phone', value: 'phone' },
+            ],
+          },
+          {
+            field_id: 'message',
+            label: 'Message or questions',
+            type: 'textarea',
+            rows: 6,
+            placeholder: 'Tell us a little about your plans',
+          },
+          {
+            field_id: 'privacy_consent',
+            label: 'Privacy consent',
+            type: 'checkbox',
+            checkbox_label: 'I agree to be contacted about my enquiry.',
+            required: true,
+          },
+        ],
+      },
+    ],
+  },
+}
+
 /**
  * Pricing page — demonstrates the dynamic /:slug catch-all route.
  * the admin can create any page in WordPress and it automatically
@@ -247,7 +359,7 @@ const PAGE_PRICING = {
 }
 
 /** All pages list — used by react-router.config.ts to discover slugs for prerendering. */
-const ALL_PAGES = [PAGE_HOME, PAGE_ABOUT, PAGE_CONTACT, PAGE_PRICING]
+const ALL_PAGES = [PAGE_HOME, PAGE_ABOUT, PAGE_CONTACT, PAGE_GET_IN_TOUCH, PAGE_PRICING]
 
 // ─── Blog post fixtures ───────────────────────────────────────────────────────
 
@@ -395,7 +507,7 @@ const NAV_MENU_PRIMARY = [
   },
   { id: 12, title: 'About', url: '/about', children: [] },
   { id: 13, title: 'Pricing', url: '/pricing', children: [] },
-  { id: 14, title: 'Contact', url: '/contact', children: [] },
+  { id: 14, title: 'Contact', url: '/get-in-touch', children: [] },
 ]
 
 // ─── Route handlers ───────────────────────────────────────────────────────────
@@ -551,7 +663,7 @@ server.listen(PORT, () => {
   Point the dev server at this mock by setting:
     WORDPRESS_URL=http://localhost:${PORT}
 
-  Mocked pages: home, about, contact, pricing, blog
+  Mocked pages: home, about, contact, get-in-touch, pricing, blog
   Gallery photos: ${GALLERY_PHOTOS.length} items (Weddings, Portraits, Events)
   Blog posts: ${MOCK_POSTS.length} items
   Nav menu: primary (${NAV_MENU_PRIMARY.length} top-level items)

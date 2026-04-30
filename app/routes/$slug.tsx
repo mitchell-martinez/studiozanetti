@@ -4,6 +4,7 @@ import BlockRenderer from '~/components/blocks/BlockRenderer'
 import BlogPostPage from '~/components/BlogPostPage'
 import ErrorPage from '~/components/ErrorPage'
 import RichText from '~/components/RichText'
+import { stripSensitiveFormBlockData } from '~/lib/forms'
 import { stripHtml } from '~/lib/html'
 import { buildPageSchemas, buildPostSchemas, toCanonicalUrl } from '~/lib/seo'
 import
@@ -51,11 +52,12 @@ export async function loader({ params, request }: LoaderFunctionArgs): Promise<L
     (lookupSlug.includes('/') ? await getPageByPath(lookupSlug) : null)
 
   if (page && !page.acf?.container_only) {
+    const publicPage = stripSensitiveFormBlockData(page)
     const pagePath = lookupSlug === 'home' ? '/' : `/${lookupSlug}`
     const canonicalUrl = toCanonicalUrl(pagePath)
 
     // If the page has a blog_posts block, pre-fetch posts for SSR
-    const blogBlock = page.acf?.blocks?.find((b) => b.acf_fc_layout === 'blog_posts')
+    const blogBlock = publicPage.acf?.blocks?.find((b) => b.acf_fc_layout === 'blog_posts')
     let blogPostsData: BlogPostsData | undefined
     if (blogBlock) {
       const url = new URL(request.url)
@@ -69,7 +71,7 @@ export async function loader({ params, request }: LoaderFunctionArgs): Promise<L
       blogPostsData = await getPostsByCategories(categoryIds, blogPage, perPage)
     }
 
-    return { type: 'page', page, canonicalUrl, blogPostsData }
+    return { type: 'page', page: publicPage, canonicalUrl, blogPostsData }
   }
 
   // Fallback: try as a blog post (single-segment slugs only)

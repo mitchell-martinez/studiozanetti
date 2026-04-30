@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { useLoaderData } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
 import RichText from '~/components/RichText'
+import { stripSensitiveFormBlockData } from '~/lib/forms'
 import { getPostsByCategories, getPreviewPage } from '~/lib/wordpress'
 import type { BlogPostsData, WPPage } from '~/types/wordpress'
 import styles from './preview.module.scss'
@@ -30,9 +31,11 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<PreviewLo
   const page = await getPreviewPage(Number(id), secret)
   if (!page) throw new Response('Preview not found or secret invalid', { status: 404 })
 
+  const publicPage = stripSensitiveFormBlockData(page)
+
   // If the page has a blog_posts block, pre-fetch posts for preview
   let blogPostsData: BlogPostsData | undefined
-  const blogBlock = page.acf?.blocks?.find((b) => b.acf_fc_layout === 'blog_posts')
+  const blogBlock = publicPage.acf?.blocks?.find((b) => b.acf_fc_layout === 'blog_posts')
   if (blogBlock) {
     const perPage =
       'posts_per_page' in blogBlock ? (blogBlock.posts_per_page ?? 6) : 6
@@ -43,7 +46,7 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<PreviewLo
     blogPostsData = await getPostsByCategories(categoryIds, 1, perPage)
   }
 
-  return { page, isIframe, blogPostsData }
+  return { page: publicPage, isIframe, blogPostsData }
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {

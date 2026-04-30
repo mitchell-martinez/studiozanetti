@@ -91,6 +91,44 @@ describe('CmsPage route', () => {
       })
     })
 
+    it('strips sensitive form email settings from page blocks before returning loader data', async () => {
+      vi.mocked(getPageBySlug).mockResolvedValueOnce({
+        ...mockPage,
+        acf: {
+          blocks: [
+            {
+              acf_fc_layout: 'form_block' as const,
+              form_id: 'contact-enquiry',
+              heading: 'Get in touch',
+              email_to: 'secret@example.com',
+              email_subject: 'Secret subject',
+              fields: [
+                {
+                  field_id: 'name',
+                  label: 'Name',
+                  type: 'text',
+                  required: true,
+                },
+              ],
+            },
+          ],
+        },
+      } as never)
+
+      const result = await loader(makeArgs('get-in-touch') as never)
+
+      expect(result).toMatchObject({
+        type: 'page',
+        canonicalUrl: 'https://www.studiozanetti.com.au/get-in-touch',
+      })
+      expect(result.type).toBe('page')
+      if (result.type === 'page') {
+        const [formBlock] = result.page.acf?.blocks ?? []
+        expect(formBlock).not.toHaveProperty('email_to')
+        expect(formBlock).not.toHaveProperty('email_subject')
+      }
+    })
+
     it('throws a 404 Response when the page is not found', async () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
       vi.mocked(getPostBySlug).mockResolvedValueOnce(null)

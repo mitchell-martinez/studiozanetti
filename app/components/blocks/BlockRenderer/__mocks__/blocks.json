@@ -77,6 +77,41 @@
       }
     ]
   },
+  "formBlock": {
+    "acf_fc_layout": "form_block",
+    "form_id": "contact-enquiry",
+    "heading": "Get in touch",
+    "heading_tag": "h2",
+    "heading_align": "left",
+    "intro": "<p>Please fill in what is relevant to your needs.</p>",
+    "submit_text": "Send message",
+    "submit_alignment": "center",
+    "success_message": "Thanks for reaching out.",
+    "fields": [
+      {
+        "field_id": "name",
+        "label": "Name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "field_id": "email",
+        "label": "Email",
+        "type": "email",
+        "required": true
+      },
+      {
+        "field_id": "preferred_contact",
+        "label": "Preferred contact method",
+        "type": "radio",
+        "required": true,
+        "options": [
+          { "label": "Email", "value": "email" },
+          { "label": "Phone", "value": "phone" }
+        ]
+      }
+    ]
+  },
   "pricingBlock": {
     "acf_fc_layout": "pricing_packages",
     "heading": "Packages",

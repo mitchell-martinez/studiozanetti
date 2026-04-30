@@ -1,0 +1,88 @@
+{
+  "acf_fc_layout": "form_block",
+  "form_id": "contact-enquiry",
+  "heading": "Let's plan your photography",
+  "heading_tag": "h2",
+  "heading_align": "left",
+  "intro": "<p>Please fill in what is relevant to your needs and we’ll get back to you promptly.</p>",
+  "submit_text": "Send message",
+  "submit_alignment": "center",
+  "success_message": "Thanks for getting in touch. We’ll reply as soon as possible.",
+  "email_subject": "New enquiry from Studio Zanetti",
+  "email_to": "hello@studiozanetti.com.au",
+  "section_theme": "light",
+  "top_spacing": "md",
+  "bottom_spacing": "md",
+  "fields": [
+    {
+      "field_id": "name",
+      "label": "Name",
+      "type": "text",
+      "placeholder": "Your full name",
+      "autocomplete": "name",
+      "required": true
+    },
+    {
+      "field_id": "email",
+      "label": "Email",
+      "type": "email",
+      "placeholder": "you@example.com",
+      "autocomplete": "email",
+      "required": true
+    },
+    {
+      "field_id": "phone",
+      "label": "Mobile number",
+      "type": "tel",
+      "placeholder": "+61",
+      "autocomplete": "tel"
+    },
+    {
+      "field_id": "event_date",
+      "label": "Date photography required",
+      "type": "date"
+    },
+    {
+      "field_id": "attendees",
+      "label": "How many attendees",
+      "type": "number",
+      "min": 0,
+      "step": 1
+    },
+    {
+      "field_id": "service_type",
+      "label": "Service type",
+      "type": "select",
+      "placeholder": "Choose a service",
+      "options": [
+        { "label": "Wedding", "value": "wedding" },
+        { "label": "Pre-wedding", "value": "pre-wedding" },
+        { "label": "Family", "value": "family" }
+      ]
+    },
+    {
+      "field_id": "preferred_contact",
+      "label": "Preferred contact method",
+      "type": "radio",
+      "required": true,
+      "options": [
+        { "label": "Email", "value": "email" },
+        { "label": "Phone", "value": "phone" }
+      ]
+    },
+    {
+      "field_id": "comments",
+      "label": "Any other comments",
+      "type": "textarea",
+      "rows": 6,
+      "placeholder": "Tell us a little about your plans"
+    },
+    {
+      "field_id": "privacy_consent",
+      "label": "Privacy consent",
+      "type": "checkbox",
+      "checkbox_label": "I agree to be contacted about my enquiry.",
+      "required": true
+    }
+  ]
+}

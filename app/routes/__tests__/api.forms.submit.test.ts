@@ -1,0 +1,282 @@
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('~/lib/forms', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('~/lib/forms')>()
+  return {
+    ...actual,
+    getTrustedFormSubmissionConfig: vi.fn(),
+  }
+})
+
+vi.mock('~/lib/email', () => ({
+  sendFormSubmissionEmail: vi.fn(),
+}))
+
+vi.mock('~/lib/rateLimit', () => ({
+  consumeRateLimit: vi.fn(() => ({ allowed: true, remaining: 4, retryAfterSeconds: 60 })),
+}))
+
+import { sendFormSubmissionEmail } from '~/lib/email'
+import { getTrustedFormSubmissionConfig } from '~/lib/forms'
+import { consumeRateLimit } from '~/lib/rateLimit'
+import { action } from '../api.forms.submit'
+
+afterEach(() => {
+  vi.clearAllMocks()
+})
+
+const makeRequest = (body: unknown) =>
+  new Request('http://localhost/api/forms/submit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+describe('api.forms.submit action', () => {
+  it('ignores frontend-injected recipient and subject fields', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+        emailTo: 'attacker@example.com',
+        emailSubject: 'Tampered subject',
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(getTrustedFormSubmissionConfig).toHaveBeenCalledWith(
+      '/get-in-touch/',
+      'contact-enquiry',
+    )
+    expect(sendFormSubmissionEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'hello@studiozanetti.com.au',
+        subject: 'Website enquiry',
+      }),
+    )
+    expect(response.status).toBe(200)
+  })
+
+  it('returns 400 for malformed payloads', async () => {
+    const response = await action({
+      request: makeRequest({ formId: 'contact-enquiry', values: {} }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(400)
+    expect(getTrustedFormSubmissionConfig).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 when the trusted form config is missing', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce(null)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(404)
+  })
+
+  it('returns 422 when the trusted form config has incomplete email settings', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        email_to: '',
+        email_subject: '',
+        fields: [],
+      },
+      emailTo: '',
+      emailSubject: '',
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(422)
+  })
+
+  it('returns 422 when the payload contains unknown fields', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell', injected: 'oops' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(422)
+    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+  })
+
+  it('returns 429 when the caller exceeds the rate limit', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        fields: [],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+    } as never)
+    vi.mocked(consumeRateLimit).mockReturnValueOnce({
+      allowed: false,
+      remaining: 0,
+      retryAfterSeconds: 42,
+      resetAt: Date.now() + 42_000,
+      limit: 5,
+    })
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: {},
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get('Retry-After')).toBe('42')
+    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+  })
+
+  it('returns success immediately for honeypot hits without sending email', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        success_message: 'Thanks for reaching out.',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        fields: [],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        honeypot: 'bot data',
+        values: {},
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(200)
+    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+    expect(consumeRateLimit).not.toHaveBeenCalled()
+  })
+})

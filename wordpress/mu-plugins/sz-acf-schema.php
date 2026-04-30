@@ -305,6 +305,58 @@ add_action( 'acf/init', function () {
 		[ 'key' => 'field_sz_image_block_color_theme', 'label' => 'Colour Theme', 'name' => 'color_theme', 'type' => 'select', 'choices' => [ '' => 'Default', 'corporate' => 'Corporate' ], 'default_value' => '', 'instructions' => 'Choose a colour theme. Corporate replaces soft pink tones with sharp greys and blacks.' ],
 	];
 
+	$form_fields = array_merge([
+		[ 'key' => 'field_sz_form_form_id', 'label' => 'Form ID', 'name' => 'form_id', 'type' => 'text', 'required' => 1, 'instructions' => 'Required stable identifier used by the secure submit route. Keep it unique on the page and do not change it after publishing.' ],
+		[ 'key' => 'field_sz_form_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
+		[ 'key' => 'field_sz_form_heading_tag', 'label' => 'Heading Tag', 'name' => 'heading_tag', 'type' => 'select', 'choices' => [ 'h1' => 'H1', 'h2' => 'H2 (default)', 'h3' => 'H3', 'h4' => 'H4', 'h5' => 'H5', 'h6' => 'H6' ], 'default_value' => 'h2', 'instructions' => 'Semantic HTML heading level for the visible heading.' ],
+		[ 'key' => 'field_sz_form_heading_align', 'label' => 'Heading Alignment', 'name' => 'heading_align', 'type' => 'select', 'choices' => [ 'left' => 'Left', 'center' => 'Centre', 'right' => 'Right' ], 'default_value' => 'left' ],
+		[ 'key' => 'field_sz_form_intro', 'label' => 'Intro', 'name' => 'intro', 'type' => 'wysiwyg', 'tabs' => 'all', 'toolbar' => 'full', 'media_upload' => 0, 'instructions' => 'Optional intro copy shown above the form.' ],
+		[ 'key' => 'field_sz_form_submit_text', 'label' => 'Submit Button Text', 'name' => 'submit_text', 'type' => 'text', 'default_value' => 'Send message' ],
+		[ 'key' => 'field_sz_form_submit_alignment', 'label' => 'Submit Button Alignment', 'name' => 'submit_alignment', 'type' => 'select', 'choices' => [ 'left' => 'Left', 'center' => 'Centre' ], 'default_value' => 'left' ],
+		[ 'key' => 'field_sz_form_success_message', 'label' => 'Success Message', 'name' => 'success_message', 'type' => 'textarea', 'instructions' => 'Shown in-page after a successful submission.' ],
+		[ 'key' => 'field_sz_form_email_subject', 'label' => 'Email Subject', 'name' => 'email_subject', 'type' => 'text', 'required' => 1, 'instructions' => 'Used by the server-side WordPress lookup when sending form submissions.' ],
+		[ 'key' => 'field_sz_form_email_to', 'label' => 'Email To', 'name' => 'email_to', 'type' => 'email', 'required' => 1, 'instructions' => 'Recipient address used by the server-side WordPress lookup when sending form submissions.' ],
+		[
+			'key' => 'field_sz_form_fields',
+			'label' => 'Fields',
+			'name' => 'fields',
+			'type' => 'repeater',
+			'layout' => 'row',
+			'button_label' => 'Add Field',
+			'min' => 1,
+			'sub_fields' => [
+				[ 'key' => 'field_sz_form_field_id', 'label' => 'Field ID', 'name' => 'field_id', 'type' => 'text', 'required' => 1, 'instructions' => 'Machine-safe key sent to the secure submit route, for example `email` or `event_date`.' ],
+				[ 'key' => 'field_sz_form_field_label', 'label' => 'Label', 'name' => 'label', 'type' => 'text', 'required' => 1 ],
+				[ 'key' => 'field_sz_form_field_type', 'label' => 'Field Type', 'name' => 'type', 'type' => 'select', 'required' => 1, 'choices' => [ 'text' => 'Text', 'email' => 'Email', 'tel' => 'Telephone', 'number' => 'Number', 'date' => 'Date', 'time' => 'Time', 'datetime-local' => 'Date & Time', 'textarea' => 'Textarea', 'select' => 'Select Dropdown', 'radio' => 'Radio Group', 'checkbox' => 'Checkbox' ], 'default_value' => 'text' ],
+				[ 'key' => 'field_sz_form_field_help_text', 'label' => 'Help Text', 'name' => 'help_text', 'type' => 'textarea', 'rows' => 2 ],
+				[ 'key' => 'field_sz_form_field_required', 'label' => 'Required', 'name' => 'required', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0 ],
+				[ 'key' => 'field_sz_form_field_placeholder', 'label' => 'Placeholder', 'name' => 'placeholder', 'type' => 'text', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '!=', 'value' => 'checkbox' ] ] ] ],
+				[ 'key' => 'field_sz_form_field_autocomplete', 'label' => 'Autocomplete', 'name' => 'autocomplete', 'type' => 'text', 'instructions' => 'Optional browser autocomplete token such as `name`, `email`, or `tel`.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'text' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'tel' ] ] ] ],
+				[ 'key' => 'field_sz_form_field_default_value_text', 'label' => 'Default Value', 'name' => 'default_value', 'type' => 'text', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'text' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'tel' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'date' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'time' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'datetime-local' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'textarea' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'select' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'radio' ] ] ] ],
+				[ 'key' => 'field_sz_form_field_default_value_number', 'label' => 'Default Number', 'name' => 'default_value', 'type' => 'number', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'number' ] ] ] ],
+				[ 'key' => 'field_sz_form_field_default_value_boolean', 'label' => 'Default Checked', 'name' => 'default_value', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0, 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'checkbox' ] ] ] ],
+				[ 'key' => 'field_sz_form_field_rows', 'label' => 'Textarea Rows', 'name' => 'rows', 'type' => 'number', 'default_value' => 5, 'min' => 2, 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'textarea' ] ] ] ],
+				[ 'key' => 'field_sz_form_field_min', 'label' => 'Minimum', 'name' => 'min', 'type' => 'number', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'number' ] ] ] ],
+				[ 'key' => 'field_sz_form_field_max', 'label' => 'Maximum', 'name' => 'max', 'type' => 'number', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'number' ] ] ] ],
+				[ 'key' => 'field_sz_form_field_step', 'label' => 'Step', 'name' => 'step', 'type' => 'number', 'default_value' => 1, 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'number' ] ] ] ],
+				[ 'key' => 'field_sz_form_field_checkbox_label', 'label' => 'Checkbox Label', 'name' => 'checkbox_label', 'type' => 'text', 'instructions' => 'Optional visible label next to the checkbox. Defaults to the main field label.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'checkbox' ] ] ] ],
+				[
+					'key' => 'field_sz_form_field_options',
+					'label' => 'Options',
+					'name' => 'options',
+					'type' => 'repeater',
+					'layout' => 'table',
+					'button_label' => 'Add Option',
+					'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'select' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'radio' ] ] ],
+					'sub_fields' => [
+						[ 'key' => 'field_sz_form_field_option_label', 'label' => 'Label', 'name' => 'label', 'type' => 'text', 'required' => 1 ],
+						[ 'key' => 'field_sz_form_field_option_value', 'label' => 'Value', 'name' => 'value', 'type' => 'text', 'required' => 1, 'instructions' => 'Machine-safe submitted value such as `email`, `phone`, or `wedding`.' ],
+					],
+				],
+			],
+		],
+	], $style_fields( 'sz_form' ));
+
 	// ─── Shared reusable button sub-fields (used in button_group repeater) ───
 	$button_sub_fields = [
 		[ 'key' => 'field_sz_btn_label', 'label' => 'Label', 'name' => 'label', 'type' => 'text', 'required' => 1, 'instructions' => 'The text displayed on the button.' ],
@@ -451,6 +503,13 @@ add_action( 'acf/init', function () {
 						'label' => 'FAQ Accordion',
 						'display' => 'block',
 						'sub_fields' => $faq_fields,
+					],
+					'layout_sz_form_block' => [
+						'key' => 'layout_sz_form_block',
+						'name' => 'form_block',
+						'label' => 'Form',
+						'display' => 'block',
+						'sub_fields' => $form_fields,
 					],
 					'layout_sz_pricing_packages' => [
 						'key' => 'layout_sz_pricing_packages',

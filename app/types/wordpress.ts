@@ -230,6 +230,95 @@ export interface ImageBlock {
   color_theme?: 'default' | 'corporate'
 }
 
+// ─── Form block ───────────────────────────────────────────────────────────────
+
+export type FormHeadingTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+export type FormHeadingAlign = 'left' | 'center' | 'right'
+export type FormSubmitAlignment = 'left' | 'center'
+export type FormFieldType =
+  | 'text'
+  | 'email'
+  | 'tel'
+  | 'number'
+  | 'date'
+  | 'time'
+  | 'datetime-local'
+  | 'textarea'
+  | 'select'
+  | 'radio'
+  | 'checkbox'
+
+export interface WPFormFieldOption {
+  label: string
+  value: string
+}
+
+interface WPFormFieldBase {
+  field_id: string
+  label: string
+  type: FormFieldType
+  help_text?: string
+  required?: boolean
+}
+
+export interface WPFormTextLikeField extends WPFormFieldBase {
+  type: 'text' | 'email' | 'tel' | 'date' | 'time' | 'datetime-local'
+  placeholder?: string
+  autocomplete?: string
+  default_value?: string
+}
+
+export interface WPFormNumberField extends WPFormFieldBase {
+  type: 'number'
+  placeholder?: string
+  default_value?: number
+  min?: number
+  max?: number
+  step?: number
+}
+
+export interface WPFormTextareaField extends WPFormFieldBase {
+  type: 'textarea'
+  placeholder?: string
+  default_value?: string
+  rows?: number
+}
+
+export interface WPFormChoiceField extends WPFormFieldBase {
+  type: 'select' | 'radio'
+  placeholder?: string
+  options: WPFormFieldOption[]
+  default_value?: string
+}
+
+export interface WPFormCheckboxField extends WPFormFieldBase {
+  type: 'checkbox'
+  checkbox_label?: string
+  default_value?: boolean
+}
+
+export type WPFormField =
+  | WPFormTextLikeField
+  | WPFormNumberField
+  | WPFormTextareaField
+  | WPFormChoiceField
+  | WPFormCheckboxField
+
+export interface FormBlock extends BlockStyleOptions {
+  acf_fc_layout: 'form_block'
+  form_id: string
+  heading?: string
+  heading_tag?: FormHeadingTag
+  heading_align?: FormHeadingAlign
+  intro?: string
+  submit_text?: string
+  submit_alignment?: FormSubmitAlignment
+  success_message?: string
+  email_subject?: string
+  email_to?: string
+  fields: WPFormField[]
+}
+
 // ─── Shared Button sub-field ─────────────────────────────────────────────────
 
 export interface WPButton {
@@ -344,6 +433,7 @@ export type ContentBlock =
   | GalleryCategoriesBlock
   | GalleriesBlock
   | ImageBlock
+  | FormBlock
   | ButtonGroupBlock
   | TextGridBlock
   | InstagramFeedBlock

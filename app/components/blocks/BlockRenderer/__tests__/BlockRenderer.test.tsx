@@ -13,6 +13,7 @@ const {
   servicesBlock,
   pillarBlock,
   faqBlock,
+  formBlock,
   pricingBlock,
   galleryCategoriesBlock,
   galleriesBlock,
@@ -71,6 +72,13 @@ describe('BlockRenderer', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Do you travel?')).toBeInTheDocument()
     expect(screen.getByText('Yes, throughout Sydney and beyond.')).toBeInTheDocument()
+  })
+
+  it('renders a form_block', () => {
+    renderBlocks([formBlock])
+    expect(screen.getByRole('heading', { name: 'Get in touch', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /send message/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/^Name/i)).toBeInTheDocument()
   })
 
   it('renders a pricing_packages block', () => {
