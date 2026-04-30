@@ -3,52 +3,75 @@
  *
  * Why this exists:
  * The TinyMCE WYSIWYG in WP admin produces `<p>` and `<br>` tags as you type,
- * but the value reaching the React front-end can arrive as plain text with
- * raw newlines (e.g. when an ACF wysiwyg field is exposed via REST without
- * `wpautop` applied, or when content is imported / pasted as plain text).
- *
- * Without this helper, `dangerouslySetInnerHTML` collapses `\n` characters
- * to a single space, so multi-paragraph text renders as one continuous
- * sentence even though it looked correct while editing.
+ * but the value reaching the React front-end can arrive as a mix of block-level
+ * HTML (`<h1>`, `<h2>`, …) and "loose" text separated by blank lines, with no
+ * `<p>` wrapping around the loose text. `dangerouslySetInnerHTML` then
+ * collapses the newlines into spaces, producing one continuous sentence even
+ * though the editor showed proper paragraphs.
  *
  * Behaviour matches WordPress:
- *   - Two or more consecutive newlines  → new <p>…</p>
- *   - A single newline inside a block   → <br />
- *   - Content already containing block-level HTML is left untouched.
+ *   - Two or more consecutive newlines  → paragraph break
+ *   - A single newline inside a chunk   → <br />
+ *   - Chunks that already start with a block-level tag are emitted as-is
+ *     (so `<h2>…</h2>`, `<p>…</p>`, lists, blockquotes etc. are never
+ *     wrapped in an extra `<p>`).
  */
 
-const BLOCK_LEVEL_TAG = /<\/?(?:address|article|aside|blockquote|canvas|dd|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|nav|noscript|ol|output|p|pre|section|table|tbody|td|tfoot|th|thead|tr|ul|video)\b/i
+// Tags that should never be wrapped in an enclosing <p>. Mirrors the list
+// WordPress uses inside wpautop().
+const BLOCK_LEVEL_TAGS = [
+  'address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div', 'dl',
+  'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2',
+  'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'iframe', 'li', 'main', 'nav',
+  'noscript', 'ol', 'output', 'p', 'pre', 'section', 'table', 'tbody', 'td',
+  'tfoot', 'th', 'thead', 'tr', 'ul', 'video',
+]
+
+const BLOCK_TAG_GROUP = BLOCK_LEVEL_TAGS.join('|')
 
 /**
- * Returns true when the given HTML already contains at least one block-level
- * element. We treat such content as "already formatted" and skip auto-paragraph
- * processing to avoid double-wrapping.
+ * Matches any opening or closing block-level tag at the start of a chunk
+ * (allowing leading whitespace). Used to decide whether a blank-line-separated
+ * chunk should be wrapped in `<p>…</p>`.
  */
-const hasBlockLevelHtml = (html: string): boolean => BLOCK_LEVEL_TAG.test(html)
+const STARTS_WITH_BLOCK_TAG = new RegExp(`^\\s*<\\s*\\/?\\s*(?:${BLOCK_TAG_GROUP})\\b`, 'i')
 
 /**
  * Apply WordPress-compatible auto-paragraph rules to the given string.
  *
- * - Idempotent on already-wrapped HTML (returns input unchanged).
- * - Trims leading/trailing whitespace from the final result.
+ * - Loose text between blank lines is wrapped in `<p>`.
+ * - Single newlines inside a wrapped chunk become `<br />`.
+ * - Chunks starting with a block-level element are passed through untouched.
+ * - Idempotent for content that is already fully wrapped in block elements.
  */
 export const autoParagraph = (input: string): string => {
   if (!input) return ''
 
   // Normalise line endings so \r\n and \r behave like \n.
-  const normalised = input.replace(/\r\n?/g, '\n')
+  const normalised = input
+    .replace(/\r\n?/g, '\n')
+    // Treat &nbsp; on its own line as an empty separator (the classic editor
+    // produces these when the user presses Enter on an empty line).
+    .replace(/^\s*&nbsp;\s*$/gm, '')
 
-  // If the content already has any block-level HTML, trust the source.
-  if (hasBlockLevelHtml(normalised)) {
-    return normalised
+  // Split into chunks on blank lines.
+  const chunks = normalised.split(/\n{2,}/)
+
+  const out: string[] = []
+  for (const raw of chunks) {
+    const chunk = raw.trim()
+    if (!chunk) continue
+
+    if (STARTS_WITH_BLOCK_TAG.test(chunk)) {
+      // Already a block-level element (or starts with one) — leave alone.
+      out.push(chunk)
+    } else {
+      // Loose text/inline content — wrap in <p> and convert single newlines
+      // to <br />.
+      const withBreaks = chunk.replace(/\n/g, '<br />')
+      out.push(`<p>${withBreaks}</p>`)
+    }
   }
 
-  // Split into paragraphs on blank lines, then convert single newlines to <br />.
-  const paragraphs = normalised
-    .split(/\n{2,}/)
-    .map((para) => para.trim())
-    .filter((para) => para.length > 0)
-    .map((para) => `<p>${para.replace(/\n/g, '<br />')}</p>`)
-
-  return paragraphs.join('\n')
+  return out.join('\n')
 }

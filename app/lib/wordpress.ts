@@ -26,6 +26,7 @@
  *  See app/types/wordpress.ts for the full field schema.
  */
 
+import { decodeHtmlEntities } from '~/lib/html'
 import type {
   BlogPostsData,
   ContentBlock,
@@ -337,9 +338,23 @@ export async function getGalleryPhotos(): Promise<WPGalleryPhoto[]> {
  * Fetch a navigation menu by its registered theme location.
  * Returns a nested tree structure suitable for rendering with dropdown support.
  * Falls back to an empty array when WordPress is unavailable.
+ *
+ * Menu item titles are decoded from HTML entities (e.g. `&amp;` → `&`,
+ * `&#038;` → `&`) so they render correctly in plain-text contexts like
+ * the navigation menu where React would otherwise display the raw entity.
  */
 export async function getNavMenu(location: string = 'primary'): Promise<WPMenuItem[]> {
-  return (await wpFetch<WPMenuItem[]>(`/sz/v1/nav-menu/${encodeURIComponent(location)}`)) ?? []
+  const items = (await wpFetch<WPMenuItem[]>(`/sz/v1/nav-menu/${encodeURIComponent(location)}`)) ?? []
+  return decodeMenuTitles(items)
+}
+
+/** Recursively decode HTML entities in menu item titles. */
+function decodeMenuTitles(items: WPMenuItem[]): WPMenuItem[] {
+  return items.map((item) => ({
+    ...item,
+    title: typeof item.title === 'string' ? decodeHtmlEntities(item.title) : item.title,
+    children: Array.isArray(item.children) ? decodeMenuTitles(item.children) : item.children,
+  }))
 }
 
 /**

@@ -45,9 +45,22 @@ describe('autoParagraph', () => {
     expect(autoParagraph(input)).toBe(input)
   })
 
-  it('does not auto-wrap when content contains a heading', () => {
-    const input = '<h2>Title</h2>\nIntro line'
+  it('does not wrap a heading in an extra paragraph', () => {
+    const input = '<h2>Title</h2>'
     expect(autoParagraph(input)).toBe(input)
+  })
+
+  it('wraps loose text that sits between block-level elements', () => {
+    const input =
+      '<h2>Title</h2>\n\nIntro paragraph one.\n\n<h2>Section</h2>\n\nBody paragraph with <strong>bold</strong>.'
+    expect(autoParagraph(input)).toBe(
+      '<h2>Title</h2>\n<p>Intro paragraph one.</p>\n<h2>Section</h2>\n<p>Body paragraph with <strong>bold</strong>.</p>',
+    )
+  })
+
+  it('strips a lone &nbsp; placeholder line between blocks', () => {
+    const input = '<h2>Title</h2>\n&nbsp;\n\nIntro paragraph.'
+    expect(autoParagraph(input)).toBe('<h2>Title</h2>\n<p>Intro paragraph.</p>')
   })
 
   it('still wraps when only inline tags are present', () => {
