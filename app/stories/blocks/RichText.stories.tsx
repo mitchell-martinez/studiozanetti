@@ -25,3 +25,23 @@ export const Default: Story = {}
 export const ParagraphOnly: Story = {
   args: { html: '<p>A single paragraph of body text without any formatting.</p>' },
 }
+
+/**
+ * Plain text with double newlines (e.g. WYSIWYG content that arrived without
+ * `wpautop` applied) is auto-wrapped into paragraphs by `RichText`.
+ */
+export const PlainTextNewlines: Story = {
+  args: {
+    html: 'First paragraph typed in the editor.\n\nSecond paragraph after pressing Enter.\n\nThird paragraph for good measure.',
+  },
+}
+
+/**
+ * Single newlines inside a paragraph (Shift+Enter in the editor) become real
+ * `<br />` line breaks rather than collapsed whitespace.
+ */
+export const PlainTextLineBreaks: Story = {
+  args: {
+    html: 'Line one of the address\nLine two of the address\nLine three of the address',
+  },
+}

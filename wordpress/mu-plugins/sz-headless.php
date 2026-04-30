@@ -801,6 +801,36 @@ add_filter( 'tiny_mce_before_init', function ( $settings ) {
 	return $settings;
 } );
 
+/**
+ * Defensive safety net for ACF WYSIWYG values returned via REST.
+ *
+ * The TinyMCE editor stores HTML containing `<p>` and `<br>` tags, and ACF's
+ * own format_value normally runs `apply_filters( 'the_content', … )` (which
+ * includes `wpautop`). However, in some edge cases — content imported as
+ * plain text, third-party REST consumers requesting unformatted values, or
+ * fields whose stored value lost its paragraph wrapping — the React front-end
+ * receives raw text with literal newline characters. Browsers collapse those
+ * newlines to a single space, so multi-paragraph content renders as one long
+ * sentence.
+ *
+ * This filter guarantees that any wysiwyg value reaching the REST API is run
+ * through `wpautop` so the front-end always receives proper paragraph and
+ * line-break markup. It is idempotent on already-wrapped HTML.
+ */
+add_filter( 'acf/format_value/type=wysiwyg', function ( $value ) {
+	if ( ! is_string( $value ) || $value === '' ) {
+		return $value;
+	}
+
+	// Avoid double-wrapping: if the value already starts with a block-level
+	// tag, wpautop is effectively a no-op but skipping it also saves work.
+	if ( ! preg_match( '/<\\s*(p|div|h[1-6]|ul|ol|blockquote|pre|table|figure|section|article)\\b/i', $value ) ) {
+		$value = wpautop( $value );
+	}
+
+	return $value;
+}, 20 );
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 7. LIVE PREVIEW PANEL IN PAGE EDITOR
 // ─────────────────────────────────────────────────────────────────────────────

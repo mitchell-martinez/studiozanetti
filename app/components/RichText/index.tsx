@@ -1,4 +1,5 @@
 /** Renders trusted WordPress HTML content (WYSIWYG field or content.rendered). */
+import { autoParagraph } from './helpers/autoParagraph'
 import styles from './RichText.module.scss'
 
 type FontSize = 'sm' | 'md' | 'lg'
@@ -18,7 +19,7 @@ const sizeClass: Record<FontSize, string> = {
 const RichText = ({ html, fontSize = 'sm' }: RichTextProps) => (
   <div
     className={`${styles.richText} ${sizeClass[fontSize]}`}
-    dangerouslySetInnerHTML={{ __html: html }}
+    dangerouslySetInnerHTML={{ __html: autoParagraph(html ?? '') }}
   />
 )
 
