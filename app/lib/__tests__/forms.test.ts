@@ -175,4 +175,42 @@ describe('checkbox group validation and email output', () => {
     expect(text).toContain('  - Weddings: True')
     expect(text).toContain('  - Corporate: False')
   })
+
+  it('decodes HTML entities in the page title line of plain-text emails', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Name',
+          type: 'text' as const,
+          required: true,
+        },
+      ],
+      email_to: 'hello@studiozanetti.com.au',
+      email_subject: 'Website enquiry',
+    }
+
+    const validated = validateFormSubmission(form as never, {
+      name: 'Mitchell',
+    })
+
+    const text = buildFormSubmissionEmailText(
+      {
+        page: {
+          ...mockPage,
+          title: { rendered: 'Events &#038; Awards' },
+        } as never,
+        normalizedPagePath: 'get-in-touch',
+        form: form as never,
+        emailTo: 'hello@studiozanetti.com.au',
+        emailSubject: 'Website enquiry',
+      },
+      validated,
+    )
+
+    expect(text).toContain('Page title: Events & Awards')
+  })
 })

@@ -1,4 +1,5 @@
 import type { ContentBlock, WPPage, WPPost } from '~/types/wordpress'
+import { decodeHtmlEntities } from '~/lib/html'
 
 const FALLBACK_SITE_URL = 'https://www.studiozanetti.com.au'
 
@@ -25,8 +26,10 @@ export function toCanonicalUrl(pathname: string): string {
 
 function plainText(html: string | undefined): string {
   if (!html) return ''
-  return html
-    .replace(/<[^>]+>/g, ' ')
+
+  const withoutTags = html.replace(/<[^>]+>/g, ' ')
+
+  return decodeHtmlEntities(withoutTags)
     .replace(/\s+/g, ' ')
     .trim()
 }
@@ -154,8 +157,8 @@ export function buildPageSchemas(
   pathname = '/',
 ): Record<string, unknown>[] {
   const description =
-    page.yoast_head_json?.description ??
-    plainText(page.excerpt.rendered) ??
+    plainText(page.yoast_head_json?.description) ||
+    plainText(page.excerpt.rendered) ||
     plainText(page.content.rendered)
   const pageTitle = plainText(page.title.rendered)
 
@@ -200,8 +203,7 @@ export function buildPostSchemas(
   pathname: string,
 ): Record<string, unknown>[] {
   const postTitle = plainText(post.title.rendered)
-  const description =
-    post.yoast_head_json?.description ?? plainText(post.excerpt.rendered)
+  const description = plainText(post.yoast_head_json?.description) || plainText(post.excerpt.rendered)
 
   const blogPosting: Record<string, unknown> = {
     '@context': 'https://schema.org',

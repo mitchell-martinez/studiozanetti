@@ -77,4 +77,27 @@ describe('seo helpers', () => {
     expect(list).toHaveLength(1)
     expect(list[0].name).toBe('Home')
   })
+
+  it('decodes HTML entities in schema and breadcrumb titles', () => {
+    const pageWithEntities = {
+      ...mockPage,
+      title: { rendered: 'Events &#038; Awards' },
+    }
+
+    const schemas = buildPageSchemas(
+      pageWithEntities,
+      'https://test.example.com/events-and-awards',
+      '/events-and-awards',
+    )
+
+    const webpage = schemas.find((schema) => schema['@type'] === 'WebPage') as {
+      name: string
+    }
+    const breadcrumb = schemas.find((schema) => schema['@type'] === 'BreadcrumbList') as {
+      itemListElement: Array<{ name: string }>
+    }
+
+    expect(webpage.name).toBe('Events & Awards')
+    expect(breadcrumb.itemListElement[1]?.name).toBe('Events & Awards')
+  })
 })

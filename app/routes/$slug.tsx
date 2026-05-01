@@ -95,8 +95,9 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const { post, canonicalUrl } = data
     const yoast = post.yoast_head_json
     const title = stripHtml(post.title.rendered)
+    const yoastTitle = yoast?.title ? stripHtml(yoast.title) : ''
     const metaDescription =
-      yoast?.description ??
+      (yoast?.description ? stripHtml(yoast.description) : '') ||
       stripHtml(post.excerpt.rendered).slice(0, 160)
     const pathname = (() => {
       try {
@@ -108,11 +109,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const schemas = buildPostSchemas(post, canonicalUrl, pathname)
 
     return [
-      { title: yoast?.title ?? `${title} | Studio Zanetti` },
+      { title: yoastTitle || `${title} | Studio Zanetti` },
       { name: 'description', content: metaDescription },
       { name: 'robots', content: 'index, follow, max-image-preview:large' },
       { property: 'og:type', content: 'article' },
-      { property: 'og:title', content: yoast?.title ?? title },
+      { property: 'og:title', content: yoastTitle || title },
       { property: 'og:description', content: metaDescription },
       { property: 'og:url', content: canonicalUrl },
       ...(post.featured_image?.url
@@ -120,7 +121,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
         : yoast?.og_image?.[0]
           ? [{ property: 'og:image', content: yoast.og_image[0].url }]
           : []),
-      { name: 'twitter:title', content: yoast?.title ?? title },
+      { name: 'twitter:title', content: yoastTitle || title },
       { name: 'twitter:description', content: metaDescription },
       { name: 'twitter:card', content: 'summary_large_image' },
       { property: 'article:published_time', content: post.date },
@@ -136,7 +137,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
   const { page, canonicalUrl } = data
   const yoast = page.yoast_head_json
-  const metaDescription = yoast?.description ?? `${page.title.rendered} | Studio Zanetti`
+  const pageTitle = stripHtml(page.title.rendered)
+  const yoastTitle = yoast?.title ? stripHtml(yoast.title) : ''
+  const metaDescription =
+    (yoast?.description ? stripHtml(yoast.description) : '') || `${pageTitle} | Studio Zanetti`
   const pathname = (() => {
     try {
       return new URL(canonicalUrl).pathname || '/'
@@ -147,15 +151,15 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const schemas = buildPageSchemas(page, canonicalUrl, pathname)
 
   return [
-    { title: yoast?.title ?? `${page.title.rendered} | Studio Zanetti` },
+    { title: yoastTitle || `${pageTitle} | Studio Zanetti` },
     { name: 'description', content: metaDescription },
     { name: 'robots', content: 'index, follow, max-image-preview:large' },
     { property: 'og:type', content: 'website' },
-    { property: 'og:title', content: yoast?.title ?? page.title.rendered },
+    { property: 'og:title', content: yoastTitle || pageTitle },
     { property: 'og:description', content: metaDescription },
     { property: 'og:url', content: canonicalUrl },
     ...(yoast?.og_image?.[0] ? [{ property: 'og:image', content: yoast.og_image[0].url }] : []),
-    { name: 'twitter:title', content: yoast?.title ?? page.title.rendered },
+    { name: 'twitter:title', content: yoastTitle || pageTitle },
     { name: 'twitter:description', content: metaDescription },
     { name: 'twitter:card', content: 'summary_large_image' },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
@@ -199,10 +203,7 @@ const CmsPage = () => {
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
-        <h1
-          className={styles.pageTitle}
-          dangerouslySetInnerHTML={{ __html: page.title.rendered }}
-        />
+        <h1 className={styles.pageTitle}>{stripHtml(page.title.rendered)}</h1>
       </header>
       <div className={styles.pageContent}>
         <RichText html={page.content.rendered} />

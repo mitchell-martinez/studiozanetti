@@ -200,7 +200,9 @@ function normalizePage(page: RawWPPage): WPPage {
   const featured_image = featuredMedia?.source_url
     ? {
         url: featuredMedia.source_url,
-        alt: featuredMedia.alt_text || page.title.rendered,
+        alt:
+          featuredMedia.alt_text ||
+          decodeHtmlEntities(page.title.rendered.replace(/<[^>]+>/g, '')).trim(),
         width: featuredMedia.media_details?.width,
         height: featuredMedia.media_details?.height,
       }

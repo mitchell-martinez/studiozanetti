@@ -3,6 +3,7 @@ import { useLoaderData } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
 import RichText from '~/components/RichText'
 import { stripSensitiveFormBlockData } from '~/lib/forms'
+import { stripHtml } from '~/lib/html'
 import { getPostsByCategories, getPreviewPage } from '~/lib/wordpress'
 import type { BlogPostsData, WPPage } from '~/types/wordpress'
 import styles from './preview.module.scss'
@@ -51,8 +52,9 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<PreviewLo
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data) return [{ title: 'Preview | Studio Zanetti' }]
+  const pageTitle = stripHtml(data.page.title.rendered)
   return [
-    { title: `Preview: ${data.page.title.rendered} | Studio Zanetti` },
+    { title: `Preview: ${pageTitle} | Studio Zanetti` },
     { name: 'robots', content: 'noindex, nofollow' },
   ]
 }
@@ -79,10 +81,7 @@ const PreviewPage = () => {
       ) : (
         <div className={styles.page}>
           <header className={styles.pageHeader}>
-            <h1
-              className={styles.pageTitle}
-              dangerouslySetInnerHTML={{ __html: page.title.rendered }}
-            />
+            <h1 className={styles.pageTitle}>{stripHtml(page.title.rendered)}</h1>
           </header>
           <div className={styles.pageContent}>
             <RichText html={page.content.rendered} />

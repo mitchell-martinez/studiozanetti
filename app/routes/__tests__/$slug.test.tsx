@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import CmsPage, { loader } from '../$slug'
+import CmsPage, { loader, meta } from '../$slug'
 
 vi.mock('~/lib/wordpress', () => ({
   getPageBySlug: vi.fn(),
@@ -181,6 +181,32 @@ describe('CmsPage route', () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(containerPage as never)
       vi.mocked(getPostBySlug).mockResolvedValueOnce(null)
       await expect(loader(makeArgs('gallery') as never)).rejects.toBeInstanceOf(Response)
+    })
+  })
+
+  describe('meta', () => {
+    it('decodes HTML entities in page title metadata', () => {
+      const pageWithEntities = {
+        ...mockPage,
+        title: { rendered: 'Events &#038; Awards' },
+        yoast_head_json: undefined,
+      }
+
+      const entries = meta({
+        data: {
+          type: 'page',
+          page: pageWithEntities,
+          canonicalUrl: 'https://www.studiozanetti.com.au/events-and-awards',
+        },
+      } as never)
+
+      expect(entries).toEqual(
+        expect.arrayContaining([
+          { title: 'Events & Awards | Studio Zanetti' },
+          { property: 'og:title', content: 'Events & Awards' },
+          { name: 'twitter:title', content: 'Events & Awards' },
+        ]),
+      )
     })
   })
 })

@@ -1,4 +1,5 @@
 import { getPageByPath, getPageBySlug } from './wordpress'
+import { stripHtml } from './html'
 import type {
   ContentBlock,
   FormBlock,
@@ -298,7 +299,7 @@ export function buildFormSubmissionEmailText(
     '',
     `Page: ${pagePath}`,
     `Form ID: ${config.form.form_id}`,
-    `Page title: ${config.page.title.rendered}`,
+    `Page title: ${stripHtml(config.page.title.rendered)}`,
     '',
     'Submitted fields:',
     ...submittedFieldLines,
