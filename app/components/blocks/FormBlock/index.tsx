@@ -149,7 +149,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
 
       <div className={styles.inner}>
         {(block.heading || block.intro) && (
-          <header className={`${styles.header} ${headingAlignment}`.trim()}>
+          <header className={`${styles.header} ${headingAlignment} ${formAlignment}`.trim()}>
             {block.heading && <HeadingTag className={styles.heading}>{block.heading}</HeadingTag>}
             {block.intro && (
               <div className={styles.intro}>

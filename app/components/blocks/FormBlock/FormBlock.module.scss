@@ -15,6 +15,7 @@
 .header {
   display: grid;
   gap: 1rem;
+  width: min(100%, 46rem);
 }
 
 .alignLeft {
