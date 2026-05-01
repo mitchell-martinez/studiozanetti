@@ -14,6 +14,8 @@ import type { FormBlockProps } from './types'
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 
+const SUBMIT_ERROR_RESHOW_DELAY_MS = 80
+
 interface SubmitResponse {
   success?: boolean
   message?: string
@@ -69,7 +71,9 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const [honeypot, setHoneypot] = useState('')
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
-  const [message, setMessage] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null)
+  const [isSubmitErrorVisible, setIsSubmitErrorVisible] = useState(false)
 
   if (!block.fields?.length) return null
 
@@ -80,6 +84,16 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const submitAlignment =
     submitAlignClass[block.submit_alignment ?? 'left'] ?? styles.submitLeft
   const submitText = block.submit_text?.trim() || 'Send message'
+
+  const showSubmitError = (nextMessage: string) => {
+    setSubmitErrorMessage(nextMessage)
+
+    // Force a brief clear/re-show cycle when users submit again with errors,
+    // so the bottom error notice reads like a fresh response to the new click.
+    window.setTimeout(() => {
+      setIsSubmitErrorVisible(true)
+    }, SUBMIT_ERROR_RESHOW_DELAY_MS)
+  }
 
   const handleValueChange = (fieldId: string, value: ClientFormValue) => {
     setValues((currentValues) => ({ ...currentValues, [fieldId]: value }))
@@ -94,17 +108,24 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
+    if (submitState === 'submitting') {
+      return
+    }
+
+    setIsSubmitErrorVisible(false)
+    setSubmitErrorMessage(null)
+
     const nextErrors = validateClientFormValues(block.fields, values)
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors)
       setSubmitState('error')
-      setMessage('Please correct the highlighted fields and try again.')
+      showSubmitError('Please correct the highlighted fields and try again.')
       return
     }
 
     setSubmitState('submitting')
     setFieldErrors({})
-    setMessage(null)
+    setSuccessMessage(null)
 
     try {
       const response = await fetch('/api/forms/submit', {
@@ -122,18 +143,19 @@ const FormBlock = ({ block }: FormBlockProps) => {
       if (!response.ok) {
         setFieldErrors(payload.fieldErrors ?? {})
         setSubmitState('error')
-        setMessage(payload.error ?? 'We could not send your message right now. Please try again.')
+        showSubmitError(payload.error ?? 'We could not send your message right now. Please try again.')
         return
       }
 
       setValues(createInitialClientFormValues(block.fields))
       setHoneypot('')
+      setFieldErrors({})
       setSubmitState('success')
-      setMessage(payload.message ?? 'Thanks. Your message has been sent.')
+      setSuccessMessage(payload.message ?? 'Thanks. Your message has been sent.')
     } catch (error) {
       console.error('[FormBlock] submit failed', error)
       setSubmitState('error')
-      setMessage('We could not send your message right now. Please try again shortly.')
+      showSubmitError('We could not send your message right now. Please try again shortly.')
     }
   }
 
@@ -160,202 +182,210 @@ const FormBlock = ({ block }: FormBlockProps) => {
         )}
 
         <div className={`${styles.panel} ${formAlignment}`.trim()}>
-          {message && (
+          {submitState === 'success' && successMessage && (
             <div
-              className={`${styles.notice} ${submitState === 'success' ? styles.noticeSuccess : styles.noticeError}`.trim()}
-              role={submitState === 'success' ? 'status' : 'alert'}
+              className={`${styles.notice} ${styles.noticeTop} ${styles.noticeSuccess}`.trim()}
+              role="status"
             >
-              {message}
+              {successMessage}
             </div>
           )}
 
-          <form className={styles.form} onSubmit={handleSubmit} noValidate>
-            <div className={styles.honeypot} aria-hidden="true">
-              <label htmlFor={`${block.form_id}-website`}>Website</label>
-              <input
-                id={`${block.form_id}-website`}
-                name="website"
-                type="text"
-                tabIndex={-1}
-                autoComplete="off"
-                value={honeypot}
-                onChange={(event) => setHoneypot(event.currentTarget.value)}
-              />
-            </div>
+          {submitState !== 'success' && (
+            <form className={styles.form} onSubmit={handleSubmit} noValidate>
+              <div className={styles.honeypot} aria-hidden="true">
+                <label htmlFor={`${block.form_id}-website`}>Website</label>
+                <input
+                  id={`${block.form_id}-website`}
+                  name="website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(event) => setHoneypot(event.currentTarget.value)}
+                />
+              </div>
 
-            <fieldset className={styles.fieldset} disabled={submitState === 'submitting'}>
-              {block.fields.map((field) => {
-                const inputId = `${block.form_id}-${field.field_id}`
-                const helpId = field.help_text ? `${inputId}-help` : undefined
-                const errorId = fieldErrors[field.field_id] ? `${inputId}-error` : undefined
-                const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined
-                const rawValue = values[field.field_id]
-                const stringValue = typeof rawValue === 'string' ? rawValue : ''
-                const hasError = Boolean(fieldErrors[field.field_id])
+              <fieldset className={styles.fieldset} disabled={submitState === 'submitting'}>
+                {block.fields.map((field) => {
+                  const inputId = `${block.form_id}-${field.field_id}`
+                  const helpId = field.help_text ? `${inputId}-help` : undefined
+                  const errorId = fieldErrors[field.field_id] ? `${inputId}-error` : undefined
+                  const describedBy = [helpId, errorId].filter(Boolean).join(' ') || undefined
+                  const rawValue = values[field.field_id]
+                  const stringValue = typeof rawValue === 'string' ? rawValue : ''
+                  const hasError = Boolean(fieldErrors[field.field_id])
 
-                if (field.type === 'radio') {
+                  if (field.type === 'radio') {
+                    return (
+                      <fieldset key={field.field_id} className={styles.fieldGroup}>
+                        <legend className={styles.legend}>
+                          {field.label}
+                          {field.required && <span className={styles.required}> *</span>}
+                        </legend>
+                        {field.help_text && (
+                          <p id={helpId} className={styles.helpText}>
+                            {field.help_text}
+                          </p>
+                        )}
+                        <div className={styles.choiceGroup} role="radiogroup" aria-describedby={describedBy}>
+                          {field.options.map((option) => (
+                            <label key={option.value} className={styles.choiceLabel}>
+                              <input
+                                type="radio"
+                                name={field.field_id}
+                                value={option.value}
+                                checked={stringValue === option.value}
+                                onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
+                                aria-invalid={hasError}
+                              />
+                              <span>{option.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {fieldErrors[field.field_id] && (
+                          <p id={errorId} className={styles.errorText}>
+                            {fieldErrors[field.field_id]}
+                          </p>
+                        )}
+                      </fieldset>
+                    )
+                  }
+
+                  if (field.type === 'checkbox') {
+                    const checkboxOptions = getCheckboxOptions(field)
+                    const selectedValues =
+                      Array.isArray(rawValue)
+                        ? rawValue.filter((value): value is string => typeof value === 'string')
+                        : []
+
+                    return (
+                      <fieldset key={field.field_id} className={styles.fieldGroup}>
+                        <legend className={styles.legend}>
+                          {field.label}
+                          {field.required && <span className={styles.required}> *</span>}
+                        </legend>
+                        {field.help_text && (
+                          <p id={helpId} className={styles.helpText}>
+                            {field.help_text}
+                          </p>
+                        )}
+                        <div className={styles.choiceGroup} role="group" aria-describedby={describedBy}>
+                          {checkboxOptions.map((option) => (
+                            <label key={option.value} className={styles.choiceLabel}>
+                              <input
+                                id={`${inputId}-${option.value}`}
+                                name={`${field.field_id}[]`}
+                                type="checkbox"
+                                value={option.value}
+                                checked={selectedValues.includes(option.value)}
+                                onChange={(event) => {
+                                  const nextSelection = event.currentTarget.checked
+                                    ? Array.from(new Set([...selectedValues, option.value]))
+                                    : selectedValues.filter((value) => value !== option.value)
+                                  handleValueChange(field.field_id, nextSelection)
+                                }}
+                                aria-invalid={hasError}
+                              />
+                              <span>{option.label}</span>
+                            </label>
+                          ))}
+                        </div>
+                        {fieldErrors[field.field_id] && (
+                          <p id={errorId} className={styles.errorText}>
+                            {fieldErrors[field.field_id]}
+                          </p>
+                        )}
+                      </fieldset>
+                    )
+                  }
+
                   return (
-                    <fieldset key={field.field_id} className={styles.fieldGroup}>
-                      <legend className={styles.legend}>
+                    <div key={field.field_id} className={styles.fieldGroup}>
+                      <label htmlFor={inputId} className={styles.label}>
                         {field.label}
                         {field.required && <span className={styles.required}> *</span>}
-                      </legend>
+                      </label>
                       {field.help_text && (
                         <p id={helpId} className={styles.helpText}>
                           {field.help_text}
                         </p>
                       )}
-                      <div className={styles.choiceGroup} role="radiogroup" aria-describedby={describedBy}>
-                        {field.options.map((option) => (
-                          <label key={option.value} className={styles.choiceLabel}>
-                            <input
-                              type="radio"
-                              name={field.field_id}
-                              value={option.value}
-                              checked={stringValue === option.value}
-                              onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
-                              aria-invalid={hasError}
-                            />
-                            <span>{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
+
+                      {field.type === 'textarea' ? (
+                        <textarea
+                          id={inputId}
+                          name={field.field_id}
+                          className={`${styles.input} ${styles.textarea}`.trim()}
+                          placeholder={field.placeholder}
+                          rows={field.rows ?? 5}
+                          value={stringValue}
+                          onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
+                          aria-invalid={hasError}
+                          aria-describedby={describedBy}
+                        />
+                      ) : field.type === 'select' ? (
+                        <select
+                          id={inputId}
+                          name={field.field_id}
+                          className={`${styles.input} ${styles.select}`.trim()}
+                          value={stringValue}
+                          onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
+                          aria-invalid={hasError}
+                          aria-describedby={describedBy}
+                        >
+                          <option value="">{field.placeholder || 'Select an option'}</option>
+                          {field.options.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          id={inputId}
+                          name={field.field_id}
+                          className={styles.input}
+                          type={field.type}
+                          placeholder={field.placeholder}
+                          value={stringValue}
+                          autoComplete={field.type === 'text' || field.type === 'email' || field.type === 'tel' ? field.autocomplete : undefined}
+                          min={field.type === 'number' && typeof field.min === 'number' ? field.min : undefined}
+                          max={field.type === 'number' && typeof field.max === 'number' ? field.max : undefined}
+                          step={field.type === 'number' && typeof field.step === 'number' ? field.step : undefined}
+                          onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
+                          aria-invalid={hasError}
+                          aria-describedby={describedBy}
+                        />
+                      )}
+
                       {fieldErrors[field.field_id] && (
                         <p id={errorId} className={styles.errorText}>
                           {fieldErrors[field.field_id]}
                         </p>
                       )}
-                    </fieldset>
+                    </div>
                   )
-                }
+                })}
+              </fieldset>
 
-                if (field.type === 'checkbox') {
-                  const checkboxOptions = getCheckboxOptions(field)
-                  const selectedValues =
-                    Array.isArray(rawValue)
-                      ? rawValue.filter((value): value is string => typeof value === 'string')
-                      : []
+              <div className={`${styles.submitRow} ${submitAlignment}`.trim()}>
+                <button
+                  type="submit"
+                  className={styles.submitButton}
+                  disabled={submitState === 'submitting'}
+                >
+                  {submitState === 'submitting' ? 'Sending…' : submitText}
+                </button>
+              </div>
 
-                  return (
-                    <fieldset key={field.field_id} className={styles.fieldGroup}>
-                      <legend className={styles.legend}>
-                        {field.label}
-                        {field.required && <span className={styles.required}> *</span>}
-                      </legend>
-                      {field.help_text && (
-                        <p id={helpId} className={styles.helpText}>
-                          {field.help_text}
-                        </p>
-                      )}
-                      <div className={styles.choiceGroup} role="group" aria-describedby={describedBy}>
-                        {checkboxOptions.map((option) => (
-                          <label key={option.value} className={styles.choiceLabel}>
-                            <input
-                              id={`${inputId}-${option.value}`}
-                              name={`${field.field_id}[]`}
-                              type="checkbox"
-                              value={option.value}
-                              checked={selectedValues.includes(option.value)}
-                              onChange={(event) => {
-                                const nextSelection = event.currentTarget.checked
-                                  ? Array.from(new Set([...selectedValues, option.value]))
-                                  : selectedValues.filter((value) => value !== option.value)
-                                handleValueChange(field.field_id, nextSelection)
-                              }}
-                              aria-invalid={hasError}
-                            />
-                            <span>{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                      {fieldErrors[field.field_id] && (
-                        <p id={errorId} className={styles.errorText}>
-                          {fieldErrors[field.field_id]}
-                        </p>
-                      )}
-                    </fieldset>
-                  )
-                }
-
-                return (
-                  <div key={field.field_id} className={styles.fieldGroup}>
-                    <label htmlFor={inputId} className={styles.label}>
-                      {field.label}
-                      {field.required && <span className={styles.required}> *</span>}
-                    </label>
-                    {field.help_text && (
-                      <p id={helpId} className={styles.helpText}>
-                        {field.help_text}
-                      </p>
-                    )}
-
-                    {field.type === 'textarea' ? (
-                      <textarea
-                        id={inputId}
-                        name={field.field_id}
-                        className={`${styles.input} ${styles.textarea}`.trim()}
-                        placeholder={field.placeholder}
-                        rows={field.rows ?? 5}
-                        value={stringValue}
-                        onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
-                        aria-invalid={hasError}
-                        aria-describedby={describedBy}
-                      />
-                    ) : field.type === 'select' ? (
-                      <select
-                        id={inputId}
-                        name={field.field_id}
-                        className={`${styles.input} ${styles.select}`.trim()}
-                        value={stringValue}
-                        onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
-                        aria-invalid={hasError}
-                        aria-describedby={describedBy}
-                      >
-                        <option value="">{field.placeholder || 'Select an option'}</option>
-                        {field.options.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        id={inputId}
-                        name={field.field_id}
-                        className={styles.input}
-                        type={field.type}
-                        placeholder={field.placeholder}
-                        value={stringValue}
-                        autoComplete={field.type === 'text' || field.type === 'email' || field.type === 'tel' ? field.autocomplete : undefined}
-                        min={field.type === 'number' && typeof field.min === 'number' ? field.min : undefined}
-                        max={field.type === 'number' && typeof field.max === 'number' ? field.max : undefined}
-                        step={field.type === 'number' && typeof field.step === 'number' ? field.step : undefined}
-                        onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
-                        aria-invalid={hasError}
-                        aria-describedby={describedBy}
-                      />
-                    )}
-
-                    {fieldErrors[field.field_id] && (
-                      <p id={errorId} className={styles.errorText}>
-                        {fieldErrors[field.field_id]}
-                      </p>
-                    )}
-                  </div>
-                )
-              })}
-            </fieldset>
-
-            <div className={`${styles.submitRow} ${submitAlignment}`.trim()}>
-              <button
-                type="submit"
-                className={styles.submitButton}
-                disabled={submitState === 'submitting'}
-              >
-                {submitState === 'submitting' ? 'Sending…' : submitText}
-              </button>
-            </div>
-          </form>
+              {isSubmitErrorVisible && submitErrorMessage && (
+                <div className={`${styles.notice} ${styles.noticeBottom} ${styles.noticeError}`.trim()} role="alert">
+                  {submitErrorMessage}
+                </div>
+              )}
+            </form>
+          )}
         </div>
       </div>
     </section>

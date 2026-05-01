@@ -10,6 +10,7 @@ const mockFetch = vi.fn()
 const baseBlock = formBlockData as unknown as FormBlockType
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.unstubAllGlobals()
   vi.clearAllMocks()
 })
@@ -45,10 +46,34 @@ describe('FormBlock', () => {
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
     expect(await screen.findByText('Name is required.')).toBeInTheDocument()
+    const genericError = await screen.findByText('Please correct the highlighted fields and try again.')
+    expect(genericError.closest('form')).toBeInTheDocument()
     expect(mockFetch).not.toHaveBeenCalled()
   })
 
-  it('submits only pagePath, formId, honeypot, and values', async () => {
+  it('disables and greys out submit button while submitting', async () => {
+    vi.stubGlobal(
+      'fetch',
+      mockFetch.mockImplementation(
+        () => new Promise(() => {}),
+      ),
+    )
+    const user = userEvent.setup()
+
+    renderBlock()
+
+    await user.type(screen.getByLabelText(/^Name/i), 'Mitchell')
+    await user.type(screen.getByRole('textbox', { name: /^Email/i }), 'mitchell@example.com')
+    await user.click(screen.getByRole('radio', { name: /^Email$/i }))
+    await user.click(screen.getByLabelText(/I agree to be contacted/i))
+
+    await user.click(screen.getByRole('button', { name: /send message/i }))
+
+    const submittingButton = screen.getByRole('button', { name: /sending/i })
+    expect(submittingButton).toBeDisabled()
+  })
+
+  it('submits only pagePath, formId, honeypot, and values and hides fields on success', async () => {
     vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({ success: true, message: 'Thanks for getting in touch.' }),
@@ -86,6 +111,8 @@ describe('FormBlock', () => {
     expect(body).not.toHaveProperty('email_to')
     expect(body).not.toHaveProperty('email_subject')
     expect(await screen.findByText('Thanks for getting in touch.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /send message/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: /^Email/i })).not.toBeInTheDocument()
   })
 
   it('shows server-side field errors returned by the submit route', async () => {
@@ -108,5 +135,22 @@ describe('FormBlock', () => {
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
     expect(await screen.findByText('Email must be a valid email address.')).toBeInTheDocument()
+  })
+
+  it('clears and re-shows the generic submit error on repeated invalid submits', async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    const user = userEvent.setup()
+
+    renderBlock()
+
+    await user.click(screen.getByRole('button', { name: /send message/i }))
+
+    expect(await screen.findByText('Please correct the highlighted fields and try again.')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /send message/i }))
+
+    expect(screen.queryByText('Please correct the highlighted fields and try again.')).not.toBeInTheDocument()
+
+    expect(await screen.findByText('Please correct the highlighted fields and try again.')).toBeInTheDocument()
   })
 })
