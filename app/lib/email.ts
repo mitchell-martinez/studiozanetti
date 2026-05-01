@@ -21,6 +21,41 @@ const buildFromAddress = (email: string, name?: string): string => {
   return `${name.trim()} <${email}>`
 }
 
+const normalizeEhloName = (value?: string): string | undefined => {
+  const trimmedValue = value?.trim()
+
+  if (!trimmedValue) {
+    return undefined
+  }
+
+  const withoutProtocol = trimmedValue.replace(/^[a-z]+:\/\//i, '')
+  const hostname = withoutProtocol.split('/')[0]?.trim().replace(/:\d+$/, '')
+
+  if (!hostname || hostname.includes(' ')) {
+    return undefined
+  }
+
+  return hostname
+}
+
+const getEhloName = (fromEmail: string): string | undefined => {
+  const explicitName = normalizeEhloName(process.env.SMTP_HELO_NAME)
+
+  if (explicitName) {
+    return explicitName
+  }
+
+  const siteUrlName = normalizeEhloName(process.env.SITE_URL)
+
+  if (siteUrlName) {
+    return siteUrlName
+  }
+
+  const fromDomain = fromEmail.split('@')[1]?.trim()
+
+  return normalizeEhloName(fromDomain)
+}
+
 function getSmtpConfig(): SmtpConfig {
   const host = process.env.SMTP_HOST?.trim()
   const fromEmail = process.env.SMTP_FROM_EMAIL?.trim()
@@ -44,6 +79,12 @@ function getSmtpConfig(): SmtpConfig {
     host,
     port,
     secure,
+  }
+
+  const name = getEhloName(fromEmail)
+
+  if (name) {
+    transportOptions.name = name
   }
 
   if (user) {

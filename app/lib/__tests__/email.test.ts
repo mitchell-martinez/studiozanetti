@@ -32,6 +32,7 @@ describe('sendFormSubmissionEmail', () => {
     vi.stubEnv('SMTP_PASS', 'secret')
     vi.stubEnv('SMTP_FROM_EMAIL', 'noreply@example.com')
     vi.stubEnv('SMTP_FROM_NAME', 'Studio Zanetti')
+    vi.stubEnv('SITE_URL', 'https://www.studiozanetti.com.au')
 
     await sendFormSubmissionEmail({
       to: 'hello@example.com',
@@ -45,6 +46,7 @@ describe('sendFormSubmissionEmail', () => {
         host: 'smtp.example.com',
         port: 587,
         secure: false,
+        name: 'www.studiozanetti.com.au',
         auth: { user: 'mailer@example.com', pass: 'secret' },
       }),
     )
@@ -55,6 +57,28 @@ describe('sendFormSubmissionEmail', () => {
         subject: 'New message',
         text: 'Test body',
         replyTo: 'client@example.com',
+      }),
+    )
+  })
+
+  it('uses an explicit SMTP_HELO_NAME when provided', async () => {
+    vi.stubEnv('SMTP_HOST', 'smtp-relay.gmail.com')
+    vi.stubEnv('SMTP_PORT', '587')
+    vi.stubEnv('SMTP_FROM_EMAIL', 'michael@studiozanetti.com.au')
+    vi.stubEnv('SMTP_HELO_NAME', 'studiozanetti.com.au')
+
+    await sendFormSubmissionEmail({
+      to: 'hello@example.com',
+      subject: 'New message',
+      text: 'Test body',
+    })
+
+    expect(createTransport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        host: 'smtp-relay.gmail.com',
+        port: 587,
+        secure: false,
+        name: 'studiozanetti.com.au',
       }),
     )
   })
