@@ -769,15 +769,15 @@ function szNormalizeFormFieldsWithRequiredName( array $fields ): array {
 }
 
 /**
- * Show a default Name row in new form blocks.
+ * Ensure the required Name row is present when loading form rows in ACF.
  */
 add_filter( 'acf/load_value/key=field_sz_form_fields', 'szLoadDefaultRequiredFormNameRow', 20, 3 );
 function szLoadDefaultRequiredFormNameRow( $value ) {
-	if ( is_array( $value ) && ! empty( $value ) ) {
-		return $value;
+	if ( ! is_array( $value ) ) {
+		return [ szRequiredFormNameFieldRow() ];
 	}
 
-	return [ szRequiredFormNameFieldRow() ];
+	return szNormalizeFormFieldsWithRequiredName( $value );
 }
 
 /**
