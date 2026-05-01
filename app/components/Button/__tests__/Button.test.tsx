@@ -117,4 +117,9 @@ describe('Button', () => {
     wrap(<Button type="submit">Submit</Button>)
     expect(screen.getByRole('button')).toHaveAttribute('type', 'submit')
   })
+
+  it('supports disabled state for native button usage', () => {
+    wrap(<Button disabled>Disabled</Button>)
+    expect(screen.getByRole('button', { name: /disabled/i })).toBeDisabled()
+  })
 })

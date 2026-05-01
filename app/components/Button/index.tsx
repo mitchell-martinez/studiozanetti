@@ -38,6 +38,7 @@ const Button = ({
   className,
   ariaLabel,
   type = 'button',
+  disabled = false,
   onClick,
 }: ButtonProps) => {
   const cls = [
@@ -77,7 +78,13 @@ const Button = ({
 
   // No URL → native <button>
   return (
-    <button type={type} className={cls} aria-label={ariaLabel} onClick={onClick}>
+    <button
+      type={type}
+      className={cls}
+      aria-label={ariaLabel}
+      onClick={onClick}
+      disabled={disabled}
+    >
       {children}
     </button>
   )

@@ -24,6 +24,8 @@ export interface ButtonProps {
   ariaLabel?: string
   /** Native button type (ignored when href is set) */
   type?: 'button' | 'submit' | 'reset'
+  /** Disable native button interaction (ignored when href is set) */
+  disabled?: boolean
   /** Click handler (ignored when href is set) */
   onClick?: () => void
 }

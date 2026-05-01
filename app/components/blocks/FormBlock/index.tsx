@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router'
+import Button from '~/components/Button'
 import RichText from '~/components/RichText'
 import type { WPFormFieldOption } from '~/types/wordpress'
 import { getBackgroundImageStyle, getSectionStyle } from '../helpers/styleOptions'
@@ -373,13 +374,14 @@ const FormBlock = ({ block }: FormBlockProps) => {
               </fieldset>
 
               <div className={`${styles.submitRow} ${submitAlignment}`.trim()}>
-                <button
+                <Button
                   type="submit"
+                  variant="primary"
                   className={styles.submitButton}
                   disabled={submitState === 'submitting'}
                 >
                   {submitState === 'submitting' ? 'Sending…' : submitText}
-                </button>
+                </Button>
               </div>
 
               {isSubmitErrorVisible && submitErrorMessage && (
