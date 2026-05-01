@@ -260,7 +260,10 @@ const FormBlock = ({ block }: FormBlockProps) => {
                         : []
 
                     return (
-                      <fieldset key={field.field_id} className={styles.fieldGroup}>
+                      <fieldset
+                        key={field.field_id}
+                        className={`${styles.fieldGroup} ${styles.checkboxFieldset}`.trim()}
+                      >
                         <legend className={styles.legend}>
                           {field.label}
                           {field.required && <span className={styles.required}> *</span>}

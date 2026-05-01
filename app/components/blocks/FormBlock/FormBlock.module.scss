@@ -73,6 +73,13 @@
   gap: 0.45rem;
 }
 
+.checkboxFieldset {
+  border: 0;
+  margin: 0;
+  min-inline-size: 0;
+  padding: 0;
+}
+
 .label,
 .legend {
   font-weight: 600;

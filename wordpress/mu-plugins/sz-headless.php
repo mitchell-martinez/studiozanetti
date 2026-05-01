@@ -427,8 +427,18 @@ function sz_get_preview( WP_REST_Request $request ) {
 	$autosave = wp_get_post_autosave( $post_id );
 	$source   = $autosave ?: $post;
 
-	// Build a response matching the WPPage interface
-	$acf_data = function_exists( 'get_fields' ) ? get_fields( $source->ID ) : [];
+	// Build a response matching the WPPage interface.
+	// ACF values (especially repeater + WYSIWYG combinations like pricing packages)
+	// are often not persisted on autosave/revision posts, so fall back to the
+	// parent page ID when revision ACF is empty.
+	$acf_data = [];
+	if ( function_exists( 'get_fields' ) ) {
+		$acf_data = get_fields( $source->ID );
+
+		if ( ( $acf_data === false || empty( $acf_data ) ) && $source->ID !== $post_id ) {
+			$acf_data = get_fields( $post_id );
+		}
+	}
 
 	$response = [
 		'id'      => $post_id,
