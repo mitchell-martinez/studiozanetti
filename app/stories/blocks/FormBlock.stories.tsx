@@ -17,6 +17,7 @@ const meta: Meta<FormArgs> = {
     heading: formBlock.heading,
     heading_tag: formBlock.heading_tag,
     heading_align: formBlock.heading_align,
+    form_alignment: formBlock.form_alignment,
     intro: formBlock.intro,
     submit_text: formBlock.submit_text,
     submit_alignment: formBlock.submit_alignment,
@@ -40,6 +41,11 @@ const meta: Meta<FormArgs> = {
       control: 'inline-radio',
       options: ['left', 'center', 'right'],
       description: 'Heading and intro alignment',
+    },
+    form_alignment: {
+      control: 'inline-radio',
+      options: ['left', 'center'],
+      description: 'Alignment of the form panel within the block',
     },
     intro: { control: 'text', description: 'Rich-text intro content (HTML)' },
     submit_text: { control: 'text', description: 'Submit button label' },
@@ -69,6 +75,7 @@ export const Default: Story = {}
 export const CenteredHeading: Story = {
   args: {
     heading_align: 'center',
+    form_alignment: 'center',
     submit_alignment: 'center',
   },
 }

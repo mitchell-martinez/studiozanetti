@@ -9,6 +9,7 @@ Create configurable enquiry forms that send submissions from the React app over 
 | Form ID | Text | Required stable identifier used by the secure submit route. Keep it unique on each page. |
 | Heading | Text | Optional visible title above the form. |
 | Heading Alignment | Select | Left, centre, or right heading alignment. |
+| Form Alignment | Select | Left or centre alignment for the form panel within the page section. |
 | Heading Level | Select | Semantic tag from `h1` to `h6`. |
 | Intro | WYSIWYG | Optional intro copy above the fields. |
 | Submit Text | Text | Button label, for example `Send message`. |
@@ -41,6 +42,7 @@ Create configurable enquiry forms that send submissions from the React app over 
 - Choice fields should use short machine-safe values such as `email`, `phone`, or `wedding`.
 - For checkbox groups, each option is included in the email output as `Option Label: True/False`.
 - Use checkbox groups for consent toggles, preferences, and multi-select interests.
+- Use `Form Alignment` to center the entire form panel on the page when needed.
 
 ## SMTP Requirements
 

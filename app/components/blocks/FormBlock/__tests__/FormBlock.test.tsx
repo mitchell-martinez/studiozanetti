@@ -22,10 +22,16 @@ const renderBlock = (overrides: Partial<FormBlockType> = {}) =>
   )
 
 describe('FormBlock', () => {
-  it('renders the configured semantic heading and submit alignment', () => {
-    const { container } = renderBlock({ heading_tag: 'h3', submit_alignment: 'center' })
+  it('renders the configured semantic heading and form/submit alignment', () => {
+    const { container } = renderBlock({
+      heading_tag: 'h3',
+      form_alignment: 'center',
+      submit_alignment: 'center',
+    })
 
     expect(screen.getByRole('heading', { name: /let's plan your photography/i, level: 3 })).toBeInTheDocument()
+    const panel = container.querySelector('section > div > div:last-child') as HTMLElement
+    expect(panel.className).toMatch(/formAlignCenter/)
     const submitRow = container.querySelector('form > div:last-child') as HTMLElement
     expect(submitRow.className).toMatch(/submitCenter/)
   })

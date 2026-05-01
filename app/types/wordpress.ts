@@ -235,6 +235,7 @@ export interface ImageBlock {
 export type FormHeadingTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 export type FormHeadingAlign = 'left' | 'center' | 'right'
 export type FormSubmitAlignment = 'left' | 'center'
+export type FormAlignment = 'left' | 'center'
 export type FormFieldType =
   | 'text'
   | 'email'
@@ -311,6 +312,7 @@ export interface FormBlock extends BlockStyleOptions {
   heading?: string
   heading_tag?: FormHeadingTag
   heading_align?: FormHeadingAlign
+  form_alignment?: FormAlignment
   intro?: string
   submit_text?: string
   submit_alignment?: FormSubmitAlignment

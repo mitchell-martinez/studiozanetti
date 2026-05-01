@@ -27,6 +27,11 @@ const headingAlignClass: Record<string, string> = {
   right: styles.alignRight,
 }
 
+const formAlignClass: Record<string, string> = {
+  left: styles.formAlignLeft,
+  center: styles.formAlignCenter,
+}
+
 const submitAlignClass: Record<string, string> = {
   left: styles.submitLeft,
   center: styles.submitCenter,
@@ -71,6 +76,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const HeadingTag = block.heading_tag ?? 'h2'
   const backgroundImageStyle = getBackgroundImageStyle(block)
   const headingAlignment = headingAlignClass[block.heading_align ?? 'left'] ?? styles.alignLeft
+  const formAlignment = formAlignClass[block.form_alignment ?? 'left'] ?? styles.formAlignLeft
   const submitAlignment =
     submitAlignClass[block.submit_alignment ?? 'left'] ?? styles.submitLeft
   const submitText = block.submit_text?.trim() || 'Send message'
@@ -153,7 +159,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
           </header>
         )}
 
-        <div className={styles.panel}>
+        <div className={`${styles.panel} ${formAlignment}`.trim()}>
           {message && (
             <div
               className={`${styles.notice} ${submitState === 'success' ? styles.noticeSuccess : styles.noticeError}`.trim()}

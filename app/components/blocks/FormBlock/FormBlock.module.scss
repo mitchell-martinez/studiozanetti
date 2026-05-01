@@ -48,6 +48,14 @@
   backdrop-filter: blur(8px);
 }
 
+.formAlignLeft {
+  margin-inline: 0;
+}
+
+.formAlignCenter {
+  margin-inline: auto;
+}
+
 .form {
   display: grid;
   gap: 1.25rem;
