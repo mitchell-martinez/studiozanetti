@@ -236,6 +236,21 @@ export type FormHeadingTag = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 export type FormHeadingAlign = 'left' | 'center' | 'right'
 export type FormSubmitAlignment = 'left' | 'center'
 export type FormAlignment = 'left' | 'center'
+export type FormDeliveryTarget = 'email' | 'vsco' | 'both'
+export type VscoJobType =
+  | 'Bridal'
+  | 'Christening'
+  | 'Couple'
+  | 'Engagement'
+  | 'Engagement Party'
+  | 'Event'
+  | 'Family'
+  | 'Headshots'
+  | 'Holiday'
+  | 'Portraits'
+  | 'Studio'
+  | 'Trash The Dress'
+  | 'Wedding'
 export type FormFieldType =
   | 'text'
   | 'email'
@@ -260,6 +275,7 @@ interface WPFormFieldBase {
   type: FormFieldType
   help_text?: string
   required?: boolean
+  vsco_field_key?: string
 }
 
 export interface WPFormTextLikeField extends WPFormFieldBase {
@@ -317,8 +333,13 @@ export interface FormBlock extends BlockStyleOptions {
   submit_text?: string
   submit_alignment?: FormSubmitAlignment
   success_message?: string
+  delivery_target?: FormDeliveryTarget
   email_subject?: string
   email_to?: string
+  vsco_job_type?: VscoJobType
+  vsco_source?: string
+  vsco_brand?: string
+  vsco_send_email_notification?: boolean
   fields: WPFormField[]
 }
 

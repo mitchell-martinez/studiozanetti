@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from 'react-router'
 import { sendFormSubmissionEmail } from '~/lib/email'
 import {
+  buildVscoLeadSubmissionData,
   buildFormSubmissionEmailText,
   getFormSuccessMessage,
   getTrustedFormSubmissionConfig,
@@ -8,6 +9,7 @@ import {
   validateFormSubmission,
 } from '~/lib/forms'
 import { consumeRateLimit } from '~/lib/rateLimit'
+import { sendVscoLead } from '~/lib/vsco'
 
 const getClientIp = (request: Request): string => {
   const forwardedFor = request.headers.get('x-forwarded-for')
@@ -53,6 +55,11 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ error: 'Form configuration not found.' }, { status: 404 })
   }
 
+  const shouldSendEmail =
+    trustedConfig.deliveryTarget === 'email' || trustedConfig.deliveryTarget === 'both'
+  const shouldSendVsco =
+    trustedConfig.deliveryTarget === 'vsco' || trustedConfig.deliveryTarget === 'both'
+
   if (payload.honeypot?.trim()) {
     return Response.json({ success: true, message: getFormSuccessMessage(trustedConfig.form) })
   }
@@ -71,7 +78,7 @@ export async function action({ request }: ActionFunctionArgs) {
     )
   }
 
-  if (!trustedConfig.emailTo || !trustedConfig.emailSubject) {
+  if (shouldSendEmail && (!trustedConfig.emailTo || !trustedConfig.emailSubject)) {
     return Response.json({ error: 'Form email settings are incomplete.' }, { status: 422 })
   }
 
@@ -86,15 +93,42 @@ export async function action({ request }: ActionFunctionArgs) {
     )
   }
 
+  const submissionText = buildFormSubmissionEmailText(trustedConfig, validatedSubmission)
+
+  let vscoLeadData: Record<string, string> | null = null
+  if (shouldSendVsco) {
+    try {
+      vscoLeadData = buildVscoLeadSubmissionData(trustedConfig, validatedSubmission)
+    } catch (error) {
+      console.error('[forms.submit] invalid VSCO lead mapping', error)
+      return Response.json(
+        {
+          error:
+            'VSCO form settings are incomplete. Map FirstName and JobType in WordPress or set VSCO Job Type on the form block.',
+        },
+        { status: 422 },
+      )
+    }
+  }
+
   try {
-    await sendFormSubmissionEmail({
-      to: trustedConfig.emailTo,
-      subject: trustedConfig.emailSubject,
-      text: buildFormSubmissionEmailText(trustedConfig, validatedSubmission),
-      replyTo: validatedSubmission.replyTo,
-    })
+    if (shouldSendEmail) {
+      await sendFormSubmissionEmail({
+        to: trustedConfig.emailTo,
+        subject: trustedConfig.emailSubject,
+        text: submissionText,
+        replyTo: validatedSubmission.replyTo,
+      })
+    }
+
+    if (shouldSendVsco && vscoLeadData) {
+      await sendVscoLead({
+        fields: vscoLeadData,
+        sendEmailNotification: trustedConfig.vscoSendEmailNotification,
+      })
+    }
   } catch (error) {
-    console.error('[forms.submit] failed to send email', error)
+    console.error('[forms.submit] failed to deliver submission', error)
     return Response.json(
       { error: 'We could not send your message right now. Please try again shortly.' },
       { status: 502 },

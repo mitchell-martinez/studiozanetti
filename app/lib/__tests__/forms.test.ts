@@ -7,6 +7,7 @@ vi.mock('~/lib/wordpress', () => ({
 
 import { getPageByPath, getPageBySlug } from '~/lib/wordpress'
 import {
+  buildVscoLeadSubmissionData,
   buildFormSubmissionEmailText,
   getTrustedFormSubmissionConfig,
   normalizeFormPagePath,
@@ -22,8 +23,12 @@ const mockFormBlock = {
   acf_fc_layout: 'form_block' as const,
   form_id: 'contact-enquiry',
   heading: 'Get in touch',
+  delivery_target: 'both' as const,
   email_to: ' hello@studiozanetti.com.au ',
   email_subject: ' New enquiry from website ',
+  vsco_job_type: 'Wedding',
+  vsco_source: 'Website Contact Form',
+  vsco_send_email_notification: true,
   fields: [
     {
       field_id: 'name',
@@ -78,6 +83,8 @@ describe('getTrustedFormSubmissionConfig', () => {
       normalizedPagePath: 'get-in-touch',
       emailTo: 'hello@studiozanetti.com.au',
       emailSubject: 'New enquiry from website',
+      deliveryTarget: 'both',
+      vscoSendEmailNotification: true,
       form: { form_id: 'contact-enquiry' },
     })
     expect(getPageBySlug).toHaveBeenCalledWith('get-in-touch')
@@ -121,6 +128,161 @@ describe('stripSensitiveFormBlockData', () => {
     })
     expect(formBlock).not.toHaveProperty('email_to')
     expect(formBlock).not.toHaveProperty('email_subject')
+    expect(formBlock).not.toHaveProperty('delivery_target')
+    expect(formBlock).not.toHaveProperty('vsco_job_type')
+    expect(formBlock).not.toHaveProperty('vsco_source')
+    expect(formBlock).not.toHaveProperty('vsco_brand')
+    expect(formBlock).not.toHaveProperty('vsco_send_email_notification')
+  })
+})
+
+describe('buildVscoLeadSubmissionData', () => {
+  it('maps values to VSCO keys and applies defaults for required VSCO fields', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      delivery_target: 'vsco' as const,
+      vsco_job_type: 'Wedding',
+      vsco_source: 'Website Contact Form',
+      fields: [
+        {
+          field_id: 'full_name',
+          label: 'Full Name',
+          type: 'text' as const,
+          required: true,
+          vsco_field_key: 'Name',
+        },
+        {
+          field_id: 'email',
+          label: 'Email',
+          type: 'email' as const,
+          required: true,
+          vsco_field_key: 'Email',
+        },
+        {
+          field_id: 'comments',
+          label: 'Comments',
+          type: 'textarea' as const,
+          vsco_field_key: 'Message',
+        },
+      ],
+    }
+
+    const validated = validateFormSubmission(form as never, {
+      full_name: 'Mitchell Martinez',
+      email: 'mitchell@example.com',
+      comments: 'Would love details for 2027 dates.',
+    })
+
+    const data = buildVscoLeadSubmissionData(
+      {
+        page: mockPage as never,
+        normalizedPagePath: 'get-in-touch',
+        form: form as never,
+        emailTo: '',
+        emailSubject: '',
+        deliveryTarget: 'vsco',
+        vscoSendEmailNotification: true,
+      },
+      validated,
+    )
+
+    expect(data).toMatchObject({
+      Name: 'Mitchell Martinez',
+      FirstName: 'Mitchell',
+      LastName: 'Martinez',
+      Email: 'mitchell@example.com',
+      JobType: 'Wedding',
+      Source: 'Website Contact Form',
+      Message: 'Would love details for 2027 dates.',
+    })
+  })
+
+  it('maps field_id=name to FirstName by default', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      delivery_target: 'vsco' as const,
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Your Name',
+          type: 'text' as const,
+          required: true,
+        },
+        {
+          field_id: 'job_type',
+          label: 'Job Type',
+          type: 'select' as const,
+          required: true,
+          vsco_field_key: 'JobType',
+          options: [{ label: 'Wedding', value: 'Wedding' }],
+        },
+      ],
+    }
+
+    const validated = validateFormSubmission(form as never, {
+      name: 'Mitchell',
+      job_type: 'Wedding',
+    })
+
+    const data = buildVscoLeadSubmissionData(
+      {
+        page: mockPage as never,
+        normalizedPagePath: 'get-in-touch',
+        form: form as never,
+        emailTo: '',
+        emailSubject: '',
+        deliveryTarget: 'vsco',
+        vscoSendEmailNotification: true,
+      },
+      validated,
+    )
+
+    expect(data).toMatchObject({
+      FirstName: 'Mitchell',
+      JobType: 'Wedding',
+    })
+    expect(data).not.toHaveProperty('name')
+  })
+
+  it('throws when JobType cannot be resolved for VSCO', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      delivery_target: 'vsco' as const,
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Name',
+          type: 'text' as const,
+          required: true,
+          vsco_field_key: 'FirstName',
+        },
+      ],
+    }
+
+    const validated = validateFormSubmission(form as never, {
+      name: 'Mitchell',
+    })
+
+    expect(() =>
+      buildVscoLeadSubmissionData(
+        {
+          page: mockPage as never,
+          normalizedPagePath: 'get-in-touch',
+          form: form as never,
+          emailTo: '',
+          emailSubject: '',
+          deliveryTarget: 'vsco',
+          vscoSendEmailNotification: true,
+        },
+        validated,
+      ),
+    ).toThrow(/JobType/)
   })
 })
 
@@ -167,6 +329,8 @@ describe('checkbox group validation and email output', () => {
         form: form as never,
         emailTo: 'hello@studiozanetti.com.au',
         emailSubject: 'Website enquiry',
+        deliveryTarget: 'email',
+        vscoSendEmailNotification: true,
       },
       validated,
     )
@@ -207,6 +371,8 @@ describe('checkbox group validation and email output', () => {
         form: form as never,
         emailTo: 'hello@studiozanetti.com.au',
         emailSubject: 'Website enquiry',
+        deliveryTarget: 'email',
+        vscoSendEmailNotification: true,
       },
       validated,
     )

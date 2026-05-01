@@ -9,8 +9,12 @@
   "submit_text": "Send message",
   "submit_alignment": "center",
   "success_message": "Thanks for getting in touch. We’ll reply as soon as possible.",
+  "delivery_target": "both",
   "email_subject": "New enquiry from Studio Zanetti",
   "email_to": "hello@studiozanetti.com.au",
+  "vsco_job_type": "Wedding",
+  "vsco_source": "Website Contact Form",
+  "vsco_send_email_notification": true,
   "section_theme": "light",
   "top_spacing": "md",
   "bottom_spacing": "md",
@@ -19,6 +23,7 @@
       "field_id": "name",
       "label": "Name",
       "type": "text",
+      "vsco_field_key": "FirstName",
       "placeholder": "Your full name",
       "autocomplete": "name",
       "required": true
@@ -27,6 +32,7 @@
       "field_id": "email",
       "label": "Email",
       "type": "email",
+      "vsco_field_key": "Email",
       "placeholder": "you@example.com",
       "autocomplete": "email",
       "required": true
@@ -35,13 +41,15 @@
       "field_id": "phone",
       "label": "Mobile number",
       "type": "tel",
+      "vsco_field_key": "MobilePhone",
       "placeholder": "+61",
       "autocomplete": "tel"
     },
     {
       "field_id": "event_date",
       "label": "Date photography required",
-      "type": "date"
+      "type": "date",
+      "vsco_field_key": "EventDate"
     },
     {
       "field_id": "attendees",
@@ -54,6 +62,7 @@
       "field_id": "service_type",
       "label": "Service type",
       "type": "select",
+      "vsco_field_key": "JobType",
       "placeholder": "Choose a service",
       "options": [
         { "label": "Wedding", "value": "wedding" },
@@ -75,6 +84,7 @@
       "field_id": "comments",
       "label": "Any other comments",
       "type": "textarea",
+      "vsco_field_key": "Message",
       "rows": 6,
       "placeholder": "Tell us a little about your plans"
     },

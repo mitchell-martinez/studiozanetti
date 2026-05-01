@@ -3,6 +3,7 @@ import { stripHtml } from './html'
 import type {
   ContentBlock,
   FormBlock,
+  FormDeliveryTarget,
   WPFormField,
   WPFormFieldOption,
   WPPage,
@@ -23,6 +24,8 @@ export interface TrustedFormSubmissionConfig {
   form: FormBlock
   emailTo: string
   emailSubject: string
+  deliveryTarget: FormDeliveryTarget
+  vscoSendEmailNotification: boolean
 }
 
 export interface ValidatedFormSubmission {
@@ -153,6 +156,43 @@ const sanitizeStringValue = (value: FormSubmissionValue): string | null => {
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
   return trimmed || null
+}
+
+const normalizeDeliveryTarget = (value?: string): FormDeliveryTarget => {
+  if (value === 'email' || value === 'vsco' || value === 'both') {
+    return value
+  }
+
+  return 'email'
+}
+
+const toVscoSubmissionValue = (value: FormSubmissionValue): string | null => {
+  if (value === null || value === undefined) return null
+
+  if (Array.isArray(value)) {
+    const normalized = value
+      .filter((entry): entry is string => typeof entry === 'string')
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+
+    if (normalized.length === 0) return null
+    return normalized.join(', ')
+  }
+
+  if (typeof value === 'number') {
+    return String(value)
+  }
+
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false'
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed || null
+  }
+
+  return null
 }
 
 const hasValidChoiceOption = (field: WPFormField, candidate: string): boolean => {
@@ -308,6 +348,86 @@ export function buildFormSubmissionEmailText(
   return lines.join('\n')
 }
 
+export function buildVscoLeadSubmissionData(
+  config: TrustedFormSubmissionConfig,
+  validated: ValidatedFormSubmission,
+): Record<string, string> {
+  const valuesByKey: Record<string, string> = {}
+
+  for (const field of config.form.fields) {
+    const rawFieldId = field.field_id?.trim()
+    const integrationKey =
+      field.vsco_field_key?.trim() || (rawFieldId?.toLowerCase() === 'name' ? 'FirstName' : rawFieldId)
+    if (!integrationKey) continue
+
+    const normalizedValue = toVscoSubmissionValue(validated.sanitizedValues[field.field_id] ?? null)
+    if (!normalizedValue) continue
+
+    valuesByKey[integrationKey] = normalizedValue
+  }
+
+  const getCaseInsensitiveValue = (targetKey: string): string | undefined => {
+    const matchedEntry = Object.entries(valuesByKey).find(
+      ([candidateKey]) => candidateKey.toLowerCase() === targetKey.toLowerCase(),
+    )
+
+    const matchedValue = matchedEntry?.[1]?.trim()
+    return matchedValue || undefined
+  }
+
+  const setIfMissing = (targetKey: string, rawValue?: string) => {
+    const value = rawValue?.trim()
+    if (!value) return
+
+    const hasKey = Object.keys(valuesByKey).some(
+      (candidateKey) => candidateKey.toLowerCase() === targetKey.toLowerCase(),
+    )
+    if (hasKey) return
+
+    valuesByKey[targetKey] = value
+  }
+
+  const fullName = getCaseInsensitiveValue('Name') || getCaseInsensitiveValue('FullName')
+  if (!getCaseInsensitiveValue('FirstName') && fullName) {
+    const [firstName, ...restOfName] = fullName.split(/\s+/)
+    setIfMissing('FirstName', firstName)
+    if (restOfName.length > 0) {
+      setIfMissing('LastName', restOfName.join(' '))
+    }
+  }
+
+  setIfMissing('FirstName', 'Website')
+  setIfMissing('Email', validated.replyTo)
+  setIfMissing('JobType', config.form.vsco_job_type)
+  setIfMissing(
+    'Source',
+    config.form.vsco_source ||
+      `Website (${config.normalizedPagePath === HOME_SLUG ? '/' : `/${config.normalizedPagePath}`})`,
+  )
+  setIfMissing('Brand', config.form.vsco_brand)
+
+  if (!getCaseInsensitiveValue('Message')) {
+    const fallbackMessage = validated.displayValues
+      .map((item) => `${item.label}: ${item.value}`)
+      .join('\n')
+      .trim()
+
+    setIfMissing('Message', fallbackMessage)
+  }
+
+  if (!getCaseInsensitiveValue('FirstName')) {
+    throw new Error('VSCO integration requires FirstName.')
+  }
+
+  if (!getCaseInsensitiveValue('JobType')) {
+    throw new Error(
+      'VSCO integration requires JobType. Set a field mapped to JobType or configure VSCO Job Type in WordPress.',
+    )
+  }
+
+  return valuesByKey
+}
+
 export function getFormSuccessMessage(form: FormBlock): string {
   return form.success_message?.trim() || 'Thanks. Your message has been sent.'
 }
@@ -322,7 +442,16 @@ export function stripSensitiveFormBlockData(page: WPPage): WPPage {
       blocks: page.acf.blocks.map((block) => {
         if (!isFormBlock(block)) return block
 
-        const { email_subject: _emailSubject, email_to: _emailTo, ...publicBlock } = block
+        const {
+          email_subject: _emailSubject,
+          email_to: _emailTo,
+          delivery_target: _deliveryTarget,
+          vsco_job_type: _vscoJobType,
+          vsco_source: _vscoSource,
+          vsco_brand: _vscoBrand,
+          vsco_send_email_notification: _vscoSendEmailNotification,
+          ...publicBlock
+        } = block
         return publicBlock as FormBlock
       }),
     },
@@ -387,5 +516,7 @@ export async function getTrustedFormSubmissionConfig(
     form,
     emailTo: form.email_to?.trim() ?? '',
     emailSubject: form.email_subject?.trim() ?? '',
+    deliveryTarget: normalizeDeliveryTarget(form.delivery_target),
+    vscoSendEmailNotification: form.vsco_send_email_notification !== false,
   }
 }

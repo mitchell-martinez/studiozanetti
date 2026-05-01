@@ -12,6 +12,10 @@ vi.mock('~/lib/email', () => ({
   sendFormSubmissionEmail: vi.fn(),
 }))
 
+vi.mock('~/lib/vsco', () => ({
+  sendVscoLead: vi.fn(),
+}))
+
 vi.mock('~/lib/rateLimit', () => ({
   consumeRateLimit: vi.fn(() => ({ allowed: true, remaining: 4, retryAfterSeconds: 60 })),
 }))
@@ -19,6 +23,7 @@ vi.mock('~/lib/rateLimit', () => ({
 import { sendFormSubmissionEmail } from '~/lib/email'
 import { getTrustedFormSubmissionConfig } from '~/lib/forms'
 import { consumeRateLimit } from '~/lib/rateLimit'
+import { sendVscoLead } from '~/lib/vsco'
 import { action } from '../api.forms.submit'
 
 afterEach(() => {
@@ -48,6 +53,7 @@ describe('api.forms.submit action', () => {
       form: {
         acf_fc_layout: 'form_block',
         form_id: 'contact-enquiry',
+        delivery_target: 'email',
         email_to: 'hello@studiozanetti.com.au',
         email_subject: 'Website enquiry',
         fields: [
@@ -61,6 +67,8 @@ describe('api.forms.submit action', () => {
       },
       emailTo: 'hello@studiozanetti.com.au',
       emailSubject: 'Website enquiry',
+      deliveryTarget: 'email',
+      vscoSendEmailNotification: true,
     } as never)
 
     const response = await action({
@@ -85,6 +93,7 @@ describe('api.forms.submit action', () => {
         subject: 'Website enquiry',
       }),
     )
+    expect(sendVscoLead).not.toHaveBeenCalled()
     expect(response.status).toBe(200)
   })
 
@@ -130,12 +139,15 @@ describe('api.forms.submit action', () => {
       form: {
         acf_fc_layout: 'form_block',
         form_id: 'contact-enquiry',
+        delivery_target: 'email',
         email_to: '',
         email_subject: '',
         fields: [],
       },
       emailTo: '',
       emailSubject: '',
+      deliveryTarget: 'email',
+      vscoSendEmailNotification: true,
     } as never)
 
     const response = await action({
@@ -166,6 +178,7 @@ describe('api.forms.submit action', () => {
       form: {
         acf_fc_layout: 'form_block',
         form_id: 'contact-enquiry',
+        delivery_target: 'email',
         email_to: 'hello@studiozanetti.com.au',
         email_subject: 'Website enquiry',
         fields: [
@@ -179,6 +192,8 @@ describe('api.forms.submit action', () => {
       },
       emailTo: 'hello@studiozanetti.com.au',
       emailSubject: 'Website enquiry',
+      deliveryTarget: 'email',
+      vscoSendEmailNotification: true,
     } as never)
 
     const response = await action({
@@ -210,12 +225,15 @@ describe('api.forms.submit action', () => {
       form: {
         acf_fc_layout: 'form_block',
         form_id: 'contact-enquiry',
+        delivery_target: 'email',
         email_to: 'hello@studiozanetti.com.au',
         email_subject: 'Website enquiry',
         fields: [],
       },
       emailTo: 'hello@studiozanetti.com.au',
       emailSubject: 'Website enquiry',
+      deliveryTarget: 'email',
+      vscoSendEmailNotification: true,
     } as never)
     vi.mocked(consumeRateLimit).mockReturnValueOnce({
       allowed: false,
@@ -256,12 +274,15 @@ describe('api.forms.submit action', () => {
         acf_fc_layout: 'form_block',
         form_id: 'contact-enquiry',
         success_message: 'Thanks for reaching out.',
+        delivery_target: 'email',
         email_to: 'hello@studiozanetti.com.au',
         email_subject: 'Website enquiry',
         fields: [],
       },
       emailTo: 'hello@studiozanetti.com.au',
       emailSubject: 'Website enquiry',
+      deliveryTarget: 'email',
+      vscoSendEmailNotification: true,
     } as never)
 
     const response = await action({
@@ -277,6 +298,160 @@ describe('api.forms.submit action', () => {
 
     expect(response.status).toBe(200)
     expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+    expect(sendVscoLead).not.toHaveBeenCalled()
     expect(consumeRateLimit).not.toHaveBeenCalled()
+  })
+
+  it('sends only to VSCO when delivery target is vsco', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'vsco',
+        vsco_job_type: 'Wedding',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
+      },
+      emailTo: '',
+      emailSubject: '',
+      deliveryTarget: 'vsco',
+      vscoSendEmailNotification: false,
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(200)
+    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+    expect(sendVscoLead).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sendEmailNotification: false,
+        fields: expect.objectContaining({
+          FirstName: 'Mitchell',
+          JobType: 'Wedding',
+        }),
+      }),
+    )
+  })
+
+  it('sends to both email and VSCO when delivery target is both', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'both',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        vsco_job_type: 'Wedding',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+      deliveryTarget: 'both',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(200)
+    expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(1)
+    expect(sendVscoLead).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns 422 when VSCO mapping misses JobType', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'vsco',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
+      },
+      emailTo: '',
+      emailSubject: '',
+      deliveryTarget: 'vsco',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(422)
+    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+    expect(sendVscoLead).not.toHaveBeenCalled()
   })
 })

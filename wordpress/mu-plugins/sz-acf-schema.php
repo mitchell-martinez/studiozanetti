@@ -28,6 +28,22 @@ add_action( 'acf/init', function () {
 		'lg'   => 'Large',
 	];
 
+	$vsco_job_type_choices = [
+		'Bridal'            => 'Bridal',
+		'Christening'       => 'Christening',
+		'Couple'            => 'Couple',
+		'Engagement'        => 'Engagement',
+		'Engagement Party'  => 'Engagement Party',
+		'Event'             => 'Event',
+		'Family'            => 'Family',
+		'Headshots'         => 'Headshots',
+		'Holiday'           => 'Holiday',
+		'Portraits'         => 'Portraits',
+		'Studio'            => 'Studio',
+		'Trash The Dress'   => 'Trash The Dress',
+		'Wedding'           => 'Wedding',
+	];
+
 	$style_fields = function ( string $prefix ) use ( $theme_choices, $spacing_choices ): array {
 		return [
 			[
@@ -315,8 +331,13 @@ add_action( 'acf/init', function () {
 		[ 'key' => 'field_sz_form_submit_text', 'label' => 'Submit Button Text', 'name' => 'submit_text', 'type' => 'text', 'default_value' => 'Send message' ],
 		[ 'key' => 'field_sz_form_submit_alignment', 'label' => 'Submit Button Alignment', 'name' => 'submit_alignment', 'type' => 'select', 'choices' => [ 'left' => 'Left', 'center' => 'Centre' ], 'default_value' => 'left' ],
 		[ 'key' => 'field_sz_form_success_message', 'label' => 'Success Message', 'name' => 'success_message', 'type' => 'textarea', 'instructions' => 'Shown in-page after a successful submission.' ],
-		[ 'key' => 'field_sz_form_email_subject', 'label' => 'Email Subject', 'name' => 'email_subject', 'type' => 'text', 'required' => 1, 'instructions' => 'Used by the server-side WordPress lookup when sending form submissions.' ],
-		[ 'key' => 'field_sz_form_email_to', 'label' => 'Email To', 'name' => 'email_to', 'type' => 'email', 'required' => 1, 'instructions' => 'Recipient address used by the server-side WordPress lookup when sending form submissions.' ],
+		[ 'key' => 'field_sz_form_delivery_target', 'label' => 'Send Enquiry To', 'name' => 'delivery_target', 'type' => 'select', 'choices' => [ 'email' => 'Email', 'vsco' => 'VSCO Workspace', 'both' => 'Email + VSCO Workspace' ], 'default_value' => 'email', 'instructions' => 'Choose where this form submission should be delivered.' ],
+		[ 'key' => 'field_sz_form_email_subject', 'label' => 'Email Subject', 'name' => 'email_subject', 'type' => 'text', 'required' => 0, 'instructions' => 'Used by the server-side WordPress lookup when sending form submissions by email.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
+		[ 'key' => 'field_sz_form_email_to', 'label' => 'Email To', 'name' => 'email_to', 'type' => 'email', 'required' => 0, 'instructions' => 'Recipient address used when sending form submissions by email.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
+		[ 'key' => 'field_sz_form_vsco_job_type', 'label' => 'VSCO Job Type', 'name' => 'vsco_job_type', 'type' => 'select', 'choices' => $vsco_job_type_choices, 'allow_null' => 1, 'required' => 1, 'instructions' => 'Required when VSCO delivery is enabled. Must match the Job Type names configured in VSCO Workspace.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'vsco' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
+		[ 'key' => 'field_sz_form_vsco_source', 'label' => 'VSCO Lead Source', 'name' => 'vsco_source', 'type' => 'text', 'instructions' => 'Optional Source value sent to VSCO (for example "Website Contact Form").', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'vsco' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
+		[ 'key' => 'field_sz_form_vsco_brand', 'label' => 'VSCO Brand', 'name' => 'vsco_brand', 'type' => 'text', 'instructions' => 'Optional brand name or brand ID to assign new leads to in VSCO.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'vsco' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
+		[ 'key' => 'field_sz_form_vsco_send_email_notification', 'label' => 'VSCO Email Notification', 'name' => 'vsco_send_email_notification', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1, 'instructions' => 'When enabled, VSCO sends its own new lead email notification. Turn off to suppress VSCO email notifications for this form.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'vsco' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
 		[
 			'key' => 'field_sz_form_fields',
 			'label' => 'Fields',
@@ -331,6 +352,7 @@ add_action( 'acf/init', function () {
 				[ 'key' => 'field_sz_form_field_type', 'label' => 'Field Type', 'name' => 'type', 'type' => 'select', 'required' => 1, 'choices' => [ 'text' => 'Text', 'email' => 'Email', 'tel' => 'Telephone', 'number' => 'Number', 'date' => 'Date', 'time' => 'Time', 'datetime-local' => 'Date & Time', 'textarea' => 'Textarea', 'select' => 'Select Dropdown', 'radio' => 'Radio Group', 'checkbox' => 'Checkbox Group' ], 'default_value' => 'text' ],
 				[ 'key' => 'field_sz_form_field_help_text', 'label' => 'Help Text', 'name' => 'help_text', 'type' => 'textarea', 'rows' => 2 ],
 				[ 'key' => 'field_sz_form_field_required', 'label' => 'Required', 'name' => 'required', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0 ],
+				[ 'key' => 'field_sz_form_field_vsco_field_key', 'label' => 'VSCO Field Key', 'name' => 'vsco_field_key', 'type' => 'text', 'instructions' => 'Optional exact VSCO field name (for example FirstName, LastName, Email, JobType, EventDate, Source). Leave blank to use Field ID.' ],
 				[ 'key' => 'field_sz_form_field_placeholder', 'label' => 'Placeholder', 'name' => 'placeholder', 'type' => 'text', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '!=', 'value' => 'checkbox' ] ] ] ],
 				[ 'key' => 'field_sz_form_field_autocomplete', 'label' => 'Autocomplete', 'name' => 'autocomplete', 'type' => 'text', 'instructions' => 'Optional browser autocomplete token such as `name`, `email`, or `tel`.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'text' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'tel' ] ] ] ],
 				[ 'key' => 'field_sz_form_field_default_value_text', 'label' => 'Default Value', 'name' => 'default_value', 'type' => 'text', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'text' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'tel' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'date' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'time' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'datetime-local' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'textarea' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'select' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'radio' ] ] ] ],
@@ -690,4 +712,157 @@ function sz_populate_menu_override_choices( array $field ): array {
 
 	$field['choices'] = $choices;
 	return $field;
+}
+
+/**
+ * Required immutable form field row used for VSCO compatibility.
+ *
+ * The admin can change only the visible label and row position.
+ */
+function szRequiredFormNameFieldRow(): array {
+	return [
+		'field_id'       => 'name',
+		'label'          => 'Name',
+		'type'           => 'text',
+		'required'       => 1,
+		'vsco_field_key' => 'FirstName',
+	];
+}
+
+/**
+ * Ensure every form block contains the protected Name field.
+ */
+function szNormalizeFormFieldsWithRequiredName( array $fields ): array {
+	$normalized = [];
+	$has_name   = false;
+
+	foreach ( $fields as $row ) {
+		if ( ! is_array( $row ) ) {
+			continue;
+		}
+
+		$field_id = isset( $row['field_id'] ) ? strtolower( trim( (string) $row['field_id'] ) ) : '';
+
+		if ( $field_id === 'name' ) {
+			$has_name = true;
+
+			// Lock canonical machine fields while preserving admin-editable label.
+			$row['field_id']       = 'name';
+			$row['type']           = 'text';
+			$row['vsco_field_key'] = 'FirstName';
+			if ( empty( $row['label'] ) || ! is_string( $row['label'] ) ) {
+				$row['label'] = 'Name';
+			}
+
+			$normalized[] = $row;
+			continue;
+		}
+
+		$normalized[] = $row;
+	}
+
+	if ( ! $has_name ) {
+		array_unshift( $normalized, szRequiredFormNameFieldRow() );
+	}
+
+	return array_values( $normalized );
+}
+
+/**
+ * Show a default Name row in new form blocks.
+ */
+add_filter( 'acf/load_value/key=field_sz_form_fields', 'szLoadDefaultRequiredFormNameRow', 20, 3 );
+function szLoadDefaultRequiredFormNameRow( $value ) {
+	if ( is_array( $value ) && ! empty( $value ) ) {
+		return $value;
+	}
+
+	return [ szRequiredFormNameFieldRow() ];
+}
+
+/**
+ * Enforce the required Name row on save so it cannot be removed.
+ */
+add_filter( 'acf/update_value/key=field_sz_blocks', 'szEnforceRequiredNameRowOnFormBlocks', 20, 3 );
+function szEnforceRequiredNameRowOnFormBlocks( $value ) {
+	if ( ! is_array( $value ) ) {
+		return $value;
+	}
+
+	foreach ( $value as $index => $block ) {
+		if ( ! is_array( $block ) || ( $block['acf_fc_layout'] ?? '' ) !== 'form_block' ) {
+			continue;
+		}
+
+		$rows = [];
+		if ( isset( $block['fields'] ) && is_array( $block['fields'] ) ) {
+			$rows = $block['fields'];
+		}
+
+		$value[ $index ]['fields'] = szNormalizeFormFieldsWithRequiredName( $rows );
+	}
+
+	return $value;
+}
+
+/**
+ * Lock the protected Name row in the ACF UI while still allowing reorder + label edits.
+ */
+add_action( 'acf/input/admin_footer', 'szLockRequiredFormNameRowUi' );
+function szLockRequiredFormNameRowUi() {
+	if ( ! function_exists( 'get_current_screen' ) ) {
+		return;
+	}
+
+	$screen = get_current_screen();
+	if ( ! $screen || $screen->post_type !== 'page' ) {
+		return;
+	}
+	?>
+	<script>
+	(function ($) {
+		if (typeof acf === 'undefined') return;
+
+		function lockNameRows(context) {
+			var $root = context && context.length ? context : $(document);
+			var $rows = $root.find('[data-key="field_sz_form_fields"] .acf-row').not('.acf-clone');
+
+			$rows.each(function () {
+				var $row = $(this);
+				var $fieldId = $row.find('[data-key="field_sz_form_field_id"] input[type="text"]').first();
+				if (!$fieldId.length) return;
+
+				var isName = (($fieldId.val() || '').trim().toLowerCase() === 'name');
+				if (!isName) return;
+
+				var $remove = $row.find('a[data-event="remove-row"]').first();
+				var $type = $row.find('[data-key="field_sz_form_field_type"] select').first();
+				var $vscoKey = $row.find('[data-key="field_sz_form_field_vsco_field_key"] input[type="text"]').first();
+				var $idWrap = $row.find('[data-key="field_sz_form_field_id"] .acf-input').first();
+
+				$remove.hide();
+				$fieldId.val('name').prop('readonly', true);
+				if ($type.length) {
+					$type.val('text').prop('disabled', true);
+				}
+				if ($vscoKey.length) {
+					$vscoKey.val('FirstName').prop('readonly', true);
+				}
+
+				if ($idWrap.find('.sz-name-lock-note').length === 0) {
+					$idWrap.append('<p class="description sz-name-lock-note">Locked required field for VSCO FirstName. You can rename the visible Label and reorder this row.</p>');
+				}
+			});
+		}
+
+		acf.addAction('ready append', function ($el) {
+			lockNameRows($el);
+		});
+
+		$(document).on('input change', '[data-key="field_sz_form_fields"] input, [data-key="field_sz_form_fields"] select', function () {
+			lockNameRows($(this).closest('.acf-fields'));
+		});
+	})(jQuery);
+	</script>
+	<?php
 }
