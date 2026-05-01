@@ -85,3 +85,10 @@ export const DarkTheme: Story = {
     section_theme: 'dark',
   },
 }
+
+export const InvalidConfiguration: Story = {
+  args: {
+    heading: 'Broken configuration preview',
+    fields: formBlock.fields.filter((field) => field.field_id !== 'name'),
+  },
+}

@@ -228,7 +228,15 @@ describe('api.forms.submit action', () => {
         delivery_target: 'email',
         email_to: 'hello@studiozanetti.com.au',
         email_subject: 'Website enquiry',
-        fields: [],
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
       },
       emailTo: 'hello@studiozanetti.com.au',
       emailSubject: 'Website enquiry',
@@ -277,7 +285,15 @@ describe('api.forms.submit action', () => {
         delivery_target: 'email',
         email_to: 'hello@studiozanetti.com.au',
         email_subject: 'Website enquiry',
-        fields: [],
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
       },
       emailTo: 'hello@studiozanetti.com.au',
       emailSubject: 'Website enquiry',
@@ -408,6 +424,262 @@ describe('api.forms.submit action', () => {
     expect(sendVscoLead).toHaveBeenCalledTimes(1)
   })
 
+  it('returns success for delivery target both when email fails but VSCO succeeds', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'both',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        vsco_job_type: 'Wedding',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+      deliveryTarget: 'both',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    vi.mocked(sendFormSubmissionEmail).mockRejectedValueOnce(new Error('SMTP down'))
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(200)
+    expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(1)
+    expect(sendVscoLead).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns success for delivery target both when VSCO fails but email succeeds', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'both',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        vsco_job_type: 'Wedding',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+      deliveryTarget: 'both',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    vi.mocked(sendVscoLead).mockRejectedValueOnce(new Error('VSCO down'))
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(200)
+    expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(1)
+    expect(sendVscoLead).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns success for delivery target both when email is misconfigured but VSCO succeeds', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'both',
+        email_to: '',
+        email_subject: '',
+        vsco_job_type: 'Wedding',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
+      },
+      emailTo: '',
+      emailSubject: '',
+      deliveryTarget: 'both',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(200)
+    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+    expect(sendVscoLead).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns success for delivery target both when VSCO mapping is invalid but email succeeds', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'both',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+      deliveryTarget: 'both',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(200)
+    expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(1)
+    expect(sendVscoLead).not.toHaveBeenCalled()
+  })
+
+  it('returns 502 for delivery target both when both channels fail', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'both',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        vsco_job_type: 'Wedding',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+      deliveryTarget: 'both',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    vi.mocked(sendFormSubmissionEmail).mockRejectedValueOnce(new Error('SMTP down'))
+    vi.mocked(sendVscoLead).mockRejectedValueOnce(new Error('VSCO down'))
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(502)
+    expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(1)
+    expect(sendVscoLead).toHaveBeenCalledTimes(1)
+  })
+
   it('returns 422 when VSCO mapping misses JobType', async () => {
     vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
       page: {
@@ -451,6 +723,58 @@ describe('api.forms.submit action', () => {
     } as never)
 
     expect(response.status).toBe(422)
+    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+    expect(sendVscoLead).not.toHaveBeenCalled()
+  })
+
+  it('returns 422 when the trusted form config is missing the reserved Name field', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'email',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        fields: [
+          {
+            field_id: 'email',
+            label: 'Email',
+            type: 'email',
+            required: true,
+            vsco_field_key: 'Email',
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+      deliveryTarget: 'email',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { email: 'mitchell@example.com' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(422)
+    await expect(response.json()).resolves.toMatchObject({
+      error: expect.stringContaining('required Name field'),
+    })
     expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
     expect(sendVscoLead).not.toHaveBeenCalled()
   })

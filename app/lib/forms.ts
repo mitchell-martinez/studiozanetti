@@ -1,5 +1,6 @@
 import { getPageByPath, getPageBySlug } from './wordpress'
 import { stripHtml } from './html'
+import { isReservedNameField, validateFormConfiguration } from './formConfiguration'
 import type {
   ContentBlock,
   FormBlock,
@@ -75,6 +76,7 @@ const normalizeStringArray = (value: unknown): string[] => {
     ),
   )
 }
+export { validateFormConfiguration } from './formConfiguration'
 
 const getCheckboxOptions = (field: Extract<WPFormField, { type: 'checkbox' }>): WPFormFieldOption[] => {
   const options =
@@ -116,8 +118,11 @@ const getCheckboxSelectedValues = (
   return []
 }
 
+const isNameField = (field: WPFormField): boolean =>
+  isReservedNameField(field)
+
 const isFieldRequiredAndEmpty = (field: WPFormField, value: FormSubmissionValue): boolean => {
-  if (!field.required) return false
+  if (!field.required && !isNameField(field)) return false
   if (field.type === 'checkbox') return !Array.isArray(value) || value.length === 0
   if (value === null) return true
   if (Array.isArray(value)) return value.length === 0
@@ -352,6 +357,11 @@ export function buildVscoLeadSubmissionData(
   config: TrustedFormSubmissionConfig,
   validated: ValidatedFormSubmission,
 ): Record<string, string> {
+  const configurationErrors = validateFormConfiguration(config.form)
+  if (configurationErrors.length > 0) {
+    throw new Error(configurationErrors.join(' '))
+  }
+
   const valuesByKey: Record<string, string> = {}
 
   for (const field of config.form.fields) {

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLocation } from 'react-router'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
+import { validateFormConfiguration } from '~/lib/formConfiguration'
 import type { WPFormFieldOption } from '~/types/wordpress'
 import { getBackgroundImageStyle, getSectionStyle } from '../helpers/styleOptions'
 import sharedStyles from '../shared.module.scss'
@@ -76,8 +77,6 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null)
   const [isSubmitErrorVisible, setIsSubmitErrorVisible] = useState(false)
 
-  if (!block.fields?.length) return null
-
   const HeadingTag = block.heading_tag ?? 'h2'
   const backgroundImageStyle = getBackgroundImageStyle(block)
   const headingAlignment = headingAlignClass[block.heading_align ?? 'left'] ?? styles.alignLeft
@@ -85,6 +84,8 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const submitAlignment =
     submitAlignClass[block.submit_alignment ?? 'left'] ?? styles.submitLeft
   const submitText = block.submit_text?.trim() || 'Send message'
+  const formConfigurationErrors = validateFormConfiguration(block)
+  const isFormAvailable = formConfigurationErrors.length === 0
 
   const showSubmitError = (nextMessage: string) => {
     setSubmitErrorMessage(nextMessage)
@@ -183,6 +184,12 @@ const FormBlock = ({ block }: FormBlockProps) => {
         )}
 
         <div className={`${styles.panel} ${formAlignment}`.trim()}>
+          {!isFormAvailable && (
+            <div className={`${styles.notice} ${styles.noticeTop} ${styles.noticeError}`.trim()} role="alert">
+              This form is unavailable right now. Please contact us another way while the required Name field is fixed.
+            </div>
+          )}
+
           {submitState === 'success' && successMessage && (
             <div
               className={`${styles.notice} ${styles.noticeTop} ${styles.noticeSuccess}`.trim()}
@@ -192,7 +199,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
             </div>
           )}
 
-          {submitState !== 'success' && (
+          {isFormAvailable && submitState !== 'success' && (
             <form className={styles.form} onSubmit={handleSubmit} noValidate>
               <div className={styles.honeypot} aria-hidden="true">
                 <label htmlFor={`${block.form_id}-website`}>Website</label>

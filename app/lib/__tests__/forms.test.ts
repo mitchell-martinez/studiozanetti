@@ -12,6 +12,7 @@ import {
   getTrustedFormSubmissionConfig,
   normalizeFormPagePath,
   stripSensitiveFormBlockData,
+  validateFormConfiguration,
   validateFormSubmission,
 } from '../forms'
 
@@ -137,7 +138,7 @@ describe('stripSensitiveFormBlockData', () => {
 })
 
 describe('buildVscoLeadSubmissionData', () => {
-  it('maps values to VSCO keys and applies defaults for required VSCO fields', () => {
+  it('maps canonical reserved Name field values to VSCO keys and applies defaults', () => {
     const form = {
       acf_fc_layout: 'form_block' as const,
       form_id: 'contact-enquiry',
@@ -147,11 +148,11 @@ describe('buildVscoLeadSubmissionData', () => {
       vsco_source: 'Website Contact Form',
       fields: [
         {
-          field_id: 'full_name',
-          label: 'Full Name',
+          field_id: 'name',
+          label: 'Name',
           type: 'text' as const,
           required: true,
-          vsco_field_key: 'Name',
+          vsco_field_key: 'FirstName',
         },
         {
           field_id: 'email',
@@ -170,7 +171,7 @@ describe('buildVscoLeadSubmissionData', () => {
     }
 
     const validated = validateFormSubmission(form as never, {
-      full_name: 'Mitchell Martinez',
+      name: 'Mitchell',
       email: 'mitchell@example.com',
       comments: 'Would love details for 2027 dates.',
     })
@@ -189,9 +190,7 @@ describe('buildVscoLeadSubmissionData', () => {
     )
 
     expect(data).toMatchObject({
-      Name: 'Mitchell Martinez',
       FirstName: 'Mitchell',
-      LastName: 'Martinez',
       Email: 'mitchell@example.com',
       JobType: 'Wedding',
       Source: 'Website Contact Form',
@@ -283,6 +282,163 @@ describe('buildVscoLeadSubmissionData', () => {
         validated,
       ),
     ).toThrow(/JobType/)
+  })
+
+  it('throws when the form config is missing the reserved name field', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      delivery_target: 'vsco' as const,
+      vsco_job_type: 'Wedding',
+      fields: [
+        {
+          field_id: 'email',
+          label: 'Email',
+          type: 'email' as const,
+          required: true,
+          vsco_field_key: 'Email',
+        },
+      ],
+    }
+
+    const validated = validateFormSubmission(form as never, {
+      email: 'mitchell@example.com',
+    })
+
+    expect(() =>
+      buildVscoLeadSubmissionData(
+        {
+          page: mockPage as never,
+          normalizedPagePath: 'get-in-touch',
+          form: form as never,
+          emailTo: '',
+          emailSubject: '',
+          deliveryTarget: 'vsco',
+          vscoSendEmailNotification: true,
+        },
+        validated,
+      ),
+    ).toThrow(/reserved Name field/i)
+  })
+})
+
+describe('validateFormConfiguration', () => {
+  it('accepts the canonical reserved name field shape', () => {
+    expect(validateFormConfiguration(mockFormBlock as never)).toEqual([])
+  })
+
+  it('rejects forms without the reserved name field', () => {
+    const form = {
+      ...mockFormBlock,
+      fields: [
+        {
+          field_id: 'email',
+          label: 'Email',
+          type: 'email' as const,
+          required: true,
+          vsco_field_key: 'Email',
+        },
+      ],
+    }
+
+    expect(validateFormConfiguration(form as never)).toContain(
+      'The form must include one reserved Name field with Field ID name.',
+    )
+  })
+
+  it('rejects a reserved name field that is not required', () => {
+    const form = {
+      ...mockFormBlock,
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Name',
+          type: 'text' as const,
+          required: false,
+          vsco_field_key: 'FirstName',
+        },
+      ],
+    }
+
+    expect(validateFormConfiguration(form as never)).toContain(
+      'The reserved Name field must have Required enabled.',
+    )
+  })
+
+  it('rejects duplicate reserved name rows', () => {
+    const form = {
+      ...mockFormBlock,
+      fields: [
+        ...mockFormBlock.fields,
+        {
+          field_id: 'name',
+          label: 'Full name',
+          type: 'text' as const,
+          required: true,
+          vsco_field_key: 'FirstName',
+        },
+      ],
+    }
+
+    expect(validateFormConfiguration(form as never)).toEqual(
+      expect.arrayContaining([
+        'Field ID name is duplicated. Field IDs must be unique.',
+        'Only one reserved Name field is allowed in a form.',
+      ]),
+    )
+  })
+
+  it('rejects non-name rows that claim the FirstName VSCO mapping', () => {
+    const form = {
+      ...mockFormBlock,
+      fields: [
+        mockFormBlock.fields[0],
+        {
+          field_id: 'first_name_override',
+          label: 'First name override',
+          type: 'text' as const,
+          required: true,
+          vsco_field_key: 'FirstName',
+        },
+      ],
+    }
+
+    expect(validateFormConfiguration(form as never)).toEqual(
+      expect.arrayContaining([
+        'VSCO Field Key FirstName is reserved for the Name field.',
+        'The reserved Name field must be the same row that maps to VSCO Field Key FirstName.',
+      ]),
+    )
+  })
+
+  it('rejects multiple rows that explicitly map to FirstName', () => {
+    const form = {
+      ...mockFormBlock,
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Name',
+          type: 'text' as const,
+          required: true,
+          vsco_field_key: 'FirstName',
+        },
+        {
+          field_id: 'alternate_name',
+          label: 'Alternate name',
+          type: 'text' as const,
+          required: true,
+          vsco_field_key: 'FirstName',
+        },
+      ],
+    }
+
+    expect(validateFormConfiguration(form as never)).toEqual(
+      expect.arrayContaining([
+        'VSCO Field Key FirstName is reserved for the Name field.',
+        'VSCO Field Key FirstName can only be used once in a form.',
+      ]),
+    )
   })
 })
 

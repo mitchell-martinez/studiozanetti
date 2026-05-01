@@ -153,4 +153,17 @@ describe('FormBlock', () => {
 
     expect(await screen.findByText('Please correct the highlighted fields and try again.')).toBeInTheDocument()
   })
+
+  it('fails closed when the required reserved Name field is missing from the form config', () => {
+    renderBlock({
+      fields: baseBlock.fields.filter((field) => field.field_id !== 'name'),
+    })
+
+    expect(
+      screen.getByText(
+        'This form is unavailable right now. Please contact us another way while the required Name field is fixed.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /send message/i })).not.toBeInTheDocument()
+  })
 })

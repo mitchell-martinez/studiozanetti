@@ -47,11 +47,14 @@ Each field row also has an optional `VSCO Field Key` value.
 
 Every form includes a protected default Name row:
 
-- It is automatically created in new forms.
-- If existing rows are missing a `field_id` of `name` + `VSCO Field Key` of `FirstName`, the row is auto-restored.
-- It cannot be removed (no remove option is shown for that row).
+- It is automatically created in the WordPress editor UI for new forms when needed.
+- It cannot be removed from the editor UI (the remove control is hidden on that row).
+- It is always required (`Required` is forced on and hidden for that row).
+- `Field ID` is locked to `name`, `Field Type` is locked to `Text`, and `VSCO Field Key` is locked to `FirstName`.
 - It always maps to VSCO `FirstName`.
-- The admin can still rename the visible Label and reorder the row position.
+- The admin can change only the visible `Label`. All other fields in the form continue to save normally.
+
+Publishing is also blocked if the form data becomes invalid behind the editor UI, for example if the reserved Name row is removed, duplicated, or its `FirstName` mapping is reused elsewhere.
 
 ## Important Setup Notes
 
@@ -62,7 +65,9 @@ Every form includes a protected default Name row:
 - Use checkbox groups for consent toggles, preferences, and multi-select interests.
 - Use `Form Alignment` to center the entire form panel on the page when needed.
 - If `Send Enquiry To` includes VSCO, each submission is posted to VSCO Workspace New Lead API (`/webservice/create-lead/<studioId>`).
+- If `Send Enquiry To` is `Email + VSCO Workspace`, each delivery channel is attempted independently and the submission still succeeds when either channel delivers successfully.
 - VSCO requires `FirstName` and `JobType`. Map these through `VSCO Field Key` or set `VSCO Job Type` as a fallback.
+- If the form configuration is invalid, the frontend fails closed and shows an unavailable message instead of rendering a broken form.
 
 Fixed `VSCO Job Type` dropdown options:
 

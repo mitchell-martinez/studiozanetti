@@ -1,3 +1,4 @@
+import { isReservedNameField } from '~/lib/formConfiguration'
 import type { WPFormField } from '~/types/wordpress'
 
 export type ClientFormValue = string | string[]
@@ -92,7 +93,7 @@ export function validateClientFormValues(
 
     const stringValue = typeof rawValue === 'string' ? rawValue.trim() : ''
 
-    if (field.required && !stringValue) {
+    if ((field.required || isReservedNameField(field)) && !stringValue) {
       errors[field.field_id] = `${field.label} is required.`
       continue
     }

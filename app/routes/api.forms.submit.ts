@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from 'react-router'
 import { sendFormSubmissionEmail } from '~/lib/email'
+import { validateFormConfiguration } from '~/lib/formConfiguration'
 import {
   buildVscoLeadSubmissionData,
   buildFormSubmissionEmailText,
@@ -55,10 +56,25 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ error: 'Form configuration not found.' }, { status: 404 })
   }
 
+  const formConfigurationErrors = validateFormConfiguration(trustedConfig.form)
+  if (formConfigurationErrors.length > 0) {
+    console.error('[forms.submit] invalid form configuration', formConfigurationErrors)
+    return Response.json(
+      {
+        error:
+          'This form is unavailable right now because its required Name field is misconfigured. Fix the form in WordPress and publish again.',
+      },
+      { status: 422 },
+    )
+  }
+
   const shouldSendEmail =
     trustedConfig.deliveryTarget === 'email' || trustedConfig.deliveryTarget === 'both'
   const shouldSendVsco =
     trustedConfig.deliveryTarget === 'vsco' || trustedConfig.deliveryTarget === 'both'
+
+  let shouldAttemptEmail = shouldSendEmail
+  let shouldAttemptVsco = shouldSendVsco
 
   if (payload.honeypot?.trim()) {
     return Response.json({ success: true, message: getFormSuccessMessage(trustedConfig.form) })
@@ -79,7 +95,12 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   if (shouldSendEmail && (!trustedConfig.emailTo || !trustedConfig.emailSubject)) {
-    return Response.json({ error: 'Form email settings are incomplete.' }, { status: 422 })
+    if (!shouldSendVsco) {
+      return Response.json({ error: 'Form email settings are incomplete.' }, { status: 422 })
+    }
+
+    shouldAttemptEmail = false
+    console.warn('[forms.submit] skipping email delivery due to incomplete email settings')
   }
 
   const validatedSubmission = validateFormSubmission(trustedConfig.form, payload.values)
@@ -100,35 +121,52 @@ export async function action({ request }: ActionFunctionArgs) {
     try {
       vscoLeadData = buildVscoLeadSubmissionData(trustedConfig, validatedSubmission)
     } catch (error) {
-      console.error('[forms.submit] invalid VSCO lead mapping', error)
-      return Response.json(
-        {
-          error:
-            'VSCO form settings are incomplete. Map FirstName and JobType in WordPress or set VSCO Job Type on the form block.',
-        },
-        { status: 422 },
-      )
+      if (!shouldAttemptEmail) {
+        console.error('[forms.submit] invalid VSCO lead mapping', error)
+        return Response.json(
+          {
+            error:
+              'VSCO form settings are incomplete. Map FirstName and JobType in WordPress or set VSCO Job Type on the form block.',
+          },
+          { status: 422 },
+        )
+      }
+
+      shouldAttemptVsco = false
+      console.warn('[forms.submit] skipping VSCO delivery due to invalid VSCO lead mapping', error)
     }
   }
 
-  try {
-    if (shouldSendEmail) {
+  let emailDelivered = false
+  let vscoDelivered = false
+
+  if (shouldAttemptEmail) {
+    try {
       await sendFormSubmissionEmail({
         to: trustedConfig.emailTo,
         subject: trustedConfig.emailSubject,
         text: submissionText,
         replyTo: validatedSubmission.replyTo,
       })
+      emailDelivered = true
+    } catch (error) {
+      console.error('[forms.submit] email delivery failed', error)
     }
+  }
 
-    if (shouldSendVsco && vscoLeadData) {
+  if (shouldAttemptVsco && vscoLeadData) {
+    try {
       await sendVscoLead({
         fields: vscoLeadData,
         sendEmailNotification: trustedConfig.vscoSendEmailNotification,
       })
+      vscoDelivered = true
+    } catch (error) {
+      console.error('[forms.submit] VSCO delivery failed', error)
     }
-  } catch (error) {
-    console.error('[forms.submit] failed to deliver submission', error)
+  }
+
+  if (!emailDelivered && !vscoDelivered) {
     return Response.json(
       { error: 'We could not send your message right now. Please try again shortly.' },
       { status: 502 },
