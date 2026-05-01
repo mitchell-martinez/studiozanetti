@@ -74,7 +74,7 @@ describe('FormBlock', () => {
         name: 'Mitchell',
         email: 'mitchell@example.com',
         preferred_contact: 'email',
-        privacy_consent: true,
+        privacy_consent: ['consent_contact'],
       }),
     })
     expect(body).not.toHaveProperty('email_to')

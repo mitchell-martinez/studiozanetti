@@ -293,8 +293,9 @@ export interface WPFormChoiceField extends WPFormFieldBase {
 
 export interface WPFormCheckboxField extends WPFormFieldBase {
   type: 'checkbox'
+  options?: WPFormFieldOption[]
+  default_value?: string[] | boolean
   checkbox_label?: string
-  default_value?: boolean
 }
 
 export type WPFormField =

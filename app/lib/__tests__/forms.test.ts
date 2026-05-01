@@ -7,9 +7,11 @@ vi.mock('~/lib/wordpress', () => ({
 
 import { getPageByPath, getPageBySlug } from '~/lib/wordpress'
 import {
+  buildFormSubmissionEmailText,
   getTrustedFormSubmissionConfig,
   normalizeFormPagePath,
   stripSensitiveFormBlockData,
+  validateFormSubmission,
 } from '../forms'
 
 afterEach(() => {
@@ -119,5 +121,58 @@ describe('stripSensitiveFormBlockData', () => {
     })
     expect(formBlock).not.toHaveProperty('email_to')
     expect(formBlock).not.toHaveProperty('email_subject')
+  })
+})
+
+describe('checkbox group validation and email output', () => {
+  it('validates checkbox group options and prints True/False per option in email output', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Name',
+          type: 'text' as const,
+          required: true,
+        },
+        {
+          field_id: 'interests',
+          label: 'Interests',
+          type: 'checkbox' as const,
+          required: true,
+          options: [
+            { label: 'Weddings', value: 'weddings' },
+            { label: 'Corporate', value: 'corporate' },
+          ],
+        },
+      ],
+      email_to: 'hello@studiozanetti.com.au',
+      email_subject: 'Website enquiry',
+    }
+
+    const validated = validateFormSubmission(form as never, {
+      name: 'Mitchell',
+      interests: ['weddings'],
+    })
+
+    expect(validated.fieldErrors).toEqual({})
+    expect(validated.sanitizedValues.interests).toEqual(['weddings'])
+
+    const text = buildFormSubmissionEmailText(
+      {
+        page: mockPage as never,
+        normalizedPagePath: 'get-in-touch',
+        form: form as never,
+        emailTo: 'hello@studiozanetti.com.au',
+        emailSubject: 'Website enquiry',
+      },
+      validated,
+    )
+
+    expect(text).toContain('- Interests:')
+    expect(text).toContain('  - Weddings: True')
+    expect(text).toContain('  - Corporate: False')
   })
 })

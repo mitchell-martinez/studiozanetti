@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { useLocation } from 'react-router'
 import RichText from '~/components/RichText'
+import type { WPFormFieldOption } from '~/types/wordpress'
 import { getBackgroundImageStyle, getSectionStyle } from '../helpers/styleOptions'
 import sharedStyles from '../shared.module.scss'
 import styles from './FormBlock.module.scss'
-import { createInitialClientFormValues, validateClientFormValues } from './helpers/clientForm'
+import {
+  createInitialClientFormValues,
+  type ClientFormValue,
+  validateClientFormValues,
+} from './helpers/clientForm'
 import type { FormBlockProps } from './types'
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
@@ -27,6 +32,32 @@ const submitAlignClass: Record<string, string> = {
   center: styles.submitCenter,
 }
 
+const getCheckboxOptions = (field: {
+  field_id: string
+  label: string
+  options?: WPFormFieldOption[]
+  checkbox_label?: string
+}): WPFormFieldOption[] => {
+  const options =
+    field.options
+      ?.map((option) => ({
+        label: option.label?.trim() || option.value?.trim() || field.label,
+        value: option.value?.trim() || '',
+      }))
+      .filter((option) => option.value) ?? []
+
+  if (options.length > 0) {
+    return options
+  }
+
+  return [
+    {
+      label: field.checkbox_label?.trim() || field.label,
+      value: field.field_id,
+    },
+  ]
+}
+
 const FormBlock = ({ block }: FormBlockProps) => {
   const location = useLocation()
   const [values, setValues] = useState(() => createInitialClientFormValues(block.fields))
@@ -44,7 +75,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
     submitAlignClass[block.submit_alignment ?? 'left'] ?? styles.submitLeft
   const submitText = block.submit_text?.trim() || 'Send message'
 
-  const handleValueChange = (fieldId: string, value: boolean | string) => {
+  const handleValueChange = (fieldId: string, value: ClientFormValue) => {
     setValues((currentValues) => ({ ...currentValues, [fieldId]: value }))
     setFieldErrors((currentErrors) => {
       if (!currentErrors[fieldId]) return currentErrors
@@ -193,34 +224,50 @@ const FormBlock = ({ block }: FormBlockProps) => {
                 }
 
                 if (field.type === 'checkbox') {
+                  const checkboxOptions = getCheckboxOptions(field)
+                  const selectedValues =
+                    Array.isArray(rawValue)
+                      ? rawValue.filter((value): value is string => typeof value === 'string')
+                      : []
+
                   return (
-                    <div key={field.field_id} className={styles.fieldGroup}>
-                      <label className={styles.checkboxLabel}>
-                        <input
-                          id={inputId}
-                          name={field.field_id}
-                          type="checkbox"
-                          checked={rawValue === true}
-                          onChange={(event) => handleValueChange(field.field_id, event.currentTarget.checked)}
-                          aria-invalid={hasError}
-                          aria-describedby={describedBy}
-                        />
-                        <span>
-                          {field.checkbox_label || field.label}
-                          {field.required && <span className={styles.required}> *</span>}
-                        </span>
-                      </label>
+                    <fieldset key={field.field_id} className={styles.fieldGroup}>
+                      <legend className={styles.legend}>
+                        {field.label}
+                        {field.required && <span className={styles.required}> *</span>}
+                      </legend>
                       {field.help_text && (
                         <p id={helpId} className={styles.helpText}>
                           {field.help_text}
                         </p>
                       )}
+                      <div className={styles.choiceGroup} role="group" aria-describedby={describedBy}>
+                        {checkboxOptions.map((option) => (
+                          <label key={option.value} className={styles.choiceLabel}>
+                            <input
+                              id={`${inputId}-${option.value}`}
+                              name={`${field.field_id}[]`}
+                              type="checkbox"
+                              value={option.value}
+                              checked={selectedValues.includes(option.value)}
+                              onChange={(event) => {
+                                const nextSelection = event.currentTarget.checked
+                                  ? Array.from(new Set([...selectedValues, option.value]))
+                                  : selectedValues.filter((value) => value !== option.value)
+                                handleValueChange(field.field_id, nextSelection)
+                              }}
+                              aria-invalid={hasError}
+                            />
+                            <span>{option.label}</span>
+                          </label>
+                        ))}
+                      </div>
                       {fieldErrors[field.field_id] && (
                         <p id={errorId} className={styles.errorText}>
                           {fieldErrors[field.field_id]}
                         </p>
                       )}
-                    </div>
+                    </fieldset>
                   )
                 }
 

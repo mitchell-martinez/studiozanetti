@@ -32,12 +32,15 @@ Create configurable enquiry forms that send submissions from the React app over 
 - `radio`
 - `checkbox`
 
+`checkbox` fields now behave as a checkbox group. Add options in the `Options` repeater, and each option is rendered as a stacked checkbox in the form.
+
 ## Important Setup Notes
 
 - `Email To` and `Email Subject` are not trusted from the browser. The submit route performs a fresh WordPress lookup using the current page path plus `Form ID`.
 - `Form ID` must stay stable after publishing, or submissions will stop resolving to the correct server-side form config.
 - Choice fields should use short machine-safe values such as `email`, `phone`, or `wedding`.
-- Use the checkbox field for consent text such as privacy acknowledgement.
+- For checkbox groups, each option is included in the email output as `Option Label: True/False`.
+- Use checkbox groups for consent toggles, preferences, and multi-select interests.
 
 ## SMTP Requirements
 

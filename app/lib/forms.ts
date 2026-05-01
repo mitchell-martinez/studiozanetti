@@ -1,5 +1,11 @@
 import { getPageByPath, getPageBySlug } from './wordpress'
-import type { ContentBlock, FormBlock, WPFormField, WPPage } from '~/types/wordpress'
+import type {
+  ContentBlock,
+  FormBlock,
+  WPFormField,
+  WPFormFieldOption,
+  WPPage,
+} from '~/types/wordpress'
 
 export type FormSubmissionValue = boolean | number | string | string[] | null
 
@@ -53,10 +59,64 @@ export function normalizeFormPagePath(pagePath: string): string {
   return normalized || HOME_SLUG
 }
 
+const normalizeStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return []
+
+  return Array.from(
+    new Set(
+      value
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  )
+}
+
+const getCheckboxOptions = (field: Extract<WPFormField, { type: 'checkbox' }>): WPFormFieldOption[] => {
+  const options =
+    field.options
+      ?.map((option) => ({
+        label: option.label?.trim() || option.value?.trim() || field.label,
+        value: option.value?.trim() || '',
+      }))
+      .filter((option) => option.value) ?? []
+
+  if (options.length > 0) {
+    return options
+  }
+
+  return [
+    {
+      label: field.checkbox_label?.trim() || field.label,
+      value: field.field_id,
+    },
+  ]
+}
+
+const getCheckboxSelectedValues = (
+  field: Extract<WPFormField, { type: 'checkbox' }>,
+  value: FormSubmissionValue,
+): string[] => {
+  const optionValues = new Set(getCheckboxOptions(field).map((option) => option.value))
+  const rawValues = normalizeStringArray(value)
+
+  if (rawValues.length > 0) {
+    return rawValues.filter((candidate) => optionValues.has(candidate))
+  }
+
+  if (value === true) {
+    const [firstOption] = getCheckboxOptions(field)
+    return firstOption ? [firstOption.value] : []
+  }
+
+  return []
+}
+
 const isFieldRequiredAndEmpty = (field: WPFormField, value: FormSubmissionValue): boolean => {
   if (!field.required) return false
-  if (field.type === 'checkbox') return value !== true
+  if (field.type === 'checkbox') return !Array.isArray(value) || value.length === 0
   if (value === null) return true
+  if (Array.isArray(value)) return value.length === 0
   if (typeof value === 'string') return value.trim() === ''
   return false
 }
@@ -68,9 +128,19 @@ const formatSelectOption = (field: WPFormField, rawValue: string): string => {
 
 const formatDisplayValue = (field: WPFormField, value: FormSubmissionValue): string => {
   if (value === null) return 'Not provided'
-  if (field.type === 'checkbox') return value === true ? 'Yes' : 'No'
+  if (field.type === 'checkbox') {
+    const selectedValues = getCheckboxSelectedValues(field, value)
+    if (selectedValues.length === 0) return 'None selected'
+
+    const labels = selectedValues.map((selectedValue) => {
+      const option = getCheckboxOptions(field).find((candidate) => candidate.value === selectedValue)
+      return option?.label ?? selectedValue
+    })
+
+    return labels.join(', ')
+  }
   if (typeof value === 'number') return String(value)
-  if (Array.isArray(value)) return value.join(', ')
+  if (Array.isArray(value)) return value.join(', ') || 'Not provided'
   if ((field.type === 'select' || field.type === 'radio') && typeof value === 'string') {
     return formatSelectOption(field, value)
   }
@@ -112,7 +182,25 @@ export function validateFormSubmission(
 
     switch (field.type) {
       case 'checkbox': {
-        sanitizedValue = rawValue === true
+        const options = getCheckboxOptions(field)
+        const optionValues = new Set(options.map((option) => option.value))
+        const selectedValues = getCheckboxSelectedValues(field, rawValue)
+        const submittedValues =
+          Array.isArray(rawValue) && rawValue.every((item) => typeof item === 'string')
+            ? normalizeStringArray(rawValue)
+            : typeof rawValue === 'string'
+              ? normalizeStringArray([rawValue])
+              : rawValue === true
+                ? selectedValues
+                : []
+
+        const hasInvalidSelection = submittedValues.some((candidate) => !optionValues.has(candidate))
+
+        if (hasInvalidSelection) {
+          fieldErrors[field.field_id] = `Please choose valid options for ${field.label}.`
+        }
+
+        sanitizedValue = selectedValues
         break
       }
       case 'number': {
@@ -187,6 +275,24 @@ export function buildFormSubmissionEmailText(
 ): string {
   const heading = config.form.heading?.trim() || 'Website form submission'
   const pagePath = config.normalizedPagePath === HOME_SLUG ? '/' : `/${config.normalizedPagePath}`
+  const submittedFieldLines = config.form.fields.flatMap((field) => {
+    const value = validated.sanitizedValues[field.field_id] ?? null
+
+    if (field.type !== 'checkbox') {
+      return [`- ${field.label}: ${formatDisplayValue(field, value)}`]
+    }
+
+    const selectedValues = new Set(getCheckboxSelectedValues(field, value))
+    const options = getCheckboxOptions(field)
+
+    return [
+      `- ${field.label}:`,
+      ...options.map(
+        (option) => `  - ${option.label}: ${selectedValues.has(option.value) ? 'True' : 'False'}`,
+      ),
+    ]
+  })
+
   const lines = [
     heading,
     '',
@@ -195,7 +301,7 @@ export function buildFormSubmissionEmailText(
     `Page title: ${config.page.title.rendered}`,
     '',
     'Submitted fields:',
-    ...validated.displayValues.flatMap((field) => [`- ${field.label}: ${field.value}`]),
+    ...submittedFieldLines,
   ]
 
   return lines.join('\n')

@@ -298,8 +298,17 @@ const PAGE_GET_IN_TOUCH = {
             field_id: 'privacy_consent',
             label: 'Privacy consent',
             type: 'checkbox',
-            checkbox_label: 'I agree to be contacted about my enquiry.',
             required: true,
+            options: [
+              {
+                label: 'I agree to be contacted about my enquiry.',
+                value: 'consent_contact',
+              },
+              {
+                label: 'I agree to receive occasional updates.',
+                value: 'consent_updates',
+              },
+            ],
           },
         ],
       },

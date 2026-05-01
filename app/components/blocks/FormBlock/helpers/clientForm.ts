@@ -1,14 +1,50 @@
 import type { WPFormField } from '~/types/wordpress'
 
-export type ClientFormValue = boolean | string
+export type ClientFormValue = string | string[]
 export type ClientFormValues = Record<string, ClientFormValue>
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+const getCheckboxOptionValues = (field: Extract<WPFormField, { type: 'checkbox' }>): string[] => {
+  const configuredValues =
+    field.options
+      ?.map((option) => option.value?.trim())
+      .filter((value): value is string => Boolean(value)) ?? []
+
+  if (configuredValues.length > 0) {
+    return configuredValues
+  }
+
+  return [field.field_id]
+}
+
+const normalizeSelectionArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return []
+
+  return Array.from(
+    new Set(
+      value
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  )
+}
+
 const getInitialValue = (field: WPFormField): ClientFormValue => {
   switch (field.type) {
     case 'checkbox':
-      return field.default_value === true
+      if (Array.isArray(field.default_value)) {
+        const optionValues = new Set(getCheckboxOptionValues(field))
+        return normalizeSelectionArray(field.default_value).filter((value) => optionValues.has(value))
+      }
+
+      if (field.default_value === true) {
+        const [firstOptionValue] = getCheckboxOptionValues(field)
+        return firstOptionValue ? [firstOptionValue] : []
+      }
+
+      return []
     case 'number':
       return typeof field.default_value === 'number' ? String(field.default_value) : ''
     case 'select':
@@ -39,7 +75,16 @@ export function validateClientFormValues(
     const rawValue = values[field.field_id]
 
     if (field.type === 'checkbox') {
-      if (field.required && rawValue !== true) {
+      const optionValues = new Set(getCheckboxOptionValues(field))
+      const selectedValues = normalizeSelectionArray(rawValue)
+      const hasInvalidSelection = selectedValues.some((value) => !optionValues.has(value))
+
+      if (hasInvalidSelection) {
+        errors[field.field_id] = `Please choose valid options for ${field.label}.`
+        continue
+      }
+
+      if (field.required && selectedValues.length === 0) {
         errors[field.field_id] = `${field.label} is required.`
       }
       continue
