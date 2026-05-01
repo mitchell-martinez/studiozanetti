@@ -57,6 +57,10 @@ describe('sendFormSubmissionEmail', () => {
         subject: 'New message',
         text: 'Test body',
         replyTo: 'client@example.com',
+        envelope: {
+          from: 'noreply@example.com',
+          to: ['hello@example.com'],
+        },
       }),
     )
   })
@@ -79,6 +83,15 @@ describe('sendFormSubmissionEmail', () => {
         port: 587,
         secure: false,
         name: 'studiozanetti.com.au',
+      }),
+    )
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: 'michael@studiozanetti.com.au',
+        envelope: {
+          from: 'michael@studiozanetti.com.au',
+          to: ['hello@example.com'],
+        },
       }),
     )
   })

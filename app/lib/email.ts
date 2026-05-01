@@ -9,7 +9,8 @@ export interface SendFormSubmissionEmailArgs {
 }
 
 interface SmtpConfig {
-  from: string
+  fromEmail: string
+  fromName?: string
   transportOptions: SMTPTransport.Options
 }
 
@@ -92,12 +93,17 @@ function getSmtpConfig(): SmtpConfig {
   }
 
   return {
-    from: buildFromAddress(fromEmail, process.env.SMTP_FROM_NAME),
+    fromEmail,
+    fromName: process.env.SMTP_FROM_NAME?.trim() || undefined,
     transportOptions,
   }
 }
 
-function getTransport(): { from: string; transporter: nodemailer.Transporter } {
+function getTransport(): {
+  fromEmail: string
+  fromName?: string
+  transporter: nodemailer.Transporter
+} {
   const config = getSmtpConfig()
   const transportKey = JSON.stringify(config.transportOptions)
 
@@ -106,18 +112,26 @@ function getTransport(): { from: string; transporter: nodemailer.Transporter } {
     cachedTransportKey = transportKey
   }
 
-  return { from: config.from, transporter: cachedTransport }
+  return {
+    fromEmail: config.fromEmail,
+    fromName: config.fromName,
+    transporter: cachedTransport,
+  }
 }
 
 export async function sendFormSubmissionEmail(args: SendFormSubmissionEmailArgs) {
-  const { from, transporter } = getTransport()
+  const { fromEmail, fromName, transporter } = getTransport()
 
   await transporter.sendMail({
-    from,
+    from: buildFromAddress(fromEmail, fromName),
     to: args.to,
     subject: args.subject,
     text: args.text,
     replyTo: args.replyTo,
+    envelope: {
+      from: fromEmail,
+      to: [args.to],
+    },
   })
 }
 
