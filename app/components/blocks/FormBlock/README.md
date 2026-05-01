@@ -48,7 +48,8 @@ Each field row also has an optional `VSCO Field Key` value.
 Every form includes a protected default Name row:
 
 - It is automatically created in new forms.
-- It cannot be removed.
+- If existing rows are missing a `field_id` of `name` + `VSCO Field Key` of `FirstName`, the row is auto-restored.
+- It cannot be removed (no remove option is shown for that row).
 - It always maps to VSCO `FirstName`.
 - The admin can still rename the visible Label and reorder the row position.
 

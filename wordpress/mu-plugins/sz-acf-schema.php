@@ -742,6 +742,17 @@ function szNormalizeFormFieldsWithRequiredName( array $fields ): array {
 		}
 
 		$field_id = isset( $row['field_id'] ) ? strtolower( trim( (string) $row['field_id'] ) ) : '';
+		$label = isset( $row['label'] ) ? trim( (string) $row['label'] ) : '';
+		$vsco_field_key = isset( $row['vsco_field_key'] ) ? trim( (string) $row['vsco_field_key'] ) : '';
+		$help_text = isset( $row['help_text'] ) ? trim( (string) $row['help_text'] ) : '';
+		$placeholder = isset( $row['placeholder'] ) ? trim( (string) $row['placeholder'] ) : '';
+		$default_value = isset( $row['default_value'] ) ? trim( (string) $row['default_value'] ) : '';
+		$has_options = isset( $row['options'] ) && is_array( $row['options'] ) && ! empty( $row['options'] );
+
+		// Drop ACF's accidental empty default row so it never persists as a blank Text field.
+		if ( $field_id === '' && $label === '' && $vsco_field_key === '' && $help_text === '' && $placeholder === '' && $default_value === '' && ! $has_options ) {
+			continue;
+		}
 
 		if ( $field_id === 'name' ) {
 			$has_name = true;
@@ -749,6 +760,7 @@ function szNormalizeFormFieldsWithRequiredName( array $fields ): array {
 			// Lock canonical machine fields while preserving admin-editable label.
 			$row['field_id']       = 'name';
 			$row['type']           = 'text';
+			$row['required']       = 1;
 			$row['vsco_field_key'] = 'FirstName';
 			if ( empty( $row['label'] ) || ! is_string( $row['label'] ) ) {
 				$row['label'] = 'Name';
@@ -778,6 +790,25 @@ function szLoadDefaultRequiredFormNameRow( $value ) {
 	}
 
 	return szNormalizeFormFieldsWithRequiredName( $value );
+}
+
+/**
+ * Ensure newly rendered Form Block repeaters never start with a blank default row.
+ */
+add_filter( 'acf/prepare_field/key=field_sz_form_fields', 'szPrepareRequiredFormNameRowField', 20 );
+function szPrepareRequiredFormNameRowField( $field ) {
+	if ( ! is_array( $field ) ) {
+		return $field;
+	}
+
+	$value = $field['value'] ?? null;
+	if ( ! is_array( $value ) ) {
+		$field['value'] = [ szRequiredFormNameFieldRow() ];
+		return $field;
+	}
+
+	$field['value'] = szNormalizeFormFieldsWithRequiredName( $value );
+	return $field;
 }
 
 /**
@@ -819,48 +850,232 @@ function szLockRequiredFormNameRowUi() {
 		return;
 	}
 	?>
+	<style>
+		[data-key="field_sz_form_fields"] .acf-row[data-sz-protected-name-row="1"] [data-event="remove-row"],
+		[data-key="field_sz_form_fields"] .acf-row[data-sz-protected-name-row="1"] .acf-row-handle.remove {
+			display: none !important;
+		}
+	</style>
 	<script>
 	(function ($) {
 		if (typeof acf === 'undefined') return;
 
-		function lockNameRows(context) {
+		function normalizeToken(value) {
+			return (value || '').toString().trim().toLowerCase();
+		}
+
+		function getFormBlocks(context) {
 			var $root = context && context.length ? context : $(document);
-			var $rows = $root.find('[data-key="field_sz_form_fields"] .acf-row').not('.acf-clone');
+			var $blocks = $root.find('[data-layout="form_block"]');
+
+			if ($root.is('[data-layout="form_block"]')) {
+				$blocks = $blocks.add($root);
+			}
+
+			return $blocks;
+		}
+
+		function getRepeaterField($formBlock) {
+			return $formBlock.find('[data-key="field_sz_form_fields"]').first();
+		}
+
+		function getRows($repeaterField) {
+			return $repeaterField.find('.acf-row').not('.acf-clone');
+		}
+
+		function getFieldIdInput($row) {
+			return $row.find('[data-key="field_sz_form_field_id"] input[type="text"]').first();
+		}
+
+		function getLabelInput($row) {
+			return $row.find('[data-key="field_sz_form_field_label"] input[type="text"]').first();
+		}
+
+		function getTypeSelect($row) {
+			return $row.find('[data-key="field_sz_form_field_type"] select').first();
+		}
+
+		function getVscoKeyInput($row) {
+			return $row.find('[data-key="field_sz_form_field_vsco_field_key"] input[type="text"]').first();
+		}
+
+		function getRequiredCheckbox($row) {
+			return $row.find('[data-key="field_sz_form_field_required"] input[type="checkbox"]').first();
+		}
+
+		function getFieldIdValue($row) {
+			return normalizeToken(getFieldIdInput($row).val());
+		}
+
+		function getVscoKeyValue($row) {
+			return normalizeToken(getVscoKeyInput($row).val());
+		}
+
+		function isProtectedRow($row) {
+			if ($row.attr('data-sz-protected-name-row') === '1') {
+				return true;
+			}
+
+			return getFieldIdValue($row) === 'name' || getVscoKeyValue($row) === 'firstname';
+		}
+
+		function isBlankFieldRow($row) {
+			var labelValue = normalizeToken(getLabelInput($row).val());
+			return !getFieldIdValue($row) && !getVscoKeyValue($row) && !labelValue;
+		}
+
+		function unlockRow($row) {
+			$row.removeAttr('data-sz-protected-name-row');
+
+			var $fieldId = getFieldIdInput($row);
+			var $type = getTypeSelect($row);
+			var $vscoKey = getVscoKeyInput($row);
+			var $removeLinks = $row.find('[data-event="remove-row"]');
+			var $removeHandles = $row.find('.acf-row-handle.remove');
+			var $idWrap = $row.find('[data-key="field_sz_form_field_id"] .acf-input').first();
+
+			$fieldId.prop('readonly', false);
+			$type.prop('disabled', false);
+			$vscoKey.prop('readonly', false);
+			$removeLinks.attr('aria-hidden', 'false').removeAttr('tabindex').show();
+			$removeHandles.attr('aria-hidden', 'false').show();
+			$idWrap.find('.sz-name-lock-note').remove();
+		}
+
+		function protectRow($row) {
+			$row.attr('data-sz-protected-name-row', '1');
+
+			var $fieldId = getFieldIdInput($row);
+			var $label = getLabelInput($row);
+			var $type = getTypeSelect($row);
+			var $required = getRequiredCheckbox($row);
+			var $vscoKey = getVscoKeyInput($row);
+			var $removeLinks = $row.find('[data-event="remove-row"]');
+			var $removeHandles = $row.find('.acf-row-handle.remove');
+			var $idWrap = $row.find('[data-key="field_sz_form_field_id"] .acf-input').first();
+
+			$fieldId.val('name').prop('readonly', true);
+			$type.val('text').prop('disabled', true);
+			$vscoKey.val('FirstName').prop('readonly', true);
+
+			if ($required.length) {
+				$required.prop('checked', true);
+			}
+
+			if (!normalizeToken($label.val())) {
+				$label.val('Name');
+			}
+
+			$removeLinks.attr('aria-hidden', 'true').attr('tabindex', '-1').hide();
+			$removeHandles.attr('aria-hidden', 'true').hide();
+
+			if ($idWrap.find('.sz-name-lock-note').length === 0) {
+				$idWrap.append('<p class="description sz-name-lock-note">Locked required field for VSCO FirstName. You can rename the visible Label and reorder this row.</p>');
+			}
+		}
+
+		function findProtectedCandidate($rows) {
+			var $exact = $rows.filter(function () {
+				var $row = $(this);
+				return getFieldIdValue($row) === 'name' && getVscoKeyValue($row) === 'firstname';
+			}).first();
+
+			if ($exact.length) return $exact;
+
+			var $fieldIdMatch = $rows.filter(function () {
+				return getFieldIdValue($(this)) === 'name';
+			}).first();
+
+			if ($fieldIdMatch.length) return $fieldIdMatch;
+
+			var $vscoMatch = $rows.filter(function () {
+				return getVscoKeyValue($(this)) === 'firstname';
+			}).first();
+
+			if ($vscoMatch.length) return $vscoMatch;
+
+			var $unconfigured = $rows.filter(function () {
+				return !getFieldIdValue($(this));
+			}).first();
+
+			if ($unconfigured.length) return $unconfigured;
+
+			return $rows.filter(function () {
+				return isBlankFieldRow($(this));
+			}).first();
+		}
+
+		function ensureProtectedNameRow($formBlock) {
+			var $repeaterField = getRepeaterField($formBlock);
+			if (!$repeaterField.length) return;
+
+			var $rows = getRows($repeaterField);
+			var $candidate = findProtectedCandidate($rows);
+
+			if (!$candidate.length && $rows.length) {
+				$candidate = $rows.first();
+			}
+
+			if (!$candidate.length) {
+				return;
+			}
 
 			$rows.each(function () {
-				var $row = $(this);
-				var $fieldId = $row.find('[data-key="field_sz_form_field_id"] input[type="text"]').first();
-				if (!$fieldId.length) return;
+				unlockRow($(this));
+			});
 
-				var isName = (($fieldId.val() || '').trim().toLowerCase() === 'name');
-				if (!isName) return;
+			protectRow($candidate);
+		}
 
-				var $remove = $row.find('a[data-event="remove-row"]').first();
-				var $type = $row.find('[data-key="field_sz_form_field_type"] select').first();
-				var $vscoKey = $row.find('[data-key="field_sz_form_field_vsco_field_key"] input[type="text"]').first();
-				var $idWrap = $row.find('[data-key="field_sz_form_field_id"] .acf-input').first();
-
-				$remove.hide();
-				$fieldId.val('name').prop('readonly', true);
-				if ($type.length) {
-					$type.val('text').prop('disabled', true);
-				}
-				if ($vscoKey.length) {
-					$vscoKey.val('FirstName').prop('readonly', true);
-				}
-
-				if ($idWrap.find('.sz-name-lock-note').length === 0) {
-					$idWrap.append('<p class="description sz-name-lock-note">Locked required field for VSCO FirstName. You can rename the visible Label and reorder this row.</p>');
-				}
+		function normalizeAll(context) {
+			getFormBlocks(context).each(function () {
+				ensureProtectedNameRow($(this));
 			});
 		}
 
+		function normalizeAllDeferred(context) {
+			normalizeAll(context);
+			window.setTimeout(function () {
+				normalizeAll(context);
+			}, 0);
+			window.setTimeout(function () {
+				normalizeAll(context);
+			}, 60);
+		}
+
 		acf.addAction('ready append', function ($el) {
-			lockNameRows($el);
+			normalizeAllDeferred($el && $el.length ? $el : $(document));
 		});
 
-		$(document).on('input change', '[data-key="field_sz_form_fields"] input, [data-key="field_sz_form_fields"] select', function () {
-			lockNameRows($(this).closest('.acf-fields'));
+		window.setTimeout(function () {
+			normalizeAllDeferred($(document));
+		}, 0);
+
+		$(document).on('click', '[data-key="field_sz_form_fields"] a[data-event="remove-row"]', function (event) {
+			var $row = $(this).closest('.acf-row');
+			if (!isProtectedRow($row)) {
+				window.setTimeout(function () {
+					normalizeAllDeferred($(document));
+				}, 0);
+				return;
+			}
+
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			normalizeAllDeferred($(document));
+			return false;
+		});
+
+		$(document).on('click', '[data-key="field_sz_form_fields"] a[data-event="add-row"]', function () {
+			var $formBlock = $(this).closest('[data-layout="form_block"]');
+			window.setTimeout(function () {
+				normalizeAllDeferred($formBlock.length ? $formBlock : $(document));
+			}, 0);
+		});
+
+		$(document).on('input change', '[data-key="field_sz_form_fields"] input, [data-key="field_sz_form_fields"] select, [data-key="field_sz_form_delivery_target"] select', function () {
+			var $formBlock = $(this).closest('[data-layout="form_block"]');
+			normalizeAllDeferred($formBlock.length ? $formBlock : $(document));
 		});
 	})(jQuery);
 	</script>
