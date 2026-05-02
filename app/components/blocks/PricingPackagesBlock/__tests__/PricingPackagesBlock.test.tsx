@@ -36,6 +36,30 @@ describe('PricingPackagesBlock', () => {
     expect(screen.getByRole('link', { name: 'Send Enquiry' })).toBeInTheDocument()
   })
 
+  it('renders inline images inside pricing tiers and inclusions content', () => {
+    render(
+      <MemoryRouter>
+        <PricingPackagesBlock
+          block={{
+            ...mockPricingPackagesBlock,
+            packages: [
+              {
+                ...mockPricingPackagesBlock.packages[0],
+                pricing:
+                  '<p><img src="/images/pricing-guide.webp" alt="Pricing tiers guide" /></p>',
+                inclusions:
+                  '<p><img src="/images/inclusions-badge.webp" alt="Inclusions badge" /></p>',
+              },
+            ],
+          }}
+        />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByAltText('Pricing tiers guide')).toBeInTheDocument()
+    expect(screen.getByAltText('Inclusions badge')).toBeInTheDocument()
+  })
+
   it('renders table layout on desktop for any number of packages', () => {
     const { container } = render(
       <MemoryRouter>
