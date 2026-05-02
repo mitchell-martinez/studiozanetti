@@ -97,6 +97,85 @@ describe('api.forms.submit action', () => {
     expect(response.status).toBe(200)
   })
 
+  it('sends a second email copy to the designated submitter email when requested', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'email',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        offer_submitter_email_copy: true,
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+          },
+          {
+            field_id: 'email',
+            label: 'Email',
+            type: 'email',
+            use_for_submitter_copy: true,
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+      deliveryTarget: 'email',
+      offerSubmitterEmailCopy: true,
+      submitterCopyFieldId: 'email',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        requestSubmitterCopy: true,
+        values: {
+          name: 'Mitchell',
+          email: 'mitchell@example.com',
+        },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(200)
+    expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(2)
+    expect(sendFormSubmissionEmail).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        to: 'hello@studiozanetti.com.au',
+        subject: 'Website enquiry',
+        replyTo: 'mitchell@example.com',
+      }),
+    )
+    expect(sendFormSubmissionEmail).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        to: 'mitchell@example.com',
+        subject: 'Copy of your form submission',
+      }),
+    )
+
+    const submitterCopyArgs = vi.mocked(sendFormSubmissionEmail).mock.calls[1]?.[0]
+    expect(submitterCopyArgs?.text).toContain('Here is a copy of the information you sent:')
+    expect(submitterCopyArgs?.text).not.toContain('Page:')
+  })
+
   it('returns 400 for malformed payloads', async () => {
     const response = await action({
       request: makeRequest({ formId: 'contact-enquiry', values: {} }),
@@ -106,6 +185,69 @@ describe('api.forms.submit action', () => {
 
     expect(response.status).toBe(400)
     expect(getTrustedFormSubmissionConfig).not.toHaveBeenCalled()
+  })
+
+  it('returns 422 when a submitter copy is requested without the designated email value', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'email',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        offer_submitter_email_copy: true,
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+          },
+          {
+            field_id: 'email',
+            label: 'Email',
+            type: 'email',
+            use_for_submitter_copy: true,
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+      deliveryTarget: 'email',
+      offerSubmitterEmailCopy: true,
+      submitterCopyFieldId: 'email',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        requestSubmitterCopy: true,
+        values: {
+          name: 'Mitchell',
+          email: '',
+        },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(422)
+    await expect(response.json()).resolves.toMatchObject({
+      fieldErrors: { email: 'Email is required to receive a copy of the form.' },
+    })
+    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
   })
 
   it('returns 404 when the trusted form config is missing', async () => {
@@ -773,7 +915,7 @@ describe('api.forms.submit action', () => {
 
     expect(response.status).toBe(422)
     await expect(response.json()).resolves.toMatchObject({
-      error: expect.stringContaining('required Name field'),
+      error: expect.stringContaining('settings are invalid'),
     })
     expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
     expect(sendVscoLead).not.toHaveBeenCalled()

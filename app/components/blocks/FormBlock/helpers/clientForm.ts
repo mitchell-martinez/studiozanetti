@@ -1,8 +1,12 @@
-import { isReservedNameField } from '~/lib/formConfiguration'
+import { getSubmitterCopyTargetFields, isReservedNameField } from '~/lib/formConfiguration'
 import type { WPFormField } from '~/types/wordpress'
 
 export type ClientFormValue = string | string[]
 export type ClientFormValues = Record<string, ClientFormValue>
+
+interface ClientFormValidationOptions {
+  requestSubmitterCopy?: boolean
+}
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -69,8 +73,10 @@ export function createInitialClientFormValues(fields: WPFormField[]): ClientForm
 export function validateClientFormValues(
   fields: WPFormField[],
   values: ClientFormValues,
+  options: ClientFormValidationOptions = {},
 ): Record<string, string> {
   const errors: Record<string, string> = {}
+  const submitterCopyTargetField = getSubmitterCopyTargetFields({ fields })[0]
 
   for (const field of fields) {
     const rawValue = values[field.field_id]
@@ -102,6 +108,14 @@ export function validateClientFormValues(
 
     if (field.type === 'email' && !EMAIL_PATTERN.test(stringValue)) {
       errors[field.field_id] = `${field.label} must be a valid email address.`
+    }
+
+    if (
+      options.requestSubmitterCopy &&
+      field.field_id === submitterCopyTargetField?.field_id &&
+      !stringValue
+    ) {
+      errors[field.field_id] = `${field.label} is required to receive a copy of the form.`
     }
 
     if (field.type === 'number' && Number.isNaN(Number(stringValue))) {

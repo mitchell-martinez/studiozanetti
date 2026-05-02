@@ -9,6 +9,7 @@ import { getPageByPath, getPageBySlug } from '~/lib/wordpress'
 import {
   buildVscoLeadSubmissionData,
   buildFormSubmissionEmailText,
+  buildSubmitterCopyEmailText,
   getTrustedFormSubmissionConfig,
   normalizeFormPagePath,
   stripSensitiveFormBlockData,
@@ -85,6 +86,7 @@ describe('getTrustedFormSubmissionConfig', () => {
       emailTo: 'hello@studiozanetti.com.au',
       emailSubject: 'New enquiry from website',
       deliveryTarget: 'both',
+      offerSubmitterEmailCopy: false,
       vscoSendEmailNotification: true,
       form: { form_id: 'contact-enquiry' },
     })
@@ -115,6 +117,41 @@ describe('getTrustedFormSubmissionConfig', () => {
 
     expect(result).toBeNull()
     expect(getPageBySlug).not.toHaveBeenCalled()
+  })
+
+  it('resolves submitter copy settings from the WordPress form block', async () => {
+    vi.mocked(getPageBySlug).mockResolvedValueOnce({
+      ...mockPage,
+      acf: {
+        blocks: [
+          {
+            acf_fc_layout: 'text_block' as const,
+            heading: 'Intro',
+            body: '<p>Text</p>',
+          },
+          {
+            ...mockFormBlock,
+            offer_submitter_email_copy: true,
+            fields: [
+              mockFormBlock.fields[0],
+              {
+                field_id: 'email',
+                label: 'Email',
+                type: 'email' as const,
+                use_for_submitter_copy: true,
+              },
+            ],
+          },
+        ],
+      },
+    } as never)
+
+    const result = await getTrustedFormSubmissionConfig('/get-in-touch/', 'contact-enquiry')
+
+    expect(result).toMatchObject({
+      offerSubmitterEmailCopy: true,
+      submitterCopyFieldId: 'email',
+    })
   })
 })
 
@@ -439,6 +476,180 @@ describe('validateFormConfiguration', () => {
         'VSCO Field Key FirstName can only be used once in a form.',
       ]),
     )
+  })
+
+  it('rejects submitter copy forms without a designated email field', () => {
+    const form = {
+      ...mockFormBlock,
+      offer_submitter_email_copy: true,
+      fields: [
+        mockFormBlock.fields[0],
+        {
+          field_id: 'email',
+          label: 'Email',
+          type: 'email' as const,
+        },
+      ],
+    }
+
+    expect(validateFormConfiguration(form as never)).toContain(
+      'Select one Email field to use when submitters request a copy of the form.',
+    )
+  })
+
+  it('rejects multiple submitter copy email targets', () => {
+    const form = {
+      ...mockFormBlock,
+      fields: [
+        mockFormBlock.fields[0],
+        {
+          field_id: 'email',
+          label: 'Email',
+          type: 'email' as const,
+          use_for_submitter_copy: true,
+        },
+        {
+          field_id: 'alternate_email',
+          label: 'Alternate email',
+          type: 'email' as const,
+          use_for_submitter_copy: true,
+        },
+      ],
+    }
+
+    expect(validateFormConfiguration(form as never)).toContain(
+      'Only one Email field can be selected for submitter copy delivery.',
+    )
+  })
+})
+
+describe('submitter copy handling', () => {
+  it('prefers the designated email for replyTo and submitter copy delivery', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      offer_submitter_email_copy: true,
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Name',
+          type: 'text' as const,
+          required: true,
+        },
+        {
+          field_id: 'billing_email',
+          label: 'Billing email',
+          type: 'email' as const,
+        },
+        {
+          field_id: 'email',
+          label: 'Email',
+          type: 'email' as const,
+          use_for_submitter_copy: true,
+        },
+      ],
+    }
+
+    const validated = validateFormSubmission(
+      form as never,
+      {
+        name: 'Mitchell',
+        billing_email: 'accounts@example.com',
+        email: 'mitchell@example.com',
+      },
+      { requestSubmitterCopy: true },
+    )
+
+    expect(validated.replyTo).toBe('mitchell@example.com')
+    expect(validated.submitterCopyTo).toBe('mitchell@example.com')
+  })
+
+  it('requires the designated email when a submitter copy is requested', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      offer_submitter_email_copy: true,
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Name',
+          type: 'text' as const,
+          required: true,
+        },
+        {
+          field_id: 'email',
+          label: 'Email',
+          type: 'email' as const,
+          use_for_submitter_copy: true,
+        },
+      ],
+    }
+
+    const validated = validateFormSubmission(
+      form as never,
+      {
+        name: 'Mitchell',
+        email: '',
+      },
+      { requestSubmitterCopy: true },
+    )
+
+    expect(validated.fieldErrors.email).toBe('Email is required to receive a copy of the form.')
+  })
+
+  it('builds submitter copy emails without technical metadata', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      offer_submitter_email_copy: true,
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Name',
+          type: 'text' as const,
+          required: true,
+        },
+        {
+          field_id: 'email',
+          label: 'Email',
+          type: 'email' as const,
+          use_for_submitter_copy: true,
+        },
+      ],
+    }
+
+    const validated = validateFormSubmission(
+      form as never,
+      {
+        name: 'Mitchell',
+        email: 'mitchell@example.com',
+      },
+      { requestSubmitterCopy: true },
+    )
+
+    const text = buildSubmitterCopyEmailText(
+      {
+        page: mockPage as never,
+        normalizedPagePath: 'get-in-touch',
+        form: form as never,
+        emailTo: 'hello@studiozanetti.com.au',
+        emailSubject: 'Website enquiry',
+        deliveryTarget: 'email',
+        offerSubmitterEmailCopy: true,
+        submitterCopyFieldId: 'email',
+        vscoSendEmailNotification: true,
+      },
+      validated,
+    )
+
+    expect(text).toContain('Here is a copy of the information you sent:')
+    expect(text).toContain('- Name: Mitchell')
+    expect(text).not.toContain('Page:')
+    expect(text).not.toContain('Form ID:')
+    expect(text).not.toContain('Page title:')
   })
 })
 

@@ -8,7 +8,16 @@ const normalizeFieldToken = (value?: string): string => value?.trim().toLowerCas
 export const isReservedNameField = (field: Pick<WPFormField, 'field_id'>): boolean =>
   normalizeFieldToken(field.field_id) === RESERVED_NAME_FIELD_ID
 
-export function validateFormConfiguration(form: Pick<FormBlock, 'fields'>): string[] {
+export const getSubmitterCopyTargetFields = (
+  form: Pick<FormBlock, 'fields'>,
+): WPFormField[] =>
+  form.fields.filter(
+    (field) => field.type === 'email' && field.use_for_submitter_copy === true,
+  )
+
+export function validateFormConfiguration(
+  form: Pick<FormBlock, 'fields' | 'offer_submitter_email_copy'>,
+): string[] {
   const errors: string[] = []
 
   if (!form.fields.length) {
@@ -19,6 +28,8 @@ export function validateFormConfiguration(form: Pick<FormBlock, 'fields'>): stri
   const seenFieldIds = new Set<string>()
   const reservedNameRows: WPFormField[] = []
   const firstNameMappedRows: WPFormField[] = []
+  let submitterCopySelectionCount = 0
+  let submitterCopyEmailTargetCount = 0
 
   for (const field of form.fields) {
     const normalizedFieldId = normalizeFieldToken(field.field_id)
@@ -57,6 +68,16 @@ export function validateFormConfiguration(form: Pick<FormBlock, 'fields'>): stri
         errors.push('VSCO Field Key FirstName is reserved for the Name field.')
       }
     }
+
+    if (field.use_for_submitter_copy === true) {
+      submitterCopySelectionCount += 1
+
+      if (field.type !== 'email') {
+        errors.push('Only Email fields can be selected for submitter copy delivery.')
+      } else {
+        submitterCopyEmailTargetCount += 1
+      }
+    }
   }
 
   if (duplicateFieldIds.size > 0) {
@@ -75,6 +96,14 @@ export function validateFormConfiguration(form: Pick<FormBlock, 'fields'>): stri
 
   if (firstNameMappedRows.length > 1) {
     errors.push('VSCO Field Key FirstName can only be used once in a form.')
+  }
+
+  if (submitterCopySelectionCount > 1) {
+    errors.push('Only one Email field can be selected for submitter copy delivery.')
+  }
+
+  if (form.offer_submitter_email_copy && submitterCopyEmailTargetCount === 0) {
+    errors.push('Select one Email field to use when submitters request a copy of the form.')
   }
 
   if (

@@ -22,6 +22,7 @@ const meta: Meta<FormArgs> = {
     submit_text: formBlock.submit_text,
     submit_alignment: formBlock.submit_alignment,
     success_message: formBlock.success_message,
+    offer_submitter_email_copy: formBlock.offer_submitter_email_copy,
     email_subject: formBlock.email_subject,
     email_to: formBlock.email_to,
     fields: formBlock.fields,
@@ -55,6 +56,10 @@ const meta: Meta<FormArgs> = {
       description: 'Button alignment inside the form panel',
     },
     success_message: { control: 'text', description: 'Success copy returned from the submit route' },
+    offer_submitter_email_copy: {
+      control: 'boolean',
+      description: 'Show the submitter email copy checkbox at the end of the form',
+    },
     email_subject: { control: 'text', description: 'Server-side email subject resolved from WordPress' },
     email_to: { control: 'text', description: 'Server-side recipient resolved from WordPress' },
     fields: { control: 'object', description: 'Field configuration repeater from WordPress' },
@@ -83,6 +88,16 @@ export const CenteredHeading: Story = {
 export const DarkTheme: Story = {
   args: {
     section_theme: 'dark',
+  },
+}
+
+export const WithoutSubmitterCopy: Story = {
+  args: {
+    offer_submitter_email_copy: false,
+    fields: formBlock.fields.map((field) => ({
+      ...field,
+      use_for_submitter_copy: undefined,
+    })),
   },
 }
 

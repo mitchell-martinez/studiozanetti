@@ -101,6 +101,7 @@ describe('FormBlock', () => {
       pagePath: '/get-in-touch',
       formId: 'contact-enquiry',
       honeypot: '',
+      requestSubmitterCopy: false,
       values: expect.objectContaining({
         name: 'Mitchell',
         email: 'mitchell@example.com',
@@ -113,6 +114,30 @@ describe('FormBlock', () => {
     expect(await screen.findByText('Thanks for getting in touch.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /send message/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('textbox', { name: /^Email/i })).not.toBeInTheDocument()
+  })
+
+  it('submits requestSubmitterCopy when the generated checkbox is selected', async () => {
+    vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, message: 'Thanks for getting in touch.' }),
+    }))
+    const user = userEvent.setup()
+
+    renderBlock()
+
+    await user.click(screen.getByLabelText(/receive a copy of this form to my email/i))
+    await user.type(screen.getByLabelText(/^Name/i), 'Mitchell')
+    await user.type(screen.getByRole('textbox', { name: /^Email/i }), 'mitchell@example.com')
+    await user.click(screen.getByRole('radio', { name: /^Email$/i }))
+    await user.click(screen.getByLabelText(/I agree to be contacted/i))
+    await user.click(screen.getByRole('button', { name: /send message/i }))
+
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1))
+
+    const [, init] = mockFetch.mock.calls[0]
+    const body = JSON.parse(init.body as string)
+
+    expect(body.requestSubmitterCopy).toBe(true)
   })
 
   it('shows server-side field errors returned by the submit route', async () => {
@@ -161,7 +186,7 @@ describe('FormBlock', () => {
 
     expect(
       screen.getByText(
-        'This form is unavailable right now. Please contact us another way while the required Name field is fixed.',
+        'This form is unavailable right now. Please contact us another way while the form settings are fixed.',
       ),
     ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /send message/i })).not.toBeInTheDocument()

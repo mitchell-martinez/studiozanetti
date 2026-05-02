@@ -1,6 +1,10 @@
 import { getPageByPath, getPageBySlug } from './wordpress'
 import { stripHtml } from './html'
-import { isReservedNameField, validateFormConfiguration } from './formConfiguration'
+import {
+  getSubmitterCopyTargetFields,
+  isReservedNameField,
+  validateFormConfiguration,
+} from './formConfiguration'
 import type {
   ContentBlock,
   FormBlock,
@@ -17,6 +21,7 @@ export interface FormSubmissionPayload {
   formId: string
   values: Record<string, FormSubmissionValue>
   honeypot?: string
+  requestSubmitterCopy?: boolean
 }
 
 export interface TrustedFormSubmissionConfig {
@@ -26,6 +31,8 @@ export interface TrustedFormSubmissionConfig {
   emailTo: string
   emailSubject: string
   deliveryTarget: FormDeliveryTarget
+  offerSubmitterEmailCopy?: boolean
+  submitterCopyFieldId?: string
   vscoSendEmailNotification: boolean
 }
 
@@ -34,6 +41,11 @@ export interface ValidatedFormSubmission {
   sanitizedValues: Record<string, FormSubmissionValue>
   displayValues: Array<{ fieldId: string; label: string; value: string }>
   replyTo?: string
+  submitterCopyTo?: string
+}
+
+interface ValidateFormSubmissionOptions {
+  requestSubmitterCopy?: boolean
 }
 
 const HOME_SLUG = 'home'
@@ -208,11 +220,13 @@ const hasValidChoiceOption = (field: WPFormField, candidate: string): boolean =>
 export function validateFormSubmission(
   form: FormBlock,
   values: Record<string, FormSubmissionValue>,
+  options: ValidateFormSubmissionOptions = {},
 ): ValidatedFormSubmission {
   const fieldErrors: Record<string, string> = {}
   const sanitizedValues: Record<string, FormSubmissionValue> = {}
   const displayValues: Array<{ fieldId: string; label: string; value: string }> = []
   const knownFieldIds = new Set(form.fields.map((field) => field.field_id))
+  const submitterCopyTargetFieldId = getSubmitterCopyTargetFields(form)[0]?.field_id
 
   for (const key of Object.keys(values)) {
     if (!knownFieldIds.has(key)) {
@@ -220,7 +234,8 @@ export function validateFormSubmission(
     }
   }
 
-  let replyTo: string | undefined
+  let firstValidEmail: string | undefined
+  let submitterCopyTargetEmail: string | undefined
 
   for (const field of form.fields) {
     const rawValue = values[field.field_id]
@@ -293,8 +308,14 @@ export function validateFormSubmission(
         sanitizedValue = sanitizeStringValue(rawValue)
         if (field.type === 'email' && typeof sanitizedValue === 'string' && !EMAIL_PATTERN.test(sanitizedValue)) {
           fieldErrors[field.field_id] = `${field.label} must be a valid email address.`
-        } else if (field.type === 'email' && typeof sanitizedValue === 'string' && !replyTo) {
-          replyTo = sanitizedValue
+        } else if (field.type === 'email' && typeof sanitizedValue === 'string') {
+          if (!firstValidEmail) {
+            firstValidEmail = sanitizedValue
+          }
+
+          if (field.field_id === submitterCopyTargetFieldId) {
+            submitterCopyTargetEmail = sanitizedValue
+          }
         }
         break
       }
@@ -302,6 +323,15 @@ export function validateFormSubmission(
 
     if (!fieldErrors[field.field_id] && isFieldRequiredAndEmpty(field, sanitizedValue)) {
       fieldErrors[field.field_id] = `${field.label} is required.`
+    }
+
+    if (
+      options.requestSubmitterCopy &&
+      field.field_id === submitterCopyTargetFieldId &&
+      !fieldErrors[field.field_id] &&
+      (typeof sanitizedValue !== 'string' || !sanitizedValue)
+    ) {
+      fieldErrors[field.field_id] = `${field.label} is required to receive a copy of the form.`
     }
 
     sanitizedValues[field.field_id] = sanitizedValue
@@ -312,16 +342,20 @@ export function validateFormSubmission(
     })
   }
 
-  return { fieldErrors, sanitizedValues, displayValues, replyTo }
+  return {
+    fieldErrors,
+    sanitizedValues,
+    displayValues,
+    replyTo: submitterCopyTargetEmail || firstValidEmail,
+    submitterCopyTo: options.requestSubmitterCopy ? submitterCopyTargetEmail : undefined,
+  }
 }
 
-export function buildFormSubmissionEmailText(
-  config: TrustedFormSubmissionConfig,
+const buildSubmittedFieldLines = (
+  form: FormBlock,
   validated: ValidatedFormSubmission,
-): string {
-  const heading = config.form.heading?.trim() || 'Website form submission'
-  const pagePath = config.normalizedPagePath === HOME_SLUG ? '/' : `/${config.normalizedPagePath}`
-  const submittedFieldLines = config.form.fields.flatMap((field) => {
+): string[] =>
+  form.fields.flatMap((field) => {
     const value = validated.sanitizedValues[field.field_id] ?? null
 
     if (field.type !== 'checkbox') {
@@ -339,6 +373,14 @@ export function buildFormSubmissionEmailText(
     ]
   })
 
+export function buildFormSubmissionEmailText(
+  config: TrustedFormSubmissionConfig,
+  validated: ValidatedFormSubmission,
+): string {
+  const heading = config.form.heading?.trim() || 'Website form submission'
+  const pagePath = config.normalizedPagePath === HOME_SLUG ? '/' : `/${config.normalizedPagePath}`
+  const submittedFieldLines = buildSubmittedFieldLines(config.form, validated)
+
   const lines = [
     heading,
     '',
@@ -348,6 +390,20 @@ export function buildFormSubmissionEmailText(
     '',
     'Submitted fields:',
     ...submittedFieldLines,
+  ]
+
+  return lines.join('\n')
+}
+
+export function buildSubmitterCopyEmailText(
+  config: TrustedFormSubmissionConfig,
+  validated: ValidatedFormSubmission,
+): string {
+  const lines = [
+    'Thanks for your submission.',
+    '',
+    'Here is a copy of the information you sent:',
+    ...buildSubmittedFieldLines(config.form, validated),
   ]
 
   return lines.join('\n')
@@ -471,9 +527,13 @@ export function stripSensitiveFormBlockData(page: WPPage): WPPage {
 export function parseFormSubmissionPayload(input: unknown): FormSubmissionPayload | null {
   if (!isRecord(input)) return null
 
-  const { formId, honeypot, pagePath, values } = input
+  const { formId, honeypot, pagePath, requestSubmitterCopy, values } = input
 
   if (typeof pagePath !== 'string' || typeof formId !== 'string' || !isRecord(values)) {
+    return null
+  }
+
+  if (requestSubmitterCopy !== undefined && typeof requestSubmitterCopy !== 'boolean') {
     return null
   }
 
@@ -489,6 +549,7 @@ export function parseFormSubmissionPayload(input: unknown): FormSubmissionPayloa
     formId,
     values: normalizedValues,
     honeypot: typeof honeypot === 'string' ? honeypot : undefined,
+    requestSubmitterCopy,
   }
 }
 
@@ -527,6 +588,8 @@ export async function getTrustedFormSubmissionConfig(
     emailTo: form.email_to?.trim() ?? '',
     emailSubject: form.email_subject?.trim() ?? '',
     deliveryTarget: normalizeDeliveryTarget(form.delivery_target),
+    offerSubmitterEmailCopy: form.offer_submitter_email_copy === true,
+    submitterCopyFieldId: getSubmitterCopyTargetFields(form)[0]?.field_id,
     vscoSendEmailNotification: form.vsco_send_email_notification !== false,
   }
 }

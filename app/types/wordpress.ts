@@ -275,6 +275,7 @@ interface WPFormFieldBase {
   type: FormFieldType
   help_text?: string
   required?: boolean
+  use_for_submitter_copy?: boolean
   vsco_field_key?: string
 }
 
@@ -333,6 +334,7 @@ export interface FormBlock extends BlockStyleOptions {
   submit_text?: string
   submit_alignment?: FormSubmitAlignment
   success_message?: string
+  offer_submitter_email_copy?: boolean
   delivery_target?: FormDeliveryTarget
   email_subject?: string
   email_to?: string

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
 import { validateFormConfiguration } from '~/lib/formConfiguration'
+import { getSubmitterCopyTargetFields } from '~/lib/formConfiguration'
 import type { WPFormFieldOption } from '~/types/wordpress'
 import { getBackgroundImageStyle, getSectionStyle } from '../helpers/styleOptions'
 import sharedStyles from '../shared.module.scss'
@@ -17,6 +18,7 @@ import type { FormBlockProps } from './types'
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 
 const SUBMIT_ERROR_RESHOW_DELAY_MS = 80
+const SUBMITTER_COPY_LABEL = 'Receive a copy of this form to my email'
 
 interface SubmitResponse {
   success?: boolean
@@ -71,6 +73,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const location = useLocation()
   const [values, setValues] = useState(() => createInitialClientFormValues(block.fields))
   const [honeypot, setHoneypot] = useState('')
+  const [requestSubmitterCopy, setRequestSubmitterCopy] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -86,6 +89,10 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const submitText = block.submit_text?.trim() || 'Send message'
   const formConfigurationErrors = validateFormConfiguration(block)
   const isFormAvailable = formConfigurationErrors.length === 0
+  const shouldOfferSubmitterCopy =
+    isFormAvailable &&
+    block.offer_submitter_email_copy === true &&
+    getSubmitterCopyTargetFields(block).length === 1
 
   const showSubmitError = (nextMessage: string) => {
     setSubmitErrorMessage(nextMessage)
@@ -117,7 +124,9 @@ const FormBlock = ({ block }: FormBlockProps) => {
     setIsSubmitErrorVisible(false)
     setSubmitErrorMessage(null)
 
-    const nextErrors = validateClientFormValues(block.fields, values)
+    const nextErrors = validateClientFormValues(block.fields, values, {
+      requestSubmitterCopy: shouldOfferSubmitterCopy && requestSubmitterCopy,
+    })
     if (Object.keys(nextErrors).length > 0) {
       setFieldErrors(nextErrors)
       setSubmitState('error')
@@ -137,6 +146,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
           pagePath: location.pathname,
           formId: block.form_id,
           honeypot,
+          requestSubmitterCopy: shouldOfferSubmitterCopy && requestSubmitterCopy,
           values,
         }),
       })
@@ -151,6 +161,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
 
       setValues(createInitialClientFormValues(block.fields))
       setHoneypot('')
+      setRequestSubmitterCopy(false)
       setFieldErrors({})
       setSubmitState('success')
       setSuccessMessage(payload.message ?? 'Thanks. Your message has been sent.')
@@ -186,7 +197,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
         <div className={`${styles.panel} ${formAlignment}`.trim()}>
           {!isFormAvailable && (
             <div className={`${styles.notice} ${styles.noticeTop} ${styles.noticeError}`.trim()} role="alert">
-              This form is unavailable right now. Please contact us another way while the required Name field is fixed.
+              This form is unavailable right now. Please contact us another way while the form settings are fixed.
             </div>
           )}
 
@@ -378,6 +389,21 @@ const FormBlock = ({ block }: FormBlockProps) => {
                     </div>
                   )
                 })}
+
+                {shouldOfferSubmitterCopy && (
+                  <div className={styles.fieldGroup}>
+                    <label htmlFor={`${block.form_id}-request-submitter-copy`} className={styles.checkboxLabel}>
+                      <input
+                        id={`${block.form_id}-request-submitter-copy`}
+                        name="requestSubmitterCopy"
+                        type="checkbox"
+                        checked={requestSubmitterCopy}
+                        onChange={(event) => setRequestSubmitterCopy(event.currentTarget.checked)}
+                      />
+                      <span>{SUBMITTER_COPY_LABEL}</span>
+                    </label>
+                  </div>
+                )}
               </fieldset>
 
               <div className={`${styles.submitRow} ${submitAlignment}`.trim()}>

@@ -4,6 +4,7 @@ import { validateFormConfiguration } from '~/lib/formConfiguration'
 import {
   buildVscoLeadSubmissionData,
   buildFormSubmissionEmailText,
+  buildSubmitterCopyEmailText,
   getFormSuccessMessage,
   getTrustedFormSubmissionConfig,
   parseFormSubmissionPayload,
@@ -61,8 +62,7 @@ export async function action({ request }: ActionFunctionArgs) {
     console.error('[forms.submit] invalid form configuration', formConfigurationErrors)
     return Response.json(
       {
-        error:
-          'This form is unavailable right now because its required Name field is misconfigured. Fix the form in WordPress and publish again.',
+        error: 'This form is unavailable right now because its settings are invalid. Fix the form in WordPress and publish again.',
       },
       { status: 422 },
     )
@@ -103,7 +103,11 @@ export async function action({ request }: ActionFunctionArgs) {
     console.warn('[forms.submit] skipping email delivery due to incomplete email settings')
   }
 
-  const validatedSubmission = validateFormSubmission(trustedConfig.form, payload.values)
+  const requestSubmitterCopy =
+    trustedConfig.offerSubmitterEmailCopy === true && payload.requestSubmitterCopy === true
+  const validatedSubmission = validateFormSubmission(trustedConfig.form, payload.values, {
+    requestSubmitterCopy,
+  })
   if (Object.keys(validatedSubmission.fieldErrors).length > 0) {
     return Response.json(
       {
@@ -138,6 +142,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   let emailDelivered = false
+  let submitterCopyDelivered = false
   let vscoDelivered = false
 
   if (shouldAttemptEmail) {
@@ -151,6 +156,19 @@ export async function action({ request }: ActionFunctionArgs) {
       emailDelivered = true
     } catch (error) {
       console.error('[forms.submit] email delivery failed', error)
+    }
+  }
+
+  if (requestSubmitterCopy && validatedSubmission.submitterCopyTo) {
+    try {
+      await sendFormSubmissionEmail({
+        to: validatedSubmission.submitterCopyTo,
+        subject: 'Copy of your form submission',
+        text: buildSubmitterCopyEmailText(trustedConfig, validatedSubmission),
+      })
+      submitterCopyDelivered = true
+    } catch (error) {
+      console.error('[forms.submit] submitter copy delivery failed', error)
     }
   }
 
@@ -171,6 +189,10 @@ export async function action({ request }: ActionFunctionArgs) {
       { error: 'We could not send your message right now. Please try again shortly.' },
       { status: 502 },
     )
+  }
+
+  if (requestSubmitterCopy && !submitterCopyDelivered) {
+    console.warn('[forms.submit] submitter copy requested but was not delivered')
   }
 
   return Response.json({ success: true, message: getFormSuccessMessage(trustedConfig.form) })
