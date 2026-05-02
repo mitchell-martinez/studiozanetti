@@ -812,8 +812,6 @@ function sz_form_validate_required_name_or_firstname( $valid, $value, $field = n
 	}
 
 	$errors = sz_validate_form_field_rows( $value );
-	$offer_submitter_copy = sz_form_get_posted_sibling_field_value( $input, 'field_sz_form_offer_submitter_email_copy' );
-	$errors = array_merge( $errors, sz_validate_form_submitter_copy_configuration( $offer_submitter_copy, $value ) );
 	if ( empty( $errors ) ) {
 		return $valid;
 	}

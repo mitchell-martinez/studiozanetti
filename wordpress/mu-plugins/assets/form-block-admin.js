@@ -25,6 +25,10 @@
   const getToggleInput = ($row, fieldName) =>
     getFieldWrapper($row, fieldName).find('input[type="checkbox"]').last();
 
+  const ensureNoValidate = () => {
+    $('form#post').attr('novalidate', 'novalidate');
+  };
+
   const syncSubmitterCopyField = ($row) => {
     const $field = getFieldWrapper($row, 'use_for_submitter_copy');
     if (!$field.length) {
@@ -171,6 +175,7 @@
 
   const scheduleSync = ($root) => {
     window.requestAnimationFrame(() => {
+      ensureNoValidate();
       syncWithin($root);
     });
   };
