@@ -10,10 +10,22 @@ export const isReservedNameField = (field: Pick<WPFormField, 'field_id'>): boole
 
 export const getSubmitterCopyTargetFields = (
   form: Pick<FormBlock, 'fields'>,
-): WPFormField[] =>
-  form.fields.filter(
-    (field) => field.type === 'email' && field.use_for_submitter_copy === true,
+): WPFormField[] => {
+  const emailFields = form.fields.filter((field) => field.type === 'email')
+  const explicitlySelectedFields = emailFields.filter(
+    (field) => field.use_for_submitter_copy === true,
   )
+
+  if (explicitlySelectedFields.length > 0) {
+    return explicitlySelectedFields
+  }
+
+  if (emailFields.length === 1) {
+    return emailFields
+  }
+
+  return []
+}
 
 export function validateFormConfiguration(
   form: Pick<FormBlock, 'fields' | 'offer_submitter_email_copy'>,
@@ -28,6 +40,7 @@ export function validateFormConfiguration(
   const seenFieldIds = new Set<string>()
   const reservedNameRows: WPFormField[] = []
   const firstNameMappedRows: WPFormField[] = []
+  let emailFieldCount = 0
   let submitterCopySelectionCount = 0
   let submitterCopyEmailTargetCount = 0
 
@@ -69,6 +82,10 @@ export function validateFormConfiguration(
       }
     }
 
+    if (field.type === 'email') {
+      emailFieldCount += 1
+    }
+
     if (field.use_for_submitter_copy === true) {
       submitterCopySelectionCount += 1
 
@@ -102,8 +119,16 @@ export function validateFormConfiguration(
     errors.push('Only one Email field can be selected for submitter copy delivery.')
   }
 
-  if (form.offer_submitter_email_copy && submitterCopyEmailTargetCount === 0) {
-    errors.push('Select one Email field to use when submitters request a copy of the form.')
+  if (form.offer_submitter_email_copy && emailFieldCount === 0) {
+    errors.push('At least one email field required to send customer copy of their form to')
+  }
+
+  if (
+    form.offer_submitter_email_copy &&
+    emailFieldCount > 1 &&
+    submitterCopyEmailTargetCount === 0
+  ) {
+    errors.push('Please select which email field customers should receive a copy to')
   }
 
   if (

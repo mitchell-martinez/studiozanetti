@@ -415,7 +415,7 @@ add_action( 'acf/init', function () {
 		[ 'key' => 'field_sz_form_delivery_target', 'label' => 'Send Enquiry To', 'name' => 'delivery_target', 'type' => 'select', 'required' => 1, 'allow_null' => 1, 'choices' => [ 'email' => 'Email', 'vsco' => 'VSCO Workspace', 'both' => 'Email + VSCO Workspace' ], 'instructions' => 'Choose where this form submission should be delivered.' ],
 		[ 'key' => 'field_sz_form_email_subject', 'label' => 'Email Subject', 'name' => 'email_subject', 'type' => 'text', 'required' => 0, 'instructions' => 'Used by the server-side WordPress lookup when sending form submissions by email.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
 		[ 'key' => 'field_sz_form_email_to', 'label' => 'Email To', 'name' => 'email_to', 'type' => 'email', 'required' => 0, 'instructions' => 'Recipient address used when sending form submissions by email.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
-		[ 'key' => 'field_sz_form_offer_submitter_email_copy', 'label' => 'Offer Submitter Email Copy', 'name' => 'offer_submitter_email_copy', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0, 'instructions' => 'Show a checkbox at the bottom of the form so submitters can request an emailed copy of their answers. Requires exactly one Email field below to have Use For Submitter Copy enabled.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
+		[ 'key' => 'field_sz_form_offer_submitter_email_copy', 'label' => 'Offer Submitter Email Copy', 'name' => 'offer_submitter_email_copy', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0, 'instructions' => 'Show a checkbox at the bottom of the form so submitters can request an emailed copy of their answers. Requires at least one Email field below. If the form has more than one Email field, turn on “Use This One For Customer Copy” on the correct Email field.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
 		[ 'key' => 'field_sz_form_vsco_job_type', 'label' => 'VSCO Job Type', 'name' => 'vsco_job_type', 'type' => 'select', 'choices' => $vsco_job_type_choices, 'allow_null' => 0, 'required' => 1, 'instructions' => 'Required when VSCO delivery is enabled. Must match the Job Type names configured in VSCO Workspace.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'vsco' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
 		[ 'key' => 'field_sz_form_vsco_source', 'label' => 'VSCO Lead Source', 'name' => 'vsco_source', 'type' => 'text', 'instructions' => 'Optional Source value sent to VSCO (for example "Website Contact Form").', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'vsco' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
 		[ 'key' => 'field_sz_form_vsco_brand', 'label' => 'VSCO Brand', 'name' => 'vsco_brand', 'type' => 'text', 'instructions' => 'Optional brand name or brand ID to assign new leads to in VSCO.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'vsco' ] ], [ [ 'field' => 'field_sz_form_delivery_target', 'operator' => '==', 'value' => 'both' ] ] ] ],
@@ -434,7 +434,7 @@ add_action( 'acf/init', function () {
 				[ 'key' => 'field_sz_form_field_type', 'label' => 'Field Type', 'name' => 'type', 'type' => 'select', 'required' => 1, 'choices' => [ 'text' => 'Text', 'email' => 'Email', 'tel' => 'Telephone', 'number' => 'Number', 'date' => 'Date', 'time' => 'Time', 'datetime-local' => 'Date & Time', 'textarea' => 'Textarea', 'select' => 'Select Dropdown', 'radio' => 'Radio Group', 'checkbox' => 'Checkbox Group' ], 'default_value' => 'text' ],
 				[ 'key' => 'field_sz_form_field_help_text', 'label' => 'Help Text', 'name' => 'help_text', 'type' => 'textarea', 'rows' => 2 ],
 				[ 'key' => 'field_sz_form_field_required', 'label' => 'Required', 'name' => 'required', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0 ],
-				[ 'key' => 'field_sz_form_field_use_for_submitter_copy', 'label' => 'Use For Submitter Copy', 'name' => 'use_for_submitter_copy', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0, 'instructions' => 'Enable on exactly one Email field if submitters should be able to receive a copy of their form submission.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'email' ] ] ] ],
+				[ 'key' => 'field_sz_form_field_use_for_submitter_copy', 'label' => 'Use This One For Customer Copy', 'name' => 'use_for_submitter_copy', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0, 'instructions' => 'Turn this on for the Email field that should receive the customer copy. If there is only one Email field, it is used automatically.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'email' ] ] ] ],
 				[ 'key' => 'field_sz_form_field_vsco_field_key', 'label' => 'VSCO Field Key', 'name' => 'vsco_field_key', 'type' => 'text', 'instructions' => 'Optional exact VSCO field name (for example FirstName, LastName, Email, JobType, EventDate, Source). Leave blank to use Field ID.' ],
 				[ 'key' => 'field_sz_form_field_placeholder', 'label' => 'Placeholder', 'name' => 'placeholder', 'type' => 'text', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '!=', 'value' => 'checkbox' ] ] ] ],
 				[ 'key' => 'field_sz_form_field_autocomplete', 'label' => 'Autocomplete', 'name' => 'autocomplete', 'type' => 'text', 'instructions' => 'Optional browser autocomplete token such as `name`, `email`, or `tel`.', 'conditional_logic' => [ [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'text' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'email' ] ], [ [ 'field' => 'field_sz_form_field_type', 'operator' => '==', 'value' => 'tel' ] ] ] ],
@@ -806,17 +806,17 @@ function sz_populate_menu_override_choices( array $field ): array {
  * This intentionally does not mutate, prepend, remove, or re-key rows.
  */
 add_filter( 'acf/validate_value/key=field_sz_form_fields', 'sz_form_validate_required_name_or_firstname', 20, 4 );
-function sz_form_validate_required_name_or_firstname( $valid, $value ) {
+function sz_form_validate_required_name_or_firstname( $valid, $value, $field = null, $input = '' ) {
 	if ( $valid !== true ) {
 		return $valid;
 	}
 
 	$errors = sz_validate_form_field_rows( $value );
+	$offer_submitter_copy = sz_form_get_posted_sibling_field_value( $input, 'field_sz_form_offer_submitter_email_copy' );
+	$errors = array_merge( $errors, sz_validate_form_submitter_copy_configuration( $offer_submitter_copy, $value ) );
 	if ( empty( $errors ) ) {
 		return $valid;
 	}
 
-	return implode( ' ', $errors );
+	return implode( ' ', array_values( array_unique( $errors ) ) );
 }
-
-add_action( 'acf/validate_save_post', 'sz_validate_submitter_copy_form_blocks_on_save', 20 );

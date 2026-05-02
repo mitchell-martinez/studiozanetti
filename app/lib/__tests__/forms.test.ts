@@ -478,7 +478,7 @@ describe('validateFormConfiguration', () => {
     )
   })
 
-  it('rejects submitter copy forms without a designated email field', () => {
+  it('auto-uses the only email field for submitter copy forms', () => {
     const form = {
       ...mockFormBlock,
       offer_submitter_email_copy: true,
@@ -492,8 +492,42 @@ describe('validateFormConfiguration', () => {
       ],
     }
 
+    expect(validateFormConfiguration(form as never)).toEqual([])
+  })
+
+  it('rejects submitter copy forms without any email field', () => {
+    const form = {
+      ...mockFormBlock,
+      offer_submitter_email_copy: true,
+      fields: [mockFormBlock.fields[0]],
+    }
+
     expect(validateFormConfiguration(form as never)).toContain(
-      'Select one Email field to use when submitters request a copy of the form.',
+      'At least one email field required to send customer copy of their form to',
+    )
+  })
+
+  it('rejects multi-email submitter copy forms without a selected target field', () => {
+    const form = {
+      ...mockFormBlock,
+      offer_submitter_email_copy: true,
+      fields: [
+        mockFormBlock.fields[0],
+        {
+          field_id: 'email',
+          label: 'Email',
+          type: 'email' as const,
+        },
+        {
+          field_id: 'alternate_email',
+          label: 'Alternate email',
+          type: 'email' as const,
+        },
+      ],
+    }
+
+    expect(validateFormConfiguration(form as never)).toContain(
+      'Please select which email field customers should receive a copy to',
     )
   })
 
@@ -556,6 +590,40 @@ describe('submitter copy handling', () => {
       {
         name: 'Mitchell',
         billing_email: 'accounts@example.com',
+        email: 'mitchell@example.com',
+      },
+      { requestSubmitterCopy: true },
+    )
+
+    expect(validated.replyTo).toBe('mitchell@example.com')
+    expect(validated.submitterCopyTo).toBe('mitchell@example.com')
+  })
+
+  it('auto-uses the only email field for replyTo and submitter copy delivery', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      offer_submitter_email_copy: true,
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Name',
+          type: 'text' as const,
+          required: true,
+        },
+        {
+          field_id: 'email',
+          label: 'Email',
+          type: 'email' as const,
+        },
+      ],
+    }
+
+    const validated = validateFormSubmission(
+      form as never,
+      {
+        name: 'Mitchell',
         email: 'mitchell@example.com',
       },
       { requestSubmitterCopy: true },

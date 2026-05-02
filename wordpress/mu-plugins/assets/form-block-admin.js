@@ -25,6 +25,32 @@
   const getToggleInput = ($row, fieldName) =>
     getFieldWrapper($row, fieldName).find('input[type="checkbox"]').last();
 
+  const syncSubmitterCopyField = ($row) => {
+    const $field = getFieldWrapper($row, 'use_for_submitter_copy');
+    if (!$field.length) {
+      return;
+    }
+
+    const $label = $field.find('.acf-label label').first();
+    if ($label.length) {
+      $label.text('Use This One For Customer Copy');
+    }
+
+    const isEmailField = normalize(getSelectInput($row, 'type').val()) === 'email';
+    const $toggle = getToggleInput($row, 'use_for_submitter_copy');
+
+    if (isEmailField) {
+      $field.show();
+      return;
+    }
+
+    if ($toggle.prop('checked')) {
+      $toggle.prop('checked', false).trigger('change');
+    }
+
+    $field.hide();
+  };
+
   const isReservedRow = ($row) => {
     const fieldId = normalize(getTextInput($row, 'field_id').val());
     const vscoKey = normalize(getTextInput($row, 'vsco_field_key').val());
@@ -126,6 +152,10 @@
     }
 
     ensureReservedRow($repeater);
+
+    getRepeaterRows($repeater).each((index, row) => {
+      syncSubmitterCopyField($(row));
+    });
   };
 
   const syncWithin = ($root) => {

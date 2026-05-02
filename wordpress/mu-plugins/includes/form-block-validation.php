@@ -44,6 +44,50 @@ if ( ! function_exists( 'sz_form_is_submitter_copy_enabled_for_row' ) ) {
 	}
 }
 
+if ( ! function_exists( 'sz_form_is_email_field_row' ) ) {
+	function sz_form_is_email_field_row( array $row ): bool {
+		$field_type = sz_form_normalize_validation_token(
+			sz_form_get_validation_row_value( $row, [ 'field_sz_form_field_type', 'type' ] )
+		);
+
+		return 'email' === $field_type;
+	}
+}
+
+if ( ! function_exists( 'sz_form_parse_input_tokens' ) ) {
+	function sz_form_parse_input_tokens( $input ): array {
+		if ( ! is_string( $input ) || '' === trim( $input ) ) {
+			return [];
+		}
+
+		preg_match_all( '/\[([^\]]+)\]/', $input, $matches );
+
+		return isset( $matches[1] ) && is_array( $matches[1] ) ? $matches[1] : [];
+	}
+}
+
+if ( ! function_exists( 'sz_form_get_posted_sibling_field_value' ) ) {
+	function sz_form_get_posted_sibling_field_value( $input, string $sibling_field_key ) {
+		$tokens = sz_form_parse_input_tokens( $input );
+		if ( empty( $tokens ) ) {
+			return null;
+		}
+
+		$tokens[ count( $tokens ) - 1 ] = $sibling_field_key;
+		$current_value = isset( $_POST['acf'] ) && is_array( $_POST['acf'] ) ? $_POST['acf'] : null;
+
+		foreach ( $tokens as $token ) {
+			if ( ! is_array( $current_value ) || ! array_key_exists( $token, $current_value ) ) {
+				return null;
+			}
+
+			$current_value = $current_value[ $token ];
+		}
+
+		return $current_value;
+	}
+}
+
 if ( ! function_exists( 'sz_validate_form_field_rows' ) ) {
 	function sz_validate_form_field_rows( $value ): array {
 		if ( ! is_array( $value ) || empty( $value ) ) {
@@ -56,6 +100,7 @@ if ( ! function_exists( 'sz_validate_form_field_rows' ) ) {
 		$reserved_name_row_count    = 0;
 		$first_name_mapping_count   = 0;
 		$reserved_name_mapping_hits = 0;
+		$email_field_row_count      = 0;
 		$submitter_copy_row_count   = 0;
 
 		foreach ( $value as $row ) {
@@ -74,6 +119,7 @@ if ( ! function_exists( 'sz_validate_form_field_rows' ) ) {
 			);
 			$required_value = sz_form_get_validation_row_value( $row, [ 'field_sz_form_field_required', 'required' ] );
 			$use_for_submitter_copy = sz_form_is_submitter_copy_enabled_for_row( $row );
+			$is_email_field = sz_form_is_email_field_row( $row );
 
 			if ( $field_id !== '' ) {
 				if ( isset( $seen_field_ids[ $field_id ] ) ) {
@@ -108,10 +154,14 @@ if ( ! function_exists( 'sz_validate_form_field_rows' ) ) {
 				}
 			}
 
+			if ( $is_email_field ) {
+				$email_field_row_count++;
+			}
+
 			if ( $use_for_submitter_copy ) {
 				$submitter_copy_row_count++;
 
-				if ( $field_type !== 'email' ) {
+				if ( ! $is_email_field ) {
 					$errors[] = 'Only Email fields can be selected for submitter copy delivery.';
 				}
 			}
@@ -146,28 +196,25 @@ if ( ! function_exists( 'sz_validate_form_field_rows' ) ) {
 }
 
 if ( ! function_exists( 'sz_validate_form_submitter_copy_configuration' ) ) {
-	function sz_validate_form_submitter_copy_configuration( array $layout ): array {
-		$offer_submitter_copy = sz_form_is_truthy_required(
-			sz_form_get_validation_row_value(
-				$layout,
-				[ 'field_sz_form_offer_submitter_email_copy', 'offer_submitter_email_copy' ]
-			)
-		);
-
-		if ( ! $offer_submitter_copy ) {
+	function sz_validate_form_submitter_copy_configuration( $offer_submitter_copy, $rows ): array {
+		if ( ! sz_form_is_truthy_required( $offer_submitter_copy ) ) {
 			return [];
 		}
 
-		$rows = sz_form_get_validation_row_value( $layout, [ 'field_sz_form_fields', 'fields' ] );
 		if ( ! is_array( $rows ) || empty( $rows ) ) {
 			return [];
 		}
 
 		$submitter_copy_row_count = 0;
+		$email_field_row_count = 0;
 
 		foreach ( $rows as $row ) {
 			if ( ! is_array( $row ) ) {
 				continue;
+			}
+
+			if ( sz_form_is_email_field_row( $row ) ) {
+				$email_field_row_count++;
 			}
 
 			if ( sz_form_is_submitter_copy_enabled_for_row( $row ) ) {
@@ -175,53 +222,14 @@ if ( ! function_exists( 'sz_validate_form_submitter_copy_configuration' ) ) {
 			}
 		}
 
-		if ( 0 === $submitter_copy_row_count ) {
-			return [ 'Select one Email field to use when submitters request a copy of the form.' ];
+		if ( 0 === $email_field_row_count ) {
+			return [ 'At least one email field required to send customer copy of their form to' ];
+		}
+
+		if ( $email_field_row_count > 1 && 0 === $submitter_copy_row_count ) {
+			return [ 'Please select which email field customers should receive a copy to' ];
 		}
 
 		return [];
-	}
-}
-
-if ( ! function_exists( 'sz_collect_form_block_layouts' ) ) {
-	function sz_collect_form_block_layouts( $value, array &$layouts ) {
-		if ( ! is_array( $value ) ) {
-			return;
-		}
-
-		if ( isset( $value['acf_fc_layout'] ) && 'form_block' === $value['acf_fc_layout'] ) {
-			$layouts[] = $value;
-		}
-
-		foreach ( $value as $item ) {
-			if ( is_array( $item ) ) {
-				sz_collect_form_block_layouts( $item, $layouts );
-			}
-		}
-	}
-}
-
-if ( ! function_exists( 'sz_validate_submitter_copy_form_blocks_on_save' ) ) {
-	function sz_validate_submitter_copy_form_blocks_on_save() {
-		if ( ! function_exists( 'acf_add_validation_error' ) ) {
-			return;
-		}
-
-		$posted_acf = isset( $_POST['acf'] ) && is_array( $_POST['acf'] ) ? $_POST['acf'] : [];
-		if ( empty( $posted_acf ) ) {
-			return;
-		}
-
-		$layouts = [];
-		sz_collect_form_block_layouts( $posted_acf, $layouts );
-
-		$errors = [];
-		foreach ( $layouts as $layout ) {
-			$errors = array_merge( $errors, sz_validate_form_submitter_copy_configuration( $layout ) );
-		}
-
-		foreach ( array_values( array_unique( $errors ) ) as $error ) {
-			acf_add_validation_error( '', $error );
-		}
 	}
 }
