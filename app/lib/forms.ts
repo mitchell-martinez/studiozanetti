@@ -402,7 +402,11 @@ export function buildSubmitterCopyEmailText(
   validated: ValidatedFormSubmission,
 ): string {
   const lines = [
-    'Thanks for your submission.',
+    'Thanks for contacting Studio Zanetti! We have received your enquiry and will start working on your quote as soon as possible.',
+    '',
+    'We typically respond to form submissions within 1-2 business days, but it may take a bit longer during busy periods or holidays.',
+    '',
+    'In the meantime, feel free to explore our website and portfolio to learn more about our work.',
     '',
     'Here is a copy of the information you sent:',
     ...buildSubmittedFieldLines(config.form, validated),

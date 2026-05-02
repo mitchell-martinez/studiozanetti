@@ -108,10 +108,13 @@ The React server must have SMTP env vars configured:
 - `SMTP_HOST`
 - `SMTP_PORT`
 - `SMTP_SECURE`
-- `SMTP_USER`
-- `SMTP_PASS`
 - `SMTP_FROM_EMAIL`
 - `SMTP_FROM_NAME`
+
+Optional sender overrides:
+
+- `SMTP_FROM_HEADER_EMAIL` or `FORM_FROM_EMAIL` to control the visible `From` address shown to recipients.
+- `SMTP_ENVELOPE_FROM_EMAIL` to control the SMTP envelope sender separately when needed.
 
 The route also supports in-memory throttling with:
 

@@ -87,7 +87,30 @@ describe('sendFormSubmissionEmail', () => {
     )
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
-        from: 'michael@studiozanetti.com.au',
+        from: 'info@studiozanetti.com.au',
+        envelope: {
+          from: 'michael@studiozanetti.com.au',
+          to: ['hello@example.com'],
+        },
+      }),
+    )
+  })
+
+  it('allows the visible From header to be overridden explicitly', async () => {
+    vi.stubEnv('SMTP_HOST', 'smtp-relay.gmail.com')
+    vi.stubEnv('SMTP_PORT', '587')
+    vi.stubEnv('SMTP_FROM_EMAIL', 'michael@studiozanetti.com.au')
+    vi.stubEnv('SMTP_FROM_HEADER_EMAIL', 'custom@studiozanetti.com.au')
+
+    await sendFormSubmissionEmail({
+      to: 'hello@example.com',
+      subject: 'New message',
+      text: 'Test body',
+    })
+
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        from: 'custom@studiozanetti.com.au',
         envelope: {
           from: 'michael@studiozanetti.com.au',
           to: ['hello@example.com'],

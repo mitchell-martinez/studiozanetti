@@ -163,7 +163,7 @@ export async function action({ request }: ActionFunctionArgs) {
     try {
       await sendFormSubmissionEmail({
         to: validatedSubmission.submitterCopyTo,
-        subject: 'Copy of your form submission',
+        subject: 'Your Studio Zanetti Enquiry',
         text: buildSubmitterCopyEmailText(trustedConfig, validatedSubmission),
       })
       submitterCopyDelivered = true

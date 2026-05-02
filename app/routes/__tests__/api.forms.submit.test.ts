@@ -167,7 +167,7 @@ describe('api.forms.submit action', () => {
       2,
       expect.objectContaining({
         to: 'mitchell@example.com',
-        subject: 'Copy of your form submission',
+        subject: 'Your Studio Zanetti Enquiry',
       }),
     )
 
