@@ -722,6 +722,36 @@ describe('submitter copy handling', () => {
 })
 
 describe('checkbox group validation and email output', () => {
+  it('rejects negative number submissions even when no explicit minimum is configured', () => {
+    const form = {
+      acf_fc_layout: 'form_block' as const,
+      form_id: 'contact-enquiry',
+      heading: 'Get in touch',
+      fields: [
+        {
+          field_id: 'name',
+          label: 'Name',
+          type: 'text' as const,
+          required: true,
+        },
+        {
+          field_id: 'attendees',
+          label: 'Attendees',
+          type: 'number' as const,
+        },
+      ],
+      email_to: 'hello@studiozanetti.com.au',
+      email_subject: 'Website enquiry',
+    }
+
+    const validated = validateFormSubmission(form as never, {
+      name: 'Mitchell',
+      attendees: '-1',
+    })
+
+    expect(validated.fieldErrors.attendees).toBe('Attendees must be at least 0.')
+  })
+
   it('validates checkbox group options and prints True/False per option in email output', () => {
     const form = {
       acf_fc_layout: 'form_block' as const,

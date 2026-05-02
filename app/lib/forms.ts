@@ -1,6 +1,7 @@
 import { getPageByPath, getPageBySlug } from './wordpress'
 import { stripHtml } from './html'
 import {
+  getEffectiveNumberFieldMin,
   getSubmitterCopyTargetFields,
   isReservedNameField,
   validateFormConfiguration,
@@ -279,8 +280,9 @@ export function validateFormSubmission(
         if (Number.isNaN(numericValue)) {
           fieldErrors[field.field_id] = `${field.label} must be a valid number.`
         } else {
-          if (typeof field.min === 'number' && numericValue < field.min) {
-            fieldErrors[field.field_id] = `${field.label} must be at least ${field.min}.`
+          const effectiveMin = getEffectiveNumberFieldMin(field)
+          if (numericValue < effectiveMin) {
+            fieldErrors[field.field_id] = `${field.label} must be at least ${effectiveMin}.`
           }
           if (typeof field.max === 'number' && numericValue > field.max) {
             fieldErrors[field.field_id] = `${field.label} must be no more than ${field.max}.`

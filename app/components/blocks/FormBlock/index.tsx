@@ -2,8 +2,11 @@ import { useState } from 'react'
 import { useLocation } from 'react-router'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
-import { validateFormConfiguration } from '~/lib/formConfiguration'
-import { getSubmitterCopyTargetFields } from '~/lib/formConfiguration'
+import {
+  getEffectiveNumberFieldMin,
+  getSubmitterCopyTargetFields,
+  validateFormConfiguration,
+} from '~/lib/formConfiguration'
 import type { WPFormFieldOption } from '~/types/wordpress'
 import { getBackgroundImageStyle, getSectionStyle } from '../helpers/styleOptions'
 import sharedStyles from '../shared.module.scss'
@@ -347,22 +350,24 @@ const FormBlock = ({ block }: FormBlockProps) => {
                           aria-describedby={describedBy}
                         />
                       ) : field.type === 'select' ? (
-                        <select
-                          id={inputId}
-                          name={field.field_id}
-                          className={`${styles.input} ${styles.select}`.trim()}
-                          value={stringValue}
-                          onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
-                          aria-invalid={hasError}
-                          aria-describedby={describedBy}
-                        >
-                          <option value="">{field.placeholder || 'Select an option'}</option>
-                          {field.options.map((option) => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
+                        <div className={styles.selectWrap}>
+                          <select
+                            id={inputId}
+                            name={field.field_id}
+                            className={`${styles.input} ${styles.select}`.trim()}
+                            value={stringValue}
+                            onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
+                            aria-invalid={hasError}
+                            aria-describedby={describedBy}
+                          >
+                            <option value="">{field.placeholder || 'Select an option'}</option>
+                            {field.options.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                       ) : (
                         <input
                           id={inputId}
@@ -372,7 +377,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
                           placeholder={field.placeholder}
                           value={stringValue}
                           autoComplete={field.type === 'text' || field.type === 'email' || field.type === 'tel' ? field.autocomplete : undefined}
-                          min={field.type === 'number' && typeof field.min === 'number' ? field.min : undefined}
+                          min={field.type === 'number' ? getEffectiveNumberFieldMin(field) : undefined}
                           max={field.type === 'number' && typeof field.max === 'number' ? field.max : undefined}
                           step={field.type === 'number' && typeof field.step === 'number' ? field.step : undefined}
                           onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}

@@ -41,6 +41,8 @@ Create configurable enquiry forms that send submissions from the React app to em
 
 `checkbox` fields now behave as a checkbox group. Add options in the `Options` repeater, and each option is rendered as a stacked checkbox in the form.
 
+`number` fields are treated as non-negative values. If no custom minimum is set, the form enforces a minimum of `0`.
+
 Each field row also has an optional `VSCO Field Key` value.
 
 Email rows also have an optional `Use For Submitter Copy` toggle.
@@ -74,6 +76,7 @@ Publishing is also blocked if the form data becomes invalid behind the editor UI
 - The submitter copy email includes only the submitted labels and values. It does not include internal routing details such as page path, page title, or form ID.
 - `Form ID` must stay stable after publishing, or submissions will stop resolving to the correct server-side form config.
 - Choice fields should use short machine-safe values such as `email`, `phone`, or `wedding`.
+- Number fields use a minimum of `0` by default and should only be used for non-negative values such as attendees, quantities, or durations.
 - For checkbox groups, each option is included in the email output as `Option Label: True/False`.
 - Use checkbox groups for consent toggles, preferences, and multi-select interests.
 - Use `Form Alignment` to center the entire form panel on the page when needed.

@@ -191,4 +191,11 @@ describe('FormBlock', () => {
     ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /send message/i })).not.toBeInTheDocument()
   })
+
+  it('renders number fields with a minimum of zero and keeps selects native', () => {
+    renderBlock()
+
+    expect(screen.getByRole('spinbutton', { name: /how many attendees/i })).toHaveAttribute('min', '0')
+    expect(screen.getByRole('combobox', { name: /service type/i })).toBeInTheDocument()
+  })
 })

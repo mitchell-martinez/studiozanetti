@@ -1,4 +1,8 @@
-import { getSubmitterCopyTargetFields, isReservedNameField } from '~/lib/formConfiguration'
+import {
+  getEffectiveNumberFieldMin,
+  getSubmitterCopyTargetFields,
+  isReservedNameField,
+} from '~/lib/formConfiguration'
 import type { WPFormField } from '~/types/wordpress'
 
 export type ClientFormValue = string | string[]
@@ -51,7 +55,9 @@ const getInitialValue = (field: WPFormField): ClientFormValue => {
 
       return []
     case 'number':
-      return typeof field.default_value === 'number' ? String(field.default_value) : ''
+      return typeof field.default_value === 'number'
+        ? String(Math.max(getEffectiveNumberFieldMin(field), field.default_value))
+        : ''
     case 'select':
     case 'radio':
       return field.default_value ?? ''
@@ -120,6 +126,19 @@ export function validateClientFormValues(
 
     if (field.type === 'number' && Number.isNaN(Number(stringValue))) {
       errors[field.field_id] = `${field.label} must be a valid number.`
+    }
+
+    if (field.type === 'number' && !Number.isNaN(Number(stringValue))) {
+      const numericValue = Number(stringValue)
+      const effectiveMin = getEffectiveNumberFieldMin(field)
+
+      if (numericValue < effectiveMin) {
+        errors[field.field_id] = `${field.label} must be at least ${effectiveMin}.`
+      }
+
+      if (typeof field.max === 'number' && numericValue > field.max) {
+        errors[field.field_id] = `${field.label} must be no more than ${field.max}.`
+      }
     }
 
     if ((field.type === 'select' || field.type === 'radio') && !field.options.some((option) => option.value === stringValue)) {

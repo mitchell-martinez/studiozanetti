@@ -1,4 +1,4 @@
-import type { FormBlock, WPFormField } from '~/types/wordpress'
+import type { FormBlock, WPFormField, WPFormNumberField } from '~/types/wordpress'
 
 export const RESERVED_NAME_FIELD_ID = 'name'
 export const RESERVED_VSCO_FIRST_NAME_KEY = 'FirstName'
@@ -7,6 +7,10 @@ const normalizeFieldToken = (value?: string): string => value?.trim().toLowerCas
 
 export const isReservedNameField = (field: Pick<WPFormField, 'field_id'>): boolean =>
   normalizeFieldToken(field.field_id) === RESERVED_NAME_FIELD_ID
+
+export const getEffectiveNumberFieldMin = (
+  field: Pick<WPFormNumberField, 'min'>,
+): number => Math.max(0, typeof field.min === 'number' ? field.min : 0)
 
 export const getSubmitterCopyTargetFields = (
   form: Pick<FormBlock, 'fields'>,

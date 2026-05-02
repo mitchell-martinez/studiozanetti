@@ -134,8 +134,36 @@
   resize: vertical;
 }
 
+.selectWrap {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 1.1rem;
+    width: 0.6rem;
+    height: 0.6rem;
+    border-right: 2px solid var(--color-ink-soft);
+    border-bottom: 2px solid var(--color-ink-soft);
+    pointer-events: none;
+    transform: translateY(-65%) rotate(45deg);
+  }
+}
+
 .select {
   appearance: none;
+  padding-right: 3rem;
+
+  &::-ms-expand {
+    display: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .select {
+    cursor: pointer;
+  }
 }
 
 .choiceGroup {
