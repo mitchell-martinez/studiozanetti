@@ -42,6 +42,11 @@
     font-style: italic;
   }
 
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
   // ─── WordPress image alignment classes (from WYSIWYG editor) ──────────────
   // WP Classic Editor outputs: <p><strong><img class="aligncenter" …></strong></p>
   // The class sits on the <img> itself, wrapped in inline elements.
