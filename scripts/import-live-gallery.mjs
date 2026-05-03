@@ -6,7 +6,7 @@ import path from 'node:path'
 
 export function printHelp() {
   console.log(
-    `\nImport a live gallery URL into a GalleriesBlock JSON payload.\n\nUsage:\n  npm run gallery:import-live -- --url <gallery-url> [options]\n\nRequired:\n  --url <value>              Live gallery page URL\n\nOptional:\n  --heading <value>          Heading for the generated block (default: derived from URL slug)\n  --out <file-path>          Output JSON file path (default: prints to stdout)\n  --limit <number>           Limit number of images (default: no limit)\n  --scope <css-selector>     DOM scope selector (default: main, fallback body)\n  --include-external         Include image URLs from other hosts\n  --help                     Show this help\n\nExamples:\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/ --out app/components/blocks/GalleriesBlock/__mocks__/stylishBrides.json\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/ --heading \"Stylish Brides\" --limit 40\n`,
+    `\nImport a live gallery URL into a GalleriesBlock JSON payload.\n\nUsage:\n  npm run gallery:import-live -- --url <gallery-url> [options]\n\nRequired:\n  --url <value>              Live gallery page URL\n\nOptional:\n  --heading <value>          Heading for the generated block (default: derived from URL slug)\n  --out <file-path>          Output JSON file path (default: prints to stdout)\n  --limit <number>           Limit number of images (default: no limit)\n  --scope <css-selector>     DOM scope selector (default: main, fallback body)\n  --include-external         Include image URLs from other hosts\n  --verbose                  Print detailed progress logs\n  --help                     Show this help\n\nExamples:\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/ --out app/components/blocks/GalleriesBlock/__mocks__/stylishBrides.json\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/ --heading \"Stylish Brides\" --limit 40\n`,
   )
 }
 
@@ -32,7 +32,7 @@ export function parseArgs(argv) {
   })
 
   const args = {}
-  const booleanFlags = new Set(['help', 'include-external', 'execute'])
+  const booleanFlags = new Set(['help', 'include-external', 'execute', 'verbose'])
 
   for (let i = 0; i < normalizedArgv.length; i += 1) {
     const token = normalizedArgv[i]
@@ -66,6 +66,11 @@ export function parseArgs(argv) {
 
     if (token === '--execute') {
       args.execute = true
+      continue
+    }
+
+    if (token === '--verbose') {
+      args.verbose = true
       continue
     }
 
@@ -206,6 +211,7 @@ export async function fetchLiveGalleryBlock({
   scopeSelector = 'main',
   limit = null,
   includeExternal = false,
+  verbose = false,
 }) {
   if (!url) {
     throw new Error('Missing required argument: --url')
@@ -213,6 +219,10 @@ export async function fetchLiveGalleryBlock({
 
   if (limit !== null && (!Number.isFinite(limit) || limit <= 0)) {
     throw new Error('--limit must be a positive integer')
+  }
+
+  if (verbose) {
+    console.log(`[verbose] Fetching source page: ${url}`)
   }
 
   const response = await fetch(url, {
@@ -230,11 +240,24 @@ export async function fetchLiveGalleryBlock({
   const dom = new JSDOM(html, { url })
   const document = dom.window.document
 
-  const scope = document.querySelector(scopeSelector) || document.body
+  const matchedScope = document.querySelector(scopeSelector)
+  const scope = matchedScope || document.body
+  if (verbose) {
+    console.log(
+      `[verbose] Scope selector \"${scopeSelector}\" ${matchedScope ? 'matched' : 'not found, using <body>'}`,
+    )
+  }
+
   let candidates = collectCandidates(scope, url, includeExternal)
+  if (verbose) {
+    console.log(`[verbose] Found ${candidates.length} candidate images before limit`)
+  }
 
   if (limit !== null) {
     candidates = candidates.slice(0, limit)
+    if (verbose) {
+      console.log(`[verbose] Applied --limit=${limit}; ${candidates.length} images remain`)
+    }
   }
 
   if (!candidates.length) {
@@ -262,6 +285,7 @@ export async function main() {
     scopeSelector: args.scope || 'main',
     limit,
     includeExternal: Boolean(args.includeExternal),
+    verbose: Boolean(args.verbose),
   })
   const output = `${JSON.stringify(payload, null, 2)}\n`
 

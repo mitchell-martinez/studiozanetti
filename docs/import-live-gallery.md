@@ -54,6 +54,7 @@ npm run gallery:import-live-to-wp -- \
 - `--scope "main .ppb_wrapper"` use a custom DOM container selector
 - `--include-external` include image URLs hosted on other domains/CDNs
 - `--mode append|replace` for direct WordPress import mode
+- `--verbose` print detailed progress logs and a long-request heartbeat
 
 ## Typical workflow
 

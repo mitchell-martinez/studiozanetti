@@ -10,7 +10,7 @@ import {
 function printWpHelp() {
   printHelp()
   console.log(
-    `\nWrite-to-WordPress mode:\n  npm run gallery:import-live-to-wp -- --source-url <gallery-url> --wp-url <wp-root> [target] [auth] [options]\n\nTarget (choose one):\n  --page-id <number>         WordPress page ID\n  --page-slug <slug>         WordPress page slug\n\nAuth (required for --execute):\n  --username <value>         WordPress username (Application Password auth)\n  --app-password <value>     WordPress Application Password\n\nOptions:\n  --heading <value>          Heading for block (default from source URL slug)\n  --scope <css-selector>     DOM scope selector when scraping source (default: main)\n  --limit <number>           Max images to import\n  --include-external         Include image URLs from other hosts\n  --mode append|replace      append (default): add new block; replace: replace first galleries block\n  --execute                  Actually write changes to WordPress\n  --help                     Show this help\n\nWrite order:\n  1) wp/v2 pages with acf payload\n  2) acf/v3 pages/posts routes\n  3) sz/v1/page-blocks custom endpoint (ACF Pro compatible)\n\nExamples:\n  npm run gallery:import-live-to-wp -- --source-url https://studiozanetti.com.au/gallery/stylish-brides/ --wp-url https://cms.example.com --page-slug gallery --mode append\n\n  npm run gallery:import-live-to-wp -- --source-url https://studiozanetti.com.au/gallery/stylish-brides/ --wp-url https://cms.example.com --page-id 123 --username admin --app-password \"xxxx xxxx xxxx xxxx xxxx xxxx\" --mode replace --execute\n`,
+    `\nWrite-to-WordPress mode:\n  npm run gallery:import-live-to-wp -- --source-url <gallery-url> --wp-url <wp-root> [target] [auth] [options]\n\nTarget (choose one):\n  --page-id <number>         WordPress page ID\n  --page-slug <slug>         WordPress page slug\n\nAuth (required for --execute):\n  --username <value>         WordPress username (Application Password auth)\n  --app-password <value>     WordPress Application Password\n\nOptions:\n  --heading <value>          Heading for block (default from source URL slug)\n  --scope <css-selector>     DOM scope selector when scraping source (default: main)\n  --limit <number>           Max images to import\n  --include-external         Include image URLs from other hosts\n  --mode append|replace      append (default): add new block; replace: replace first galleries block\n  --execute                  Actually write changes to WordPress\n  --verbose                  Print detailed progress logs and long-request heartbeat\n  --help                     Show this help\n\nWrite order:\n  1) wp/v2 pages with acf payload\n  2) acf/v3 pages/posts routes\n  3) sz/v1/page-blocks custom endpoint (ACF Pro compatible)\n\nExamples:\n  npm run gallery:import-live-to-wp -- --source-url https://studiozanetti.com.au/gallery/stylish-brides/ --wp-url https://cms.example.com --page-slug gallery --mode append\n\n  npm run gallery:import-live-to-wp -- --source-url https://studiozanetti.com.au/gallery/stylish-brides/ --wp-url https://cms.example.com --page-id 123 --username admin --app-password \"xxxx xxxx xxxx xxxx xxxx xxxx\" --mode replace --execute\n`,
   )
 }
 
@@ -24,30 +24,52 @@ function buildAuthHeader(username, appPassword) {
   return `Basic ${token}`
 }
 
-async function fetchJson(url, init = {}) {
-  const response = await fetch(url, init)
-  const raw = await response.text()
+async function fetchJson(url, init = {}, { verbose = false, label = 'request' } = {}) {
+  const startedAt = Date.now()
+  let heartbeat = null
 
-  let data = null
+  if (verbose) {
+    console.log(`[verbose] ${label} -> ${url}`)
+    heartbeat = setInterval(() => {
+      const seconds = Math.round((Date.now() - startedAt) / 1000)
+      console.log(`[verbose] ${label} still running... ${seconds}s elapsed`)
+    }, 5000)
+  }
+
   try {
-    data = raw ? JSON.parse(raw) : null
-  } catch {
-    data = { raw }
-  }
+    const response = await fetch(url, init)
+    const raw = await response.text()
 
-  if (!response.ok) {
-    const message = data?.message || response.statusText || 'Request failed'
-    const error = new Error(`${response.status} ${message}`)
-    error.status = response.status
-    error.code = data?.code
-    error.payload = data
-    throw error
-  }
+    let data = null
+    try {
+      data = raw ? JSON.parse(raw) : null
+    } catch {
+      data = { raw }
+    }
 
-  return data
+    if (!response.ok) {
+      const message = data?.message || response.statusText || 'Request failed'
+      const error = new Error(`${response.status} ${message}`)
+      error.status = response.status
+      error.code = data?.code
+      error.payload = data
+      throw error
+    }
+
+    if (verbose) {
+      const durationMs = Date.now() - startedAt
+      console.log(`[verbose] ${label} completed in ${durationMs}ms`)
+    }
+
+    return data
+  } finally {
+    if (heartbeat) {
+      clearInterval(heartbeat)
+    }
+  }
 }
 
-async function writeBlocksViaWpV2({ base, pageId, pageAcf, blocks, authHeader }) {
+async function writeBlocksViaWpV2({ base, pageId, pageAcf, blocks, authHeader, verbose = false }) {
   return fetchJson(`${base}/wp-json/wp/v2/pages/${pageId}`, {
     method: 'POST',
     headers: {
@@ -60,10 +82,10 @@ async function writeBlocksViaWpV2({ base, pageId, pageAcf, blocks, authHeader })
         blocks,
       },
     }),
-  })
+  }, { verbose, label: 'wp/v2 write' })
 }
 
-async function writeBlocksViaAcfV3({ base, pageId, blocks, authHeader }) {
+async function writeBlocksViaAcfV3({ base, pageId, blocks, authHeader, verbose = false }) {
   const payload = JSON.stringify({
     fields: {
       blocks,
@@ -87,7 +109,7 @@ async function writeBlocksViaAcfV3({ base, pageId, blocks, authHeader }) {
         method: 'POST',
         headers,
         body: payload,
-      })
+      }, { verbose, label: `acf/v3 write (${url.split('/').slice(-2).join('/')})` })
     } catch (error) {
       lastError = error
       const status = Number(error?.status || 0)
@@ -104,7 +126,7 @@ async function writeBlocksViaAcfV3({ base, pageId, blocks, authHeader }) {
   throw error
 }
 
-async function writeBlocksViaSzEndpoint({ base, pageId, blocks, authHeader }) {
+async function writeBlocksViaSzEndpoint({ base, pageId, blocks, authHeader, verbose = false }) {
   return fetchJson(`${base}/wp-json/sz/v1/page-blocks/${pageId}`, {
     method: 'POST',
     headers: {
@@ -114,7 +136,7 @@ async function writeBlocksViaSzEndpoint({ base, pageId, blocks, authHeader }) {
     body: JSON.stringify({
       blocks,
     }),
-  })
+  }, { verbose, label: 'sz/v1 page-blocks write' })
 }
 
 function upsertGalleriesBlock(existingBlocks, nextBlock, mode) {
@@ -132,16 +154,24 @@ function upsertGalleriesBlock(existingBlocks, nextBlock, mode) {
   return { blocks, action: 'appended-new-galleries' }
 }
 
-async function resolvePage({ wpUrl, pageId, pageSlug }) {
+async function resolvePage({ wpUrl, pageId, pageSlug, verbose = false }) {
   const base = wpUrl.replace(/\/$/, '')
 
   if (pageId) {
-    const page = await fetchJson(`${base}/wp-json/wp/v2/pages/${pageId}`)
+    const page = await fetchJson(
+      `${base}/wp-json/wp/v2/pages/${pageId}`,
+      {},
+      { verbose, label: 'resolve page by ID' },
+    )
     return page
   }
 
   const slugQuery = new URLSearchParams({ slug: pageSlug, _fields: 'id,slug,title,acf' }).toString()
-  const pages = await fetchJson(`${base}/wp-json/wp/v2/pages?${slugQuery}`)
+  const pages = await fetchJson(
+    `${base}/wp-json/wp/v2/pages?${slugQuery}`,
+    {},
+    { verbose, label: 'resolve page by slug' },
+  )
 
   if (!Array.isArray(pages) || pages.length === 0) {
     throw new Error(`No WordPress page found for slug "${pageSlug}"`)
@@ -167,6 +197,12 @@ async function main() {
   const limit = args.limit ? Number.parseInt(args.limit, 10) : null
   const mode = getArg(args, 'mode', 'append')
   const execute = Boolean(args.execute)
+  const verbose = Boolean(args.verbose)
+
+  const verboseLog = (...messages) => {
+    if (!verbose) return
+    console.log('[verbose]', ...messages)
+  }
 
   if (!sourceUrl) throw new Error('Missing required argument: --source-url')
   if (!wpUrl) throw new Error('Missing required argument: --wp-url')
@@ -178,15 +214,17 @@ async function main() {
     throw new Error('--mode must be either append or replace')
   }
 
+  verboseLog('Starting gallery scrape', { sourceUrl, scopeSelector, limit: limit ?? 'none' })
   const galleryBlock = await fetchLiveGalleryBlock({
     url: sourceUrl,
     heading,
     scopeSelector,
     limit,
     includeExternal: Boolean(args.includeExternal),
+    verbose,
   })
 
-  const page = await resolvePage({ wpUrl, pageId, pageSlug })
+  const page = await resolvePage({ wpUrl, pageId, pageSlug, verbose })
   const currentBlocks = page?.acf?.blocks ?? []
 
   const { blocks, action } = upsertGalleriesBlock(currentBlocks, galleryBlock, mode)
@@ -208,6 +246,7 @@ async function main() {
   }
 
   const base = wpUrl.replace(/\/$/, '')
+  verboseLog('Write mode enabled. This may take time when WordPress imports media.')
   try {
     await writeBlocksViaWpV2({
       base,
@@ -215,6 +254,7 @@ async function main() {
       pageAcf: page.acf,
       blocks,
       authHeader,
+      verbose,
     })
   } catch (error) {
     const msg = String(error?.message || '')
@@ -232,6 +272,7 @@ async function main() {
         pageId: page.id,
         blocks,
         authHeader,
+        verbose,
       })
     } catch (acfError) {
       const isAcfRouteMissing = acfError?.code === 'acf_rest_route_missing'
@@ -243,6 +284,7 @@ async function main() {
         pageId: page.id,
         blocks,
         authHeader,
+        verbose,
       })
     }
   }
