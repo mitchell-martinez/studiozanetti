@@ -163,6 +163,7 @@ function normalizeBlockImages(blocks: ContentBlock[]): ContentBlock[] {
         }
 
       case 'galleries':
+      case 'gallery_reference':
         return {
           ...block,
           images: Array.isArray(block.images)

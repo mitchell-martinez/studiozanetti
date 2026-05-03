@@ -64,6 +64,25 @@ add_action( 'after_setup_theme', function () {
 	add_theme_support( 'post-thumbnails' );
 } );
 
+add_action( 'init', function () {
+	register_post_type( 'sz_gallery', [
+		'labels' => [
+			'name' => __( 'Gallery Library', 'studio-zanetti' ),
+			'singular_name' => __( 'Gallery Entry', 'studio-zanetti' ),
+			'add_new_item' => __( 'Add Gallery Entry', 'studio-zanetti' ),
+			'edit_item' => __( 'Edit Gallery Entry', 'studio-zanetti' ),
+		],
+		'public' => false,
+		'show_ui' => true,
+		'show_in_menu' => true,
+		'show_in_rest' => true,
+		'menu_icon' => 'dashicons-format-gallery',
+		'supports' => [ 'title' ],
+		'has_archive' => false,
+		'rewrite' => false,
+	] );
+} );
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. REST API — NAVIGATION MENU ENDPOINT
 // ─────────────────────────────────────────────────────────────────────────────
@@ -285,6 +304,14 @@ add_action( 'rest_api_init', function () {
 			],
 		],
 	] );
+
+	register_rest_route( 'sz/v1', '/gallery-library', [
+		'methods'             => 'POST',
+		'callback'            => 'sz_upsert_gallery_library_item',
+		'permission_callback' => function () {
+			return current_user_can( 'edit_pages' );
+		},
+	] );
 } );
 
 /**
@@ -340,6 +367,163 @@ function sz_update_page_blocks( WP_REST_Request $request ) {
 		'blocks_count'   => count( $blocks ),
 		'persisted'      => $persisted,
 	], 200 );
+}
+
+/**
+ * REST callback: create or update a reusable gallery library entry.
+ */
+function sz_upsert_gallery_library_item( WP_REST_Request $request ) {
+	$params      = $request->get_json_params();
+	$title       = is_array( $params ) && isset( $params['title'] ) ? sanitize_text_field( (string) $params['title'] ) : '';
+	$description = is_array( $params ) && isset( $params['description'] ) ? (string) $params['description'] : '';
+	$images      = is_array( $params ) && isset( $params['images'] ) && is_array( $params['images'] ) ? $params['images'] : [];
+	$slug_input  = is_array( $params ) && isset( $params['slug'] ) ? sanitize_title( (string) $params['slug'] ) : '';
+
+	if ( $title === '' ) {
+		return new WP_REST_Response( [ 'message' => 'Gallery title is required.' ], 400 );
+	}
+
+	if ( ! function_exists( 'update_field' ) ) {
+		return new WP_REST_Response( [ 'message' => 'ACF is not available.' ], 500 );
+	}
+
+	if ( ! function_exists( 'media_sideload_image' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+	}
+	if ( ! function_exists( 'download_url' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+	}
+	if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+	}
+
+	$slug     = $slug_input !== '' ? $slug_input : sanitize_title( $title );
+	$existing = $slug !== '' ? get_page_by_path( $slug, OBJECT, 'sz_gallery' ) : null;
+
+	$post_args = [
+		'post_type'   => 'sz_gallery',
+		'post_status' => 'publish',
+		'post_title'  => $title,
+		'post_name'   => $slug,
+	];
+
+	if ( $existing instanceof WP_Post ) {
+		$post_args['ID'] = $existing->ID;
+		$gallery_id      = wp_update_post( $post_args, true );
+	} else {
+		$gallery_id = wp_insert_post( $post_args, true );
+	}
+
+	if ( is_wp_error( $gallery_id ) || ! $gallery_id ) {
+		return new WP_REST_Response( [ 'message' => 'Failed to save gallery library entry.' ], 500 );
+	}
+
+	$site_url        = rtrim( get_site_url(), '/' );
+	$normalised_rows = sz_prepare_gallery_rows_for_acf_write( $images, $site_url );
+
+	update_field( 'description', $description, $gallery_id );
+	update_field( 'images', $normalised_rows, $gallery_id );
+
+	return new WP_REST_Response( sz_get_reusable_gallery_payload( (int) $gallery_id ), 200 );
+}
+
+/**
+ * Prepare gallery repeater rows for ACF writes.
+ */
+function sz_prepare_gallery_rows_for_acf_write( array $rows, string $site_url ): array {
+	$normalised_rows = [];
+
+	foreach ( $rows as $row ) {
+		if ( ! is_array( $row ) ) {
+			continue;
+		}
+
+		$image         = $row['image'] ?? null;
+		$attachment_id = sz_resolve_or_import_attachment_id( $image, $site_url );
+		if ( $attachment_id <= 0 ) {
+			continue;
+		}
+
+		$normalised_rows[] = [
+			'image'   => $attachment_id,
+			'caption' => isset( $row['caption'] ) ? (string) $row['caption'] : '',
+		];
+	}
+
+	return $normalised_rows;
+}
+
+/**
+ * Convert gallery image rows to the frontend shape.
+ */
+function sz_normalize_gallery_rows( array $rows ): array {
+	$normalized = [];
+
+	foreach ( $rows as $row ) {
+		if ( ! is_array( $row ) || ! array_key_exists( 'image', $row ) ) {
+			continue;
+		}
+
+		$img = sz_resolve_image( $row['image'] );
+		if ( ! $img ) {
+			continue;
+		}
+
+		$normalized[] = [
+			'image'   => $img,
+			'caption' => isset( $row['caption'] ) ? $row['caption'] : '',
+		];
+	}
+
+	return $normalized;
+}
+
+/**
+ * Build the resolved gallery payload used by the frontend and importer.
+ */
+function sz_get_reusable_gallery_payload( int $gallery_id ): array {
+	$post = get_post( $gallery_id );
+	if ( ! $post || $post->post_type !== 'sz_gallery' ) {
+		return [];
+	}
+
+	$fields      = function_exists( 'get_fields' ) ? get_fields( $gallery_id ) : [];
+	$description = is_array( $fields ) && isset( $fields['description'] ) ? (string) $fields['description'] : '';
+	$images      = is_array( $fields ) && isset( $fields['images'] ) && is_array( $fields['images'] ) ? $fields['images'] : [];
+
+	return [
+		'id'          => (int) $gallery_id,
+		'slug'        => $post->post_name,
+		'title'       => get_the_title( $post ),
+		'description' => $description,
+		'images'      => sz_normalize_gallery_rows( $images ),
+	];
+}
+
+/**
+ * Resolve a stored gallery reference value into a reusable gallery payload.
+ */
+function sz_resolve_gallery_reference( $value ): ?array {
+	$gallery_id = 0;
+
+	if ( $value instanceof WP_Post ) {
+		$gallery_id = (int) $value->ID;
+	} elseif ( is_array( $value ) ) {
+		if ( isset( $value['id'] ) && is_numeric( $value['id'] ) ) {
+			$gallery_id = (int) $value['id'];
+		} elseif ( isset( $value['ID'] ) && is_numeric( $value['ID'] ) ) {
+			$gallery_id = (int) $value['ID'];
+		}
+	} elseif ( is_numeric( $value ) ) {
+		$gallery_id = (int) $value;
+	}
+
+	if ( $gallery_id <= 0 ) {
+		return null;
+	}
+
+	$payload = sz_get_reusable_gallery_payload( $gallery_id );
+	return empty( $payload ) ? null : $payload;
 }
 
 /**
@@ -409,25 +593,21 @@ function sz_prepare_block_for_acf_write( $block, string $site_url ) {
 	}
 
 	if ( ( $block['acf_fc_layout'] ?? '' ) === 'galleries' && ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
-		$normalised_rows = [];
-		foreach ( $block['images'] as $row ) {
-			if ( ! is_array( $row ) ) {
-				continue;
-			}
+		$block['images'] = sz_prepare_gallery_rows_for_acf_write( $block['images'], $site_url );
+	}
 
-			$image = $row['image'] ?? null;
-			$attachment_id = sz_resolve_or_import_attachment_id( $image, $site_url );
+	if ( ( $block['acf_fc_layout'] ?? '' ) === 'gallery_reference' && array_key_exists( 'gallery_reference', $block ) ) {
+		$reference = $block['gallery_reference'];
 
-			// Keep only rows with a resolvable image ID; image subfield is required.
-			if ( $attachment_id > 0 ) {
-				$normalised_rows[] = [
-					'image'   => $attachment_id,
-					'caption' => isset( $row['caption'] ) ? (string) $row['caption'] : '',
-				];
+		if ( $reference instanceof WP_Post ) {
+			$block['gallery_reference'] = (int) $reference->ID;
+		} elseif ( is_array( $reference ) ) {
+			if ( isset( $reference['id'] ) && is_numeric( $reference['id'] ) ) {
+				$block['gallery_reference'] = (int) $reference['id'];
+			} elseif ( isset( $reference['ID'] ) && is_numeric( $reference['ID'] ) ) {
+				$block['gallery_reference'] = (int) $reference['ID'];
 			}
 		}
-
-		$block['images'] = $normalised_rows;
 	}
 
 	if ( ( $block['acf_fc_layout'] ?? '' ) === 'instagram_feed' && ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
@@ -601,6 +781,10 @@ function sz_get_preview( WP_REST_Request $request ) {
 		if ( ( $acf_data === false || empty( $acf_data ) ) && $source->ID !== $post_id ) {
 			$acf_data = get_fields( $post_id );
 		}
+	}
+
+	if ( is_array( $acf_data ) && ! empty( $acf_data['blocks'] ) && is_array( $acf_data['blocks'] ) ) {
+		$acf_data['blocks'] = array_map( 'sz_normalize_block_images', $acf_data['blocks'] );
 	}
 
 	$response = [
@@ -1479,6 +1663,19 @@ function sz_normalize_page_images( WP_REST_Response $response, WP_Post $post, WP
  * Walk a single ACF Flexible Content block and resolve every image field.
  */
 function sz_normalize_block_images( array $block ): array {
+	if ( ( $block['acf_fc_layout'] ?? '' ) === 'gallery_reference' ) {
+		$resolved_gallery = array_key_exists( 'gallery_reference', $block )
+			? sz_resolve_gallery_reference( $block['gallery_reference'] )
+			: null;
+
+		if ( $resolved_gallery ) {
+			$block['gallery_reference'] = $resolved_gallery;
+			$block['heading']           = $block['heading'] ?? $resolved_gallery['title'];
+			$block['description']       = $block['description'] ?? $resolved_gallery['description'];
+			$block['images']            = $resolved_gallery['images'];
+		}
+	}
+
 	// Top-level image fields (hero, image_text, gallery_categories)
 	$image_keys = [ 'background_image', 'image', 'image_mobile' ];
 
@@ -1523,24 +1720,12 @@ function sz_normalize_block_images( array $block ): array {
 	}
 
 	// Galleries block repeater: images[] rows contain { image, caption }.
-	if ( ( $block['acf_fc_layout'] ?? '' ) === 'galleries' && ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
-		$rows = [];
-		foreach ( $block['images'] as $row ) {
-			if ( ! is_array( $row ) || ! array_key_exists( 'image', $row ) ) {
-				continue;
-			}
-
-			$img = sz_resolve_image( $row['image'] );
-			if ( ! $img ) {
-				continue;
-			}
-
-			$rows[] = [
-				'image'   => $img,
-				'caption' => isset( $row['caption'] ) ? $row['caption'] : '',
-			];
-		}
-		$block['images'] = $rows;
+	if (
+		in_array( $block['acf_fc_layout'] ?? '', [ 'galleries', 'gallery_reference' ], true ) &&
+		! empty( $block['images'] ) &&
+		is_array( $block['images'] )
+	) {
+		$block['images'] = sz_normalize_gallery_rows( $block['images'] );
 	}
 
 	// Instagram feed block: images[] is a flat image array.

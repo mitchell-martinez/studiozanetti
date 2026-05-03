@@ -1,5 +1,8 @@
-import type { GalleriesBlock as GalleriesBlockType } from '~/types/wordpress'
+import type {
+  GalleriesBlock as GalleriesBlockType,
+  GalleryReferenceBlock,
+} from '~/types/wordpress'
 
 export interface GalleriesBlockProps {
-  block: GalleriesBlockType
+  block: GalleriesBlockType | GalleryReferenceBlock
 }

@@ -201,11 +201,29 @@ export interface WPGalleriesImageItem {
   caption?: string
 }
 
+export interface WPReusableGallery {
+  id: number
+  slug?: string
+  title: string
+  description?: string
+  images: WPGalleriesImageItem[]
+}
+
 export interface GalleriesBlock extends BlockStyleOptions {
   acf_fc_layout: 'galleries'
   heading?: string
   description?: string
   images: WPGalleriesImageItem[]
+  desktop_columns?: number
+  mobile_columns?: number
+}
+
+export interface GalleryReferenceBlock extends BlockStyleOptions {
+  acf_fc_layout: 'gallery_reference'
+  gallery_reference?: WPReusableGallery | number
+  heading?: string
+  description?: string
+  images?: WPGalleriesImageItem[]
   desktop_columns?: number
   mobile_columns?: number
 }
@@ -458,6 +476,7 @@ export type ContentBlock =
   | PricingPackagesBlock
   | GalleryCategoriesBlock
   | GalleriesBlock
+  | GalleryReferenceBlock
   | ImageBlock
   | FormBlock
   | ButtonGroupBlock

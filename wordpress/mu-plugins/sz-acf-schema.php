@@ -383,6 +383,39 @@ add_action( 'acf/init', function () {
 		],
 	];
 
+	$gallery_reference_fields = [
+		[
+			'key' => 'field_sz_gallery_reference_item',
+			'label' => 'Reusable Gallery',
+			'name' => 'gallery_reference',
+			'type' => 'post_object',
+			'post_type' => [ 'sz_gallery' ],
+			'return_format' => 'id',
+			'ui' => 1,
+			'required' => 1,
+			'instructions' => 'Choose a reusable gallery library entry. Manage its images from the Gallery Library menu in WordPress.',
+		],
+		[ 'key' => 'field_sz_gallery_reference_desktop_columns', 'label' => 'Desktop Columns', 'name' => 'desktop_columns', 'type' => 'number', 'min' => 2, 'max' => 4, 'default_value' => 3 ],
+		[ 'key' => 'field_sz_gallery_reference_mobile_columns', 'label' => 'Mobile Columns', 'name' => 'mobile_columns', 'type' => 'number', 'min' => 1, 'max' => 3, 'default_value' => 2 ],
+	];
+
+	$gallery_library_fields = [
+		[ 'key' => 'field_sz_gallery_library_description', 'label' => 'Description', 'name' => 'description', 'type' => 'wysiwyg', 'tabs' => 'visual', 'toolbar' => 'basic', 'media_upload' => 0 ],
+		[
+			'key' => 'field_sz_gallery_library_images',
+			'label' => 'Insert Images',
+			'name' => 'images',
+			'type' => 'repeater',
+			'layout' => 'row',
+			'button_label' => 'Add Image',
+			'min' => 1,
+			'sub_fields' => [
+				[ 'key' => 'field_sz_gallery_library_image_item', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'required' => 1 ],
+				[ 'key' => 'field_sz_gallery_library_image_caption', 'label' => 'Caption', 'name' => 'caption', 'type' => 'text' ],
+			],
+		],
+	];
+
 	$image_block_fields = [
 		[ 'key' => 'field_sz_image_block_image', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'required' => 1 ],
 		[ 'key' => 'field_sz_image_block_height', 'label' => 'Height', 'name' => 'height', 'type' => 'select', 'choices' => [ 'md' => 'Medium', 'lg' => 'Large', 'full' => 'Full Screen' ], 'default_value' => 'lg' ],
@@ -556,6 +589,22 @@ add_action( 'acf/init', function () {
 	], $style_fields( 'sz_blog_posts' ));
 
 	acf_add_local_field_group([
+		'key' => 'group_sz_gallery_library',
+		'title' => 'Gallery Library',
+		'show_in_rest' => 1,
+		'fields' => $gallery_library_fields,
+		'location' => [
+			[
+				[
+					'param' => 'post_type',
+					'operator' => '==',
+					'value' => 'sz_gallery',
+				],
+			],
+		],
+	]);
+
+	acf_add_local_field_group([
 		'key' => 'group_sz_page_blocks',
 		'title' => 'Page Blocks',
 		'show_in_rest' => 1,
@@ -633,9 +682,16 @@ add_action( 'acf/init', function () {
 					'layout_sz_galleries' => [
 						'key' => 'layout_sz_galleries',
 						'name' => 'galleries',
-						'label' => 'Galleries',
+						'label' => 'Galleries (Legacy Inline)',
 						'display' => 'block',
 						'sub_fields' => $galleries_fields,
+					],
+					'layout_sz_gallery_reference' => [
+						'key' => 'layout_sz_gallery_reference',
+						'name' => 'gallery_reference',
+						'label' => 'Reusable Gallery',
+						'display' => 'block',
+						'sub_fields' => $gallery_reference_fields,
 					],
 					'layout_sz_image_block' => [
 						'key' => 'layout_sz_image_block',

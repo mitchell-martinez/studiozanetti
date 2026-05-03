@@ -10,7 +10,7 @@ import {
 function printWpHelp() {
   printHelp()
   console.log(
-    `\nWrite-to-WordPress mode:\n  npm run gallery:import-live-to-wp -- --source-url <gallery-url> --wp-url <wp-root> [target] [auth] [options]\n\nTarget (choose one):\n  --page-id <number>         WordPress page ID\n  --page-slug <slug>         WordPress page slug\n\nAuth (required for --execute):\n  --username <value>         WordPress username (Application Password auth)\n  --app-password <value>     WordPress Application Password\n\nOptions:\n  --heading <value>          Heading for block (default from source URL slug)\n  --scope <css-selector>     DOM scope selector when scraping source (default: main)\n  --limit <number>           Max images to import\n  --include-external         Include image URLs from other hosts\n  --mode append|replace      append (default): add new block; replace: replace first galleries block\n  --execute                  Actually write changes to WordPress\n  --verbose                  Print detailed progress logs and long-request heartbeat\n  --help                     Show this help\n\nWrite order:\n  1) wp/v2 pages with acf payload\n  2) acf/v3 pages/posts routes\n  3) sz/v1/page-blocks custom endpoint (ACF Pro compatible)\n\nExamples:\n  npm run gallery:import-live-to-wp -- --source-url https://studiozanetti.com.au/gallery/stylish-brides/ --wp-url https://cms.example.com --page-slug gallery --mode append\n\n  npm run gallery:import-live-to-wp -- --source-url https://studiozanetti.com.au/gallery/stylish-brides/ --wp-url https://cms.example.com --page-id 123 --username admin --app-password \"xxxx xxxx xxxx xxxx xxxx xxxx\" --mode replace --execute\n`,
+    `\nWrite-to-WordPress mode:\n  npm run gallery:import-live-to-wp -- --source-url <gallery-url> --wp-url <wp-root> [target] [auth] [options]\n\nTarget (choose one):\n  --page-id <number>         WordPress page ID\n  --page-slug <slug>         WordPress page slug\n\nAuth (required for --execute):\n  --username <value>         WordPress username (Application Password auth)\n  --app-password <value>     WordPress Application Password\n\nOptions:\n  --heading <value>          Gallery title / heading (default from source URL slug)\n  --gallery-slug <value>     Stable reusable gallery slug (default from source URL)\n  --scope <css-selector>     DOM scope selector when scraping source (default: main)\n  --limit <number>           Max images to import\n  --include-external         Include image URLs from other hosts\n  --mode append|replace      append (default): add new block; replace: replace first gallery-like block\n  --storage-mode inline|reference\n                            reference (default): create reusable gallery + insert gallery_reference block\n                            inline: write legacy inline galleries block directly onto the page\n  --execute                  Actually write changes to WordPress\n  --verbose                  Print detailed progress logs and long-request heartbeat\n  --help                     Show this help\n\nWrite order:\n  1) reusable gallery library via sz/v1/gallery-library (reference mode only)\n  2) wp/v2 pages with acf payload\n  3) acf/v3 pages/posts routes\n  4) sz/v1/page-blocks custom endpoint (ACF Pro compatible)\n\nExamples:\n  npm run gallery:import-live-to-wp -- --source-url https://studiozanetti.com.au/gallery/stylish-brides/ --wp-url https://cms.example.com --page-slug gallery --mode append\n\n  npm run gallery:import-live-to-wp -- --source-url https://studiozanetti.com.au/gallery/stylish-brides/ --wp-url https://cms.example.com --page-id 123 --username admin --app-password "xxxx xxxx xxxx xxxx xxxx xxxx" --mode replace --execute\n`,
   )
 }
 
@@ -22,6 +22,16 @@ function buildAuthHeader(username, appPassword) {
   if (!username || !appPassword) return null
   const token = Buffer.from(`${username}:${appPassword}`).toString('base64')
   return `Basic ${token}`
+}
+
+function slugFromUrl(sourceUrl, fallback = 'gallery') {
+  try {
+    const pathname = new URL(sourceUrl).pathname
+    const segments = pathname.split('/').filter(Boolean)
+    return segments.at(-1) || fallback
+  } catch {
+    return fallback
+  }
 }
 
 async function fetchJson(url, init = {}, { verbose = false, label = 'request' } = {}) {
@@ -139,19 +149,45 @@ async function writeBlocksViaSzEndpoint({ base, pageId, blocks, authHeader, verb
   }, { verbose, label: 'sz/v1 page-blocks write' })
 }
 
+async function writeGalleryLibraryItemViaSzEndpoint({
+  base,
+  title,
+  slug,
+  description,
+  images,
+  authHeader,
+  verbose = false,
+}) {
+  return fetchJson(`${base}/wp-json/sz/v1/gallery-library`, {
+    method: 'POST',
+    headers: {
+      authorization: authHeader,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      title,
+      slug,
+      description,
+      images,
+    }),
+  }, { verbose, label: 'sz/v1 gallery-library write' })
+}
+
 function upsertGalleriesBlock(existingBlocks, nextBlock, mode) {
   const blocks = Array.isArray(existingBlocks) ? [...existingBlocks] : []
 
   if (mode === 'replace') {
-    const index = blocks.findIndex((block) => block?.acf_fc_layout === 'galleries')
+    const index = blocks.findIndex((block) =>
+      ['galleries', 'gallery_reference'].includes(block?.acf_fc_layout),
+    )
     if (index >= 0) {
       blocks[index] = nextBlock
-      return { blocks, action: 'replaced-existing-galleries' }
+      return { blocks, action: 'replaced-existing-gallery-block' }
     }
   }
 
   blocks.push(nextBlock)
-  return { blocks, action: 'appended-new-galleries' }
+  return { blocks, action: 'appended-new-gallery-block' }
 }
 
 async function resolvePage({ wpUrl, pageId, pageSlug, verbose = false }) {
@@ -193,9 +229,11 @@ async function main() {
   const pageId = getArg(args, 'page-id')
   const pageSlug = getArg(args, 'page-slug')
   const heading = getArg(args, 'heading', sourceUrl ? titleFromSlug(sourceUrl) : null)
+  const gallerySlug = getArg(args, 'gallery-slug', sourceUrl ? slugFromUrl(sourceUrl) : 'gallery')
   const scopeSelector = getArg(args, 'scope', 'main')
   const limit = args.limit ? Number.parseInt(args.limit, 10) : null
   const mode = getArg(args, 'mode', 'append')
+  const storageMode = getArg(args, 'storage-mode', 'reference')
   const execute = Boolean(args.execute)
   const verbose = Boolean(args.verbose)
 
@@ -214,6 +252,10 @@ async function main() {
     throw new Error('--mode must be either append or replace')
   }
 
+  if (!['inline', 'reference'].includes(storageMode)) {
+    throw new Error('--storage-mode must be either inline or reference')
+  }
+
   verboseLog('Starting gallery scrape', { sourceUrl, scopeSelector, limit: limit ?? 'none' })
   const galleryBlock = await fetchLiveGalleryBlock({
     url: sourceUrl,
@@ -227,13 +269,52 @@ async function main() {
   const page = await resolvePage({ wpUrl, pageId, pageSlug, verbose })
   const currentBlocks = page?.acf?.blocks ?? []
 
-  const { blocks, action } = upsertGalleriesBlock(currentBlocks, galleryBlock, mode)
+  let nextBlock = galleryBlock
+  let reusableGallery = null
+
+  if (storageMode === 'reference' && execute) {
+    const authHeader = buildAuthHeader(args.username, args['app-password'])
+    if (!authHeader) {
+      throw new Error('--execute requires --username and --app-password')
+    }
+
+    const base = wpUrl.replace(/\/$/, '')
+    reusableGallery = await writeGalleryLibraryItemViaSzEndpoint({
+      base,
+      title: heading,
+      slug: gallerySlug,
+      description: galleryBlock.description || '',
+      images: galleryBlock.images,
+      authHeader,
+      verbose,
+    })
+
+    nextBlock = {
+      acf_fc_layout: 'gallery_reference',
+      gallery_reference: reusableGallery.id,
+      desktop_columns: galleryBlock.desktop_columns,
+      mobile_columns: galleryBlock.mobile_columns,
+    }
+  } else if (storageMode === 'reference') {
+    nextBlock = {
+      acf_fc_layout: 'gallery_reference',
+      gallery_reference: `(dry-run:${gallerySlug})`,
+      desktop_columns: galleryBlock.desktop_columns,
+      mobile_columns: galleryBlock.mobile_columns,
+    }
+  }
+
+  const { blocks, action } = upsertGalleriesBlock(currentBlocks, nextBlock, mode)
 
   console.log(`Prepared galleries block with ${galleryBlock.images.length} images`)
   console.log(`Target page: id=${page.id} slug=${page.slug}`)
+  console.log(`Storage mode: ${storageMode}`)
   console.log(`Action: ${action}`)
   console.log(`Existing blocks: ${Array.isArray(currentBlocks) ? currentBlocks.length : 0}`)
   console.log(`Updated blocks: ${blocks.length}`)
+  if (reusableGallery) {
+    console.log(`Reusable gallery: id=${reusableGallery.id} slug=${reusableGallery.slug}`)
+  }
 
   if (!execute) {
     console.log('\nDry run only. No changes written. Add --execute to update WordPress.')
