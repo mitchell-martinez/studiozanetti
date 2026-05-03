@@ -1735,7 +1735,10 @@ function sz_normalize_page_images( WP_REST_Response $response, WP_Post $post, WP
 	$data = $response->get_data();
 
 	if ( ! empty( $data['acf']['blocks'] ) && is_array( $data['acf']['blocks'] ) ) {
-		$data['acf']['blocks'] = array_map( 'sz_normalize_block_images', $data['acf']['blocks'] );
+		$hydrate_gallery_references = $request->get_param( 'context' ) !== 'edit';
+		$data['acf']['blocks']      = array_map( function ( $block ) use ( $hydrate_gallery_references ) {
+			return sz_normalize_block_images( $block, $hydrate_gallery_references );
+		}, $data['acf']['blocks'] );
 		$response->set_data( $data );
 	}
 
@@ -1745,14 +1748,15 @@ function sz_normalize_page_images( WP_REST_Response $response, WP_Post $post, WP
 /**
  * Walk a single ACF Flexible Content block and resolve every image field.
  */
-function sz_normalize_block_images( array $block ): array {
-	if ( ( $block['acf_fc_layout'] ?? '' ) === 'gallery_reference' ) {
+function sz_normalize_block_images( array $block, bool $hydrate_gallery_references = true ): array {
+	if ( $hydrate_gallery_references && ( $block['acf_fc_layout'] ?? '' ) === 'gallery_reference' ) {
 		$resolved_gallery = array_key_exists( 'gallery_reference', $block )
 			? sz_resolve_gallery_reference( $block['gallery_reference'] )
 			: null;
 
 		if ( $resolved_gallery ) {
-			$block['gallery_reference'] = $resolved_gallery;
+			// Keep the stored reference lightweight in page payloads; hydrate only render fields.
+			$block['gallery_reference'] = $resolved_gallery['id'];
 			$block['heading']           = $block['heading'] ?? $resolved_gallery['title'];
 			$block['description']       = $block['description'] ?? $resolved_gallery['description'];
 			$block['images']            = $resolved_gallery['images'];

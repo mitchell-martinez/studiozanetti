@@ -6,7 +6,7 @@ import path from 'node:path'
 
 export function printHelp() {
   console.log(
-    `\nImport a live gallery URL into a GalleriesBlock JSON payload.\n\nUsage:\n  npm run gallery:import-live -- --url <gallery-url> [options]\n\nRequired:\n  --url <value>              Live gallery page URL\n\nOptional:\n  --heading <value>          Heading for the generated block (default: derived from URL slug)\n  --out <file-path>          Output JSON file path (default: prints to stdout)\n  --limit <number>           Limit number of images (default: no limit)\n  --scope <css-selector>     DOM scope selector (default: main, fallback body)\n  --include-external         Include image URLs from other hosts\n  --verbose                  Print detailed progress logs\n  --help                     Show this help\n\nExamples:\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/ --out app/components/blocks/GalleriesBlock/__mocks__/stylishBrides.json\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/ --heading \"Stylish Brides\" --limit 40\n`,
+    `\nImport a live gallery URL into a GalleriesBlock JSON payload.\n\nUsage:\n  npm run gallery:import-live -- --url <gallery-url> [options]\n\nRequired:\n  --url <value>              Live gallery page URL\n\nOptional:\n  --heading <value>          Heading for the generated block (default: derived from URL slug)\n  --out <file-path>          Output JSON file path (default: prints to stdout)\n  --limit <number>           Limit number of images (default: no limit)\n  --scope <css-selector>     DOM scope selector (default: main; prefers Flo gallery items inside scope)\n  --include-external         Include image URLs from other hosts\n  --verbose                  Print detailed progress logs\n  --help                     Show this help\n\nExamples:\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/ --out app/components/blocks/GalleriesBlock/__mocks__/stylishBrides.json\n  npm run gallery:import-live -- --url https://studiozanetti.com.au/gallery/stylish-brides/ --heading \"Stylish Brides\" --limit 40\n`,
   )
 }
 
@@ -191,6 +191,44 @@ export function collectCandidates(scope, pageUrl, includeExternal) {
   return [...map.values()]
 }
 
+export function collectFloGalleryCandidates(scope, pageUrl, includeExternal) {
+  const pageHost = new URL(pageUrl).hostname
+  const map = new Map()
+
+  const pushCandidate = (rawUrl, alt = '') => {
+    const normalized = normalizeUrl(rawUrl, pageUrl)
+    if (!normalized) return
+
+    const normalizedHost = new URL(normalized).hostname
+    if (!includeExternal && normalizedHost !== pageHost) return
+
+    if (!looksLikeImageUrl(normalized) && !isWordPressUpload(normalized)) return
+
+    if (!map.has(normalized)) {
+      map.set(normalized, { url: normalized, alt: (alt || '').trim() })
+      return
+    }
+
+    const existing = map.get(normalized)
+    if (!existing.alt && alt) {
+      map.set(normalized, { ...existing, alt: alt.trim() })
+    }
+  }
+
+  const floAnchors = scope.querySelectorAll([
+    'a[href][data-fancybox^="flo-block-gallery"]',
+    'a[href].flo-block-gallery-view-1__image',
+    'a[href].flo-block-gallery-view-2__image',
+    'a[href].flo-block-gallery-view-3__image',
+  ].join(', '))
+
+  floAnchors.forEach((anchor) => {
+    pushCandidate(anchor.getAttribute('href'), anchor.querySelector('img')?.getAttribute('alt') || '')
+  })
+
+  return [...map.values()]
+}
+
 export function buildBlockPayload(images, heading) {
   return {
     acf_fc_layout: 'galleries',
@@ -254,9 +292,20 @@ export async function fetchLiveGalleryBlock({
     )
   }
 
-  let candidates = collectCandidates(scope, url, includeExternal)
-  if (verbose) {
-    console.log(`[verbose] Found ${candidates.length} candidate images before limit`)
+  let candidates = collectFloGalleryCandidates(scope, url, includeExternal)
+  if (verbose && candidates.length) {
+    console.log(`[verbose] Found ${candidates.length} Flo gallery images`)
+  }
+
+  if (!candidates.length) {
+    if (verbose) {
+      console.log('[verbose] No Flo gallery markers found; falling back to generic image scrape')
+    }
+
+    candidates = collectCandidates(scope, url, includeExternal)
+    if (verbose) {
+      console.log(`[verbose] Found ${candidates.length} candidate images before limit`)
+    }
   }
 
   if (limit !== null) {
