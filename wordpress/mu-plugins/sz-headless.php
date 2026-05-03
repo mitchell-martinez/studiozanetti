@@ -839,6 +839,32 @@ add_action( 'admin_init', function () {
 } );
 
 /**
+ * Warn editors when PHP input variable limits are likely to truncate ACF data.
+ *
+ * Large Flexible Content pages (especially image repeaters) can exceed
+ * `max_input_vars`, causing silent field loss on save/publish.
+ */
+add_action( 'admin_notices', function () {
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $screen || $screen->base !== 'post' || $screen->post_type !== 'page' ) {
+		return;
+	}
+
+	$raw_limit = ini_get( 'max_input_vars' );
+	$limit     = is_string( $raw_limit ) ? (int) $raw_limit : 0;
+
+	if ( $limit <= 0 || $limit >= 5000 ) {
+		return;
+	}
+
+	echo '<div class="notice notice-warning"><p>';
+	echo '<strong>Studio Zanetti:</strong> This server is configured with <code>max_input_vars=' . esc_html( (string) $limit ) . '</code>. ';
+	echo 'Large page builder edits may be truncated on save (blocks can disappear). ';
+	echo 'Recommended minimum for this site: <code>5000</code> (preferably <code>10000</code>).';
+	echo '</p></div>';
+} );
+
+/**
  * Remove clutter from the Dashboard widgets.
  */
 add_action( 'wp_dashboard_setup', function () {
@@ -1134,8 +1160,32 @@ function sz_live_preview_js() {
 		var loadingOverlay  = document.getElementById('sz-preview-loading');
 		var frameWrapper    = document.getElementById('sz-preview-frame-wrapper');
 		var fullscreenBtn   = document.getElementById('sz-fullscreen-btn');
+		var postForm        = document.getElementById('post');
+		var maxInputVars    = <?php echo (int) ini_get( 'max_input_vars' ); ?>;
 
 		if (!iframe || !refreshBtn) return;
+
+		if (postForm) {
+			postForm.addEventListener('submit', function (event) {
+				var namedInputs = postForm.querySelectorAll('input[name], select[name], textarea[name]').length;
+				var threshold = maxInputVars > 0 ? Math.floor(maxInputVars * 0.9) : 0;
+
+				if (threshold > 0 && namedInputs >= threshold) {
+					var message =
+						'This page has ' + namedInputs + ' input fields and your server max_input_vars is ' + maxInputVars + '.\n\n' +
+						'Saving now may truncate fields (blocks can disappear).\n\n' +
+						'Click Cancel to stop and split content into smaller blocks/pages, or increase max_input_vars (recommended 5000-10000).';
+
+					if (!window.confirm(message)) {
+						event.preventDefault();
+						return;
+					}
+				}
+
+				setStatus('Saving in WordPress... large pages can take up to 1-2 minutes.');
+				refreshBtn.disabled = true;
+			});
+		}
 
 		/* ── Helpers ─────────────────────────────────────────── */
 		function setStatus(text) {
