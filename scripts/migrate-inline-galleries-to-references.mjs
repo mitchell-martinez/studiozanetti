@@ -317,36 +317,54 @@ async function persistPageMigration({ base, plan, authHeader, verbose = false })
     })
   }
 
+  // Safety: never write an unexpectedly empty block payload for pages that currently have blocks.
+  if (plan.currentBlocks.length > 0 && blocks.length === 0) {
+    throw new Error(
+      `Refusing to write empty blocks payload for page ${plan.page.id} (${plan.page.slug}).`,
+    )
+  }
+
   try {
-    await writeBlocksViaWpV2({
+    // Use custom endpoint first so image objects are normalized back to attachment IDs
+    // before ACF save. This avoids accidental block loss from incompatible payload shapes.
+    await writeBlocksViaSzEndpoint({
       base,
       pageId: plan.page.id,
-      pageAcf: plan.page.acf,
       blocks,
       authHeader,
       verbose,
     })
   } catch (error) {
+    const status = Number(error?.status || 0)
+    const code = String(error?.code || '')
     const msg = String(error?.message || '')
-    const shouldFallbackToAcfV3 =
-      msg.includes('Invalid parameter(s): acf') ||
-      msg.includes('rest_invalid_param') ||
-      msg.includes('rest_unknown_parameter')
+    const routeMissing =
+      status === 404 ||
+      code === 'rest_no_route' ||
+      msg.includes('No route was found matching')
 
-    if (!shouldFallbackToAcfV3) throw error
+    // Backward-compatible fallback for environments that do not have the sz endpoint.
+    if (!routeMissing) throw error
 
     try {
-      await writeBlocksViaAcfV3({
+      await writeBlocksViaWpV2({
         base,
         pageId: plan.page.id,
+        pageAcf: plan.page.acf,
         blocks,
         authHeader,
         verbose,
       })
-    } catch (acfError) {
-      if (acfError?.code !== 'acf_rest_route_missing') throw acfError
+    } catch (wpError) {
+      const wpMsg = String(wpError?.message || '')
+      const shouldFallbackToAcfV3 =
+        wpMsg.includes('Invalid parameter(s): acf') ||
+        wpMsg.includes('rest_invalid_param') ||
+        wpMsg.includes('rest_unknown_parameter')
 
-      await writeBlocksViaSzEndpoint({
+      if (!shouldFallbackToAcfV3) throw wpError
+
+      await writeBlocksViaAcfV3({
         base,
         pageId: plan.page.id,
         blocks,

@@ -312,6 +312,20 @@ add_action( 'rest_api_init', function () {
 			return current_user_can( 'edit_pages' );
 		},
 	] );
+
+	register_rest_route( 'sz/v1', '/resolve-media', [
+		'methods'             => 'GET',
+		'callback'            => 'sz_resolve_media_reference',
+		'permission_callback' => function () {
+			return current_user_can( 'upload_files' );
+		},
+		'args'                => [
+			'source_url' => [
+				'required' => true,
+				'type'     => 'string',
+			],
+		],
+	] );
 } );
 
 /**
@@ -355,15 +369,13 @@ function sz_update_page_blocks( WP_REST_Request $request ) {
 	// Update by field name. Field group is registered in sz-acf-schema.php.
 	$result = update_field( 'blocks', $blocks, $post_id );
 
-	// update_field can return false when value is unchanged; verify persisted state.
+	// ACF can return false when the computed value is effectively unchanged.
+	// Treat that as non-fatal to avoid false 500 responses during idempotent writes.
 	$persisted = function_exists( 'get_field' ) ? get_field( 'blocks', $post_id ) : null;
-	if ( $result === false && $persisted !== $blocks ) {
-		return new WP_REST_Response( [ 'message' => 'Failed to update page blocks.' ], 500 );
-	}
 
 	return new WP_REST_Response( [
 		'id'             => $post_id,
-		'status'         => 'updated',
+		'status'         => $result === false ? 'unchanged_or_not_modified' : 'updated',
 		'blocks_count'   => count( $blocks ),
 		'persisted'      => $persisted,
 	], 200 );
@@ -420,11 +432,82 @@ function sz_upsert_gallery_library_item( WP_REST_Request $request ) {
 
 	$site_url        = rtrim( get_site_url(), '/' );
 	$normalised_rows = sz_prepare_gallery_rows_for_acf_write( $images, $site_url );
+	$attempted_count = count( $images );
+	$persisted_count = count( $normalised_rows );
 
+	if ( $attempted_count > 0 && $persisted_count === 0 ) {
+		return new WP_REST_Response( [
+			'message' => 'Gallery images could not be imported into the WordPress Media Library.',
+			'attempted_images' => $attempted_count,
+			'persisted_images' => $persisted_count,
+		], 422 );
+	}
+
+	// Use explicit field keys first to avoid ambiguous field-name resolution.
+	update_field( 'field_sz_gallery_library_description', $description, $gallery_id );
+	update_field( 'field_sz_gallery_library_images', $normalised_rows, $gallery_id );
+
+	// Name-based fallback for environments with different field-key mapping states.
 	update_field( 'description', $description, $gallery_id );
 	update_field( 'images', $normalised_rows, $gallery_id );
 
+	// Ensure we read fresh values after writes.
+	clean_post_cache( $gallery_id );
+	wp_cache_delete( $gallery_id, 'post_meta' );
+
+	$persisted_images_raw = function_exists( 'get_field' ) ? get_field( 'images', $gallery_id ) : [];
+	$persisted_images     = is_array( $persisted_images_raw ) ? sz_normalize_gallery_rows( $persisted_images_raw ) : [];
+
+	if ( $attempted_count > 0 && count( $persisted_images ) === 0 ) {
+		return new WP_REST_Response( [
+			'message' => 'Gallery write did not persist images to ACF.',
+			'attempted_images' => $attempted_count,
+			'prepared_images' => $persisted_count,
+			'persisted_images' => 0,
+		], 500 );
+	}
+
 	return new WP_REST_Response( sz_get_reusable_gallery_payload( (int) $gallery_id ), 200 );
+}
+
+/**
+ * REST callback: resolve existing media by source URL/path without uploading.
+ */
+function sz_resolve_media_reference( WP_REST_Request $request ) {
+	$source_url = trim( (string) $request->get_param( 'source_url' ) );
+	if ( $source_url === '' ) {
+		return new WP_REST_Response( [ 'message' => 'source_url is required.' ], 400 );
+	}
+
+	$site_url      = rtrim( get_site_url(), '/' );
+	$attachment_id = (int) attachment_url_to_postid( $source_url );
+
+	if ( $attachment_id <= 0 ) {
+		$attachment_id = sz_find_attachment_by_source_url( $source_url );
+	}
+
+	if ( $attachment_id <= 0 ) {
+		$path = wp_parse_url( $source_url, PHP_URL_PATH );
+		if ( is_string( $path ) && $path !== '' ) {
+			$site_url_path = $site_url . $path;
+
+			$attachment_id = (int) attachment_url_to_postid( $site_url_path );
+			if ( $attachment_id <= 0 ) {
+				$attachment_id = sz_find_attachment_by_source_url( $site_url_path );
+			}
+		}
+	}
+
+	if ( $attachment_id <= 0 ) {
+		return new WP_REST_Response( [ 'message' => 'No matching media found.' ], 404 );
+	}
+
+	$media_url = wp_get_attachment_url( $attachment_id );
+
+	return new WP_REST_Response( [
+		'id'  => $attachment_id,
+		'url' => $media_url ? $media_url : '',
+	], 200 );
 }
 
 /**

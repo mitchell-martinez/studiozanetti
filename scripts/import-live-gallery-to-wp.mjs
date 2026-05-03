@@ -173,6 +173,138 @@ async function writeGalleryLibraryItemViaSzEndpoint({
   }, { verbose, label: 'sz/v1 gallery-library write' })
 }
 
+function guessContentTypeFromUrl(url) {
+  const lower = String(url || '').toLowerCase()
+  if (lower.endsWith('.webp')) return 'image/webp'
+  if (lower.endsWith('.png')) return 'image/png'
+  if (lower.endsWith('.gif')) return 'image/gif'
+  if (lower.endsWith('.jpeg') || lower.endsWith('.jpg')) return 'image/jpeg'
+  return 'application/octet-stream'
+}
+
+function sanitizeFileName(value, fallback = 'image') {
+  const cleaned = String(value || '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return cleaned || fallback
+}
+
+function fileNameFromImageUrl(url, index) {
+  try {
+    const parsed = new URL(url)
+    const pathname = parsed.pathname || ''
+    const base = pathname.split('/').filter(Boolean).at(-1)
+    return sanitizeFileName(base, `gallery-image-${index + 1}.jpg`)
+  } catch {
+    return `gallery-image-${index + 1}.jpg`
+  }
+}
+
+async function uploadMediaFromUrlToWordPress({ base, authHeader, imageUrl, fileName, verbose = false }) {
+  const sourceResponse = await fetch(imageUrl)
+  if (!sourceResponse.ok) {
+    throw new Error(`Failed to download source image (${sourceResponse.status}) ${imageUrl}`)
+  }
+
+  const sourceContentType = sourceResponse.headers.get('content-type') || ''
+  const contentType = sourceContentType || guessContentTypeFromUrl(imageUrl)
+  const binary = Buffer.from(await sourceResponse.arrayBuffer())
+
+  return fetchJson(`${base}/wp-json/wp/v2/media`, {
+    method: 'POST',
+    headers: {
+      authorization: authHeader,
+      'content-type': contentType,
+      'content-disposition': `attachment; filename="${fileName}"`,
+    },
+    body: binary,
+  }, { verbose, label: 'wp/v2 media upload' })
+}
+
+async function resolveExistingMediaIdBySourceUrl({ base, authHeader, imageUrl, verbose = false }) {
+  const url = `${base}/wp-json/sz/v1/resolve-media?${new URLSearchParams({ source_url: imageUrl }).toString()}`
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      authorization: authHeader,
+    },
+  })
+
+  if (response.status === 404) return null
+  const raw = await response.text()
+  let payload = null
+  try {
+    payload = raw ? JSON.parse(raw) : null
+  } catch {
+    payload = { raw }
+  }
+
+  if (!response.ok) {
+    const message = payload?.message || response.statusText || 'Failed to resolve media'
+    throw new Error(`${response.status} ${message}`)
+  }
+
+  const id = Number(payload?.id)
+  if (!Number.isFinite(id) || id <= 0) return null
+
+  if (verbose) {
+    console.log(`[verbose] media resolve hit -> ${imageUrl} (id=${id})`)
+  }
+
+  return id
+}
+
+async function buildWpMediaBackedGalleryRows({ base, authHeader, rows, verbose = false }) {
+  const uploadedRows = []
+  const mediaIdCache = new Map()
+
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i]
+    const imageUrl = row?.image?.url
+    if (!imageUrl) continue
+
+    let mediaId = mediaIdCache.get(imageUrl) ?? null
+
+    if (!mediaId) {
+      mediaId = await resolveExistingMediaIdBySourceUrl({
+        base,
+        authHeader,
+        imageUrl,
+        verbose,
+      })
+    }
+
+    if (!mediaId) {
+      const media = await uploadMediaFromUrlToWordPress({
+        base,
+        authHeader,
+        imageUrl,
+        fileName: fileNameFromImageUrl(imageUrl, i),
+        verbose,
+      })
+
+      const uploadedId = Number(media?.id)
+      if (!Number.isFinite(uploadedId) || uploadedId <= 0) {
+        throw new Error(`Media upload did not return a valid ID for ${imageUrl}`)
+      }
+
+      mediaId = uploadedId
+      if (verbose) {
+        console.log(`[verbose] media upload created -> ${imageUrl} (id=${mediaId})`)
+      }
+    }
+
+    mediaIdCache.set(imageUrl, mediaId)
+
+    uploadedRows.push({
+      image: mediaId,
+      caption: row?.caption || '',
+    })
+  }
+
+  return uploadedRows
+}
+
 function upsertGalleriesBlock(existingBlocks, nextBlock, mode) {
   const blocks = Array.isArray(existingBlocks) ? [...existingBlocks] : []
 
@@ -279,15 +411,51 @@ async function main() {
     }
 
     const base = wpUrl.replace(/\/$/, '')
-    reusableGallery = await writeGalleryLibraryItemViaSzEndpoint({
-      base,
-      title: heading,
-      slug: gallerySlug,
-      description: galleryBlock.description || '',
-      images: galleryBlock.images,
-      authHeader,
-      verbose,
-    })
+    const attemptedImages = Array.isArray(galleryBlock?.images) ? galleryBlock.images.length : 0
+
+    const writeGallery = async (imagesPayload) =>
+      writeGalleryLibraryItemViaSzEndpoint({
+        base,
+        title: heading,
+        slug: gallerySlug,
+        description: galleryBlock.description || '',
+        images: imagesPayload,
+        authHeader,
+        verbose,
+      })
+
+    try {
+      reusableGallery = await writeGallery(galleryBlock.images)
+    } catch (error) {
+      const isImportFailure = Number(error?.status || 0) === 422
+      if (!isImportFailure) throw error
+
+      console.log('WordPress could not sideload source images. Uploading images via wp/v2/media and retrying...')
+      const uploadedRows = await buildWpMediaBackedGalleryRows({
+        base,
+        authHeader,
+        rows: galleryBlock.images,
+        verbose,
+      })
+      reusableGallery = await writeGallery(uploadedRows)
+    }
+
+    let persistedImages = Array.isArray(reusableGallery?.images) ? reusableGallery.images.length : 0
+    if (attemptedImages > 0 && persistedImages === 0) {
+      console.log('Reusable gallery persisted 0 images. Retrying via wp/v2/media uploads...')
+      const uploadedRows = await buildWpMediaBackedGalleryRows({
+        base,
+        authHeader,
+        rows: galleryBlock.images,
+        verbose,
+      })
+      reusableGallery = await writeGallery(uploadedRows)
+      persistedImages = Array.isArray(reusableGallery?.images) ? reusableGallery.images.length : 0
+    }
+
+    if (attemptedImages > 0 && persistedImages === 0) {
+      throw new Error(`Reusable gallery persisted 0 images after retry (attempted ${attemptedImages}).`)
+    }
 
     nextBlock = {
       acf_fc_layout: 'gallery_reference',
