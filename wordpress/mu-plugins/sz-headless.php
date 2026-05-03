@@ -319,17 +319,96 @@ function sz_update_page_blocks( WP_REST_Request $request ) {
 		require_once ABSPATH . 'wp-admin/includes/image.php';
 	}
 
-	// Normalise incoming gallery rows so ACF image subfields receive attachment IDs.
+	// Normalise incoming blocks so ACF image fields receive attachment IDs.
 	$site_url = rtrim( get_site_url(), '/' );
 	$blocks   = array_map( function ( $block ) use ( $site_url ) {
-		if ( ! is_array( $block ) || ( $block['acf_fc_layout'] ?? '' ) !== 'galleries' ) {
-			return $block;
+		return sz_prepare_block_for_acf_write( $block, $site_url );
+	}, $blocks );
+
+	// Update by field name. Field group is registered in sz-acf-schema.php.
+	$result = update_field( 'blocks', $blocks, $post_id );
+
+	// update_field can return false when value is unchanged; verify persisted state.
+	$persisted = function_exists( 'get_field' ) ? get_field( 'blocks', $post_id ) : null;
+	if ( $result === false && $persisted !== $blocks ) {
+		return new WP_REST_Response( [ 'message' => 'Failed to update page blocks.' ], 500 );
+	}
+
+	return new WP_REST_Response( [
+		'id'             => $post_id,
+		'status'         => 'updated',
+		'blocks_count'   => count( $blocks ),
+		'persisted'      => $persisted,
+	], 200 );
+}
+
+/**
+ * Prepare a flexible-content block payload for ACF writes by converting
+ * image objects/URLs back to attachment IDs where possible.
+ */
+function sz_prepare_block_for_acf_write( $block, string $site_url ) {
+	if ( ! is_array( $block ) ) {
+		return $block;
+	}
+
+	$image_keys = [ 'background_image', 'image', 'image_mobile' ];
+	foreach ( $image_keys as $key ) {
+		if ( array_key_exists( $key, $block ) ) {
+			$resolved_id = sz_resolve_or_import_attachment_id( $block[ $key ], $site_url );
+			if ( $resolved_id > 0 ) {
+				$block[ $key ] = $resolved_id;
+			}
+		}
+	}
+
+	if ( ( $block['acf_fc_layout'] ?? '' ) === 'hero' && ! empty( $block['slides'] ) && is_array( $block['slides'] ) ) {
+		$slides = [];
+		foreach ( $block['slides'] as $slide ) {
+			if ( ! is_array( $slide ) ) {
+				continue;
+			}
+
+			$raw_image = array_key_exists( 'image', $slide ) ? $slide['image'] : $slide;
+			$slide_id  = sz_resolve_or_import_attachment_id( $raw_image, $site_url );
+			if ( $slide_id <= 0 ) {
+				continue;
+			}
+
+			$next_slide = [ 'image' => $slide_id ];
+			if ( isset( $slide['tagline'] ) ) {
+				$next_slide['tagline'] = (string) $slide['tagline'];
+			}
+			if ( isset( $slide['subtitle'] ) ) {
+				$next_slide['subtitle'] = (string) $slide['subtitle'];
+			}
+
+			$slides[] = $next_slide;
 		}
 
-		if ( empty( $block['images'] ) || ! is_array( $block['images'] ) ) {
-			return $block;
+		$block['slides'] = $slides;
+	}
+
+	$repeater_keys = [ 'services', 'categories', 'testimonials', 'steps', 'packages' ];
+	foreach ( $repeater_keys as $rk ) {
+		if ( empty( $block[ $rk ] ) || ! is_array( $block[ $rk ] ) ) {
+			continue;
 		}
 
+		$block[ $rk ] = array_map( function ( $row ) use ( $site_url ) {
+			if ( ! is_array( $row ) || ! array_key_exists( 'image', $row ) ) {
+				return $row;
+			}
+
+			$resolved_id = sz_resolve_or_import_attachment_id( $row['image'], $site_url );
+			if ( $resolved_id > 0 ) {
+				$row['image'] = $resolved_id;
+			}
+
+			return $row;
+		}, $block[ $rk ] );
+	}
+
+	if ( ( $block['acf_fc_layout'] ?? '' ) === 'galleries' && ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
 		$normalised_rows = [];
 		foreach ( $block['images'] as $row ) {
 			if ( ! is_array( $row ) ) {
@@ -349,24 +428,16 @@ function sz_update_page_blocks( WP_REST_Request $request ) {
 		}
 
 		$block['images'] = $normalised_rows;
-		return $block;
-	}, $blocks );
-
-	// Update by field name. Field group is registered in sz-acf-schema.php.
-	$result = update_field( 'blocks', $blocks, $post_id );
-
-	// update_field can return false when value is unchanged; verify persisted state.
-	$persisted = function_exists( 'get_field' ) ? get_field( 'blocks', $post_id ) : null;
-	if ( $result === false && $persisted !== $blocks ) {
-		return new WP_REST_Response( [ 'message' => 'Failed to update page blocks.' ], 500 );
 	}
 
-	return new WP_REST_Response( [
-		'id'             => $post_id,
-		'status'         => 'updated',
-		'blocks_count'   => count( $blocks ),
-		'persisted'      => $persisted,
-	], 200 );
+	if ( ( $block['acf_fc_layout'] ?? '' ) === 'instagram_feed' && ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
+		$block['images'] = array_values( array_filter( array_map( function ( $image ) use ( $site_url ) {
+			$id = sz_resolve_or_import_attachment_id( $image, $site_url );
+			return $id > 0 ? $id : null;
+		}, $block['images'] ) ) );
+	}
+
+	return $block;
 }
 
 /**
@@ -1063,8 +1134,44 @@ function sz_live_preview_js() {
 		var loadingOverlay  = document.getElementById('sz-preview-loading');
 		var frameWrapper    = document.getElementById('sz-preview-frame-wrapper');
 		var fullscreenBtn   = document.getElementById('sz-fullscreen-btn');
+		var postForm        = document.getElementById('post');
+		var isSubmitting    = false;
+		var isDirty         = false;
 
 		if (!iframe || !refreshBtn) return;
+
+		function isEditorField(el) {
+			if (!el || !el.closest) return false;
+			return Boolean(el.closest('#titlediv, .acf-field, #poststuff'));
+		}
+
+		document.addEventListener('input', function (event) {
+			if (isEditorField(event.target)) {
+				isDirty = true;
+			}
+		}, true);
+
+		document.addEventListener('change', function (event) {
+			if (isEditorField(event.target)) {
+				isDirty = true;
+			}
+		}, true);
+
+		if (postForm) {
+			postForm.addEventListener('submit', function () {
+				isSubmitting = true;
+				isDirty = false;
+				setStatus('Saving changes in WordPress...');
+			});
+		}
+
+		window.addEventListener('beforeunload', function (event) {
+			if (!isDirty || isSubmitting) return;
+
+			event.preventDefault();
+			event.returnValue = 'You have unsaved changes. Are you sure you want to leave this page?';
+			return event.returnValue;
+		});
 
 		/* ── Helpers ─────────────────────────────────────────── */
 		function setStatus(text) {
@@ -1086,19 +1193,12 @@ function sz_live_preview_js() {
 				' — Click "Refresh Preview" after making changes.');
 		});
 
-		/* ── Refresh: saves draft first, then reloads iframe ── */
+		/* ── Refresh preview iframe without triggering autosave ── */
 		function refreshPreview() {
 			showLoading();
-			setStatus('Saving &amp; refreshing…');
-			/* Trigger WP autosave to persist current field values */
-			if (window.wp && wp.autosave && wp.autosave.server) {
-				wp.autosave.server.triggerSave();
-			}
-			/* Wait for the save to complete, then reload iframe */
-			setTimeout(function () {
-				var src = iframe.src.replace(/&_cb=\d+/, '');
-				iframe.src = src + '&_cb=' + Date.now();
-			}, 2000);
+			setStatus('Refreshing preview…');
+			var src = iframe.src.replace(/&_cb=\d+/, '');
+			iframe.src = src + '&_cb=' + Date.now();
 		}
 
 		/* ── Manual refresh button ───────────────────────────── */
