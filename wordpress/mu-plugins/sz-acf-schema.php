@@ -395,6 +395,7 @@ add_action( 'acf/init', function () {
 			'required' => 1,
 			'instructions' => 'Choose a reusable gallery library entry. Manage its images from the Gallery Library menu in WordPress.',
 		],
+		[ 'key' => 'field_sz_gallery_reference_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text', 'instructions' => 'Optional custom heading for this page block. Leave blank to hide the heading instead of using the reusable gallery title.' ],
 		[ 'key' => 'field_sz_gallery_reference_desktop_columns', 'label' => 'Desktop Columns', 'name' => 'desktop_columns', 'type' => 'number', 'min' => 2, 'max' => 4, 'default_value' => 3 ],
 		[ 'key' => 'field_sz_gallery_reference_mobile_columns', 'label' => 'Mobile Columns', 'name' => 'mobile_columns', 'type' => 'number', 'min' => 1, 'max' => 3, 'default_value' => 2 ],
 	];

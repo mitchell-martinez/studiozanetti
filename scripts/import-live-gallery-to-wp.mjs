@@ -460,6 +460,7 @@ async function main() {
     nextBlock = {
       acf_fc_layout: 'gallery_reference',
       gallery_reference: reusableGallery.id,
+        heading: galleryBlock.heading ?? '',
       desktop_columns: galleryBlock.desktop_columns,
       mobile_columns: galleryBlock.mobile_columns,
     }
@@ -467,6 +468,7 @@ async function main() {
     nextBlock = {
       acf_fc_layout: 'gallery_reference',
       gallery_reference: `(dry-run:${gallerySlug})`,
+        heading: galleryBlock.heading ?? '',
       desktop_columns: galleryBlock.desktop_columns,
       mobile_columns: galleryBlock.mobile_columns,
     }

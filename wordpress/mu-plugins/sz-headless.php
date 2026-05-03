@@ -1757,7 +1757,9 @@ function sz_normalize_block_images( array $block, bool $hydrate_gallery_referenc
 		if ( $resolved_gallery ) {
 			// Keep the stored reference lightweight in page payloads; hydrate only render fields.
 			$block['gallery_reference'] = $resolved_gallery['id'];
-			$block['heading']           = $block['heading'] ?? $resolved_gallery['title'];
+			$block['heading']           = array_key_exists( 'heading', $block )
+				? (string) $block['heading']
+				: $resolved_gallery['title'];
 			$block['description']       = $block['description'] ?? $resolved_gallery['description'];
 			$block['images']            = $resolved_gallery['images'];
 		}

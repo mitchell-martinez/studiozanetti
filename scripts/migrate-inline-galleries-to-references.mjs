@@ -271,6 +271,7 @@ function planPageMigration(page) {
 
     return {
       acf_fc_layout: 'gallery_reference',
+        heading: block.heading ?? '',
       gallery_reference_meta: {
         title: buildReusableGalleryTitle(page, block, index),
         slug: buildReusableGallerySlug(page, block, index),
@@ -312,6 +313,7 @@ async function persistPageMigration({ base, plan, authHeader, verbose = false })
     blocks.push({
       acf_fc_layout: 'gallery_reference',
       gallery_reference: reusableGallery.id,
+        heading: block.heading ?? '',
       desktop_columns: block.desktop_columns,
       mobile_columns: block.mobile_columns,
     })
