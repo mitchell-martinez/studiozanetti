@@ -11,11 +11,31 @@ export function printHelp() {
 }
 
 export function parseArgs(argv) {
+  const normalizedArgv = argv.flatMap((rawToken) => {
+    if (typeof rawToken !== 'string') return []
+
+    // Normalise pasted Unicode dashes/spaces from docs/chat apps.
+    const normalizedToken = rawToken
+      .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]/g, '-')
+      .replace(/[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/g, ' ')
+      .trim()
+
+    if (!normalizedToken) return []
+
+    // If a pasted token collapsed "--key value" into one arg via non-breaking space,
+    // recover by splitting only flag-prefixed tokens.
+    if (normalizedToken.startsWith('--') && normalizedToken.includes(' ')) {
+      return normalizedToken.split(/\s+/).filter(Boolean)
+    }
+
+    return [normalizedToken]
+  })
+
   const args = {}
   const booleanFlags = new Set(['help', 'include-external', 'execute'])
 
-  for (let i = 0; i < argv.length; i += 1) {
-    const token = argv[i]
+  for (let i = 0; i < normalizedArgv.length; i += 1) {
+    const token = normalizedArgv[i]
 
     if (!token.startsWith('--')) continue
 
@@ -50,7 +70,7 @@ export function parseArgs(argv) {
     }
 
     const key = token.slice(2)
-    const value = argv[i + 1]
+    const value = normalizedArgv[i + 1]
 
     if (!value || value.startsWith('--')) {
       throw new Error(`Missing value for --${key}`)
