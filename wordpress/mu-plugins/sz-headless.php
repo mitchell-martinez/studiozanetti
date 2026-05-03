@@ -309,6 +309,16 @@ function sz_update_page_blocks( WP_REST_Request $request ) {
 		return new WP_REST_Response( [ 'message' => 'ACF is not available.' ], 500 );
 	}
 
+	if ( ! function_exists( 'media_sideload_image' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/media.php';
+	}
+	if ( ! function_exists( 'download_url' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+	}
+	if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/image.php';
+	}
+
 	// Normalise incoming gallery rows so ACF image subfields receive attachment IDs.
 	$site_url = rtrim( get_site_url(), '/' );
 	$blocks   = array_map( function ( $block ) use ( $site_url ) {
@@ -327,22 +337,7 @@ function sz_update_page_blocks( WP_REST_Request $request ) {
 			}
 
 			$image = $row['image'] ?? null;
-			$attachment_id = 0;
-
-			if ( is_numeric( $image ) ) {
-				$attachment_id = (int) $image;
-			} elseif ( is_array( $image ) && ! empty( $image['url'] ) && is_string( $image['url'] ) ) {
-				$raw_url = $image['url'];
-				$attachment_id = (int) attachment_url_to_postid( $raw_url );
-
-				// If source domain differs, retry with the current site host + same path.
-				if ( $attachment_id === 0 ) {
-					$path = wp_parse_url( $raw_url, PHP_URL_PATH );
-					if ( is_string( $path ) && $path !== '' ) {
-						$attachment_id = (int) attachment_url_to_postid( $site_url . $path );
-					}
-				}
-			}
+			$attachment_id = sz_resolve_or_import_attachment_id( $image, $site_url );
 
 			// Keep only rows with a resolvable image ID; image subfield is required.
 			if ( $attachment_id > 0 ) {
@@ -372,6 +367,54 @@ function sz_update_page_blocks( WP_REST_Request $request ) {
 		'blocks_count'   => count( $blocks ),
 		'persisted'      => $persisted,
 	], 200 );
+}
+
+/**
+ * Resolve an ACF gallery image value to an attachment ID.
+ * Falls back to sideloading external URLs into the Media Library.
+ */
+function sz_resolve_or_import_attachment_id( $image, string $site_url ): int {
+	if ( is_numeric( $image ) ) {
+		return (int) $image;
+	}
+
+	if ( is_string( $image ) && filter_var( $image, FILTER_VALIDATE_URL ) ) {
+		$image = [ 'url' => $image ];
+	}
+
+	if ( ! is_array( $image ) || empty( $image['url'] ) || ! is_string( $image['url'] ) ) {
+		return 0;
+	}
+
+	$raw_url = trim( $image['url'] );
+	if ( $raw_url === '' ) {
+		return 0;
+	}
+
+	$attachment_id = (int) attachment_url_to_postid( $raw_url );
+	if ( $attachment_id > 0 ) {
+		return $attachment_id;
+	}
+
+	$path = wp_parse_url( $raw_url, PHP_URL_PATH );
+	if ( is_string( $path ) && $path !== '' ) {
+		$attachment_id = (int) attachment_url_to_postid( $site_url . $path );
+		if ( $attachment_id > 0 ) {
+			return $attachment_id;
+		}
+	}
+
+	if ( ! function_exists( 'media_sideload_image' ) ) {
+		return 0;
+	}
+
+	// Import into media library and capture attachment ID for ACF image fields.
+	$sideloaded_id = media_sideload_image( $raw_url, 0, null, 'id' );
+	if ( is_wp_error( $sideloaded_id ) ) {
+		return 0;
+	}
+
+	return (int) $sideloaded_id;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
