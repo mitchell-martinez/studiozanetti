@@ -1134,44 +1134,8 @@ function sz_live_preview_js() {
 		var loadingOverlay  = document.getElementById('sz-preview-loading');
 		var frameWrapper    = document.getElementById('sz-preview-frame-wrapper');
 		var fullscreenBtn   = document.getElementById('sz-fullscreen-btn');
-		var postForm        = document.getElementById('post');
-		var isSubmitting    = false;
-		var isDirty         = false;
 
 		if (!iframe || !refreshBtn) return;
-
-		function isEditorField(el) {
-			if (!el || !el.closest) return false;
-			return Boolean(el.closest('#titlediv, .acf-field, #poststuff'));
-		}
-
-		document.addEventListener('input', function (event) {
-			if (isEditorField(event.target)) {
-				isDirty = true;
-			}
-		}, true);
-
-		document.addEventListener('change', function (event) {
-			if (isEditorField(event.target)) {
-				isDirty = true;
-			}
-		}, true);
-
-		if (postForm) {
-			postForm.addEventListener('submit', function () {
-				isSubmitting = true;
-				isDirty = false;
-				setStatus('Saving changes in WordPress...');
-			});
-		}
-
-		window.addEventListener('beforeunload', function (event) {
-			if (!isDirty || isSubmitting) return;
-
-			event.preventDefault();
-			event.returnValue = 'You have unsaved changes. Are you sure you want to leave this page?';
-			return event.returnValue;
-		});
 
 		/* ── Helpers ─────────────────────────────────────────── */
 		function setStatus(text) {
