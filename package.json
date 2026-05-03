@@ -21,6 +21,7 @@
     "test:e2e": "playwright test",
     "gallery:import-live": "node ./scripts/import-live-gallery.mjs",
     "gallery:import-live-to-wp": "node ./scripts/import-live-gallery-to-wp.mjs",
+    "gallery:migrate-inline-to-references": "node ./scripts/migrate-inline-galleries-to-references.mjs",
     "seo:smoke": "bash ./scripts/seo-smoke.sh"
   },
   "dependencies": {

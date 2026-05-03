@@ -88,3 +88,36 @@ Or use the direct WordPress import command to skip manual paste.
 - Best results come when gallery images are in the page `main` content area.
 - If no images are found, try a more specific `--scope` selector.
 - Direct WordPress writes are always dry-run unless `--execute` is passed.
+
+## Migrate Existing Inline Galleries To References
+
+Use this when pages already contain legacy inline `galleries` blocks and you want to convert them to the reusable Gallery Library model.
+
+Dry run a single page:
+
+```bash
+npm run gallery:migrate-inline-to-references -- \
+  --wp-url https://your-wordpress-site.com \
+  --page-slug your-page-slug
+```
+
+Execute across all published pages:
+
+```bash
+npm run gallery:migrate-inline-to-references -- \
+  --wp-url https://studiozanetti.mitchellmartinez.tech \
+  --all-pages \
+  --username admin \
+  --app-password "xxxx xxxx xxxx xxxx xxxx xxxx" \
+  --execute
+```
+
+You can also do --page-slug to migrate an individual page
+
+What it does:
+
+1. finds legacy inline `galleries` blocks on the selected pages
+2. creates or updates reusable Gallery Library entries in WordPress
+3. replaces each inline block with a lightweight `gallery_reference` block
+
+This is the safest way to reduce page save payload size on already-built pages without rebuilding those galleries by hand in the admin.

@@ -32,7 +32,7 @@ export function parseArgs(argv) {
   })
 
   const args = {}
-  const booleanFlags = new Set(['help', 'include-external', 'execute', 'verbose'])
+  const booleanFlags = new Set(['help', 'include-external', 'execute', 'verbose', 'all-pages'])
 
   for (let i = 0; i < normalizedArgv.length; i += 1) {
     const token = normalizedArgv[i]
@@ -75,6 +75,12 @@ export function parseArgs(argv) {
     }
 
     const key = token.slice(2)
+
+    if (booleanFlags.has(key)) {
+      args[key] = true
+      continue
+    }
+
     const value = normalizedArgv[i + 1]
 
     if (!value || value.startsWith('--')) {
