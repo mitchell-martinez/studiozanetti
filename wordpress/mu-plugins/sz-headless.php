@@ -396,11 +396,23 @@ function sz_resolve_or_import_attachment_id( $image, string $site_url ): int {
 		return $attachment_id;
 	}
 
+	// Reuse existing sideloaded media by original source URL.
+	$existing_by_source = sz_find_attachment_by_source_url( $raw_url );
+	if ( $existing_by_source > 0 ) {
+		return $existing_by_source;
+	}
+
 	$path = wp_parse_url( $raw_url, PHP_URL_PATH );
 	if ( is_string( $path ) && $path !== '' ) {
 		$attachment_id = (int) attachment_url_to_postid( $site_url . $path );
 		if ( $attachment_id > 0 ) {
 			return $attachment_id;
+		}
+
+		// Also check if this path was sideloaded from another host earlier.
+		$existing_by_source_path = sz_find_attachment_by_source_url( $site_url . $path );
+		if ( $existing_by_source_path > 0 ) {
+			return $existing_by_source_path;
 		}
 	}
 
@@ -415,6 +427,43 @@ function sz_resolve_or_import_attachment_id( $image, string $site_url ): int {
 	}
 
 	return (int) $sideloaded_id;
+}
+
+/**
+ * Find an attachment ID by its recorded sideload source URL.
+ */
+function sz_find_attachment_by_source_url( string $source_url ): int {
+	$source_url = trim( $source_url );
+	if ( $source_url === '' ) {
+		return 0;
+	}
+
+	$candidates = [ $source_url ];
+
+	$without_query = preg_replace( '/\?.*$/', '', $source_url );
+	if ( is_string( $without_query ) && $without_query !== '' && $without_query !== $source_url ) {
+		$candidates[] = $without_query;
+	}
+
+	foreach ( $candidates as $candidate ) {
+		$existing = get_posts( [
+			'post_type'              => 'attachment',
+			'post_status'            => 'inherit',
+			'posts_per_page'         => 1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_term_cache' => false,
+			'update_post_meta_cache' => false,
+			'meta_key'               => '_source_url',
+			'meta_value'             => $candidate,
+		] );
+
+		if ( ! empty( $existing ) ) {
+			return (int) $existing[0];
+		}
+	}
+
+	return 0;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
