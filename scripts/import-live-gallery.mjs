@@ -199,7 +199,7 @@ export function buildBlockPayload(images, heading) {
           url: item.url,
           alt,
         },
-        ...(item.alt ? { caption: item.alt } : {}),
+        caption: '',
       }
     }),
   }
