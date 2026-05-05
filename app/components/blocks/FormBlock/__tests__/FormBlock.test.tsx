@@ -23,6 +23,14 @@ const renderBlock = (overrides: Partial<FormBlockType> = {}) =>
   )
 
 describe('FormBlock', () => {
+  it('renders the configured anchor id on the section wrapper', () => {
+    const { container } = renderBlock({
+      anchor_id: 'contact-form',
+    })
+
+    expect(container.querySelector('section#contact-form')).toBeInTheDocument()
+  })
+
   it('renders the configured semantic heading and form/submit alignment', () => {
     const { container } = renderBlock({
       heading_tag: 'h3',

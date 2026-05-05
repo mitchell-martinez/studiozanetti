@@ -14,6 +14,7 @@ const meta: Meta<FormArgs> = {
   tags: ['autodocs'],
   args: {
     form_id: formBlock.form_id,
+    anchor_id: formBlock.anchor_id,
     heading: formBlock.heading,
     heading_tag: formBlock.heading_tag,
     heading_align: formBlock.heading_align,
@@ -32,6 +33,10 @@ const meta: Meta<FormArgs> = {
   },
   argTypes: {
     form_id: { control: 'text', description: 'Stable secure identifier for the form block' },
+    anchor_id: {
+      control: 'text',
+      description: 'Optional HTML id applied to the outer section for hash links such as /page#contact-form',
+    },
     heading: { control: 'text', description: 'Visible form heading' },
     heading_tag: {
       control: 'select',

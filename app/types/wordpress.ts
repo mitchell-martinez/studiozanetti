@@ -344,6 +344,7 @@ export type WPFormField =
 export interface FormBlock extends BlockStyleOptions {
   acf_fc_layout: 'form_block'
   form_id: string
+  anchor_id?: string
   heading?: string
   heading_tag?: FormHeadingTag
   heading_align?: FormHeadingAlign
