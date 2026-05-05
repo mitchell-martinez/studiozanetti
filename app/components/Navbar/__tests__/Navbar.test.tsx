@@ -7,9 +7,13 @@ import Navbar from '../index'
 
 const MOCK_ITEMS = testMenuItems as WPMenuItem[]
 
-const renderNavbar = (items: WPMenuItem[] = [], siteName?: string) =>
+const renderNavbar = (
+  items: WPMenuItem[] = [],
+  siteName?: string,
+  initialEntries: string[] = ['/'],
+) =>
   render(
-    <MemoryRouter initialEntries={['/']}>
+    <MemoryRouter initialEntries={initialEntries}>
       <Navbar items={items} siteName={siteName} />
     </MemoryRouter>,
   )
@@ -85,5 +89,22 @@ describe('Navbar', () => {
   it('renders custom site name when provided', () => {
     renderNavbar([], 'My Photography')
     expect(screen.getByRole('link', { name: /My Photography.*home/i })).toBeInTheDocument()
+  })
+
+  it('keeps the matching page highlighted when the current URL includes a hash fragment', () => {
+    renderNavbar(
+      [
+        {
+          id: 4,
+          title: 'Contact',
+          url: 'https://studiozanetti.com.au/contact/',
+          children: [],
+        },
+      ],
+      undefined,
+      ['/contact#contact-enquiry'],
+    )
+
+    expect(screen.getByRole('link', { name: 'Contact' }).className).toMatch(/navLinkActive/)
   })
 })

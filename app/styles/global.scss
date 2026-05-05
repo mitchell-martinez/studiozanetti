@@ -10,6 +10,8 @@ $transition-mid: 0.3s ease;
 
 // ─── CSS Custom Properties (runtime theme) ────────────────────────────────────
 :root {
+  --fixed-header-height: 64px;
+  --anchor-scroll-offset: calc(var(--fixed-header-height) + 12px);
   --color-dark: #2d2433;
   --color-white: #ffffff;
   --color-gold: #dfa86d;
@@ -56,8 +58,19 @@ $transition-mid: 0.3s ease;
 // ─── Base ─────────────────────────────────────────────────────────────────────
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: var(--anchor-scroll-offset);
   // Prevent layout shift from scrollbar
   scrollbar-gutter: stable;
+}
+
+:target {
+  scroll-margin-top: var(--anchor-scroll-offset);
+}
+
+@media (max-width: #{$bp-lg}) {
+  :root {
+    --anchor-scroll-offset: calc(var(--fixed-header-height) + 16px);
+  }
 }
 
 body {
@@ -130,7 +143,7 @@ button {
 .main-content {
   flex: 1;
   // Compensate for fixed navbar height
-  padding-top: 64px;
+  padding-top: var(--fixed-header-height);
 
   // Remove default focus outline; focus is managed manually per component
   &:focus {

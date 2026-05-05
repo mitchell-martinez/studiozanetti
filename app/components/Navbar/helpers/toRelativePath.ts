@@ -1,10 +1,11 @@
 /** Convert a WordPress absolute URL to a relative path for react-router. */
+const normalizePathname = (pathname: string): string => pathname.replace(/\/+$/, '') || '/'
+
 export function toRelativePath(url: string): string {
-  if (url.startsWith('/')) return url
   try {
-    const parsed = new URL(url)
-    return parsed.pathname + parsed.search + parsed.hash || '/'
+    const parsed = new URL(url, 'https://studiozanetti.local')
+    return `${normalizePathname(parsed.pathname)}${parsed.search}${parsed.hash}` || '/'
   } catch {
-    return url
+    return normalizePathname(url)
   }
 }

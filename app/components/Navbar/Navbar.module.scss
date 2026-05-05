@@ -16,7 +16,7 @@
   max-width: #{g.$bp-xl};
   margin: 0 auto;
   padding: 0 var(--space-page-x);
-  height: 64px;
+  height: var(--fixed-header-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -211,7 +211,7 @@
   .navList {
     display: none;
     position: absolute;
-    top: 64px;
+    top: var(--fixed-header-height);
     left: 0;
     right: 0;
     background-color: var(--color-surface);
