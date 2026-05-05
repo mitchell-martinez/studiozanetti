@@ -23,6 +23,12 @@ const renderBlock = (overrides: Partial<FormBlockType> = {}) =>
   )
 
 describe('FormBlock', () => {
+  it('uses form_id as the section anchor id', () => {
+    const { container } = renderBlock()
+
+    expect(container.querySelector(`section#${baseBlock.form_id}`)).toBeInTheDocument()
+  })
+
   it('renders the configured semantic heading and form/submit alignment', () => {
     const { container } = renderBlock({
       heading_tag: 'h3',
