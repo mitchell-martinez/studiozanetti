@@ -90,7 +90,6 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const submitAlignment =
     submitAlignClass[block.submit_alignment ?? 'left'] ?? styles.submitLeft
   const submitText = block.submit_text?.trim() || 'Send message'
-  const anchorId = block.anchor_id?.trim() || undefined
   const formConfigurationErrors = validateFormConfiguration(block)
   const isFormAvailable = formConfigurationErrors.length === 0
   const shouldOfferSubmitterCopy =
@@ -177,7 +176,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
   }
 
   return (
-    <section id={anchorId} className={styles.section} style={getSectionStyle(block)}>
+    <section className={styles.section} style={getSectionStyle(block)}>
       {backgroundImageStyle && (
         <div
           className={sharedStyles.backgroundImage}

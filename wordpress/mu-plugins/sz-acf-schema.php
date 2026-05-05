@@ -438,7 +438,6 @@ add_action( 'acf/init', function () {
 
 	$form_fields = array_merge([
 		[ 'key' => 'field_sz_form_form_id', 'label' => 'Form ID', 'name' => 'form_id', 'type' => 'text', 'required' => 1, 'instructions' => 'Required stable identifier used by the secure submit route. Keep it unique on the page and do not change it after publishing.' ],
-		[ 'key' => 'field_sz_form_anchor_id', 'label' => 'Anchor ID', 'name' => 'anchor_id', 'type' => 'text', 'instructions' => 'Optional HTML id for hash links such as /page#contact-form. Use lowercase letters, numbers, and hyphens.' ],
 		[ 'key' => 'field_sz_form_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
 		[ 'key' => 'field_sz_form_heading_tag', 'label' => 'Heading Tag', 'name' => 'heading_tag', 'type' => 'select', 'choices' => [ 'h1' => 'H1', 'h2' => 'H2 (default)', 'h3' => 'H3', 'h4' => 'H4', 'h5' => 'H5', 'h6' => 'H6' ], 'default_value' => 'h2', 'instructions' => 'Semantic HTML heading level for the visible heading.' ],
 		[ 'key' => 'field_sz_form_heading_align', 'label' => 'Heading Alignment', 'name' => 'heading_align', 'type' => 'select', 'choices' => [ 'left' => 'Left', 'center' => 'Centre', 'right' => 'Right' ], 'default_value' => 'left' ],
