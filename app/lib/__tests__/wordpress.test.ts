@@ -144,7 +144,15 @@ describe('getGalleryPhotos', () => {
 })
 
 describe('caching', () => {
+  it('does not cache responses by default', async () => {
+    mockFetch.mockReturnValue(ok([mockPage]))
+    await getPageBySlug('home')
+    await getPageBySlug('home')
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+
   it('serves a cached response and does not re-fetch within the TTL', async () => {
+    vi.stubEnv('WORDPRESS_CACHE_TTL_SECONDS', '60')
     mockFetch.mockReturnValue(ok([mockPage]))
     await getPageBySlug('home')
     await getPageBySlug('home')
@@ -152,6 +160,7 @@ describe('caching', () => {
   })
 
   it('re-fetches after the cache is explicitly cleared', async () => {
+    vi.stubEnv('WORDPRESS_CACHE_TTL_SECONDS', '60')
     mockFetch.mockReturnValue(ok([mockPage]))
     await getPageBySlug('home')
     clearCache()
@@ -160,6 +169,7 @@ describe('caching', () => {
   })
 
   it('exposes _cache for test introspection', async () => {
+    vi.stubEnv('WORDPRESS_CACHE_TTL_SECONDS', '60')
     mockFetch.mockReturnValue(ok([mockPage]))
     await getPageBySlug('home')
     expect(_cache.size).toBeGreaterThan(0)

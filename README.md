@@ -207,15 +207,15 @@ npm run dev
 The SSR loaders will now fetch live content from WordPress on every request.  
 Hot-reload still works for code changes; browser refresh picks up WordPress content changes.
 
-### Tip — disable the SSR cache during development
+### Tip — re-enable the SSR cache only if you need it
 
 Add to `.env.development.local`:
 
 ```
-WORDPRESS_CACHE_TTL_SECONDS=0
+WORDPRESS_CACHE_TTL_SECONDS=60
 ```
 
-This forces a fresh WordPress fetch on every request so you see content changes instantly without restarting the server.
+By default the SSR WordPress cache is disabled, so content changes show up on the next request. Add a positive TTL only if you want to reduce repeated WordPress fetches during development.
 
 ---
 
@@ -471,7 +471,7 @@ Unknown layouts are silently skipped — so the admin can add a layout in WordPr
 | Variable                      | Required | Default | Description                                                                                  |
 | ----------------------------- | -------- | ------- | -------------------------------------------------------------------------------------------- |
 | `WORDPRESS_URL`               | No       | —       | WordPress base URL (no trailing slash). If unset, all routes use hardcoded fallback content. |
-| `WORDPRESS_CACHE_TTL_SECONDS` | No       | `60`    | SSR cache TTL in seconds. Set to `0` to disable (useful in development).                     |
+| `WORDPRESS_CACHE_TTL_SECONDS` | No       | `0`     | SSR cache TTL in seconds. Leave at `0` for fresh fetches on every request, or raise it to enable SSR caching. |
 | `PORT`                        | No       | `3000`  | Port the SSR server listens on.                                                              |
 
 **For local development:** copy `.env.example` to `.env.development.local` (gitignored).  

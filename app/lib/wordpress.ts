@@ -227,7 +227,8 @@ const getWpUrl = (): string | null => process.env.WORDPRESS_URL || null
 
 // In-process cache — avoids hammering WordPress on every SSR request.
 // Cleared automatically on each new deployment (process restart).
-const CACHE_TTL_MS = parseInt(process.env.WORDPRESS_CACHE_TTL_SECONDS || '60', 10) * 1_000
+const getCacheTtlMs = (): number =>
+  Math.max(0, parseInt(process.env.WORDPRESS_CACHE_TTL_SECONDS || '0', 10) || 0) * 1_000
 
 // Exported for testing only — do not call in application code.
 export const _cache = new Map<string, { data: unknown; ts: number }>()
@@ -243,10 +244,13 @@ async function wpFetch<T>(path: string): Promise<T | null> {
   if (!baseUrl) return null
 
   const url = `${baseUrl}/wp-json${path}`
+  const cacheTtlMs = getCacheTtlMs()
 
-  const cached = _cache.get(url)
-  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
-    return cached.data as T
+  if (cacheTtlMs > 0) {
+    const cached = _cache.get(url)
+    if (cached && Date.now() - cached.ts < cacheTtlMs) {
+      return cached.data as T
+    }
   }
 
   try {
@@ -259,7 +263,11 @@ async function wpFetch<T>(path: string): Promise<T | null> {
       return null
     }
     const data = (await res.json()) as T
-    _cache.set(url, { data, ts: Date.now() })
+    if (cacheTtlMs > 0) {
+      _cache.set(url, { data, ts: Date.now() })
+    } else {
+      _cache.delete(url)
+    }
     return data
   } catch (err) {
     console.error(`[WP] fetch failed — ${url}:`, err)
