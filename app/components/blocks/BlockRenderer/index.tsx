@@ -39,9 +39,9 @@ const BLOCK_LABELS: Record<string, string> = {
  * Notify the parent WordPress editor window to scroll to / highlight
  * a specific ACF Flexible Content row.
  */
-function notifyParent(action: string, index: number) {
-  if (typeof window !== 'undefined' && window.parent !== window) {
-    window.parent.postMessage({ source: 'sz-preview', action, index }, '*')
+function notifyParent(action: string, index: number, layoutType: string) {
+  if (typeof window !== 'undefined' && typeof window.parent?.postMessage === 'function') {
+    window.parent.postMessage({ source: 'sz-preview', action, index, layoutType }, '*')
   }
 }
 
@@ -58,67 +58,76 @@ const InteractiveBlockWrapper = ({
   index: number
   layoutType: string
   children: React.ReactNode
-}) => (
-  <div
-    style={{ position: 'relative', cursor: 'pointer' }}
-    data-block-index={index}
-    data-block-type={layoutType}
-    onClick={() => notifyParent('focus-block', index)}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        notifyParent('focus-block', index)
-      }
-    }}
-    onMouseEnter={(e) => {
-      const overlay = e.currentTarget.querySelector<HTMLElement>('[data-overlay]')
-      if (overlay) overlay.style.opacity = '1'
-    }}
-    onMouseLeave={(e) => {
-      const overlay = e.currentTarget.querySelector<HTMLElement>('[data-overlay]')
-      if (overlay) overlay.style.opacity = '0'
-    }}
-    role="button"
-    tabIndex={0}
-    aria-label={`Edit ${BLOCK_LABELS[layoutType] || layoutType} block`}
-  >
-    {children}
+}) => {
+  const focusBlock = () => notifyParent('focus-block', index, layoutType)
+
+  return (
     <div
-      data-overlay
-      style={{
-        position: 'absolute',
-        inset: 0,
-        background: 'rgba(0, 120, 215, 0.08)',
-        border: '2px dashed rgba(0, 120, 215, 0.5)',
-        borderRadius: '4px',
-        opacity: 0,
-        transition: 'opacity 0.2s',
-        pointerEvents: 'none',
-        zIndex: 50,
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'flex-end',
-        padding: '8px',
+      style={{ position: 'relative', cursor: 'pointer' }}
+      data-block-index={index}
+      data-block-type={layoutType}
+      onClickCapture={(e) => {
+        // In preview-interactive mode, clicks should always focus the ACF row,
+        // not trigger in-block links/buttons.
+        e.preventDefault()
+        focusBlock()
       }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          focusBlock()
+        }
+      }}
+      onMouseEnter={(e) => {
+        const overlay = e.currentTarget.querySelector<HTMLElement>('[data-overlay]')
+        if (overlay) overlay.style.opacity = '1'
+      }}
+      onMouseLeave={(e) => {
+        const overlay = e.currentTarget.querySelector<HTMLElement>('[data-overlay]')
+        if (overlay) overlay.style.opacity = '0'
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Edit ${BLOCK_LABELS[layoutType] || layoutType} block`}
     >
-      <span
+      {children}
+      <div
+        data-overlay
         style={{
-          background: '#0078d7',
-          color: '#fff',
-          fontSize: '12px',
-          fontWeight: 600,
-          padding: '4px 10px',
-          borderRadius: '3px',
-          letterSpacing: '0.03em',
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(0, 120, 215, 0.08)',
+          border: '2px dashed rgba(0, 120, 215, 0.5)',
+          borderRadius: '4px',
+          opacity: 0,
+          transition: 'opacity 0.2s',
           pointerEvents: 'auto',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'flex-end',
+          padding: '8px',
         }}
       >
-        ✎ {BLOCK_LABELS[layoutType] || layoutType}
-      </span>
+        <span
+          style={{
+            background: '#0078d7',
+            color: '#fff',
+            fontSize: '12px',
+            fontWeight: 600,
+            padding: '4px 10px',
+            borderRadius: '3px',
+            letterSpacing: '0.03em',
+            pointerEvents: 'none',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+          }}
+        >
+          ✎ {BLOCK_LABELS[layoutType] || layoutType}
+        </span>
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
 /**
  * Renders a list of ACF Flexible Content blocks in order.

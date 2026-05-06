@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { ContentBlock } from '~/types/wordpress'
 import mockBlocks from '../__mocks__/blocks.json'
 import BlockRenderer from '../index'
@@ -158,5 +158,55 @@ describe('BlockRenderer', () => {
 
     renderBlocks([featuredOnlyHero], featured)
     expect(screen.getByAltText('Featured image')).toBeInTheDocument()
+  })
+
+  it('posts focus-block message to parent when clicking an interactive wrapper', () => {
+    const postMessageSpy = vi.spyOn(window.parent, 'postMessage').mockImplementation(() => undefined)
+
+    render(
+      <MemoryRouter>
+        <BlockRenderer blocks={[textBlock]} interactive />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /edit text block block/i }))
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: 'sz-preview',
+        action: 'focus-block',
+        index: 0,
+        layoutType: 'text_block',
+      },
+      '*',
+    )
+
+    postMessageSpy.mockRestore()
+  })
+
+  it('posts focus-block message when activating interactive wrapper with keyboard', () => {
+    const postMessageSpy = vi.spyOn(window.parent, 'postMessage').mockImplementation(() => undefined)
+
+    render(
+      <MemoryRouter>
+        <BlockRenderer blocks={[textBlock]} interactive />
+      </MemoryRouter>,
+    )
+
+    fireEvent.keyDown(screen.getByRole('button', { name: /edit text block block/i }), {
+      key: 'Enter',
+    })
+
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      {
+        source: 'sz-preview',
+        action: 'focus-block',
+        index: 0,
+        layoutType: 'text_block',
+      },
+      '*',
+    )
+
+    postMessageSpy.mockRestore()
   })
 })

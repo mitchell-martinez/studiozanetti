@@ -1524,9 +1524,17 @@ function sz_live_preview_js() {
 			if (!data || data.source !== 'sz-preview') return;
 
 			if (data.action === 'focus-block' && typeof data.index === 'number') {
-				/* Find all ACF Flexible Content layout rows */
-				var layouts = document.querySelectorAll('.acf-flexible-content .layout');
+				/* Find only the page "blocks" flexible-content rows (ignore clones). */
+				var blocksField = document.querySelector('.acf-field-flexible-content[data-name="blocks"]');
+				if (!blocksField) return;
+
+				var layouts = blocksField.querySelectorAll('.acf-flexible-content .layout:not(.acf-clone)');
 				var target  = layouts[data.index];
+
+				/* Fallback for index mismatches: locate the first row by layout type. */
+				if (!target && typeof data.layoutType === 'string' && data.layoutType) {
+					target = blocksField.querySelector('.acf-flexible-content .layout[data-layout="' + data.layoutType + '"]:not(.acf-clone)');
+				}
 
 				if (!target) return;
 
