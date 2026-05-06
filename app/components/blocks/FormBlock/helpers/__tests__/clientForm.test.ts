@@ -48,6 +48,30 @@ describe('getPrefilledClientFormValues', () => {
       ),
     ).toEqual({})
   })
+
+  it('matches select and radio options by trimmed value to tolerate accidental whitespace in WordPress values', () => {
+    const fields: WPFormField[] = [
+      {
+        field_id: 'package_choice',
+        label: 'Package choice',
+        type: 'select',
+        options: [
+          { label: 'Short & Sweet', value: ' short_and_sweet ' },
+          { label: 'Full Day', value: 'full_day' },
+        ],
+      },
+    ]
+
+    expect(
+      getPrefilledClientFormValues(
+        fields,
+        '?form_id=lgbt-wedding-form&package_choice=short_and_sweet',
+        'lgbt-wedding-form',
+      ),
+    ).toEqual({
+      package_choice: ' short_and_sweet ',
+    })
+  })
 })
 
 describe('validateClientFormValues', () => {

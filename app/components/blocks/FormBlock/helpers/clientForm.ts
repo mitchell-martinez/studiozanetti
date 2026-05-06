@@ -47,6 +47,12 @@ const normalizeQueryValue = (value: string | null): string | null => {
   return trimmedValue || null
 }
 
+const getNormalizedChoiceOption = (
+  field: Extract<WPFormField, { type: 'select' | 'radio' }>,
+  value: string,
+): { label: string; value: string } | undefined =>
+  field.options.find((option) => option.value?.trim() === value)
+
 const getInitialValue = (field: WPFormField): ClientFormValue => {
   switch (field.type) {
     case 'checkbox':
@@ -118,12 +124,15 @@ export function getPrefilledClientFormValues(
 
     if (
       (field.type === 'select' || field.type === 'radio') &&
-      !field.options.some((option) => option.value === queryValue)
+      !getNormalizedChoiceOption(field, queryValue)
     ) {
       continue
     }
 
-    prefilledValues[field.field_id] = queryValue
+    prefilledValues[field.field_id] =
+      field.type === 'select' || field.type === 'radio'
+        ? (getNormalizedChoiceOption(field, queryValue)?.value ?? queryValue)
+        : queryValue
   }
 
   return prefilledValues
@@ -194,7 +203,10 @@ export function validateClientFormValues(
       }
     }
 
-    if ((field.type === 'select' || field.type === 'radio') && !field.options.some((option) => option.value === stringValue)) {
+    if (
+      (field.type === 'select' || field.type === 'radio') &&
+      !getNormalizedChoiceOption(field, stringValue)
+    ) {
       errors[field.field_id] = `Please choose a valid option for ${field.label}.`
     }
   }
