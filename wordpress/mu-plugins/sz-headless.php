@@ -1494,20 +1494,17 @@ function sz_live_preview_js() {
 			refreshBtn.textContent = '↻ Refresh Preview';
 		}
 
-		var autoRefreshTimer = null;
-		var AUTO_REFRESH_DEBOUNCE_MS = 900;
+		/* ── Pending-changes tracking ────────────────────────── */
+		/* The preview endpoint reads from WordPress autosave/    */
+		/* published data. Changes are only visible in the        */
+		/* preview AFTER WordPress saves them. We therefore mark  */
+		/* changes as pending and refresh only after autosave.    */
+		var pendingChanges = false;
 
-		function scheduleAutoRefresh(reason) {
+		function markPending() {
 			if (refreshBtn.disabled) return;
-
-			if (autoRefreshTimer) {
-				clearTimeout(autoRefreshTimer);
-			}
-
-			autoRefreshTimer = setTimeout(function () {
-				setStatus('Auto-updating preview' + (reason ? ' (' + reason + ')' : '') + '…');
-				ensurePreviewLoaded(iframe.dataset.loaded === 'true');
-			}, AUTO_REFRESH_DEBOUNCE_MS);
+			pendingChanges = true;
+			setStatus('Unsaved changes — preview will update after save, or click Refresh.');
 		}
 
 		/* Show initial loading state */
@@ -1518,51 +1515,86 @@ function sz_live_preview_js() {
 		iframe.addEventListener('load', function () {
 			if (iframe.dataset.loaded !== 'true') return;
 			hideLoading();
-			if (autoRefreshTimer) {
-				clearTimeout(autoRefreshTimer);
-				autoRefreshTimer = null;
-			}
 			setStatus('Updated ' + new Date().toLocaleTimeString() +
-				' — Preview auto-refreshes as you edit.');
+				(pendingChanges ? ' — Unsaved changes pending.' : ' — Preview reflects last saved content.'));
 		});
+
+		/* ── After WordPress autosave: refresh preview ───────── */
+		/* The 'after-autosave' jQuery event fires when WordPress */
+		/* writes an autosave revision to the DB. Only then can   */
+		/* the preview endpoint return the new content.           */
+		if (typeof jQuery !== 'undefined') {
+			jQuery(document).on('after-autosave', function () {
+				pendingChanges = false;
+				ensurePreviewLoaded(true);
+			});
+		}
 
 		/* ── Manual refresh button ───────────────────────────── */
+		/* Triggers a WordPress Heartbeat (which causes an        */
+		/* immediate autosave if there are changes), then the     */
+		/* after-autosave handler above reloads the preview.      */
+		/* Falls back to a direct reload if no heartbeat/jQuery.  */
 		refreshBtn.addEventListener('click', function () {
-			ensurePreviewLoaded(iframe.dataset.loaded === 'true');
+			var heartbeatTriggered = false;
+
+			if (typeof jQuery !== 'undefined' && typeof wp !== 'undefined' && wp.heartbeat) {
+				setStatus('Saving changes and refreshing preview…');
+				refreshBtn.disabled = true;
+
+				var fallbackTimer = setTimeout(function () {
+					/* Heartbeat fired but after-autosave didn't — just reload anyway */
+					refreshBtn.disabled = false;
+					pendingChanges = false;
+					ensurePreviewLoaded(true);
+				}, 6000);
+
+				jQuery(document).one('after-autosave', function () {
+					clearTimeout(fallbackTimer);
+					refreshBtn.disabled = false;
+					pendingChanges = false;
+					ensurePreviewLoaded(true);
+				});
+
+				wp.heartbeat.connectNow();
+				heartbeatTriggered = true;
+			}
+
+			if (!heartbeatTriggered) {
+				/* No heartbeat available — reload with whatever is currently saved */
+				pendingChanges = false;
+				ensurePreviewLoaded(true);
+			}
 		});
 
-		/* ── Auto-refresh on field edits ─────────────────────── */
+		/* ── Mark pending on field edits ─────────────────────── */
+		/* Do NOT reload the iframe here — content won't have     */
+		/* changed in WordPress yet. Just show a pending status.  */
 		if (postForm) {
 			postForm.addEventListener('input', function (event) {
 				var target = event.target;
 				if (!target || !target.name) return;
-				scheduleAutoRefresh('field change');
+				markPending();
 			});
 
 			postForm.addEventListener('change', function (event) {
 				var target = event.target;
 				if (!target || !target.name) return;
-				scheduleAutoRefresh('field change');
+				markPending();
 			});
 		}
 
 		if (typeof window.acf !== 'undefined' && typeof window.acf.addAction === 'function') {
-			window.acf.addAction('append', function () {
-				scheduleAutoRefresh('layout update');
-			});
-			window.acf.addAction('remove', function () {
-				scheduleAutoRefresh('layout update');
-			});
-			window.acf.addAction('sortstop', function () {
-				scheduleAutoRefresh('layout reorder');
-			});
+			window.acf.addAction('append', function () { markPending(); });
+			window.acf.addAction('remove', function () { markPending(); });
+			window.acf.addAction('sortstop', function () { markPending(); });
 		}
 
 		/* ── Keyboard shortcut: Ctrl+Shift+P ─────────────────── */
 		document.addEventListener('keydown', function (e) {
 			if (e.ctrlKey && e.shiftKey && e.key === 'P') {
 				e.preventDefault();
-				ensurePreviewLoaded(iframe.dataset.loaded === 'true');
+				refreshBtn.click();
 			}
 		});
 
@@ -1701,17 +1733,13 @@ function sz_live_preview_js() {
 					loadingOverlay = loading;
 					initialPlaceholder = initialPlaceholderEl;
 					refreshBtn.disabled = false;
-					refreshBtn.textContent = 'Load Preview';
-					setStatus('Preview is paused by default. Click "Load Preview" after making changes.');
+					refreshBtn.textContent = '↻ Refresh Preview';
+					setStatus('Preview loaded — edit fields and click Refresh to update.');
 					newIframe.addEventListener('load', function () {
 						if (newIframe.dataset.loaded !== 'true') return;
 						hideLoading();
-						if (autoRefreshTimer) {
-							clearTimeout(autoRefreshTimer);
-							autoRefreshTimer = null;
-						}
 						setStatus('Updated ' + new Date().toLocaleTimeString() +
-							' — Preview auto-refreshes as you edit.');
+							' — Preview reflects last saved content.');
 					});
 				}
 			});
