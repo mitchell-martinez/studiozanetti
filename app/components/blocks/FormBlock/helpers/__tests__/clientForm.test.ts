@@ -1,6 +1,54 @@
 import { describe, expect, it } from 'vitest'
 import type { WPFormField } from '~/types/wordpress'
-import { validateClientFormValues } from '../clientForm'
+import { getPrefilledClientFormValues, validateClientFormValues } from '../clientForm'
+
+describe('getPrefilledClientFormValues', () => {
+  it('reads matching query params when form_id matches the current form', () => {
+    const fields: WPFormField[] = [
+      {
+        field_id: 'package_choice',
+        label: 'Package choice',
+        type: 'select',
+        options: [
+          { label: 'Short & Sweet', value: 'short_and_sweet' },
+          { label: 'Full Day', value: 'full_day' },
+        ],
+      },
+    ]
+
+    expect(
+      getPrefilledClientFormValues(
+        fields,
+        '?form_id=lgbt-wedding-enquiry&package_choice=short_and_sweet',
+        'lgbt-wedding-enquiry',
+      ),
+    ).toEqual({
+      package_choice: 'short_and_sweet',
+    })
+  })
+
+  it('ignores query params meant for a different form', () => {
+    const fields: WPFormField[] = [
+      {
+        field_id: 'package_choice',
+        label: 'Package choice',
+        type: 'select',
+        options: [
+          { label: 'Short & Sweet', value: 'short_and_sweet' },
+          { label: 'Full Day', value: 'full_day' },
+        ],
+      },
+    ]
+
+    expect(
+      getPrefilledClientFormValues(
+        fields,
+        '?form_id=other-form&package_choice=short_and_sweet',
+        'lgbt-wedding-enquiry',
+      ),
+    ).toEqual({})
+  })
+})
 
 describe('validateClientFormValues', () => {
   it('treats the reserved Name field as required even when the required flag is false', () => {

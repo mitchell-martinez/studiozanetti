@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
@@ -13,6 +13,7 @@ import sharedStyles from '../shared.module.scss'
 import styles from './FormBlock.module.scss'
 import {
   createInitialClientFormValues,
+  getPrefilledClientFormValues,
   type ClientFormValue,
   validateClientFormValues,
 } from './helpers/clientForm'
@@ -72,9 +73,26 @@ const getCheckboxOptions = (field: {
   ]
 }
 
+const isSameClientFormValue = (
+  currentValue: ClientFormValue | undefined,
+  nextValue: ClientFormValue,
+): boolean => {
+  if (Array.isArray(currentValue) && Array.isArray(nextValue)) {
+    return (
+      currentValue.length === nextValue.length &&
+      currentValue.every((value, index) => value === nextValue[index])
+    )
+  }
+
+  return currentValue === nextValue
+}
+
 const FormBlock = ({ block }: FormBlockProps) => {
   const location = useLocation()
-  const [values, setValues] = useState(() => createInitialClientFormValues(block.fields))
+  const [values, setValues] = useState(() => ({
+    ...createInitialClientFormValues(block.fields),
+    ...getPrefilledClientFormValues(block.fields, location.search, block.form_id),
+  }))
   const [honeypot, setHoneypot] = useState('')
   const [requestSubmitterCopy, setRequestSubmitterCopy] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -97,6 +115,29 @@ const FormBlock = ({ block }: FormBlockProps) => {
     isFormAvailable &&
     block.offer_submitter_email_copy === true &&
     getSubmitterCopyTargetFields(block).length === 1
+
+  useEffect(() => {
+    const prefilledValues = getPrefilledClientFormValues(block.fields, location.search, block.form_id)
+    if (Object.keys(prefilledValues).length === 0) {
+      return
+    }
+
+    setValues((currentValues) => {
+      let hasChanges = false
+      const nextValues = { ...currentValues }
+
+      for (const [fieldId, nextValue] of Object.entries(prefilledValues)) {
+        if (isSameClientFormValue(currentValues[fieldId], nextValue)) {
+          continue
+        }
+
+        nextValues[fieldId] = nextValue
+        hasChanges = true
+      }
+
+      return hasChanges ? nextValues : currentValues
+    })
+  }, [block.fields, block.form_id, location.search])
 
   const showSubmitError = (nextMessage: string) => {
     setSubmitErrorMessage(nextMessage)

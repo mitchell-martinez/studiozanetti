@@ -15,14 +15,23 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-const renderBlock = (overrides: Partial<FormBlockType> = {}) =>
+const renderBlock = (
+  overrides: Partial<FormBlockType> = {},
+  initialEntries: string[] = ['/get-in-touch'],
+) =>
   render(
-    <MemoryRouter initialEntries={['/get-in-touch']}>
+    <MemoryRouter initialEntries={initialEntries}>
       <FormBlock block={{ ...baseBlock, ...overrides }} />
     </MemoryRouter>,
   )
 
 describe('FormBlock', () => {
+  it('prefills matching fields from the URL query string for the targeted form', () => {
+    renderBlock({}, ['/get-in-touch?form_id=contact-enquiry&service_type=family#contact-enquiry'])
+
+    expect(screen.getByRole('combobox', { name: /service type/i })).toHaveValue('family')
+  })
+
   it('uses form_id as the section anchor id', () => {
     const { container } = renderBlock()
 

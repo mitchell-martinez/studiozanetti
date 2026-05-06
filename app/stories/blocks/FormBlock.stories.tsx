@@ -91,6 +91,16 @@ export const DarkTheme: Story = {
   },
 }
 
+export const PrefilledFromUrl: Story = {
+  render: (args) => (
+    <MemoryRouter
+      initialEntries={['/get-in-touch?form_id=contact-enquiry&service_type=family#contact-enquiry']}
+    >
+      <FormBlock block={{ acf_fc_layout: 'form_block', ...args }} />
+    </MemoryRouter>
+  ),
+}
+
 export const WithoutSubmitterCopy: Story = {
   args: {
     offer_submitter_email_copy: false,

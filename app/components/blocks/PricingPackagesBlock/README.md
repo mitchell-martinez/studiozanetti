@@ -42,3 +42,4 @@ No configuration needed — just add your packages and the layout adjusts.
 - The **Tagline** field appears centered below the columns with elegant spacing — ideal for "Perfect for…" lines.
 - The CTA button in horizontal layout uses a filled accent background for strong contrast and readability.
 - Keep package names and pricing labels concise for easy visual scanning in horizontal row mode.
+- To jump to a form and preselect a package choice, set the CTA URL to a query-string link such as `/prices?form_id=lgbt-wedding-enquiry&package_choice=short_and_sweet#lgbt-wedding-enquiry`. `form_id` must match the target form block, and `package_choice` must match the select field's `Field ID` plus one of its option values.

@@ -40,6 +40,13 @@ const normalizeSelectionArray = (value: unknown): string[] => {
   )
 }
 
+const normalizeQueryValue = (value: string | null): string | null => {
+  if (typeof value !== 'string') return null
+
+  const trimmedValue = value.trim()
+  return trimmedValue || null
+}
+
 const getInitialValue = (field: WPFormField): ClientFormValue => {
   switch (field.type) {
     case 'checkbox':
@@ -74,6 +81,46 @@ const getInitialValue = (field: WPFormField): ClientFormValue => {
 
 export function createInitialClientFormValues(fields: WPFormField[]): ClientFormValues {
   return Object.fromEntries(fields.map((field) => [field.field_id, getInitialValue(field)]))
+}
+
+export function getPrefilledClientFormValues(
+  fields: WPFormField[],
+  search: string,
+  formId?: string,
+): Partial<ClientFormValues> {
+  const searchParams = new URLSearchParams(search)
+  const requestedFormId = normalizeQueryValue(searchParams.get('form_id'))
+
+  if (requestedFormId && requestedFormId !== formId?.trim()) {
+    return {}
+  }
+
+  return Object.fromEntries(
+    fields.flatMap((field) => {
+      if (field.type === 'checkbox') {
+        const optionValues = new Set(getCheckboxOptionValues(field))
+        const selectedValues = normalizeSelectionArray(searchParams.getAll(field.field_id)).filter(
+          (value) => optionValues.has(value),
+        )
+
+        return selectedValues.length > 0 ? [[field.field_id, selectedValues]] : []
+      }
+
+      const queryValue = normalizeQueryValue(searchParams.get(field.field_id))
+      if (!queryValue) {
+        return []
+      }
+
+      if (
+        (field.type === 'select' || field.type === 'radio') &&
+        !field.options.some((option) => option.value === queryValue)
+      ) {
+        return []
+      }
+
+      return [[field.field_id, queryValue]]
+    }),
+  )
 }
 
 export function validateClientFormValues(
