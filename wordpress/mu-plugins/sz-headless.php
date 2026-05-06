@@ -1546,7 +1546,7 @@ function sz_live_preview_js() {
 				});
 
 				/* Scroll to & highlight the target layout */
-				target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 				target.style.transition = 'outline-color 0.3s';
 				target.style.outline = '3px solid #0073aa';
 				target.style.outlineOffset = '2px';
