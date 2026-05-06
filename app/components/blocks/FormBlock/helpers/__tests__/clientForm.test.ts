@@ -72,6 +72,30 @@ describe('getPrefilledClientFormValues', () => {
       package_choice: ' short_and_sweet ',
     })
   })
+
+  it('matches form_id and field ids when URL uses different hyphen/underscore casing conventions', () => {
+    const fields: WPFormField[] = [
+      {
+        field_id: 'package_choice',
+        label: 'Package choice',
+        type: 'select',
+        options: [
+          { label: 'The Prince', value: 'the_prince' },
+          { label: 'Short & Sweet', value: 'short_and_sweet' },
+        ],
+      },
+    ]
+
+    expect(
+      getPrefilledClientFormValues(
+        fields,
+        '?FORM-ID=LGBT_WEDDING_FORM&package-choice=THE-PRINCE',
+        'lgbt-wedding-form',
+      ),
+    ).toEqual({
+      package_choice: 'the_prince',
+    })
+  })
 })
 
 describe('validateClientFormValues', () => {

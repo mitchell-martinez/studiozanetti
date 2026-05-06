@@ -47,11 +47,59 @@ const normalizeQueryValue = (value: string | null): string | null => {
   return trimmedValue || null
 }
 
+const normalizeLookupToken = (value: string): string =>
+  value.trim().toLowerCase().replace(/[\s_-]+/g, '_')
+
+const getParamValueByFieldId = (searchParams: URLSearchParams, fieldId: string): string | null => {
+  const directValue = normalizeQueryValue(searchParams.get(fieldId))
+  if (directValue) {
+    return directValue
+  }
+
+  const normalizedFieldId = normalizeLookupToken(fieldId)
+
+  for (const [paramName, paramValue] of searchParams.entries()) {
+    if (normalizeLookupToken(paramName) !== normalizedFieldId) {
+      continue
+    }
+
+    const normalizedValue = normalizeQueryValue(paramValue)
+    if (normalizedValue) {
+      return normalizedValue
+    }
+  }
+
+  return null
+}
+
+const getParamValuesByFieldId = (searchParams: URLSearchParams, fieldId: string): string[] => {
+  const directValues = normalizeSelectionArray(searchParams.getAll(fieldId))
+  if (directValues.length > 0) {
+    return directValues
+  }
+
+  const normalizedFieldId = normalizeLookupToken(fieldId)
+  const matchingValues: string[] = []
+
+  for (const [paramName, paramValue] of searchParams.entries()) {
+    if (normalizeLookupToken(paramName) !== normalizedFieldId) {
+      continue
+    }
+
+    const normalizedValue = normalizeQueryValue(paramValue)
+    if (normalizedValue) {
+      matchingValues.push(normalizedValue)
+    }
+  }
+
+  return normalizeSelectionArray(matchingValues)
+}
+
 const getNormalizedChoiceOption = (
   field: Extract<WPFormField, { type: 'select' | 'radio' }>,
   value: string,
 ): { label: string; value: string } | undefined =>
-  field.options.find((option) => option.value?.trim() === value)
+  field.options.find((option) => normalizeLookupToken(option.value ?? '') === normalizeLookupToken(value))
 
 const getInitialValue = (field: WPFormField): ClientFormValue => {
   switch (field.type) {
@@ -95,9 +143,9 @@ export function getPrefilledClientFormValues(
   formId?: string,
 ): Partial<ClientFormValues> {
   const searchParams = new URLSearchParams(search)
-  const requestedFormId = normalizeQueryValue(searchParams.get('form_id'))
+  const requestedFormId = getParamValueByFieldId(searchParams, 'form_id')
 
-  if (requestedFormId && requestedFormId !== formId?.trim()) {
+  if (requestedFormId && normalizeLookupToken(requestedFormId) !== normalizeLookupToken(formId?.trim() || '')) {
     return {}
   }
 
@@ -106,7 +154,7 @@ export function getPrefilledClientFormValues(
   for (const field of fields) {
     if (field.type === 'checkbox') {
       const optionValues = new Set(getCheckboxOptionValues(field))
-      const selectedValues = normalizeSelectionArray(searchParams.getAll(field.field_id)).filter(
+      const selectedValues = getParamValuesByFieldId(searchParams, field.field_id).filter(
         (value) => optionValues.has(value),
       )
 
@@ -117,7 +165,7 @@ export function getPrefilledClientFormValues(
       continue
     }
 
-    const queryValue = normalizeQueryValue(searchParams.get(field.field_id))
+    const queryValue = getParamValueByFieldId(searchParams, field.field_id)
     if (!queryValue) {
       continue
     }
