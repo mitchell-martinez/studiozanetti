@@ -15,6 +15,7 @@ import {
   createInitialClientFormValues,
   getPrefilledClientFormValues,
   type ClientFormValue,
+  type ClientFormValues,
   validateClientFormValues,
 } from './helpers/clientForm'
 import type { FormBlockProps } from './types'
@@ -87,12 +88,26 @@ const isSameClientFormValue = (
   return currentValue === nextValue
 }
 
+const createInitialValues = (fields: FormBlockProps['block']['fields'], search: string, formId: string): ClientFormValues => {
+  const initialValues = createInitialClientFormValues(fields)
+  const prefilledValues = getPrefilledClientFormValues(fields, search, formId)
+
+  for (const [fieldId, prefilledValue] of Object.entries(prefilledValues)) {
+    if (prefilledValue === undefined) {
+      continue
+    }
+
+    initialValues[fieldId] = prefilledValue
+  }
+
+  return initialValues
+}
+
 const FormBlock = ({ block }: FormBlockProps) => {
   const location = useLocation()
-  const [values, setValues] = useState(() => ({
-    ...createInitialClientFormValues(block.fields),
-    ...getPrefilledClientFormValues(block.fields, location.search, block.form_id),
-  }))
+  const [values, setValues] = useState<ClientFormValues>(() =>
+    createInitialValues(block.fields, location.search, block.form_id),
+  )
   const [honeypot, setHoneypot] = useState('')
   const [requestSubmitterCopy, setRequestSubmitterCopy] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -127,6 +142,10 @@ const FormBlock = ({ block }: FormBlockProps) => {
       const nextValues = { ...currentValues }
 
       for (const [fieldId, nextValue] of Object.entries(prefilledValues)) {
+        if (nextValue === undefined) {
+          continue
+        }
+
         if (isSameClientFormValue(currentValues[fieldId], nextValue)) {
           continue
         }

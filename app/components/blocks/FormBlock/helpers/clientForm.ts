@@ -95,32 +95,38 @@ export function getPrefilledClientFormValues(
     return {}
   }
 
-  return Object.fromEntries(
-    fields.flatMap((field) => {
-      if (field.type === 'checkbox') {
-        const optionValues = new Set(getCheckboxOptionValues(field))
-        const selectedValues = normalizeSelectionArray(searchParams.getAll(field.field_id)).filter(
-          (value) => optionValues.has(value),
-        )
+  const prefilledValues: Partial<ClientFormValues> = {}
 
-        return selectedValues.length > 0 ? [[field.field_id, selectedValues]] : []
+  for (const field of fields) {
+    if (field.type === 'checkbox') {
+      const optionValues = new Set(getCheckboxOptionValues(field))
+      const selectedValues = normalizeSelectionArray(searchParams.getAll(field.field_id)).filter(
+        (value) => optionValues.has(value),
+      )
+
+      if (selectedValues.length > 0) {
+        prefilledValues[field.field_id] = selectedValues
       }
 
-      const queryValue = normalizeQueryValue(searchParams.get(field.field_id))
-      if (!queryValue) {
-        return []
-      }
+      continue
+    }
 
-      if (
-        (field.type === 'select' || field.type === 'radio') &&
-        !field.options.some((option) => option.value === queryValue)
-      ) {
-        return []
-      }
+    const queryValue = normalizeQueryValue(searchParams.get(field.field_id))
+    if (!queryValue) {
+      continue
+    }
 
-      return [[field.field_id, queryValue]]
-    }),
-  )
+    if (
+      (field.type === 'select' || field.type === 'radio') &&
+      !field.options.some((option) => option.value === queryValue)
+    ) {
+      continue
+    }
+
+    prefilledValues[field.field_id] = queryValue
+  }
+
+  return prefilledValues
 }
 
 export function validateClientFormValues(
