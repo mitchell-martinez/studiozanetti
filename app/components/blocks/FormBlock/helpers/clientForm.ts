@@ -153,10 +153,11 @@ export function getPrefilledClientFormValues(
 
   for (const field of fields) {
     if (field.type === 'checkbox') {
-      const optionValues = new Set(getCheckboxOptionValues(field))
-      const selectedValues = getParamValuesByFieldId(searchParams, field.field_id).filter(
-        (value) => optionValues.has(value),
-      )
+      const options = getCheckboxOptionValues(field)
+      const normalizedOptionMap = new Map(options.map((v) => [normalizeLookupToken(v), v]))
+      const selectedValues = getParamValuesByFieldId(searchParams, field.field_id)
+        .map((value) => normalizedOptionMap.get(normalizeLookupToken(value)))
+        .filter((v): v is string => v !== undefined)
 
       if (selectedValues.length > 0) {
         prefilledValues[field.field_id] = selectedValues

@@ -1344,12 +1344,12 @@ function sz_live_preview_html( $post ) {
 	<div id="sz-preview-container">
 		<div id="sz-preview-toolbar" style="display:flex;align-items:center;gap:12px;padding:10px 0;flex-wrap:wrap;">
 			<button type="button" id="sz-refresh-preview" class="button button-primary" <?php echo $is_new_post ? 'disabled' : ''; ?>>
-				Load Preview
+				↻ Refresh Preview
 			</button>
 			<span id="sz-preview-status" style="color:#666;font-size:13px;">
 				<?php echo $is_new_post
 					? 'Save this page as a draft first to enable preview.'
-					: 'Preview is paused by default. Click "Load Preview" after making changes. <kbd style="background:#f0f0f0;padding:2px 6px;border:1px solid #ccc;border-radius:3px;font-size:11px;">Ctrl+Shift+P</kbd>'; ?>
+					: 'Loading preview…'; ?>
 			</span>
 		</div>
 
@@ -1378,8 +1378,9 @@ function sz_live_preview_html( $post ) {
 				<iframe
 					id="sz-preview-frame"
 					data-src="<?php echo esc_url( $preview_url ); ?>"
-					src="about:blank"
+					src="<?php echo esc_url( $preview_url ); ?>&_cb=<?php echo time(); ?>"
 					style="width:100%;height:800px;border:none;display:block;transition:width 0.3s;margin:0 auto;"
+					data-loaded="true"
 					title="Live front-end preview"
 				></iframe>
 			</div>
@@ -1387,7 +1388,7 @@ function sz_live_preview_html( $post ) {
 
 		<div class="sz-editor-hint">
 			👆 Click any block above to jump to its fields below &nbsp;·&nbsp;
-			<kbd style="background:#f0f0f0;padding:2px 6px;border:1px solid #ccc;border-radius:3px;font-size:11px;">Ctrl+Shift+P</kbd> to load or refresh preview
+			<kbd style="background:#f0f0f0;padding:2px 6px;border:1px solid #ccc;border-radius:3px;font-size:11px;">Ctrl+Shift+P</kbd> to refresh preview
 		</div>
 	</div>
 	<?php
@@ -1432,7 +1433,7 @@ function sz_live_preview_js() {
 		var refreshBtn      = document.getElementById('sz-refresh-preview');
 		var statusEl        = document.getElementById('sz-preview-status');
 		var loadingOverlay  = document.getElementById('sz-preview-loading');
-		var initialPlaceholder = document.getElementById('sz-preview-initial-placeholder');
+		var initialPlaceholder = null; // removed: preview loads immediately
 		var frameWrapper    = document.getElementById('sz-preview-frame-wrapper');
 		var fullscreenBtn   = document.getElementById('sz-fullscreen-btn');
 		var postForm        = document.getElementById('post');
@@ -1508,6 +1509,10 @@ function sz_live_preview_js() {
 				ensurePreviewLoaded(iframe.dataset.loaded === 'true');
 			}, AUTO_REFRESH_DEBOUNCE_MS);
 		}
+
+		/* Show initial loading state */
+		showLoading();
+		setStatus('Loading preview…');
 
 		/* Hide the loading overlay once iframe loads */
 		iframe.addEventListener('load', function () {
