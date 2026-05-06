@@ -73,5 +73,9 @@ export const autoParagraph = (input: string): string => {
     }
   }
 
-  return out.join('\n')
+  // Remove trailing "empty" paragraphs WordPress editors can emit
+  // (e.g. <p>&nbsp;</p> or <p><br></p>) so blocks don't pick up phantom bottom space.
+  return out
+    .join('\n')
+    .replace(/(?:\s*<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>\s*)+$/gi, '')
 }
