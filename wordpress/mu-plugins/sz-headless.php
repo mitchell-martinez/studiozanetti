@@ -1493,18 +1493,65 @@ function sz_live_preview_js() {
 			refreshBtn.textContent = '↻ Refresh Preview';
 		}
 
+		var autoRefreshTimer = null;
+		var AUTO_REFRESH_DEBOUNCE_MS = 900;
+
+		function scheduleAutoRefresh(reason) {
+			if (refreshBtn.disabled) return;
+
+			if (autoRefreshTimer) {
+				clearTimeout(autoRefreshTimer);
+			}
+
+			autoRefreshTimer = setTimeout(function () {
+				setStatus('Auto-updating preview' + (reason ? ' (' + reason + ')' : '') + '…');
+				ensurePreviewLoaded(iframe.dataset.loaded === 'true');
+			}, AUTO_REFRESH_DEBOUNCE_MS);
+		}
+
 		/* Hide the loading overlay once iframe loads */
 		iframe.addEventListener('load', function () {
 			if (iframe.dataset.loaded !== 'true') return;
 			hideLoading();
+			if (autoRefreshTimer) {
+				clearTimeout(autoRefreshTimer);
+				autoRefreshTimer = null;
+			}
 			setStatus('Updated ' + new Date().toLocaleTimeString() +
-				' — Click "Refresh Preview" after making changes.');
+				' — Preview auto-refreshes as you edit.');
 		});
 
 		/* ── Manual refresh button ───────────────────────────── */
 		refreshBtn.addEventListener('click', function () {
 			ensurePreviewLoaded(iframe.dataset.loaded === 'true');
 		});
+
+		/* ── Auto-refresh on field edits ─────────────────────── */
+		if (postForm) {
+			postForm.addEventListener('input', function (event) {
+				var target = event.target;
+				if (!target || !target.name) return;
+				scheduleAutoRefresh('field change');
+			});
+
+			postForm.addEventListener('change', function (event) {
+				var target = event.target;
+				if (!target || !target.name) return;
+				scheduleAutoRefresh('field change');
+			});
+		}
+
+		if (typeof window.acf !== 'undefined' && typeof window.acf.addAction === 'function') {
+			window.acf.addAction('append', function () {
+				scheduleAutoRefresh('layout update');
+			});
+			window.acf.addAction('remove', function () {
+				scheduleAutoRefresh('layout update');
+			});
+			window.acf.addAction('sortstop', function () {
+				scheduleAutoRefresh('layout reorder');
+			});
+		}
 
 		/* ── Keyboard shortcut: Ctrl+Shift+P ─────────────────── */
 		document.addEventListener('keydown', function (e) {
@@ -1654,8 +1701,12 @@ function sz_live_preview_js() {
 					newIframe.addEventListener('load', function () {
 						if (newIframe.dataset.loaded !== 'true') return;
 						hideLoading();
+						if (autoRefreshTimer) {
+							clearTimeout(autoRefreshTimer);
+							autoRefreshTimer = null;
+						}
 						setStatus('Updated ' + new Date().toLocaleTimeString() +
-							' — Click "Refresh Preview" after making changes.');
+							' — Preview auto-refreshes as you edit.');
 					});
 				}
 			});

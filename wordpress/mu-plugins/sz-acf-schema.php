@@ -191,6 +191,25 @@ add_action( 'acf/init', function () {
 					],
 				],
 			],
+			[
+				'key'     => "field_{$prefix}_background_image_shadow_strength",
+				'label'   => 'Background Image Shadow Strength',
+				'name'    => 'background_image_shadow_strength',
+				'type'    => 'number',
+				'min'     => 0,
+				'max'     => 1,
+				'step'    => 0.05,
+				'default_value' => 0,
+				'instructions' => 'Darkens the background image itself. 0 = no shadow, 0.5 = reasonably strong shadow, 1 = black.',
+				'conditional_logic' => [
+					[
+						[
+							'field' => "field_{$prefix}_background_image",
+							'operator' => '!=empty',
+						],
+					],
+				],
+			],
 		];
 	};
 

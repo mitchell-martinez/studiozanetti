@@ -29,6 +29,7 @@ export interface BlockStyleOptions {
   max_width_px?: number
   background_image?: WPImage
   background_image_opacity?: number
+  background_image_shadow_strength?: number
 }
 
 // ─── ACF Flexible Content block layouts ──────────────────────────────────────

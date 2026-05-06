@@ -1,6 +1,7 @@
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
-import { getSectionStyle } from '../helpers/styleOptions'
+import { getBackgroundImageStyle, getSectionStyle } from '../helpers/styleOptions'
+import sharedStyles from '../shared.module.scss'
 import styles from './TextBlock.module.scss'
 import type { TextBlockProps } from './types'
 
@@ -27,6 +28,7 @@ const TextBlock = ({ block, dark }: TextBlockProps) => {
   // TextBlock uses max_width for its inner text container, not the outer section.
   // Strip both so getSectionStyle doesn't constrain the full-width section background.
   const { max_width: _textWidth, max_width_px: _textWidthPx, ...sectionOptions } = block
+  const backgroundImageStyle = getBackgroundImageStyle(sectionOptions)
 
   return (
     <section
@@ -37,6 +39,14 @@ const TextBlock = ({ block, dark }: TextBlockProps) => {
           : getSectionStyle(sectionOptions)
       }
     >
+      {backgroundImageStyle && (
+        <div
+          className={sharedStyles.backgroundImage}
+          style={backgroundImageStyle}
+          aria-hidden="true"
+        />
+      )}
+
       <div
         className={[
           styles.textContent,

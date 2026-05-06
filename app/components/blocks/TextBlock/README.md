@@ -18,6 +18,9 @@ Supports independent **text alignment** (left / centre / right / justified) and 
    - **Max Width** (optional, default "Normal"): Constrains the block width — Narrow (560 px), Normal (680 px), or Wide (920 px)
    - **CTA Text** (optional): Link label (e.g. "Read more")
    - **CTA URL** (optional): Where the link points to
+  - **Background Image** (optional): Section background image
+  - **Background Image Opacity** (optional): Image visibility where 0 is fully dimmed and 1 is fully visible
+  - **Background Image Shadow Strength** (optional): Extra darkening layer where 0 is no shadow, 0.5 is reasonably strong, and 1 is black
    - **Section Theme** / **Top Spacing** / **Bottom Spacing**: Shared style options (see global docs)
 4. Save/Publish
 

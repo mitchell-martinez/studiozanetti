@@ -59,8 +59,9 @@ export function getSectionStyle(
 export function getBackgroundImageStyle(options?: BlockStyleOptions): CSSProperties | undefined {
   if (!options?.background_image?.url) return undefined
   const opacity = options.background_image_opacity ?? 0.15
+  const shadowStrength = options.background_image_shadow_strength ?? 0
   return {
-    backgroundImage: `linear-gradient(rgb(0 0 0 / ${1 - opacity}), rgb(0 0 0 / ${1 - opacity})), url(${options.background_image.url})`,
+    backgroundImage: `linear-gradient(rgb(0 0 0 / ${shadowStrength}), rgb(0 0 0 / ${shadowStrength})), linear-gradient(rgb(0 0 0 / ${1 - opacity}), rgb(0 0 0 / ${1 - opacity})), url(${options.background_image.url})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',

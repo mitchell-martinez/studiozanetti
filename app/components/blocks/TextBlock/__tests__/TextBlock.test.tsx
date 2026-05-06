@@ -134,4 +134,19 @@ describe('TextBlock', () => {
     expect(section.style.getPropertyValue('--color-accent')).toBe('#333333')
     expect(section.style.getPropertyValue('--color-accent-strong')).toBe('#1a1a1a')
   })
+
+  it('renders section background image layer when configured', () => {
+    const { container } = renderBlock({
+      background_image: {
+        url: 'https://example.com/bg.jpg',
+        alt: 'Background',
+      },
+      background_image_opacity: 0.4,
+      background_image_shadow_strength: 0.5,
+    })
+
+    const backgroundLayer = container.querySelector('section > div[aria-hidden="true"]') as HTMLElement
+    expect(backgroundLayer).toBeInTheDocument()
+    expect(backgroundLayer.style.backgroundImage).toContain('bg.jpg')
+  })
 })
