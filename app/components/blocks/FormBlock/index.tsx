@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useLocation } from 'react-router'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
@@ -105,9 +105,11 @@ const createInitialValues = (fields: FormBlockProps['block']['fields'], search: 
 
 const FormBlock = ({ block }: FormBlockProps) => {
   const location = useLocation()
+  const prefillKey = `${block.form_id}|${location.search}`
   const [values, setValues] = useState<ClientFormValues>(() =>
     createInitialValues(block.fields, location.search, block.form_id),
   )
+  const [previousPrefillKey, setPreviousPrefillKey] = useState(prefillKey)
   const [honeypot, setHoneypot] = useState('')
   const [requestSubmitterCopy, setRequestSubmitterCopy] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -131,13 +133,15 @@ const FormBlock = ({ block }: FormBlockProps) => {
     block.offer_submitter_email_copy === true &&
     getSubmitterCopyTargetFields(block).length === 1
 
-  useEffect(() => {
-    const prefilledValues = getPrefilledClientFormValues(block.fields, location.search, block.form_id)
-    if (Object.keys(prefilledValues).length === 0) {
-      return
-    }
+  if (prefillKey !== previousPrefillKey) {
+    setPreviousPrefillKey(prefillKey)
 
+    const prefilledValues = getPrefilledClientFormValues(block.fields, location.search, block.form_id)
     setValues((currentValues) => {
+      if (Object.keys(prefilledValues).length === 0) {
+        return currentValues
+      }
+
       let hasChanges = false
       const nextValues = { ...currentValues }
 
@@ -156,7 +160,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
 
       return hasChanges ? nextValues : currentValues
     })
-  }, [block.fields, block.form_id, location.search])
+  }
 
   const showSubmitError = (nextMessage: string) => {
     setSubmitErrorMessage(nextMessage)
