@@ -44,7 +44,10 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
         ? styles.heroMd
         : styles.heroLg
 
-  const currentImage = slides[activeSlide]
+  // Keep rendering resilient when navigating between pages with different
+  // hero slide counts.
+  const safeActiveSlide = slideCount > 0 ? Math.min(activeSlide, slideCount - 1) : 0
+  const currentImage = slides[safeActiveSlide]
 
   return (
     <section className={`${styles.hero} ${heightClass}`} aria-label="Hero">
@@ -52,10 +55,10 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
           This prevents flicker caused by the browser loading a new src. */}
       {slides.map((slide, index) => (
         <img
-          key={slide.url}
+          key={`${slide.url}-${index}`}
           src={slide.url}
-          alt={index === activeSlide ? slide.alt || block.title : ''}
-          className={`${styles.heroImage} ${index === activeSlide ? styles.heroImageActive : ''}`}
+          alt={index === safeActiveSlide ? slide.alt || block.title : ''}
+          className={`${styles.heroImage} ${index === safeActiveSlide ? styles.heroImageActive : ''}`}
           fetchPriority={index === 0 ? 'high' : 'low'}
           decoding={index === 0 ? 'sync' : 'async'}
           // All slides use eager loading — lazy+opacity:0 causes Safari to
@@ -96,7 +99,7 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
               <button
                 key={`${slide.url}-${index}`}
                 type="button"
-                className={`${styles.dot} ${index === activeSlide ? styles.dotActive : ''}`}
+                className={`${styles.dot} ${index === safeActiveSlide ? styles.dotActive : ''}`}
                 onClick={() => setActiveSlide(index)}
                 aria-label={`Go to slide ${index + 1}`}
               />
