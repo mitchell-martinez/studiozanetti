@@ -6,17 +6,28 @@ This directory contains the WordPress must-use plugin (`mu-plugin`) that configu
 
 ## Quick Setup
 
-### 1. Install the mu-plugin
+### 1. Install the mu-plugins
 
-Copy `mu-plugins/sz-headless.php` into your WordPress installation:
+Copy the required files into your WordPress installation:
 
 ```
 wp-content/
   mu-plugins/
-    sz-headless.php   ← copy this file here
+    sz-headless.php        ← headless config + APIs
+    sz-media-folders.php   ← media folder organization
 ```
 
 > **mu-plugins** are "must-use" plugins that are always active and cannot be deactivated from the admin. This is ideal for headless infrastructure code.
+
+### 1b. Media folders (new)
+
+After `sz-media-folders.php` is installed, editors can organize assets under:
+
+1. **Media -> Folders** to create folder structure (supports parent/child folders)
+2. **Media -> Library** to filter by folder in list view
+3. Attachment details panel to assign a file to a folder
+
+This keeps a large media library manageable for non-technical admins.
 
 ### 2. Add constants to `wp-config.php`
 
