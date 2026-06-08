@@ -15,14 +15,29 @@ const ABORT_DELAY = 5_000
 function applyFrameHeaders(request: Request, headers: Headers) {
   const url = new URL(request.url)
   if (url.pathname === '/preview') {
-    const wpUrl = process.env.WORDPRESS_URL
-    if (wpUrl) {
-      // Allow embedding from the WordPress admin domain
-      headers.set('Content-Security-Policy', `frame-ancestors 'self' ${wpUrl}`)
-    } else {
-      // No WP URL configured — allow any parent (development)
-      headers.delete('X-Frame-Options')
+    // Use explicit public admin origin when provided. If WORDPRESS_URL is an
+    // internal Docker host (e.g. http://wordpress), fall back to current origin.
+    const explicitAdminOrigin = process.env.WORDPRESS_ADMIN_ORIGIN?.trim()
+    const wpUrl = process.env.WORDPRESS_URL?.trim()
+
+    let adminOrigin = explicitAdminOrigin || ''
+    if (!adminOrigin && wpUrl) {
+      try {
+        const parsed = new URL(wpUrl)
+        const hostname = parsed.hostname.toLowerCase()
+        const internalHosts = new Set(['wordpress', 'localhost', '127.0.0.1'])
+        if (!internalHosts.has(hostname) && !hostname.endsWith('.internal')) {
+          adminOrigin = parsed.origin
+        }
+      } catch {
+        // Ignore invalid URL and fall back below.
+      }
     }
+
+    const requestOrigin = `${url.protocol}//${url.host}`
+    const frameAncestor = adminOrigin || requestOrigin
+    headers.set('Content-Security-Policy', `frame-ancestors 'self' ${frameAncestor}`)
+    headers.delete('X-Frame-Options')
   }
 }
 

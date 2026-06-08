@@ -1,4 +1,5 @@
-import { act, render } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { HeroBlock as HeroBlockType } from '~/types/wordpress'
 import HeroBlock from '../index'
@@ -39,6 +40,25 @@ afterEach(() => {
 })
 
 describe('HeroBlock', () => {
+  it('renders absolute Studio Zanetti CTA URLs as same-tab internal links', () => {
+    vi.stubEnv('SITE_URL', 'https://studiozanetti.com.au')
+
+    render(
+      <MemoryRouter>
+        <HeroBlock
+          block={buildBlock({
+            cta_text: 'Enquire now',
+            cta_url: 'https://studiozanetti.mitchellmartinez.tech/contact?src=hero#form',
+          })}
+        />
+      </MemoryRouter>,
+    )
+
+    const link = screen.getByRole('link', { name: /enquire now/i })
+    expect(link).toHaveAttribute('href', '/contact?src=hero#form')
+    expect(link).not.toHaveAttribute('target', '_blank')
+  })
+
   it('renders one visible active slide by default', () => {
     const { container } = render(<HeroBlock block={buildBlock()} />)
 

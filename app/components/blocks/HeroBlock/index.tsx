@@ -1,8 +1,31 @@
 import { useEffect, useMemo, useState } from 'react'
 import Button from '~/components/Button'
+import { getSiteUrlFromEnv } from '~/lib/seo'
 import type { HeroSlide } from '~/types/wordpress'
 import styles from './HeroBlock.module.scss'
 import type { HeroBlockProps } from './types'
+
+const normalizeHostname = (hostname: string): string => hostname.replace(/^www\./i, '').toLowerCase()
+
+function normalizeHeroHref(href?: string): string | undefined {
+  if (!href || !/^https?:\/\//i.test(href)) return href
+
+  try {
+    const targetUrl = new URL(href)
+    const siteUrl = new URL(getSiteUrlFromEnv())
+    const targetHost = normalizeHostname(targetUrl.hostname)
+    const siteHost = normalizeHostname(siteUrl.hostname)
+
+    if (targetHost === siteHost || targetHost === 'studiozanetti.mitchellmartinez.tech') {
+      const pathname = targetUrl.pathname || '/'
+      return `${pathname}${targetUrl.search}${targetUrl.hash}`
+    }
+  } catch {
+    return href
+  }
+
+  return href
+}
 
 const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
   const slides = useMemo<HeroSlide[]>(() => {
@@ -48,6 +71,8 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
   // hero slide counts.
   const safeActiveSlide = slideCount > 0 ? Math.min(activeSlide, slideCount - 1) : 0
   const currentImage = slides[safeActiveSlide]
+  const primaryCtaHref = normalizeHeroHref(block.cta_url)
+  const secondaryCtaHref = normalizeHeroHref(block.secondary_cta_url)
 
   return (
     <section className={`${styles.hero} ${heightClass}`} aria-label="Hero">
@@ -72,17 +97,17 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
         <h1 className={styles.heroTitle}>{block.title}</h1>
         {block.tagline && <p className={styles.heroTagline}>{block.tagline}</p>}
 
-        {(block.cta_text && block.cta_url) ||
-        (block.secondary_cta_text && block.secondary_cta_url) ? (
+        {(block.cta_text && primaryCtaHref) ||
+        (block.secondary_cta_text && secondaryCtaHref) ? (
           <div className={styles.heroActions}>
-            {block.cta_text && block.cta_url && (
-              <Button href={block.cta_url} variant="primary" inverted className={styles.heroCta}>
+            {block.cta_text && primaryCtaHref && (
+              <Button href={primaryCtaHref} variant="primary" inverted className={styles.heroCta}>
                 {block.cta_text}
               </Button>
             )}
-            {block.secondary_cta_text && block.secondary_cta_url && (
+            {block.secondary_cta_text && secondaryCtaHref && (
               <Button
-                href={block.secondary_cta_url}
+                href={secondaryCtaHref}
                 variant="secondary"
                 inverted
                 className={styles.heroCta}

@@ -1369,12 +1369,6 @@ function sz_live_preview_html( $post ) {
 				<div id="sz-preview-loading" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,0.9);z-index:10;font-size:14px;color:#666;">
 					Loading preview…
 				</div>
-				<div id="sz-preview-initial-placeholder" style="display:flex;align-items:center;justify-content:center;min-height:420px;padding:2rem;text-align:center;color:#666;background:#fafafa;">
-					<div>
-						<p style="margin:0 0 0.5rem;font-size:16px;">Preview is paused by default to keep page edits responsive.</p>
-						<p style="margin:0;font-size:13px;">Use the button above only when you need a live front-end check.</p>
-					</div>
-				</div>
 				<iframe
 					id="sz-preview-frame"
 					data-src="<?php echo esc_url( $preview_url ); ?>"
@@ -1708,11 +1702,6 @@ function sz_live_preview_js() {
 					var wrapper = document.createElement('div');
 					wrapper.id = 'sz-preview-frame-wrapper';
 					wrapper.style.cssText = 'position:relative;background:#f0f0f0;border-radius:8px;overflow:hidden;';
-					var initialPlaceholderEl = document.createElement('div');
-					initialPlaceholderEl.id = 'sz-preview-initial-placeholder';
-					initialPlaceholderEl.style.cssText = 'display:flex;align-items:center;justify-content:center;min-height:420px;padding:2rem;text-align:center;color:#666;background:#fafafa;';
-					initialPlaceholderEl.innerHTML = '<div><p style="margin:0 0 0.5rem;font-size:16px;">Preview is paused by default to keep page edits responsive.</p><p style="margin:0;font-size:13px;">Use the button above only when you need a live front-end check.</p></div>';
-					wrapper.appendChild(initialPlaceholderEl);
 					var loading = document.createElement('div');
 					loading.id = 'sz-preview-loading';
 					loading.style.cssText = 'position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(255,255,255,0.9);z-index:10;font-size:14px;color:#666;';
@@ -1723,18 +1712,20 @@ function sz_live_preview_js() {
 					newIframe.title = 'Live front-end preview';
 					newIframe.style.cssText = 'width:100%;height:800px;border:none;display:block;';
 					var postId = document.getElementById('post_ID').value;
-					newIframe.src = 'about:blank';
-					newIframe.setAttribute('data-src', '<?php echo esc_js( rtrim( SZ_FRONTEND_URL, "/" ) ); ?>/preview?id=' + postId +
-						'&secret=<?php echo esc_js( rawurlencode( SZ_PREVIEW_SECRET ) ); ?>&iframe=true');
+					var previewSrc = '<?php echo esc_js( rtrim( SZ_FRONTEND_URL, "/" ) ); ?>/preview?id=' + postId +
+						'&secret=<?php echo esc_js( rawurlencode( SZ_PREVIEW_SECRET ) ); ?>&iframe=true';
+					newIframe.setAttribute('data-src', previewSrc);
+					newIframe.src = previewSrc + '&_cb=' + Date.now();
+					newIframe.dataset.loaded = 'true';
 					wrapper.appendChild(newIframe);
 					document.getElementById('sz-preview-container').appendChild(wrapper);
 					iframe = newIframe;
 					frameWrapper = wrapper;
 					loadingOverlay = loading;
-					initialPlaceholder = initialPlaceholderEl;
 					refreshBtn.disabled = false;
 					refreshBtn.textContent = '↻ Refresh Preview';
-					setStatus('Preview loaded — edit fields and click Refresh to update.');
+					showLoading();
+					setStatus('Loading preview…');
 					newIframe.addEventListener('load', function () {
 						if (newIframe.dataset.loaded !== 'true') return;
 						hideLoading();
