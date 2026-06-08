@@ -1432,6 +1432,16 @@ function sz_live_preview_js() {
 		var fullscreenBtn   = document.getElementById('sz-fullscreen-btn');
 		var postForm        = document.getElementById('post');
 		var maxInputVars    = <?php echo (int) ini_get( 'max_input_vars' ); ?>;
+		var frontendBaseUrl = <?php echo wp_json_encode( rtrim( SZ_FRONTEND_URL, '/' ) ); ?>;
+		var frontendOrigin  = '';
+		var previewWindows  = [];
+		var draftSyncTimer  = null;
+
+		try {
+			frontendOrigin = new URL(frontendBaseUrl).origin;
+		} catch (err) {
+			frontendOrigin = '';
+		}
 
 		if (!iframe || !refreshBtn) return;
 
@@ -1470,6 +1480,240 @@ function sz_live_preview_js() {
 			if (loadingOverlay) loadingOverlay.style.display = 'none';
 		}
 
+		function normalizeValue(value) {
+			if (Array.isArray(value)) {
+				return value.map(normalizeValue);
+			}
+
+			if (typeof value !== 'string') return value;
+
+			var trimmed = value.trim();
+			if (trimmed === '') return '';
+			if (/^-?\d+(?:\.\d+)?$/.test(trimmed)) {
+				return Number(trimmed);
+			}
+
+			return value;
+		}
+
+		function getDirectFieldElements(container) {
+			if (!container || !container.children) return [];
+
+			var fields = [];
+			Array.prototype.forEach.call(container.children, function (child) {
+				if (!child || !child.classList) return;
+
+				if (child.classList.contains('acf-field') && child.dataset && child.dataset.name) {
+					fields.push(child);
+					return;
+				}
+
+				Array.prototype.forEach.call(child.children || [], function (grandchild) {
+					if (
+						grandchild &&
+						grandchild.classList &&
+						grandchild.classList.contains('acf-field') &&
+						grandchild.dataset &&
+						grandchild.dataset.name
+					) {
+						fields.push(grandchild);
+					}
+				});
+			});
+
+			return fields;
+		}
+
+		function serializeFieldMap(container) {
+			var data = {};
+			getDirectFieldElements(container).forEach(function (fieldEl) {
+				var fieldName = fieldEl.dataset ? fieldEl.dataset.name : '';
+				if (!fieldName) return;
+
+				var value = serializeField(fieldEl);
+				if (typeof value === 'undefined') return;
+
+				data[fieldName] = value;
+			});
+
+			return data;
+		}
+
+		function serializeImageField(fieldEl) {
+			var image = fieldEl.querySelector('.acf-image-uploader img');
+			if (!image || !image.getAttribute('src')) return undefined;
+
+			return {
+				url: image.getAttribute('src') || '',
+				alt: image.getAttribute('alt') || '',
+			};
+		}
+
+		function serializeRepeaterField(fieldEl) {
+			var rows = fieldEl.querySelectorAll('.acf-table > tbody > .acf-row:not(.acf-clone), .acf-repeater > table > tbody > .acf-row:not(.acf-clone)');
+			return Array.prototype.map.call(rows, function (row) {
+				var fieldsContainer = row.querySelector(':scope > .acf-fields');
+				return serializeFieldMap(fieldsContainer || row);
+			});
+		}
+
+		function serializeFlexibleField(fieldEl) {
+			var layouts = fieldEl.querySelectorAll('.acf-flexible-content > .values > .layout:not(.acf-clone), .acf-flexible-content .values > .layout:not(.acf-clone)');
+			return Array.prototype.map.call(layouts, function (layout) {
+				var fieldsContainer = layout.querySelector(':scope > .acf-fields');
+				var layoutData = serializeFieldMap(fieldsContainer || layout);
+				layoutData.acf_fc_layout = layout.dataset ? layout.dataset.layout : '';
+				return layoutData;
+			});
+		}
+
+		function serializeSimpleField(fieldEl) {
+			var multipleSelect = fieldEl.querySelector('select[multiple]');
+			if (multipleSelect) {
+				return Array.prototype.map.call(multipleSelect.selectedOptions || [], function (option) {
+					return normalizeValue(option.value);
+				});
+			}
+
+			var select = fieldEl.querySelector('select');
+			if (select) return normalizeValue(select.value);
+
+			var checkboxList = fieldEl.querySelectorAll('.acf-checkbox-list input[type="checkbox"]:checked');
+			if (checkboxList.length > 0) {
+				return Array.prototype.map.call(checkboxList, function (input) {
+					return normalizeValue(input.value);
+				});
+			}
+
+			var radio = fieldEl.querySelector('.acf-radio-list input[type="radio"]:checked');
+			if (radio) return normalizeValue(radio.value);
+
+			var trueFalse = fieldEl.querySelector('input[type="checkbox"]');
+			if (trueFalse && fieldEl.classList.contains('acf-field-true-false')) {
+				return !!trueFalse.checked;
+			}
+
+			var textarea = fieldEl.querySelector('textarea');
+			if (textarea) return textarea.value;
+
+			var input = fieldEl.querySelector('input[type="text"], input[type="number"], input[type="url"], input[type="email"], input[type="tel"], input[type="hidden"]');
+			if (input) return normalizeValue(input.value);
+
+			return undefined;
+		}
+
+		function serializeField(fieldEl) {
+			if (!fieldEl || !fieldEl.classList) return undefined;
+
+			if (fieldEl.classList.contains('acf-field-flexible-content')) {
+				return serializeFlexibleField(fieldEl);
+			}
+
+			if (fieldEl.classList.contains('acf-field-repeater')) {
+				return serializeRepeaterField(fieldEl);
+			}
+
+			if (fieldEl.classList.contains('acf-field-group')) {
+				var nestedFields = fieldEl.querySelector(':scope > .acf-fields') || fieldEl.querySelector('.acf-fields');
+				return serializeFieldMap(nestedFields || fieldEl);
+			}
+
+			if (fieldEl.classList.contains('acf-field-image')) {
+				return serializeImageField(fieldEl);
+			}
+
+			return serializeSimpleField(fieldEl);
+		}
+
+		function buildPreviewPageState() {
+			var postIdInput = document.getElementById('post_ID');
+			var titleValue = titleInput ? titleInput.value : '';
+			var contentInput = document.getElementById('content');
+			var blocksField = document.querySelector('.acf-field-flexible-content[data-name="blocks"]');
+			var blocks = blocksField ? serializeFlexibleField(blocksField) : undefined;
+
+			return {
+				id: postIdInput ? parseInt(postIdInput.value, 10) || 0 : 0,
+				title: { rendered: titleValue },
+				content: { rendered: contentInput ? contentInput.value : '' },
+				excerpt: { rendered: '' },
+				acf: {
+					blocks: Array.isArray(blocks) ? blocks : [],
+				},
+			};
+		}
+
+		function prunePreviewWindows() {
+			previewWindows = previewWindows.filter(function (previewWindow) {
+				return previewWindow && !previewWindow.closed;
+			});
+		}
+
+		function postPreviewState(targetWindow) {
+			if (!targetWindow || targetWindow.closed) return false;
+			if (!frontendOrigin) return false;
+
+			try {
+				targetWindow.postMessage(
+					{
+						source: 'sz-editor',
+						action: 'preview-state',
+						page: buildPreviewPageState(),
+					},
+					frontendOrigin
+				);
+				return true;
+			} catch (err) {
+				return false;
+			}
+		}
+
+		function broadcastPreviewState() {
+			var sent = false;
+
+			if (iframe && iframe.contentWindow) {
+				sent = postPreviewState(iframe.contentWindow) || sent;
+			}
+
+			prunePreviewWindows();
+			previewWindows.forEach(function (previewWindow) {
+				sent = postPreviewState(previewWindow) || sent;
+			});
+
+			if (sent) {
+				setStatus('Updated ' + new Date().toLocaleTimeString() + ' - Live preview includes unsaved changes.');
+			}
+
+			return sent;
+		}
+
+		function schedulePreviewUpdate() {
+			if (draftSyncTimer) {
+				window.clearTimeout(draftSyncTimer);
+			}
+
+			draftSyncTimer = window.setTimeout(function () {
+				broadcastPreviewState();
+			}, 250);
+		}
+
+		function bindPreviewFrame(frame) {
+			if (!frame) return;
+
+			frame.addEventListener('load', function () {
+				if (frame.dataset.loaded !== 'true') return;
+				hideLoading();
+				setStatus(
+					'Updated ' +
+						new Date().toLocaleTimeString() +
+						(pendingChanges
+							? ' - Live preview includes unsaved changes.'
+							: ' - Preview reflects current editor state.')
+				);
+				postPreviewState(frame.contentWindow);
+			});
+		}
+
 		function ensurePreviewLoaded(forceReload) {
 			var previewUrl = iframe ? iframe.getAttribute('data-src') : null;
 			if (!iframe || !previewUrl) return;
@@ -1488,77 +1732,36 @@ function sz_live_preview_js() {
 			refreshBtn.textContent = '↻ Refresh Preview';
 		}
 
-		/* ── Pending-changes tracking ────────────────────────── */
-		/* The preview endpoint reads from WordPress autosave/    */
-		/* published data. Changes are only visible in the        */
-		/* preview AFTER WordPress saves them. We therefore mark  */
-		/* changes as pending and refresh only after autosave.    */
 		var pendingChanges = false;
 
 		function markPending() {
 			if (refreshBtn.disabled) return;
 			pendingChanges = true;
-			setStatus('Unsaved changes — preview will update after save, or click Refresh.');
+			setStatus('Updating live preview with your latest editor changes…');
+			schedulePreviewUpdate();
 		}
 
 		/* Show initial loading state */
 		showLoading();
 		setStatus('Loading preview…');
+		iframe.dataset.loaded = 'true';
+		bindPreviewFrame(iframe);
 
-		/* Hide the loading overlay once iframe loads */
-		iframe.addEventListener('load', function () {
-			if (iframe.dataset.loaded !== 'true') return;
-			hideLoading();
-			setStatus('Updated ' + new Date().toLocaleTimeString() +
-				(pendingChanges ? ' — Unsaved changes pending.' : ' — Preview reflects last saved content.'));
-		});
-
-		/* ── After WordPress autosave: refresh preview ───────── */
-		/* The 'after-autosave' jQuery event fires when WordPress */
-		/* writes an autosave revision to the DB. Only then can   */
-		/* the preview endpoint return the new content.           */
 		if (typeof jQuery !== 'undefined') {
 			jQuery(document).on('after-autosave', function () {
-				pendingChanges = false;
-				ensurePreviewLoaded(true);
+				pendingChanges = true;
+				broadcastPreviewState();
 			});
 		}
 
-		/* ── Manual refresh button ───────────────────────────── */
-		/* Triggers a WordPress Heartbeat (which causes an        */
-		/* immediate autosave if there are changes), then the     */
-		/* after-autosave handler above reloads the preview.      */
-		/* Falls back to a direct reload if no heartbeat/jQuery.  */
 		refreshBtn.addEventListener('click', function () {
-			var heartbeatTriggered = false;
+			refreshBtn.disabled = true;
+			ensurePreviewLoaded(true);
 
-			if (typeof jQuery !== 'undefined' && typeof wp !== 'undefined' && wp.heartbeat) {
-				setStatus('Saving changes and refreshing preview…');
-				refreshBtn.disabled = true;
-
-				var fallbackTimer = setTimeout(function () {
-					/* Heartbeat fired but after-autosave didn't — just reload anyway */
-					refreshBtn.disabled = false;
-					pendingChanges = false;
-					ensurePreviewLoaded(true);
-				}, 6000);
-
-				jQuery(document).one('after-autosave', function () {
-					clearTimeout(fallbackTimer);
-					refreshBtn.disabled = false;
-					pendingChanges = false;
-					ensurePreviewLoaded(true);
-				});
-
-				wp.heartbeat.connectNow();
-				heartbeatTriggered = true;
-			}
-
-			if (!heartbeatTriggered) {
-				/* No heartbeat available — reload with whatever is currently saved */
-				pendingChanges = false;
-				ensurePreviewLoaded(true);
-			}
+			window.setTimeout(function () {
+				refreshBtn.disabled = false;
+				broadcastPreviewState();
+			}, 400);
 		});
 
 		/* ── Mark pending on field edits ─────────────────────── */
@@ -1592,14 +1795,41 @@ function sz_live_preview_js() {
 			}
 		});
 
+		document.addEventListener('click', function (event) {
+			var target = event.target;
+			if (!target || typeof target.closest !== 'function') return;
+
+			var previewLink = target.closest('a[href*="/preview?id="], a[target="wp-preview"], #post-preview, #preview-action a');
+			if (!previewLink || !previewLink.href) return;
+
+			event.preventDefault();
+
+			var previewWindow = window.open(previewLink.href, previewLink.target || 'wp-preview');
+			if (!previewWindow) {
+				window.location.href = previewLink.href;
+				return;
+			}
+
+			previewWindows.push(previewWindow);
+			prunePreviewWindows();
+			setStatus('Opening preview with current unpublished changes…');
+		}, true);
+
 		/* ── postMessage bridge: click-to-edit ────────────────── */
 		/* When the admin clicks a block in the iframe preview,   */
 		/* the React app sends { source:'sz-preview', action:     */
 		/* 'focus-block', index: N }. We scroll to and highlight  */
 		/* the Nth ACF Flexible Content layout row in the editor. */
 		window.addEventListener('message', function (event) {
+			if (frontendOrigin && event.origin !== frontendOrigin) return;
+
 			var data = event.data;
 			if (!data || data.source !== 'sz-preview') return;
+
+			if (data.action === 'ready-for-state') {
+				postPreviewState(event.source);
+				return;
+			}
 
 			if (data.action === 'focus-block' && typeof data.index === 'number') {
 				/* Find only the page "blocks" flexible-content rows (ignore clones). */
@@ -1726,12 +1956,7 @@ function sz_live_preview_js() {
 					refreshBtn.textContent = '↻ Refresh Preview';
 					showLoading();
 					setStatus('Loading preview…');
-					newIframe.addEventListener('load', function () {
-						if (newIframe.dataset.loaded !== 'true') return;
-						hideLoading();
-						setStatus('Updated ' + new Date().toLocaleTimeString() +
-							' — Preview reflects last saved content.');
-					});
+					bindPreviewFrame(newIframe);
 				}
 			});
 		}

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { useLoaderData } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
@@ -13,6 +14,65 @@ interface PreviewLoaderData {
   page: WPPage
   isIframe: boolean
   blogPostsData?: BlogPostsData
+}
+
+interface DraftPreviewMessage {
+  source: 'sz-editor'
+  action: 'preview-state'
+  page?: Partial<WPPage>
+}
+
+function mergeRenderedField(
+  base: WPPage['title'] | WPPage['content'] | WPPage['excerpt'],
+  override?: Partial<WPPage['title']> | Partial<WPPage['content']> | Partial<WPPage['excerpt']>,
+) {
+  if (!override) return base
+  return {
+    ...base,
+    ...override,
+  }
+}
+
+function mergePreviewPage(base: WPPage, override?: Partial<WPPage>): WPPage {
+  if (!override) return base
+
+  return {
+    ...base,
+    ...override,
+    title: mergeRenderedField(base.title, override.title),
+    content: mergeRenderedField(base.content, override.content),
+    excerpt: mergeRenderedField(base.excerpt, override.excerpt),
+    acf: override.acf ? { ...base.acf, ...override.acf } : base.acf,
+    yoast_head_json: override.yoast_head_json
+      ? { ...base.yoast_head_json, ...override.yoast_head_json }
+      : base.yoast_head_json,
+  }
+}
+
+async function fetchPreviewBlogPosts(page: WPPage): Promise<BlogPostsData | undefined> {
+  const blogBlock = page.acf?.blocks?.find((block) => block.acf_fc_layout === 'blog_posts')
+  if (!blogBlock) return undefined
+
+  const perPage = blogBlock.posts_per_page ?? 6
+  const categories = Array.isArray(blogBlock.categories) ? blogBlock.categories : []
+  const params = new URLSearchParams({
+    page: '1',
+    per_page: String(perPage),
+  })
+
+  if (categories.length > 0) {
+    params.set('categories', categories.join(','))
+  }
+
+  try {
+    const res = await fetch(`/api/blog-posts?${params.toString()}`, {
+      headers: { Accept: 'application/json' },
+    })
+    if (!res.ok) return undefined
+    return (await res.json()) as BlogPostsData
+  } catch {
+    return undefined
+  }
 }
 
 // ─── Loader ───────────────────────────────────────────────────────────────────
@@ -61,8 +121,46 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 
 // ─── Route component ──────────────────────────────────────────────────────────
 const PreviewPage = () => {
-  const { page, isIframe, blogPostsData } = useLoaderData<typeof loader>()
-  const blocks = page.acf?.blocks
+  const loaderData = useLoaderData<typeof loader>()
+  const { page, isIframe, blogPostsData } = loaderData
+  const [draftPageOverride, setDraftPageOverride] = useState<Partial<WPPage> | null>(null)
+  const [draftBlogPostsData, setDraftBlogPostsData] = useState<BlogPostsData | undefined>(
+    undefined,
+  )
+  const [basePageId, setBasePageId] = useState(page.id)
+
+  if (basePageId !== page.id) {
+    setBasePageId(page.id)
+    setDraftPageOverride(null)
+    setDraftBlogPostsData(undefined)
+  }
+
+  const currentPage = mergePreviewPage(page, draftPageOverride ?? undefined)
+  const currentBlogPostsData = draftBlogPostsData ?? blogPostsData
+
+  useEffect(() => {
+    const handlePreviewMessage = (event: MessageEvent<DraftPreviewMessage>) => {
+      if (event.data?.source !== 'sz-editor' || event.data?.action !== 'preview-state') return
+
+      setDraftPageOverride(event.data.page ?? null)
+
+      const mergedPage = mergePreviewPage(page, event.data.page)
+
+      void fetchPreviewBlogPosts(mergedPage).then((data) => {
+        setDraftBlogPostsData(data)
+      })
+    }
+
+    window.addEventListener('message', handlePreviewMessage)
+    window.parent?.postMessage({ source: 'sz-preview', action: 'ready-for-state' }, '*')
+    window.opener?.postMessage({ source: 'sz-preview', action: 'ready-for-state' }, '*')
+
+    return () => {
+      window.removeEventListener('message', handlePreviewMessage)
+    }
+  }, [page])
+
+  const blocks = currentPage.acf?.blocks
 
   return (
     <div className={styles.previewWrapper}>
@@ -77,14 +175,18 @@ const PreviewPage = () => {
       )}
 
       {blocks?.length ? (
-        <BlockRenderer blocks={blocks} interactive={isIframe} blogPostsData={blogPostsData} />
+        <BlockRenderer
+          blocks={blocks}
+          interactive={isIframe}
+          blogPostsData={currentBlogPostsData}
+        />
       ) : (
         <div className={styles.page}>
           <header className={styles.pageHeader}>
-            <h1 className={styles.pageTitle}>{stripHtml(page.title.rendered)}</h1>
+            <h1 className={styles.pageTitle}>{stripHtml(currentPage.title.rendered)}</h1>
           </header>
           <div className={styles.pageContent}>
-            <RichText html={page.content.rendered} />
+            <RichText html={currentPage.content.rendered} />
           </div>
         </div>
       )}
