@@ -31,11 +31,23 @@ afterEach(() => {
 })
 
 const makeRequest = (body: unknown) =>
-  new Request('http://localhost/api/forms/submit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+  {
+    const now = Date.now()
+    const enrichedBody =
+      body && typeof body === 'object' && !Array.isArray(body)
+        ? {
+            formStartedAtMs: now - 3_000,
+            submittedAtMs: now,
+            ...body,
+          }
+        : body
+
+    return new Request('http://localhost/api/forms/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(enrichedBody),
+    })
+  }
 
 describe('api.forms.submit action', () => {
   it('ignores frontend-injected recipient and subject fields', async () => {
@@ -450,6 +462,114 @@ describe('api.forms.submit action', () => {
         honeypot: 'bot data',
         values: {},
       }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(200)
+    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+    expect(sendVscoLead).not.toHaveBeenCalled()
+    expect(consumeRateLimit).not.toHaveBeenCalled()
+  })
+
+  it('returns 429 when the form is submitted faster than the minimum fill time', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        delivery_target: 'email',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+      deliveryTarget: 'email',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    const response = await action({
+      request: makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        formStartedAtMs: 1_000,
+        submittedAtMs: 1_500,
+        values: { name: 'Mitchell' },
+      }),
+      params: {},
+      context: {},
+    } as never)
+
+    expect(response.status).toBe(429)
+    await expect(response.json()).resolves.toMatchObject({
+      error: 'Please wait a few seconds before submitting the form.',
+    })
+    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+    expect(sendVscoLead).not.toHaveBeenCalled()
+  })
+
+  it('returns success immediately for obvious bot user-agents', async () => {
+    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+      page: {
+        id: 12,
+        slug: 'get-in-touch',
+        parent: 0,
+        status: 'publish',
+        title: { rendered: 'Get in touch' },
+        content: { rendered: '' },
+        excerpt: { rendered: '' },
+      },
+      normalizedPagePath: 'get-in-touch',
+      form: {
+        acf_fc_layout: 'form_block',
+        form_id: 'contact-enquiry',
+        success_message: 'Thanks for reaching out.',
+        delivery_target: 'email',
+        email_to: 'hello@studiozanetti.com.au',
+        email_subject: 'Website enquiry',
+        fields: [
+          {
+            field_id: 'name',
+            label: 'Name',
+            type: 'text',
+            required: true,
+            vsco_field_key: 'FirstName',
+          },
+        ],
+      },
+      emailTo: 'hello@studiozanetti.com.au',
+      emailSubject: 'Website enquiry',
+      deliveryTarget: 'email',
+      vscoSendEmailNotification: true,
+    } as never)
+
+    const request = makeRequest({
+      pagePath: '/get-in-touch/',
+      formId: 'contact-enquiry',
+      values: { name: 'Mitchell' },
+    })
+
+    request.headers.set('user-agent', 'Googlebot/2.1 (+http://www.google.com/bot.html)')
+
+    const response = await action({
+      request,
       params: {},
       context: {},
     } as never)

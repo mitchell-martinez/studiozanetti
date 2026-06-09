@@ -109,8 +109,10 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const [values, setValues] = useState<ClientFormValues>(() =>
     createInitialValues(block.fields, location.search, block.form_id),
   )
+  const [formStartedAtMs, setFormStartedAtMs] = useState<number>(() => Date.now())
   const [previousPrefillKey, setPreviousPrefillKey] = useState(prefillKey)
   const [honeypot, setHoneypot] = useState('')
+  const [honeypotSecondary, setHoneypotSecondary] = useState('')
   const [requestSubmitterCopy, setRequestSubmitterCopy] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [submitState, setSubmitState] = useState<SubmitState>('idle')
@@ -205,6 +207,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
     setSubmitState('submitting')
     setFieldErrors({})
     setSuccessMessage(null)
+    const submittedAtMs = Date.now()
 
     try {
       const response = await fetch('/api/forms/submit', {
@@ -214,7 +217,10 @@ const FormBlock = ({ block }: FormBlockProps) => {
           pagePath: location.pathname,
           formId: block.form_id,
           honeypot,
+          honeypotSecondary,
           requestSubmitterCopy: shouldOfferSubmitterCopy && requestSubmitterCopy,
+          formStartedAtMs,
+          submittedAtMs,
           values,
         }),
       })
@@ -229,6 +235,8 @@ const FormBlock = ({ block }: FormBlockProps) => {
 
       setValues(createInitialClientFormValues(block.fields))
       setHoneypot('')
+      setHoneypotSecondary('')
+      setFormStartedAtMs(Date.now())
       setRequestSubmitterCopy(false)
       setFieldErrors({})
       setSubmitState('success')
@@ -290,6 +298,17 @@ const FormBlock = ({ block }: FormBlockProps) => {
                   autoComplete="off"
                   value={honeypot}
                   onChange={(event) => setHoneypot(event.currentTarget.value)}
+                />
+
+                <label htmlFor={`${block.form_id}-company`}>Company</label>
+                <input
+                  id={`${block.form_id}-company`}
+                  name="company"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypotSecondary}
+                  onChange={(event) => setHoneypotSecondary(event.currentTarget.value)}
                 />
               </div>
 

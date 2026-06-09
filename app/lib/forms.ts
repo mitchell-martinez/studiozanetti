@@ -22,7 +22,10 @@ export interface FormSubmissionPayload {
   formId: string
   values: Record<string, FormSubmissionValue>
   honeypot?: string
+  honeypotSecondary?: string
   requestSubmitterCopy?: boolean
+  formStartedAtMs?: number
+  submittedAtMs?: number
 }
 
 export interface TrustedFormSubmissionConfig {
@@ -533,13 +536,30 @@ export function stripSensitiveFormBlockData(page: WPPage): WPPage {
 export function parseFormSubmissionPayload(input: unknown): FormSubmissionPayload | null {
   if (!isRecord(input)) return null
 
-  const { formId, honeypot, pagePath, requestSubmitterCopy, values } = input
+  const {
+    formId,
+    honeypot,
+    honeypotSecondary,
+    pagePath,
+    requestSubmitterCopy,
+    formStartedAtMs,
+    submittedAtMs,
+    values,
+  } = input
 
   if (typeof pagePath !== 'string' || typeof formId !== 'string' || !isRecord(values)) {
     return null
   }
 
   if (requestSubmitterCopy !== undefined && typeof requestSubmitterCopy !== 'boolean') {
+    return null
+  }
+
+  if (formStartedAtMs !== undefined && !Number.isFinite(formStartedAtMs)) {
+    return null
+  }
+
+  if (submittedAtMs !== undefined && !Number.isFinite(submittedAtMs)) {
     return null
   }
 
@@ -555,7 +575,10 @@ export function parseFormSubmissionPayload(input: unknown): FormSubmissionPayloa
     formId,
     values: normalizedValues,
     honeypot: typeof honeypot === 'string' ? honeypot : undefined,
+    honeypotSecondary: typeof honeypotSecondary === 'string' ? honeypotSecondary : undefined,
     requestSubmitterCopy,
+    formStartedAtMs: typeof formStartedAtMs === 'number' ? formStartedAtMs : undefined,
+    submittedAtMs: typeof submittedAtMs === 'number' ? submittedAtMs : undefined,
   }
 }
 

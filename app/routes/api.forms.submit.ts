@@ -1,4 +1,5 @@
 import type { ActionFunctionArgs } from 'react-router'
+import { isbot } from 'isbot'
 import { sendFormSubmissionEmail } from '~/lib/email'
 import { validateFormConfiguration } from '~/lib/formConfiguration'
 import {
@@ -12,6 +13,43 @@ import {
 } from '~/lib/forms'
 import { consumeRateLimit } from '~/lib/rateLimit'
 import { sendVscoLead } from '~/lib/vsco'
+
+const DEFAULT_MIN_FILL_TIME_MS = 2_500
+const DEFAULT_MAX_FILL_TIME_MS = 2 * 60 * 60 * 1000
+
+const getFormTimingSettings = () => {
+  const minFillTimeMs = Math.max(
+    0,
+    Number.parseInt(process.env.FORM_MIN_FILL_TIME_MS ?? '', 10) || DEFAULT_MIN_FILL_TIME_MS,
+  )
+  const maxFillTimeMs = Math.max(
+    minFillTimeMs,
+    Number.parseInt(process.env.FORM_MAX_FILL_TIME_MS ?? '', 10) || DEFAULT_MAX_FILL_TIME_MS,
+  )
+
+  return { minFillTimeMs, maxFillTimeMs }
+}
+
+const getSafeSubmissionSuccessResponse = (message: string) =>
+  Response.json({ success: true, message })
+
+const isValidSubmissionTiming = (
+  startedAtMs: number | undefined,
+  submittedAtMs: number | undefined,
+): boolean => {
+  if (typeof startedAtMs !== 'number' || typeof submittedAtMs !== 'number') {
+    return false
+  }
+
+  if (!Number.isFinite(startedAtMs) || !Number.isFinite(submittedAtMs)) {
+    return false
+  }
+
+  const { minFillTimeMs, maxFillTimeMs } = getFormTimingSettings()
+  const elapsedMs = submittedAtMs - startedAtMs
+
+  return elapsedMs >= minFillTimeMs && elapsedMs <= maxFillTimeMs
+}
 
 const getClientIp = (request: Request): string => {
   const forwardedFor = request.headers.get('x-forwarded-for')
@@ -76,8 +114,20 @@ export async function action({ request }: ActionFunctionArgs) {
   let shouldAttemptEmail = shouldSendEmail
   let shouldAttemptVsco = shouldSendVsco
 
-  if (payload.honeypot?.trim()) {
-    return Response.json({ success: true, message: getFormSuccessMessage(trustedConfig.form) })
+  const userAgent = request.headers.get('user-agent') ?? ''
+  if (userAgent && isbot(userAgent)) {
+    return getSafeSubmissionSuccessResponse(getFormSuccessMessage(trustedConfig.form))
+  }
+
+  if (payload.honeypot?.trim() || payload.honeypotSecondary?.trim()) {
+    return getSafeSubmissionSuccessResponse(getFormSuccessMessage(trustedConfig.form))
+  }
+
+  if (!isValidSubmissionTiming(payload.formStartedAtMs, payload.submittedAtMs)) {
+    return Response.json(
+      { error: 'Please wait a few seconds before submitting the form.' },
+      { status: 429 },
+    )
   }
 
   const clientIp = getClientIp(request)
