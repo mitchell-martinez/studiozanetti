@@ -72,6 +72,9 @@
   color: var(--color-white);
   letter-spacing: 0.06em;
   max-width: 16ch;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 80%),
+    0 4px 16px rgb(0 0 0 / 50%);
 }
 
 .heroTagline {
@@ -80,6 +83,9 @@
   font-style: italic;
   letter-spacing: 0.03em;
   max-width: 38ch;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 80%),
+    0 4px 12px rgb(0 0 0 / 45%);
 }
 
 .heroActions {
@@ -116,12 +122,18 @@
   color: rgb(255 255 255 / 85%);
   letter-spacing: 0.02em;
   line-height: 1.1;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 80%),
+    0 4px 16px rgb(0 0 0 / 50%);
 }
 
 .slideSubtitle {
   font-size: 1.1rem;
   color: rgb(255 255 255 / 60%);
   letter-spacing: 0.03em;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 80%),
+    0 4px 12px rgb(0 0 0 / 45%);
 }
 
 .heroFooter {
@@ -137,6 +149,9 @@
   color: rgb(255 255 255 / 85%);
   max-width: 50ch;
   line-height: 1.6;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 80%),
+    0 4px 12px rgb(0 0 0 / 45%);
 }
 
 .heroCaption {
@@ -144,6 +159,9 @@
   color: rgb(255 255 255 / 60%);
   font-style: italic;
   letter-spacing: 0.03em;
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 80%),
+    0 4px 12px rgb(0 0 0 / 45%);
 }
 
 .dots {
