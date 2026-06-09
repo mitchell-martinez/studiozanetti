@@ -1,11 +1,3 @@
-import { getPageByPath, getPageBySlug } from './wordpress'
-import { stripHtml } from './html'
-import {
-  getEffectiveNumberFieldMin,
-  getSubmitterCopyTargetFields,
-  isReservedNameField,
-  validateFormConfiguration,
-} from './formConfiguration'
 import type {
   ContentBlock,
   FormBlock,
@@ -14,6 +6,15 @@ import type {
   WPFormFieldOption,
   WPPage,
 } from '~/types/wordpress'
+import
+  {
+    getEffectiveNumberFieldMin,
+    getSubmitterCopyTargetFields,
+    isReservedNameField,
+    validateFormConfiguration,
+  } from './formConfiguration'
+import { stripHtml } from './html'
+import { getPageByPath, getPageBySlug } from './wordpress'
 
 export type FormSubmissionValue = boolean | number | string | string[] | null
 
@@ -405,9 +406,7 @@ export function buildSubmitterCopyEmailText(
   validated: ValidatedFormSubmission,
 ): string {
   const lines = [
-    'Thanks for contacting Studio Zanetti! We have received your enquiry and will start working on your quote as soon as possible.',
-    '',
-    'We typically respond to form submissions within 1-2 business days, but it may take a bit longer during busy periods or holidays.',
+    'Thanks for contacting Studio Zanetti! We have received your enquiry and will respond as soon as possible.',
     '',
     'In the meantime, feel free to explore our website and portfolio to learn more about our work.',
     '',
