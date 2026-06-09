@@ -182,7 +182,8 @@
     0 4px 16px rgb(0 0 0 / 50%);
   margin: 0;
   opacity: var(--heading-opacity);
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
   text-wrap: balance;
 }
 
@@ -198,7 +199,8 @@
     0 4px 12px rgb(0 0 0 / 45%);
   opacity: var(--heading-opacity);
   margin: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
   text-wrap: balance;
 }
 
@@ -244,13 +246,26 @@
     0 1px 2px rgb(0 0 0 / 80%),
     0 4px 16px rgb(0 0 0 / 50%);
   margin: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
   text-wrap: balance;
 }
 
 @media (max-width: #{g.$bp-md}) {
   .content {
     gap: 0.625rem;
+  }
+
+  .title {
+    font-size: clamp(1.6rem, 7.2vw, 3rem);
+  }
+
+  .subtitle {
+    font-size: clamp(1rem, 4.1vw, 1.5rem);
+  }
+
+  .overlayText {
+    font-size: clamp(1.125rem, 4.5vw, 2rem);
   }
 
   .title,
