@@ -208,5 +208,44 @@ describe('CmsPage route', () => {
         ]),
       )
     })
+
+    it('uses page content as description fallback and emits social image tags from featured image', () => {
+      const pageWithMetaFallbacks = {
+        ...mockPage,
+        yoast_head_json: undefined,
+        excerpt: { rendered: '' },
+        content: { rendered: '<p>Elegant wedding coverage and storytelling photography.</p>' },
+        featured_image: { url: '/uploads/hero-share.jpg' },
+      }
+
+      const entries = meta({
+        data: {
+          type: 'page',
+          page: pageWithMetaFallbacks,
+          canonicalUrl: 'https://www.studiozanetti.com.au/pricing',
+        },
+      } as never)
+
+      expect(entries).toEqual(
+        expect.arrayContaining([
+          {
+            name: 'description',
+            content: 'Elegant wedding coverage and storytelling photography.',
+          },
+          {
+            property: 'og:description',
+            content: 'Elegant wedding coverage and storytelling photography.',
+          },
+          {
+            property: 'og:image',
+            content: 'https://www.studiozanetti.com.au/uploads/hero-share.jpg',
+          },
+          {
+            name: 'twitter:image',
+            content: 'https://www.studiozanetti.com.au/uploads/hero-share.jpg',
+          },
+        ]),
+      )
+    })
   })
 })

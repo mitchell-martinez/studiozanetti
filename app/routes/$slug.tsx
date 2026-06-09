@@ -6,7 +6,7 @@ import ErrorPage from '~/components/ErrorPage'
 import RichText from '~/components/RichText'
 import { stripSensitiveFormBlockData } from '~/lib/forms'
 import { stripHtml } from '~/lib/html'
-import { buildPageSchemas, buildPostSchemas, toCanonicalUrl } from '~/lib/seo'
+import { buildPageSchemas, buildPostSchemas, getSiteUrlFromEnv, toCanonicalUrl } from '~/lib/seo'
 import
   {
     getPageByPath,
@@ -35,6 +35,11 @@ interface PostLoaderData {
 }
 
 type LoaderData = PageLoaderData | PostLoaderData
+
+const toAbsoluteSocialImageUrl = (url: string): string => {
+  if (/^https?:\/\//i.test(url)) return url
+  return `${getSiteUrlFromEnv()}${url.startsWith('/') ? '' : '/'}${url}`
+}
 
 // ─── Loader (SSR — called on every request) ───────────────────────────────────
 // This route catches any URL that hasn't matched a specific route above it.
@@ -99,6 +104,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     const metaDescription =
       (yoast?.description ? stripHtml(yoast.description) : '') ||
       stripHtml(post.excerpt.rendered).slice(0, 160)
+    const socialImage = post.featured_image?.url || yoast?.og_image?.[0]?.url
     const pathname = (() => {
       try {
         return new URL(canonicalUrl).pathname || '/'
@@ -116,11 +122,12 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
       { property: 'og:title', content: yoastTitle || title },
       { property: 'og:description', content: metaDescription },
       { property: 'og:url', content: canonicalUrl },
-      ...(post.featured_image?.url
-        ? [{ property: 'og:image', content: post.featured_image.url }]
-        : yoast?.og_image?.[0]
-          ? [{ property: 'og:image', content: yoast.og_image[0].url }]
-          : []),
+      ...(socialImage
+        ? [
+            { property: 'og:image', content: toAbsoluteSocialImageUrl(socialImage) },
+            { name: 'twitter:image', content: toAbsoluteSocialImageUrl(socialImage) },
+          ]
+        : []),
       { name: 'twitter:title', content: yoastTitle || title },
       { name: 'twitter:description', content: metaDescription },
       { name: 'twitter:card', content: 'summary_large_image' },
@@ -140,7 +147,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const pageTitle = stripHtml(page.title.rendered)
   const yoastTitle = yoast?.title ? stripHtml(yoast.title) : ''
   const metaDescription =
-    (yoast?.description ? stripHtml(yoast.description) : '') || `${pageTitle} | Studio Zanetti`
+    (yoast?.description ? stripHtml(yoast.description) : '') ||
+    stripHtml(page.excerpt.rendered).slice(0, 160) ||
+    stripHtml(page.content.rendered).slice(0, 160) ||
+    `${pageTitle} | Studio Zanetti`
+  const socialImage = page.featured_image?.url || yoast?.og_image?.[0]?.url
   const pathname = (() => {
     try {
       return new URL(canonicalUrl).pathname || '/'
@@ -158,7 +169,12 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { property: 'og:title', content: yoastTitle || pageTitle },
     { property: 'og:description', content: metaDescription },
     { property: 'og:url', content: canonicalUrl },
-    ...(yoast?.og_image?.[0] ? [{ property: 'og:image', content: yoast.og_image[0].url }] : []),
+    ...(socialImage
+      ? [
+          { property: 'og:image', content: toAbsoluteSocialImageUrl(socialImage) },
+          { name: 'twitter:image', content: toAbsoluteSocialImageUrl(socialImage) },
+        ]
+      : []),
     { name: 'twitter:title', content: yoastTitle || pageTitle },
     { name: 'twitter:description', content: metaDescription },
     { name: 'twitter:card', content: 'summary_large_image' },
