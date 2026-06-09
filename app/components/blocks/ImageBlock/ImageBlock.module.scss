@@ -93,7 +93,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: clamp(1.5rem, 10%, 3rem);
+  width: 100%;
+  box-sizing: border-box;
+  padding-block: clamp(1.5rem, 8vw, 3rem);
+  padding-inline: clamp(1.25rem, 6vw, 3rem);
   z-index: 1;
   gap: 0.75rem;
 }
@@ -169,7 +172,9 @@
 
 .title {
   font-family: var(--font-serif);
-  font-size: var(--text-hero);
+  width: 100%;
+  font-size: clamp(2rem, 8.5vw, var(--text-hero));
+  line-height: 1.08;
   color: var(--color-white);
   letter-spacing: 0.06em;
   text-shadow:
@@ -177,10 +182,14 @@
     0 4px 16px rgb(0 0 0 / 50%);
   margin: 0;
   opacity: var(--heading-opacity);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .subtitle {
-  font-size: var(--text-xl);
+  width: 100%;
+  font-size: clamp(1.125rem, 4.6vw, var(--text-xl));
+  line-height: 1.2;
   color: var(--color-white);
   font-style: italic;
   letter-spacing: 0.03em;
@@ -188,6 +197,9 @@
     0 1px 2px rgb(0 0 0 / 80%),
     0 4px 12px rgb(0 0 0 / 45%);
   opacity: var(--heading-opacity);
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 // ─── Pop out effect (#29) ───────────────────────────────────────────────────
@@ -223,10 +235,27 @@
 
 .overlayText {
   font-family: var(--font-serif);
-  font-size: var(--text-3xl);
+  width: 100%;
+  font-size: clamp(1.25rem, 5.2vw, var(--text-3xl));
+  line-height: 1.18;
   color: var(--color-white);
   letter-spacing: 0.06em;
   text-shadow:
     0 1px 2px rgb(0 0 0 / 80%),
     0 4px 16px rgb(0 0 0 / 50%);
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+@media (max-width: #{g.$bp-md}) {
+  .content {
+    gap: 0.625rem;
+  }
+
+  .title,
+  .subtitle,
+  .overlayText {
+    max-width: 100%;
+  }
 }
