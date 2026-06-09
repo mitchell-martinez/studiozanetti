@@ -29,4 +29,21 @@ describe('RichText', () => {
     const { container } = render(<RichText html="" />)
     expect(container.querySelector('p')).toBeNull()
   })
+
+  it('rewrites legacy studio host links and images to the canonical domain', () => {
+    const html =
+      '<p><a href="https://studiozanetti.mitchellmartinez.tech/contact">Contact</a></p>' +
+      '<p><img src="https://studiozanetti.mitchellmartinez.tech/uploads/pricing.webp" alt="Pricing" /></p>'
+
+    const { container } = render(<RichText html={html} />)
+
+    const link = container.querySelector('a')
+    const image = container.querySelector('img')
+
+    expect(link).toHaveAttribute('href', 'https://studiozanetti.com.au/contact')
+    expect(image).toHaveAttribute(
+      'src',
+      'https://studiozanetti.com.au/uploads/pricing.webp',
+    )
+  })
 })

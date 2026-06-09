@@ -33,3 +33,15 @@ export function decodeHtmlEntities(text: string): string {
 export function stripHtml(html: string): string {
   return decodeHtmlEntities(html.replace(/<[^>]+>/g, '')).trim()
 }
+
+const LEGACY_STUDIO_HOST_REGEX =
+  /(?:https?:)?\/\/(?:www\.)?studiozanetti\.mitchellmartinez\.tech(?=[:/?#]|$)/gi
+const CANONICAL_STUDIO_ORIGIN = 'https://studiozanetti.com.au'
+
+/**
+ * Rewrites legacy domain references embedded in WordPress HTML to the canonical
+ * production host used by the frontend.
+ */
+export function rewriteLegacyStudioHost(html: string): string {
+  return html.replace(LEGACY_STUDIO_HOST_REGEX, CANONICAL_STUDIO_ORIGIN)
+}

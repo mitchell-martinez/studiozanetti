@@ -1,4 +1,5 @@
 /** Renders trusted WordPress HTML content (WYSIWYG field or content.rendered). */
+import { rewriteLegacyStudioHost } from '~/lib/html'
 import { autoParagraph } from './helpers/autoParagraph'
 import styles from './RichText.module.scss'
 
@@ -19,7 +20,7 @@ const sizeClass: Record<FontSize, string> = {
 const RichText = ({ html, fontSize = 'sm' }: RichTextProps) => (
   <div
     className={`${styles.richText} ${sizeClass[fontSize]}`}
-    dangerouslySetInnerHTML={{ __html: autoParagraph(html ?? '') }}
+    dangerouslySetInnerHTML={{ __html: autoParagraph(rewriteLegacyStudioHost(html ?? '')) }}
   />
 )
 
