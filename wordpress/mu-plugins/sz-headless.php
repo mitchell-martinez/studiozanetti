@@ -1215,6 +1215,18 @@ function szRenderSocialSeoManager() {
 		'sort_order'  => 'ASC',
 	] );
 
+	$pages = array_values( array_filter( $pages, function ( $page ) {
+		if ( ! ( $page instanceof WP_Post ) ) {
+			return false;
+		}
+
+		if ( ! function_exists( 'get_field' ) ) {
+			return true;
+		}
+
+		return ! (bool) get_field( 'container_only', $page->ID );
+	} ) );
+
 	?>
 	<div class="wrap sz-social-seo-wrap">
 		<h1>SEO &amp; Social Previews</h1>
