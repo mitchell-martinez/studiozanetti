@@ -52,36 +52,35 @@ export default function handleRequest(
 
   return new Promise<Response>((resolve, reject) => {
     let shellRendered = false
+    let responseStarted = false
+    const body = new PassThrough()
+    const stream = createReadableStreamFromReadable(body)
+
+    const startResponse = () => {
+      if (responseStarted) return
+      responseStarted = true
+      responseHeaders.set('Content-Type', 'text/html')
+      resolve(
+        new Response(stream, {
+          headers: responseHeaders,
+          status: responseStatusCode,
+        }),
+      )
+    }
 
     const { pipe, abort } = renderToPipeableStream(
       <ServerRouter context={routerContext} url={request.url} />,
       {
         onShellReady() {
           shellRendered = true
-          const body = new PassThrough()
-          const stream = createReadableStreamFromReadable(body)
-          responseHeaders.set('Content-Type', 'text/html')
-          resolve(
-            new Response(stream, {
-              headers: responseHeaders,
-              status: responseStatusCode,
-            }),
-          )
-          if (!isBot) pipe(body)
+          if (!isBot) {
+            startResponse()
+            pipe(body)
+          }
         },
         onAllReady() {
           if (isBot) {
-            const body = new PassThrough()
-            const stream = createReadableStreamFromReadable(body)
-            responseHeaders.set('Content-Type', 'text/html')
-            if (!shellRendered) {
-              resolve(
-                new Response(stream, {
-                  headers: responseHeaders,
-                  status: responseStatusCode,
-                }),
-              )
-            }
+            startResponse()
             pipe(body)
           }
         },
