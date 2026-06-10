@@ -1096,17 +1096,10 @@ function szGetSocialMetaForPage( int $post_id, bool $with_fallback = false ): ar
 }
 
 /**
- * Save social SEO metadata posted from the manager page.
+ * Persist one or more social SEO rows using canonical page fields.
  */
-function szSaveSocialSeoManager(): void {
-	if ( ! current_user_can( 'edit_pages' ) ) {
-		return;
-	}
-
-	$raw_rows = $_POST['social'] ?? null;
-	if ( ! is_array( $raw_rows ) ) {
-		return;
-	}
+function szPersistSocialSeoRows( array $raw_rows ): array {
+	$saved_post_ids = [];
 
 	foreach ( $raw_rows as $post_id_raw => $row ) {
 		$post_id = (int) $post_id_raw;
@@ -1146,8 +1139,60 @@ function szSaveSocialSeoManager(): void {
 		} else {
 			delete_post_thumbnail( $post_id );
 		}
+
+		$saved_post_ids[] = $post_id;
 	}
+
+	return $saved_post_ids;
 }
+
+/**
+ * Save social SEO metadata posted from the manager page.
+ */
+function szSaveSocialSeoManager(): void {
+	if ( ! current_user_can( 'edit_pages' ) ) {
+		return;
+	}
+
+	$raw_rows = $_POST['social'] ?? null;
+	if ( ! is_array( $raw_rows ) ) {
+		return;
+	}
+
+	szPersistSocialSeoRows( $raw_rows );
+}
+
+add_action( 'wp_ajax_sz_social_seo_autosave', function () {
+	if ( ! current_user_can( 'edit_pages' ) ) {
+		wp_send_json_error( [ 'message' => 'Insufficient permissions.' ], 403 );
+	}
+
+	check_ajax_referer( 'sz_social_seo_manager_save', 'nonce' );
+
+	$post_id = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+	if ( $post_id <= 0 ) {
+		wp_send_json_error( [ 'message' => 'Invalid page.' ], 400 );
+	}
+
+	$row = [
+		'title'       => isset( $_POST['title'] ) ? wp_unslash( (string) $_POST['title'] ) : '',
+		'description' => isset( $_POST['description'] ) ? wp_unslash( (string) $_POST['description'] ) : '',
+		'keywords'    => isset( $_POST['keywords'] ) ? wp_unslash( (string) $_POST['keywords'] ) : '',
+		'image_id'    => isset( $_POST['image_id'] ) ? (int) $_POST['image_id'] : 0,
+	];
+
+	$saved = szPersistSocialSeoRows( [ $post_id => $row ] );
+	if ( empty( $saved ) ) {
+		wp_send_json_error( [ 'message' => 'Nothing was saved.' ], 400 );
+	}
+
+	$meta = szGetSocialMetaForPage( $post_id, true );
+
+	wp_send_json_success( [
+		'post_id' => $post_id,
+		'meta'    => $meta,
+	] );
+} );
 
 /**
  * Render SEO & Social manager admin page.
@@ -1179,6 +1224,7 @@ function szRenderSocialSeoManager() {
 			<input id="sz-social-filter" type="search" class="regular-text" placeholder="Filter pages by title or path" />
 			<button type="button" class="button" id="sz-expand-all">Expand All</button>
 			<button type="button" class="button" id="sz-collapse-all">Collapse All</button>
+			<span class="sz-autosave-status" aria-live="polite">Autosave ready</span>
 			<span class="sz-filter-count" aria-live="polite"></span>
 		</div>
 
@@ -1208,6 +1254,7 @@ function szRenderSocialSeoManager() {
 						?>
 						<section
 							class="sz-social-row"
+							data-post-id="<?php echo esc_attr( (string) $post_id ); ?>"
 							data-page-title="<?php echo esc_attr( strtolower( $page_title ) ); ?>"
 							data-page-path="<?php echo esc_attr( strtolower( $page_permalink_label ) ); ?>"
 							data-expanded="true"
@@ -1217,6 +1264,7 @@ function szRenderSocialSeoManager() {
 									<strong><?php echo esc_html( $page_title ); ?></strong>
 									<span class="sz-status-badge <?php echo $is_ready ? 'sz-status-complete' : 'sz-status-incomplete'; ?>"><?php echo esc_html( $status_text ); ?></span>
 									<small><?php echo esc_html( $page_permalink_label ); ?></small>
+									<span class="sz-save-state" aria-live="polite">Saved</span>
 									<a href="<?php echo esc_url( get_edit_post_link( $post_id, '' ) ?: '' ); ?>">Edit Page</a>
 								</div>
 								<button type="button" class="button sz-row-toggle" aria-expanded="true">Collapse</button>
@@ -1408,6 +1456,23 @@ function szRenderSocialSeoManager() {
 			color: #50575e;
 			font-size: 12px;
 		}
+		.sz-social-seo-wrap .sz-autosave-status,
+		.sz-social-seo-wrap .sz-save-state {
+			font-size: 12px;
+			color: #667085;
+		}
+		.sz-social-seo-wrap .sz-autosave-status.sz-state-saving,
+		.sz-social-seo-wrap .sz-save-state.sz-state-saving {
+			color: #8a6d3b;
+		}
+		.sz-social-seo-wrap .sz-autosave-status.sz-state-saved,
+		.sz-social-seo-wrap .sz-save-state.sz-state-saved {
+			color: #155724;
+		}
+		.sz-social-seo-wrap .sz-autosave-status.sz-state-error,
+		.sz-social-seo-wrap .sz-save-state.sz-state-error {
+			color: #b32d2e;
+		}
 		.sz-social-seo-wrap .sz-status-badge {
 			display: inline-block;
 			margin-left: 8px;
@@ -1519,6 +1584,12 @@ function szRenderSocialSeoManager() {
 	(function () {
 		'use strict';
 
+		var AJAX_URL = <?php echo wp_json_encode( admin_url( 'admin-ajax.php' ) ); ?>;
+		var AUTOSAVE_NONCE = <?php echo wp_json_encode( wp_create_nonce( 'sz_social_seo_manager_save' ) ); ?>;
+		var autosaveTimers = {};
+		var autosaveRequests = {};
+		var autosaveStatus = document.querySelector('.sz-autosave-status');
+
 		var PREVIEW_LIMITS = {
 			google: { title: 60, description: 160 },
 			facebook: { title: 88, description: 200 },
@@ -1529,6 +1600,99 @@ function szRenderSocialSeoManager() {
 			if (!text) return '';
 			if (text.length <= max) return text;
 			return text.slice(0, max - 1).trimEnd() + '…';
+		}
+
+		function setGlobalAutosaveStatus(text, state) {
+			if (!autosaveStatus) return;
+			autosaveStatus.textContent = text;
+			autosaveStatus.classList.remove('sz-state-saving', 'sz-state-saved', 'sz-state-error');
+			if (state) autosaveStatus.classList.add(state);
+		}
+
+		function setRowSaveState(row, text, state) {
+			var saveState = row.querySelector('.sz-save-state');
+			if (!saveState) return;
+			saveState.textContent = text;
+			saveState.classList.remove('sz-state-saving', 'sz-state-saved', 'sz-state-error');
+			if (state) saveState.classList.add(state);
+		}
+
+		function collectRowPayload(row) {
+			var postId = row.getAttribute('data-post-id') || '';
+			var title = row.querySelector('.sz-social-title');
+			var description = row.querySelector('.sz-social-description');
+			var keywords = row.querySelector('.sz-social-keywords');
+			var imageId = row.querySelector('.sz-social-image-id');
+
+			return {
+				post_id: postId,
+				title: title ? title.value : '',
+				description: description ? description.value : '',
+				keywords: keywords ? keywords.value : '',
+				image_id: imageId ? imageId.value : '0'
+			};
+		}
+
+		function saveRow(row) {
+			var payload = collectRowPayload(row);
+			if (!payload.post_id) return;
+
+			if (autosaveRequests[payload.post_id]) {
+				autosaveRequests[payload.post_id].abort();
+			}
+
+			setRowSaveState(row, 'Saving…', 'sz-state-saving');
+			setGlobalAutosaveStatus('Saving changes…', 'sz-state-saving');
+
+			var formData = new FormData();
+			formData.append('action', 'sz_social_seo_autosave');
+			formData.append('nonce', AUTOSAVE_NONCE);
+			formData.append('post_id', payload.post_id);
+			formData.append('title', payload.title);
+			formData.append('description', payload.description);
+			formData.append('keywords', payload.keywords);
+			formData.append('image_id', payload.image_id);
+
+			var controller = new AbortController();
+			autosaveRequests[payload.post_id] = controller;
+
+			fetch(AJAX_URL, {
+				method: 'POST',
+				body: formData,
+				signal: controller.signal,
+				credentials: 'same-origin'
+			})
+				.then(function (response) { return response.json(); })
+				.then(function (result) {
+					if (!result || !result.success) {
+						throw new Error((result && result.data && result.data.message) || 'Autosave failed.');
+					}
+					setRowSaveState(row, 'Saved', 'sz-state-saved');
+					setGlobalAutosaveStatus('All changes saved', 'sz-state-saved');
+				})
+				.catch(function (error) {
+					if (error && error.name === 'AbortError') return;
+					setRowSaveState(row, 'Save failed', 'sz-state-error');
+					setGlobalAutosaveStatus('Autosave failed', 'sz-state-error');
+				})
+				.finally(function () {
+					if (autosaveRequests[payload.post_id] === controller) {
+						delete autosaveRequests[payload.post_id];
+					}
+				});
+		}
+
+		function scheduleAutosave(row) {
+			var postId = row.getAttribute('data-post-id');
+			if (!postId) return;
+			if (autosaveTimers[postId]) {
+				window.clearTimeout(autosaveTimers[postId]);
+			}
+			setRowSaveState(row, 'Unsaved changes', null);
+			setGlobalAutosaveStatus('Unsaved changes', null);
+			autosaveTimers[postId] = window.setTimeout(function () {
+				saveRow(row);
+			}, 700);
 		}
 
 		function updateRowPreview(row) {
@@ -1641,6 +1805,7 @@ function szRenderSocialSeoManager() {
 						if (imageIdInput) imageIdInput.value = String(media.id || '');
 						if (imageUrlInput) imageUrlInput.value = media.url || '';
 						updateRowPreview(row);
+						scheduleAutosave(row);
 					});
 
 					frame.open();
@@ -1652,6 +1817,7 @@ function szRenderSocialSeoManager() {
 					if (imageIdInput) imageIdInput.value = '';
 					if (imageUrlInput) imageUrlInput.value = '';
 					updateRowPreview(row);
+					scheduleAutosave(row);
 				});
 			}
 		}
@@ -1706,11 +1872,13 @@ function szRenderSocialSeoManager() {
 			row.querySelectorAll('.sz-social-title, .sz-social-description, .sz-social-keywords, .sz-social-image-url').forEach(function (input) {
 				input.addEventListener('input', function () {
 					updateRowPreview(row);
+					scheduleAutosave(row);
 				});
 			});
 
 			bindRowToggle(row);
 			bindImagePicker(row);
+			setRowSaveState(row, 'Saved', 'sz-state-saved');
 			updateRowPreview(row);
 		});
 
