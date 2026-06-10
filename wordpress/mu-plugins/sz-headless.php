@@ -1256,10 +1256,10 @@ function szRenderSocialSeoManager() {
 						$page_title  = (string) get_the_title( $post_id );
 						$page_path   = '/' . ltrim( (string) get_page_uri( $post_id ), '/' );
 						$page_permalink_label = $page_url !== '' ? $page_url : $page_path;
+						$has_title           = ! empty( $override['title'] );
 						$has_seo_description = ! empty( $override['description'] );
-						$has_share_image     = ! empty( $override['image_id'] );
-						$is_ready            = $has_seo_description && $has_share_image;
-						$status_text         = $is_ready ? 'Ready for Sharing' : 'Needs SEO Fields';
+						$has_keywords        = ! empty( $override['keywords'] );
+						$has_share_image     = (int) ( $override['image_id'] ?? 0 ) > 0;
 						$preview_img = is_array( $preview['image'] ?? null ) && ! empty( $preview['image']['url'] )
 							? (string) $preview['image']['url']
 							: '';
@@ -1274,8 +1274,13 @@ function szRenderSocialSeoManager() {
 							<div class="sz-social-row__header">
 								<div class="sz-social-row__titleblock">
 									<strong><?php echo esc_html( $page_title ); ?></strong>
-									<span class="sz-status-badge <?php echo $is_ready ? 'sz-status-complete' : 'sz-status-incomplete'; ?>"><?php echo esc_html( $status_text ); ?></span>
 									<small><?php echo esc_html( $page_permalink_label ); ?></small>
+									<div class="sz-field-badges">
+										<span class="sz-field-badge" data-field="title"><?php echo $has_title ? '✓' : '○'; ?> Title</span>
+										<span class="sz-field-badge" data-field="description"><?php echo $has_seo_description ? '✓' : '○'; ?> Description</span>
+										<span class="sz-field-badge" data-field="keywords"><?php echo $has_keywords ? '✓' : '○'; ?> Keywords</span>
+										<span class="sz-field-badge" data-field="image"><?php echo $has_share_image ? '✓' : '○'; ?> Image</span>
+									</div>
 									<span class="sz-save-state" aria-live="polite">Saved</span>
 									<a href="<?php echo esc_url( get_edit_post_link( $post_id, '' ) ?: '' ); ?>">Edit Page</a>
 								</div>
@@ -1424,6 +1429,36 @@ function szRenderSocialSeoManager() {
 		}
 		.sz-social-seo-wrap .sz-social-row__titleblock small {
 			color: #667085;
+		}
+		.sz-social-seo-wrap .sz-field-badges {
+			display: flex;
+			gap: 6px;
+			flex-wrap: wrap;
+		}
+		.sz-social-seo-wrap .sz-field-badge {
+			display: inline-flex;
+			align-items: center;
+			gap: 3px;
+			padding: 2px 10px;
+			border-radius: 999px;
+			font-size: 11px;
+			font-weight: 600;
+			line-height: 1.8;
+			background: #e8eaed;
+			color: #3c434a;
+			transition: background 0.15s, color 0.15s;
+		}
+		.sz-social-seo-wrap .sz-field-badge.sz-badge-set {
+			background: #d4f5dd;
+			color: #155724;
+		}
+		.sz-social-seo-wrap .sz-field-badge.sz-badge-missing {
+			background: #fdf0d5;
+			color: #7a4f00;
+		}
+		.sz-social-seo-wrap .sz-field-badge.sz-badge-optional {
+			background: #e8eaed;
+			color: #3c434a;
 		}
 		.sz-social-seo-wrap .sz-social-row__body {
 			padding: 18px;
@@ -1723,16 +1758,28 @@ function szRenderSocialSeoManager() {
 
 			var title = (titleInput && titleInput.value.trim()) || defaultTitle;
 			var description = (descInput && descInput.value.trim()) || defaultDescription;
+			var hasTitle = titleInput && titleInput.value.trim().length > 0;
 			var hasSeoDescription = descInput && descInput.value.trim().length > 0;
-			var hasShareImage = imageIdInput && imageIdInput.value.trim().length > 0;
-			var isReady = hasSeoDescription && hasShareImage;
+			var hasKeywords = row.querySelector('.sz-social-keywords') && row.querySelector('.sz-social-keywords').value.trim().length > 0;
+			var hasShareImage = imageIdInput && imageIdInput.value.trim().length > 0 && imageIdInput.value.trim() !== '0';
 			var imageUrl = (imgUrlInput && imgUrlInput.value.trim()) || '';
 
-			if (statusBadge) {
-				statusBadge.textContent = isReady ? 'Ready for Sharing' : 'Needs SEO Fields';
-				statusBadge.classList.toggle('sz-status-complete', isReady);
-				statusBadge.classList.toggle('sz-status-incomplete', !isReady);
-			}
+			var fieldBadgeStates = {
+				title: hasTitle ? 'set' : 'missing',
+				description: hasSeoDescription ? 'set' : 'missing',
+				keywords: hasKeywords ? 'set' : 'optional',
+				image: hasShareImage ? 'set' : 'missing'
+			};
+
+			row.querySelectorAll('.sz-field-badge').forEach(function (badge) {
+				var field = badge.getAttribute('data-field');
+				if (!field || !fieldBadgeStates[field]) return;
+				var state = fieldBadgeStates[field];
+				badge.classList.remove('sz-badge-set', 'sz-badge-missing', 'sz-badge-optional');
+				badge.classList.add('sz-badge-' + state);
+				var icon = state === 'set' ? '✓' : '○';
+				badge.textContent = icon + ' ' + field.charAt(0).toUpperCase() + field.slice(1);
+			});
 
 			updateCounters(row, title, description);
 
@@ -1804,12 +1851,18 @@ function szRenderSocialSeoManager() {
 			var imageIdInput = row.querySelector('.sz-social-image-id');
 			var imageUrlInput = row.querySelector('.sz-social-image-url');
 
-			if (pickBtn && window.wp && window.wp.media) {
+			if (pickBtn) {
 				pickBtn.addEventListener('click', function () {
+					if (!window.wp || !window.wp.media) {
+						return;
+					}
+
+					var postId = parseInt(row.getAttribute('data-post-id') || '0', 10);
 					var frame = window.wp.media({
 						title: 'Choose Social Preview Image',
 						button: { text: 'Use this image' },
 						multiple: false,
+						post: postId || undefined,
 					});
 
 					frame.on('select', function () {
