@@ -1197,6 +1197,7 @@ function szRenderSocialSeoManager() {
 						$page_url    = get_permalink( $post_id ) ?: '';
 						$page_title  = (string) get_the_title( $post_id );
 						$page_path   = '/' . ltrim( (string) get_page_uri( $post_id ), '/' );
+						$page_permalink_label = $page_url !== '' ? $page_url : $page_path;
 						$has_seo_description = ! empty( $override['description'] );
 						$has_share_image     = ! empty( $override['image_id'] );
 						$is_ready            = $has_seo_description && $has_share_image;
@@ -1208,14 +1209,14 @@ function szRenderSocialSeoManager() {
 						<section
 							class="sz-social-row"
 							data-page-title="<?php echo esc_attr( strtolower( $page_title ) ); ?>"
-							data-page-path="<?php echo esc_attr( strtolower( $page_path ) ); ?>"
+							data-page-path="<?php echo esc_attr( strtolower( $page_permalink_label ) ); ?>"
 							data-expanded="true"
 						>
 							<div class="sz-social-row__header">
 								<div class="sz-social-row__titleblock">
 									<strong><?php echo esc_html( $page_title ); ?></strong>
 									<span class="sz-status-badge <?php echo $is_ready ? 'sz-status-complete' : 'sz-status-incomplete'; ?>"><?php echo esc_html( $status_text ); ?></span>
-									<small><?php echo esc_html( $page_path ); ?></small>
+									<small><?php echo esc_html( $page_permalink_label ); ?></small>
 									<a href="<?php echo esc_url( get_edit_post_link( $post_id, '' ) ?: '' ); ?>">Edit Page</a>
 								</div>
 								<button type="button" class="button sz-row-toggle" aria-expanded="true">Collapse</button>
