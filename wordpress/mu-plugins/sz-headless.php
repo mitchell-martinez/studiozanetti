@@ -1177,6 +1177,8 @@ function szRenderSocialSeoManager() {
 		<div class="sz-social-toolbar">
 			<label for="sz-social-filter" class="screen-reader-text">Filter pages</label>
 			<input id="sz-social-filter" type="search" class="regular-text" placeholder="Filter pages by title or path" />
+			<button type="button" class="button" id="sz-expand-all">Expand All</button>
+			<button type="button" class="button" id="sz-collapse-all">Collapse All</button>
 			<span class="sz-filter-count" aria-live="polite"></span>
 		</div>
 
@@ -1186,18 +1188,7 @@ function szRenderSocialSeoManager() {
 
 		<form method="post">
 			<?php wp_nonce_field( 'sz_social_seo_manager_save', 'sz_social_seo_manager_nonce' ); ?>
-			<table class="widefat fixed striped">
-				<thead>
-					<tr>
-						<th style="width:220px;">Page</th>
-						<th style="width:240px;">Title</th>
-						<th style="width:300px;">Description</th>
-						<th style="width:220px;">Keywords</th>
-						<th style="width:260px;">Image</th>
-						<th>Preview</th>
-					</tr>
-				</thead>
-				<tbody>
+			<div class="sz-social-cards">
 					<?php foreach ( $pages as $page ) : ?>
 						<?php
 						$post_id     = (int) $page->ID;
@@ -1214,75 +1205,91 @@ function szRenderSocialSeoManager() {
 							? (string) $preview['image']['url']
 							: '';
 						?>
-						<tr
+						<section
 							class="sz-social-row"
 							data-page-title="<?php echo esc_attr( strtolower( $page_title ) ); ?>"
 							data-page-path="<?php echo esc_attr( strtolower( $page_path ) ); ?>"
+							data-expanded="true"
 						>
-							<td>
-								<strong><?php echo esc_html( $page_title ); ?></strong>
-								<span class="sz-status-badge <?php echo $is_ready ? 'sz-status-complete' : 'sz-status-incomplete'; ?>"><?php echo esc_html( $status_text ); ?></span><br>
-								<small><?php echo esc_html( $page_path ); ?></small><br>
-								<a href="<?php echo esc_url( get_edit_post_link( $post_id, '' ) ?: '' ); ?>">Edit Page</a>
-							</td>
-							<td>
-								<input
+							<div class="sz-social-row__header">
+								<div class="sz-social-row__titleblock">
+									<strong><?php echo esc_html( $page_title ); ?></strong>
+									<span class="sz-status-badge <?php echo $is_ready ? 'sz-status-complete' : 'sz-status-incomplete'; ?>"><?php echo esc_html( $status_text ); ?></span>
+									<small><?php echo esc_html( $page_path ); ?></small>
+									<a href="<?php echo esc_url( get_edit_post_link( $post_id, '' ) ?: '' ); ?>">Edit Page</a>
+								</div>
+								<button type="button" class="button sz-row-toggle" aria-expanded="true">Collapse</button>
+							</div>
+							<div class="sz-social-row__body">
+								<div class="sz-social-fields-grid">
+									<div class="sz-field-box">
+										<label class="sz-field-label" for="sz-social-title-<?php echo esc_attr( (string) $post_id ); ?>">Title</label>
+										<input
+											id="sz-social-title-<?php echo esc_attr( (string) $post_id ); ?>"
 									type="text"
 									class="regular-text sz-social-title"
 									name="social[<?php echo esc_attr( (string) $post_id ); ?>][title]"
 									value="<?php echo esc_attr( (string) ( $override['title'] ?? '' ) ); ?>"
 									placeholder="Same title as the page editor"
 								>
-								<div class="sz-char-guidance" data-kind="title">
+										<div class="sz-char-guidance" data-kind="title">
 									<small class="sz-char-item" data-limit="60">Google: <span class="sz-char-count">0</span>/60</small>
 									<small class="sz-char-item" data-limit="88">Facebook: <span class="sz-char-count">0</span>/88</small>
 									<small class="sz-char-item" data-limit="70">X: <span class="sz-char-count">0</span>/70</small>
+										</div>
 								</div>
-							</td>
-							<td>
-								<textarea
+									<div class="sz-field-box">
+										<label class="sz-field-label" for="sz-social-description-<?php echo esc_attr( (string) $post_id ); ?>">Description</label>
+										<textarea
+											id="sz-social-description-<?php echo esc_attr( (string) $post_id ); ?>"
 									rows="4"
 									class="large-text sz-social-description"
 									name="social[<?php echo esc_attr( (string) $post_id ); ?>][description]"
 									placeholder="Same Page Description field shown in page editor"
 								><?php echo esc_textarea( (string) ( $override['description'] ?? '' ) ); ?></textarea>
-								<div class="sz-char-guidance" data-kind="description">
+										<div class="sz-char-guidance" data-kind="description">
 									<small class="sz-char-item" data-limit="160">Google: <span class="sz-char-count">0</span>/160</small>
 									<small class="sz-char-item" data-limit="200">Facebook: <span class="sz-char-count">0</span>/200</small>
 									<small class="sz-char-item" data-limit="200">X: <span class="sz-char-count">0</span>/200</small>
+										</div>
 								</div>
-							</td>
-							<td>
-								<input
+									<div class="sz-field-box">
+										<label class="sz-field-label" for="sz-social-keywords-<?php echo esc_attr( (string) $post_id ); ?>">Keywords</label>
+										<input
+											id="sz-social-keywords-<?php echo esc_attr( (string) $post_id ); ?>"
 									type="text"
 									class="regular-text sz-social-keywords"
 									name="social[<?php echo esc_attr( (string) $post_id ); ?>][keywords]"
 									value="<?php echo esc_attr( (string) ( $override['keywords'] ?? '' ) ); ?>"
 									placeholder="Same Page Keywords field shown in page editor"
 								>
-								<small>Comma-separated keywords for SEO metadata.</small>
-							</td>
-							<td>
-								<input
+										<small>Comma-separated keywords for SEO metadata.</small>
+									</div>
+									<div class="sz-field-box">
+										<label class="sz-field-label" for="sz-social-image-url-<?php echo esc_attr( (string) $post_id ); ?>">Featured Image</label>
+										<input
 									type="hidden"
 									class="sz-social-image-id"
 									name="social[<?php echo esc_attr( (string) $post_id ); ?>][image_id]"
 									value="<?php echo esc_attr( (string) ( $override['image_id'] ?? 0 ) ); ?>"
 								>
-								<input
+										<input
+											id="sz-social-image-url-<?php echo esc_attr( (string) $post_id ); ?>"
 									type="text"
 									class="regular-text sz-social-image-url"
 									value="<?php echo esc_attr( $preview_img ); ?>"
 									readonly
 								>
-								<p>
+										<p class="sz-image-actions">
 									<button type="button" class="button sz-pick-image">Choose Image</button>
 									<button type="button" class="button sz-clear-image">Clear</button>
 								</p>
-								<small>Used as the display image for social media link previews.</small>
-							</td>
-							<td>
-								<div
+										<small>Used as the display image for social media link previews.</small>
+									</div>
+								</div>
+								<div class="sz-preview-section">
+									<div class="sz-preview-section__label">Live Previews</div>
+									<div
 									class="sz-preview-cards"
 									data-default-title="<?php echo esc_attr( (string) ( $preview['title'] ?? '' ) ); ?>"
 									data-default-description="<?php echo esc_attr( (string) ( $preview['description'] ?? '' ) ); ?>"
@@ -1307,11 +1314,11 @@ function szRenderSocialSeoManager() {
 										<div class="sz-card-description"></div>
 									</div>
 								</div>
-							</td>
-						</tr>
+								</div>
+							</div>
+						</section>
 					<?php endforeach; ?>
-				</tbody>
-			</table>
+			</div>
 
 			<p style="margin-top:16px;">
 				<button type="submit" name="sz_social_save_all" class="button button-primary button-large">Save All Changes</button>
@@ -1323,8 +1330,78 @@ function szRenderSocialSeoManager() {
 		.sz-social-seo-wrap .sz-social-toolbar {
 			display: flex;
 			align-items: center;
+			flex-wrap: wrap;
 			gap: 10px;
 			margin: 10px 0 14px;
+		}
+		.sz-social-seo-wrap .sz-social-cards {
+			display: grid;
+			gap: 16px;
+		}
+		.sz-social-seo-wrap .sz-social-row {
+			border: 1px solid #d0d7de;
+			border-radius: 14px;
+			background: #ffffff;
+			box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+			overflow: hidden;
+		}
+		.sz-social-seo-wrap .sz-social-row__header {
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-start;
+			gap: 16px;
+			padding: 16px 18px;
+			background: linear-gradient(180deg, #fcfcfd 0%, #f8fafc 100%);
+			border-bottom: 1px solid #eaecf0;
+		}
+		.sz-social-seo-wrap .sz-social-row__titleblock {
+			display: grid;
+			gap: 4px;
+		}
+		.sz-social-seo-wrap .sz-social-row__titleblock strong {
+			font-size: 16px;
+		}
+		.sz-social-seo-wrap .sz-social-row__titleblock small {
+			color: #667085;
+		}
+		.sz-social-seo-wrap .sz-social-row__body {
+			padding: 18px;
+			display: grid;
+			gap: 18px;
+		}
+		.sz-social-seo-wrap .sz-social-row[data-expanded="false"] .sz-social-row__body {
+			display: none;
+		}
+		.sz-social-seo-wrap .sz-social-fields-grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(280px, 1fr));
+			gap: 16px;
+		}
+		.sz-social-seo-wrap .sz-field-box {
+			display: grid;
+			gap: 8px;
+			padding: 14px;
+			border: 1px solid #eaecf0;
+			border-radius: 12px;
+			background: #fbfdff;
+			min-width: 0;
+		}
+		.sz-social-seo-wrap .sz-field-label {
+			font-size: 12px;
+			font-weight: 600;
+			letter-spacing: 0.02em;
+			color: #344054;
+		}
+		.sz-social-seo-wrap .sz-field-box input[type="text"],
+		.sz-social-seo-wrap .sz-field-box textarea {
+			width: 100%;
+			max-width: none;
+		}
+		.sz-social-seo-wrap .sz-image-actions {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+			margin: 0;
 		}
 		.sz-social-seo-wrap .sz-filter-count {
 			color: #50575e;
@@ -1364,13 +1441,25 @@ function szRenderSocialSeoManager() {
 		}
 		.sz-social-seo-wrap .sz-preview-cards {
 			display: grid;
-			gap: 8px;
+			grid-template-columns: repeat(3, minmax(260px, 1fr));
+			gap: 12px;
+		}
+		.sz-social-seo-wrap .sz-preview-section {
+			display: grid;
+			gap: 10px;
+		}
+		.sz-social-seo-wrap .sz-preview-section__label {
+			font-size: 12px;
+			font-weight: 600;
+			letter-spacing: 0.02em;
+			color: #344054;
 		}
 		.sz-social-seo-wrap .sz-card {
 			border: 1px solid #dcdcde;
-			border-radius: 8px;
-			padding: 8px;
+			border-radius: 12px;
+			padding: 12px;
 			background: #fff;
+			min-width: 0;
 		}
 		.sz-social-seo-wrap .sz-card-label {
 			font-size: 11px;
@@ -1407,8 +1496,21 @@ function szRenderSocialSeoManager() {
 		.sz-social-seo-wrap .sz-card-image {
 			display: block;
 			width: 100%;
-			height: 120px;
+			height: 160px;
 			object-fit: cover;
+		}
+		@media screen and (max-width: 1200px) {
+			.sz-social-seo-wrap .sz-preview-cards {
+				grid-template-columns: 1fr;
+			}
+		}
+		@media screen and (max-width: 900px) {
+			.sz-social-seo-wrap .sz-social-fields-grid {
+				grid-template-columns: 1fr;
+			}
+			.sz-social-seo-wrap .sz-social-row__header {
+				flex-direction: column;
+			}
 		}
 	</style>
 
@@ -1553,6 +1655,26 @@ function szRenderSocialSeoManager() {
 			}
 		}
 
+		function setRowExpanded(row, expanded) {
+			if (!row) return;
+			row.setAttribute('data-expanded', expanded ? 'true' : 'false');
+			var toggle = row.querySelector('.sz-row-toggle');
+			if (toggle) {
+				toggle.textContent = expanded ? 'Collapse' : 'Expand';
+				toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+			}
+		}
+
+		function bindRowToggle(row) {
+			var toggle = row.querySelector('.sz-row-toggle');
+			if (!toggle) return;
+
+			toggle.addEventListener('click', function () {
+				var expanded = row.getAttribute('data-expanded') !== 'false';
+				setRowExpanded(row, !expanded);
+			});
+		}
+
 		function filterRows() {
 			var filterInput = document.getElementById('sz-social-filter');
 			var countEl = document.querySelector('.sz-filter-count');
@@ -1568,7 +1690,10 @@ function szRenderSocialSeoManager() {
 				var path = row.getAttribute('data-page-path') || '';
 				var match = !query || title.indexOf(query) !== -1 || path.indexOf(query) !== -1;
 				row.style.display = match ? '' : 'none';
-				if (match) visible += 1;
+				if (match) {
+					visible += 1;
+					if (query) setRowExpanded(row, true);
+				}
 			});
 
 			if (countEl) {
@@ -1583,9 +1708,28 @@ function szRenderSocialSeoManager() {
 				});
 			});
 
+			bindRowToggle(row);
 			bindImagePicker(row);
 			updateRowPreview(row);
 		});
+
+		var expandAllBtn = document.getElementById('sz-expand-all');
+		if (expandAllBtn) {
+			expandAllBtn.addEventListener('click', function () {
+				document.querySelectorAll('.sz-social-row').forEach(function (row) {
+					setRowExpanded(row, true);
+				});
+			});
+		}
+
+		var collapseAllBtn = document.getElementById('sz-collapse-all');
+		if (collapseAllBtn) {
+			collapseAllBtn.addEventListener('click', function () {
+				document.querySelectorAll('.sz-social-row').forEach(function (row) {
+					setRowExpanded(row, false);
+				});
+			});
+		}
 
 		var filterInput = document.getElementById('sz-social-filter');
 		if (filterInput) {
@@ -1779,6 +1923,81 @@ add_action( 'admin_head', function () {
 			padding: 12px !important;
 			min-height: 52px !important;
 			border-radius: 6px !important;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings {
+			margin-top: 12px !important;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .inside {
+			padding-bottom: 12px !important;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .acf-fields > .acf-field {
+			padding-left: 12px !important;
+			padding-right: 12px !important;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image {
+			margin: 12px;
+			padding-top: 12px;
+			border-top: 1px solid #dcdcde;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image h3 {
+			margin: 0 0 8px;
+			font-size: 13px;
+			line-height: 1.4;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug {
+			margin: 12px;
+			padding-top: 12px;
+			border-top: 1px solid #dcdcde;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug h3,
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv {
+			margin: 0;
+			border: 0;
+			box-shadow: none;
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug p.description {
+			margin: 0 0 8px;
+			color: #50575e;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug #edit-slug-box {
+			padding: 0;
+			margin: 0;
+			min-height: 0;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug #edit-slug-box strong {
+			display: none;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug #sample-permalink,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug #editable-post-name-full {
+			word-break: break-word;
+		}
+			background: transparent;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv .hndle,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv .handlediv {
+			display: none;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv .inside {
+			padding: 0;
+			margin: 0;
+		}
+
+		body.post-type-page #pageparentdiv,
+		body.post-type-page #authordiv {
+			margin-top: 16px !important;
 		}
 
 		/* Keep preview panel clean but non-invasive */
@@ -2023,6 +2242,73 @@ function sz_live_preview_js() {
 			titleInput.style.visibility = 'visible';
 			titleInput.style.opacity = '1';
 		}
+
+		function movePageEditorMetaBoxes() {
+			var sideSortables = document.getElementById('side-sortables');
+			var normalSortables = document.getElementById('normal-sortables');
+			var pageSettingsBox = document.getElementById('acf-group_sz_page_settings');
+			var publishBox = document.getElementById('submitdiv');
+			var slugBox = document.getElementById('edit-slug-box');
+			var featuredImageBox = document.getElementById('postimagediv');
+			var pageAttributesBox = document.getElementById('pageparentdiv');
+			var authorBox = document.getElementById('authordiv');
+
+			if (sideSortables && pageSettingsBox) {
+				var publishNext = publishBox && publishBox.parentNode === sideSortables
+					? publishBox.nextSibling
+					: sideSortables.firstChild;
+				sideSortables.insertBefore(pageSettingsBox, publishNext);
+			}
+
+			if (pageSettingsBox && featuredImageBox) {
+				var inside = pageSettingsBox.querySelector('.inside');
+				var keywordsField = pageSettingsBox.querySelector('.acf-field[data-name="page_keywords"]');
+				if (inside && slugBox && !inside.querySelector('.sz-page-settings-slug')) {
+					var slugWrapper = document.createElement('div');
+					slugWrapper.className = 'sz-page-settings-slug';
+					var slugHeading = document.createElement('h3');
+					slugHeading.textContent = 'Slug';
+					var slugCaption = document.createElement('p');
+					slugCaption.className = 'description';
+					slugCaption.textContent = 'Controls the URL of the page. Change this if you want to override the URL to something different to the Page Title.';
+					slugWrapper.appendChild(slugHeading);
+					slugWrapper.appendChild(slugCaption);
+					slugWrapper.appendChild(slugBox);
+
+					if (keywordsField && keywordsField.parentNode === inside) {
+						inside.insertBefore(slugWrapper, keywordsField);
+					} else {
+						inside.appendChild(slugWrapper);
+					}
+				}
+
+				if (inside && !inside.querySelector('.sz-page-settings-featured-image')) {
+					var wrapper = document.createElement('div');
+					wrapper.className = 'sz-page-settings-featured-image';
+					var heading = document.createElement('h3');
+					heading.textContent = 'Featured Image';
+					wrapper.appendChild(heading);
+					wrapper.appendChild(featuredImageBox);
+
+					if (keywordsField && keywordsField.parentNode === inside) {
+						inside.insertBefore(wrapper, keywordsField);
+					} else {
+						inside.appendChild(wrapper);
+					}
+				}
+			}
+
+			if (normalSortables) {
+				if (pageAttributesBox) {
+					normalSortables.appendChild(pageAttributesBox);
+				}
+				if (authorBox) {
+					normalSortables.appendChild(authorBox);
+				}
+			}
+		}
+
+		movePageEditorMetaBoxes();
 
 		var iframe          = document.getElementById('sz-preview-frame');
 		var refreshBtn      = document.getElementById('sz-refresh-preview');
@@ -2383,6 +2669,7 @@ function sz_live_preview_js() {
 		}
 
 		if (typeof window.acf !== 'undefined' && typeof window.acf.addAction === 'function') {
+			window.acf.addAction('ready', function () { movePageEditorMetaBoxes(); });
 			window.acf.addAction('append', function () { markPending(); });
 			window.acf.addAction('remove', function () { markPending(); });
 			window.acf.addAction('sortstop', function () { markPending(); });

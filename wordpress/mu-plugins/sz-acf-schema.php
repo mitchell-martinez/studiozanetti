@@ -768,16 +768,6 @@ add_action( 'acf/init', function () {
 		'show_in_rest' => 1,
 		'fields' => [
 			[
-				'key' => 'field_sz_menu_override',
-				'label' => 'Menu Override',
-				'name' => 'menu_override',
-				'type' => 'select',
-				'allow_null' => 1,
-				'ui' => 1,
-				'choices' => [],
-				'instructions' => 'Optional. Choose a menu from Appearance → Menus to display in the header instead of the primary menu. Falls back to Primary when empty or not found.',
-			],
-			[
 				'key' => 'field_sz_page_description',
 				'label' => 'Page Description',
 				'name' => 'page_description',
@@ -792,6 +782,16 @@ add_action( 'acf/init', function () {
 				'name' => 'page_keywords',
 				'type' => 'text',
 				'instructions' => 'Optional comma-separated SEO keywords (for example: wedding photography, melbourne weddings, bridal portraits).',
+			],
+			[
+				'key' => 'field_sz_menu_override',
+				'label' => 'Menu Override',
+				'name' => 'menu_override',
+				'type' => 'select',
+				'allow_null' => 1,
+				'ui' => 1,
+				'choices' => [],
+				'instructions' => 'Optional. Choose a menu from Appearance → Menus to display in the header instead of the primary menu. Falls back to Primary when empty or not found.',
 			],
 			[
 				'key' => 'field_sz_container_only',
