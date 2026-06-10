@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const isBotMock = vi.fn<(userAgent: string) => boolean>()
 const renderToPipeableStreamMock = vi.fn()
-const createReadableStreamFromReadableMock = vi.fn(() => new ReadableStream())
+const createReadableStreamFromReadableMock = vi.fn((body: unknown) => {
+  void body
+  return new ReadableStream()
+})
 
 vi.mock('isbot', () => ({
   isbot: (userAgent: string) => isBotMock(userAgent),
