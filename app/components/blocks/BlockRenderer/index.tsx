@@ -26,7 +26,6 @@ const BLOCK_LABELS: Record<string, string> = {
   form_block: 'Form',
   pricing_packages: 'Pricing Packages',
   gallery_categories: 'Gallery Categories',
-  galleries: 'Galleries',
   gallery_reference: 'Gallery Reference',
   image_block: 'Image',
   button_group: 'Button Group',
@@ -177,7 +176,6 @@ const BlockRenderer = ({
         case 'gallery_categories':
           rendered = <GalleryCategoriesBlock key={key} block={block} />
           break
-        case 'galleries':
         case 'gallery_reference':
           rendered = <GalleriesBlock key={key} block={block} />
           break

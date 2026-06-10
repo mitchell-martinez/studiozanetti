@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { GalleriesBlock as GalleriesBlockType } from '~/types/wordpress'
+import type { GalleryReferenceBlock } from '~/types/wordpress'
 import testGalleriesBlock from '../__mocks__/testGalleriesBlock.json'
 import GalleriesBlock from '../index'
 
-const mockGalleriesBlock = testGalleriesBlock as GalleriesBlockType
+const mockGalleriesBlock = testGalleriesBlock as GalleryReferenceBlock
 
 describe('GalleriesBlock', () => {
   beforeEach(() => {
@@ -50,7 +50,7 @@ describe('GalleriesBlock', () => {
 
   it('returns null when no images are configured', () => {
     const { container } = render(
-      <GalleriesBlock block={{ acf_fc_layout: 'galleries', heading: 'Empty', images: [] }} />,
+      <GalleriesBlock block={{ acf_fc_layout: 'gallery_reference', heading: 'Empty', images: [] }} />,
     )
 
     expect(container.firstChild).toBeNull()
@@ -87,19 +87,17 @@ describe('GalleriesBlock', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('labels the modal image via aria-labelledby pointing to the caption', async () => {
+  it('renders modal image without a caption element', async () => {
     const user = userEvent.setup()
 
     render(<GalleriesBlock block={mockGalleriesBlock} />)
 
     await user.click(screen.getAllByRole('button', { name: /open image/i })[0])
-    const modalImage = document.querySelector('img[aria-labelledby="gallery-modal-caption"]')!
+    const modalImage = document.querySelector('img[class*="modalImage"]')
     expect(modalImage).toBeInTheDocument()
     expect(modalImage).not.toHaveAttribute('tabindex')
-
-    const caption = document.getElementById('gallery-modal-caption')
-    expect(caption).toBeInTheDocument()
-    expect(caption).toHaveTextContent(/.+/)
+    expect(modalImage).not.toHaveAttribute('aria-labelledby')
+    expect(document.getElementById('gallery-modal-caption')).toBeNull()
   })
 
   it('traps focus within the modal when tabbing', async () => {

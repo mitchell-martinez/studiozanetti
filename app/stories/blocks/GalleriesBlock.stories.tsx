@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import GalleriesBlock from '~/components/blocks/GalleriesBlock'
 import galleriesBlockData from '~/components/blocks/GalleriesBlock/__mocks__/galleriesBlock.json'
-import type { GalleriesBlock as GalleriesBlockType } from '~/types/wordpress'
+import type { GalleryReferenceBlock } from '~/types/wordpress'
 
-type GalleriesArgs = Omit<GalleriesBlockType, 'acf_fc_layout'>
-const galleriesBlock = galleriesBlockData as GalleriesBlockType
+type GalleriesArgs = Omit<GalleryReferenceBlock, 'acf_fc_layout'>
+const galleriesBlock = galleriesBlockData as GalleryReferenceBlock
 
 const meta: Meta<GalleriesArgs> = {
   title: 'Blocks/Galleries',
@@ -21,7 +21,7 @@ const meta: Meta<GalleriesArgs> = {
     description: { control: 'text', description: 'Optional intro copy between heading and gallery' },
     images: {
       control: 'object',
-      description: 'Insert Images repeater list with image + optional caption',
+      description: 'Insert Images list for the selected reusable gallery',
     },
     desktop_columns: {
       control: { type: 'number', min: 2, max: 4, step: 1 },
@@ -32,7 +32,7 @@ const meta: Meta<GalleriesArgs> = {
       description: 'Mobile column count (defaults to 2)',
     },
   },
-  render: (args) => <GalleriesBlock block={{ acf_fc_layout: 'galleries', ...args }} />,
+  render: (args) => <GalleriesBlock block={{ acf_fc_layout: 'gallery_reference', ...args }} />,
 }
 
 export default meta

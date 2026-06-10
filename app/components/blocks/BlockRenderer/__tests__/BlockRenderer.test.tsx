@@ -95,7 +95,7 @@ describe('BlockRenderer', () => {
     expect(screen.getByRole('link', { name: /The Brides/i })).toBeInTheDocument()
   })
 
-  it('renders a galleries block', () => {
+  it('renders a gallery_reference block', () => {
     renderBlocks([galleriesBlock])
     expect(screen.getByRole('heading', { name: 'Cat Gallery', level: 2 })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /open image 1 of 2/i })).toBeInTheDocument()

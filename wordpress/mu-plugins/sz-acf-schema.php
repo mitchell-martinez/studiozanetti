@@ -382,26 +382,6 @@ add_action( 'acf/init', function () {
 		],
 	], $style_fields( 'sz_gallery_categories' ));
 
-	$galleries_fields = [
-		[ 'key' => 'field_sz_galleries_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
-		[ 'key' => 'field_sz_galleries_description', 'label' => 'Description', 'name' => 'description', 'type' => 'wysiwyg', 'tabs' => 'visual', 'toolbar' => 'basic', 'media_upload' => 0 ],
-		[ 'key' => 'field_sz_galleries_desktop_columns', 'label' => 'Desktop Columns', 'name' => 'desktop_columns', 'type' => 'number', 'min' => 2, 'max' => 4, 'default_value' => 3 ],
-		[ 'key' => 'field_sz_galleries_mobile_columns', 'label' => 'Mobile Columns', 'name' => 'mobile_columns', 'type' => 'number', 'min' => 1, 'max' => 3, 'default_value' => 2 ],
-		[
-			'key' => 'field_sz_galleries_images',
-			'label' => 'Insert Images',
-			'name' => 'images',
-			'type' => 'repeater',
-			'layout' => 'row',
-			'button_label' => 'Add Image',
-			'min' => 1,
-			'sub_fields' => [
-				[ 'key' => 'field_sz_galleries_image_item', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'required' => 1 ],
-				[ 'key' => 'field_sz_galleries_image_caption', 'label' => 'Caption', 'name' => 'caption', 'type' => 'text' ],
-			],
-		],
-	];
-
 	$gallery_reference_fields = [
 		[
 			'key' => 'field_sz_gallery_reference_item',
@@ -698,13 +678,6 @@ add_action( 'acf/init', function () {
 						'label' => 'Gallery Categories',
 						'display' => 'block',
 						'sub_fields' => $gallery_categories_fields,
-					],
-					'layout_sz_galleries' => [
-						'key' => 'layout_sz_galleries',
-						'name' => 'galleries',
-						'label' => 'Galleries (Legacy Inline)',
-						'display' => 'block',
-						'sub_fields' => $galleries_fields,
 					],
 					'layout_sz_gallery_reference' => [
 						'key' => 'layout_sz_gallery_reference',

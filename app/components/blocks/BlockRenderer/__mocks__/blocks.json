@@ -144,7 +144,7 @@
     ]
   },
   "galleriesBlock": {
-    "acf_fc_layout": "galleries",
+    "acf_fc_layout": "gallery_reference",
     "heading": "Cat Gallery",
     "desktop_columns": 3,
     "mobile_columns": 2,

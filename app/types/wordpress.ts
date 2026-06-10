@@ -210,15 +210,6 @@ export interface WPReusableGallery {
   images: WPGalleriesImageItem[]
 }
 
-export interface GalleriesBlock extends BlockStyleOptions {
-  acf_fc_layout: 'galleries'
-  heading?: string
-  description?: string
-  images: WPGalleriesImageItem[]
-  desktop_columns?: number
-  mobile_columns?: number
-}
-
 export interface GalleryReferenceBlock extends BlockStyleOptions {
   acf_fc_layout: 'gallery_reference'
   gallery_reference?: WPReusableGallery | number
@@ -476,7 +467,6 @@ export type ContentBlock =
   | FaqAccordionBlock
   | PricingPackagesBlock
   | GalleryCategoriesBlock
-  | GalleriesBlock
   | GalleryReferenceBlock
   | ImageBlock
   | FormBlock

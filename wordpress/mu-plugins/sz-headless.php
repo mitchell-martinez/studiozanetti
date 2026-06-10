@@ -675,7 +675,7 @@ function sz_prepare_block_for_acf_write( $block, string $site_url ) {
 		}, $block[ $rk ] );
 	}
 
-	if ( ( $block['acf_fc_layout'] ?? '' ) === 'galleries' && ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
+	if ( ( $block['acf_fc_layout'] ?? '' ) === 'gallery_reference' && ! empty( $block['images'] ) && is_array( $block['images'] ) ) {
 		$block['images'] = sz_prepare_gallery_rows_for_acf_write( $block['images'], $site_url );
 	}
 
@@ -3275,9 +3275,9 @@ function sz_normalize_block_images( array $block, bool $hydrate_gallery_referenc
 		}
 	}
 
-	// Galleries block repeater: images[] rows contain { image, caption }.
+	// Reusable Gallery block repeater: images[] rows contain { image, caption }.
 	if (
-		in_array( $block['acf_fc_layout'] ?? '', [ 'galleries', 'gallery_reference' ], true ) &&
+		( $block['acf_fc_layout'] ?? '' ) === 'gallery_reference' &&
 		! empty( $block['images'] ) &&
 		is_array( $block['images'] )
 	) {

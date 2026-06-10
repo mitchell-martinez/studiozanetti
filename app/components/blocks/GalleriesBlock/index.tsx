@@ -47,13 +47,13 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
     document.body.style.overflow = 'hidden'
 
     const img = images[activeIndex]
-    const caption = img?.caption || img?.image.alt || `Gallery image ${activeIndex + 1}`
+    const description = img?.image.alt || `Gallery image ${activeIndex + 1}`
 
     if (prevActiveRef.current === null) {
       requestAnimationFrame(() => closeRef.current?.focus())
-      announce(`Lightbox opened, image ${activeIndex + 1} of ${images.length}: ${caption}`)
+      announce(`Lightbox opened, image ${activeIndex + 1} of ${images.length}: ${description}`)
     } else {
-      announce(`Image ${activeIndex + 1} of ${images.length}: ${caption}`)
+      announce(`Image ${activeIndex + 1} of ${images.length}: ${description}`)
     }
     prevActiveRef.current = activeIndex
 
@@ -181,12 +181,12 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
                       if (element) triggerRefs.current.set(sourceIndex, element)
                       else triggerRefs.current.delete(sourceIndex)
                     }}
-                    aria-label={`Open image ${sourceIndex + 1} of ${images.length}: ${item.image.alt || item.caption || 'Untitled'}`}
+                    aria-label={`Open image ${sourceIndex + 1} of ${images.length}: ${item.image.alt || 'Untitled'}`}
                   >
                     <img
                       className={styles.image}
                       src={item.image.url}
-                      alt={item.image.alt || item.caption || `Gallery image ${sourceIndex + 1}`}
+                      alt={item.image.alt || `Gallery image ${sourceIndex + 1}`}
                       loading="lazy"
                       decoding="async"
                       width={item.image.width}
@@ -265,8 +265,7 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
             <img
               className={styles.modalImage}
               src={currentImage.image.url}
-              alt={currentImage.image.alt || currentImage.caption || `Gallery image ${activeIndex + 1}`}
-              aria-labelledby="gallery-modal-caption"
+              alt={currentImage.image.alt || `Gallery image ${activeIndex + 1}`}
             />
 
             {activeIndex < images.length - 1 && (
@@ -293,10 +292,6 @@ const GalleriesBlock = ({ block }: GalleriesBlockProps) => {
                 </svg>
               </button>
             )}
-
-            <p id="gallery-modal-caption" className={styles.modalCaption} aria-live="polite">
-              {currentImage.caption || currentImage.image.alt}
-            </p>
           </div>
         </div>
       )}
