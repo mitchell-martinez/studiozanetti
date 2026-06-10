@@ -499,6 +499,8 @@ export interface WPPageAcf {
   menu_override?: string
   /** Optional SEO/social description used for page meta tags */
   page_description?: string
+  /** Optional comma-separated SEO keywords */
+  page_keywords?: string
   /** When true, this page exists only for URL hierarchy — direct access returns 404 */
   container_only?: boolean
   /** Contact page — set via "Contact Details" field group */

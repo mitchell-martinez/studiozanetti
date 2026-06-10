@@ -787,6 +787,13 @@ add_action( 'acf/init', function () {
 				'instructions' => 'Used as the page description for social media and SEO.',
 			],
 			[
+				'key' => 'field_sz_page_keywords',
+				'label' => 'Page Keywords',
+				'name' => 'page_keywords',
+				'type' => 'text',
+				'instructions' => 'Optional comma-separated SEO keywords (for example: wedding photography, melbourne weddings, bridal portraits).',
+			],
+			[
 				'key' => 'field_sz_container_only',
 				'label' => 'Container Only (no direct access)',
 				'name' => 'container_only',

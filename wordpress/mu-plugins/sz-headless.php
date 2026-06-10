@@ -1013,6 +1013,590 @@ add_action( 'admin_menu', function () {
 	remove_menu_page( 'edit-comments.php' );  // Comments
 } );
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 5b. SOCIAL SEO MANAGER — CENTRALIZED TITLES/DESCRIPTIONS/IMAGES
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Adds a dedicated admin page where editors can manage social/SEO metadata
+// for all pages in one place, with live previews for Google, Facebook, and X.
+
+add_action( 'admin_menu', function () {
+	add_menu_page(
+		'SEO & Social Previews',
+		'SEO & Social',
+		'edit_pages',
+		'sz-social-seo-manager',
+		'szRenderSocialSeoManager',
+		'dashicons-share',
+		25
+	);
+} );
+
+add_action( 'admin_enqueue_scripts', function ( $hook ) {
+	if ( $hook !== 'toplevel_page_sz-social-seo-manager' ) {
+		return;
+	}
+
+	if ( function_exists( 'wp_enqueue_media' ) ) {
+		wp_enqueue_media();
+	}
+} );
+
+/**
+ * Get social SEO metadata for a page.
+ *
+ * This reads canonical page data only (title, ACF page_description,
+ * featured image) so single-page editing and bulk editing stay consistent.
+ *
+ * When $with_fallback is true, description falls back to excerpt/content for
+ * preview convenience only.
+ */
+function szGetSocialMetaForPage( int $post_id, bool $with_fallback = false ): array {
+	$title       = trim( (string) get_the_title( $post_id ) );
+	$description = '';
+	$keywords    = '';
+	if ( function_exists( 'get_field' ) ) {
+		$description = trim( (string) get_field( 'page_description', $post_id ) );
+		$keywords    = trim( (string) get_field( 'page_keywords', $post_id ) );
+	}
+	$image_id = (int) get_post_thumbnail_id( $post_id );
+
+	$image = null;
+	if ( $image_id > 0 ) {
+		$image = sz_resolve_image( $image_id );
+	}
+
+	if ( ! $with_fallback ) {
+		return [
+			'title'       => $title,
+			'description' => $description,
+			'keywords'    => $keywords,
+			'image'       => $image,
+			'image_id'    => $image_id,
+		];
+	}
+
+	$excerpt_text = trim( (string) wp_strip_all_tags( get_post_field( 'post_excerpt', $post_id ) ) );
+	$content_text = trim( (string) wp_strip_all_tags( get_post_field( 'post_content', $post_id ) ) );
+	$fallback_description = $description;
+	if ( $fallback_description === '' ) {
+		$fallback_description = $excerpt_text;
+	}
+	if ( $fallback_description === '' ) {
+		$fallback_description = wp_trim_words( $content_text, 28, '…' );
+	}
+
+	return [
+		'title'       => $title,
+		'description' => $fallback_description,
+		'keywords'    => $keywords,
+		'image'       => $image,
+		'image_id'    => $image_id,
+	];
+}
+
+/**
+ * Save social SEO metadata posted from the manager page.
+ */
+function szSaveSocialSeoManager(): void {
+	if ( ! current_user_can( 'edit_pages' ) ) {
+		return;
+	}
+
+	$raw_rows = $_POST['social'] ?? null;
+	if ( ! is_array( $raw_rows ) ) {
+		return;
+	}
+
+	foreach ( $raw_rows as $post_id_raw => $row ) {
+		$post_id = (int) $post_id_raw;
+		$post    = get_post( $post_id );
+		if ( ! $post || $post->post_type !== 'page' ) {
+			continue;
+		}
+		if ( ! current_user_can( 'edit_post', $post_id ) ) {
+			continue;
+		}
+		if ( ! is_array( $row ) ) {
+			continue;
+		}
+
+		$title       = isset( $row['title'] ) ? sanitize_text_field( wp_unslash( (string) $row['title'] ) ) : '';
+		$description = isset( $row['description'] ) ? sanitize_textarea_field( wp_unslash( (string) $row['description'] ) ) : '';
+		$keywords    = isset( $row['keywords'] ) ? sanitize_text_field( wp_unslash( (string) $row['keywords'] ) ) : '';
+		$image_id    = isset( $row['image_id'] ) ? (int) $row['image_id'] : 0;
+
+		if ( $title !== '' && $title !== (string) get_the_title( $post_id ) ) {
+			wp_update_post( [
+				'ID'         => $post_id,
+				'post_title' => $title,
+			] );
+		}
+
+		if ( function_exists( 'update_field' ) ) {
+			update_field( 'page_description', $description, $post_id );
+			update_field( 'page_keywords', $keywords, $post_id );
+		} else {
+			update_post_meta( $post_id, 'page_description', $description );
+			update_post_meta( $post_id, 'page_keywords', $keywords );
+		}
+
+		if ( $image_id > 0 && get_post( $image_id ) ) {
+			set_post_thumbnail( $post_id, $image_id );
+		} else {
+			delete_post_thumbnail( $post_id );
+		}
+	}
+}
+
+/**
+ * Render SEO & Social manager admin page.
+ */
+function szRenderSocialSeoManager() {
+	if ( ! current_user_can( 'edit_pages' ) ) {
+		wp_die( 'Insufficient permissions.' );
+	}
+
+	$did_save = false;
+	if ( isset( $_POST['sz_social_save_all'] ) ) {
+		check_admin_referer( 'sz_social_seo_manager_save', 'sz_social_seo_manager_nonce' );
+		szSaveSocialSeoManager();
+		$did_save = true;
+	}
+
+	$pages = get_pages( [
+		'post_status' => [ 'publish', 'draft', 'private', 'pending' ],
+		'sort_column' => 'menu_order,post_title',
+		'sort_order'  => 'ASC',
+	] );
+
+	?>
+	<div class="wrap sz-social-seo-wrap">
+		<h1>SEO &amp; Social Previews</h1>
+		<p>Manage page title, page description, and featured image in one place. This editor uses the same fields as the single-page editor to keep SEO and social previews consistent.</p>
+		<div class="sz-social-toolbar">
+			<label for="sz-social-filter" class="screen-reader-text">Filter pages</label>
+			<input id="sz-social-filter" type="search" class="regular-text" placeholder="Filter pages by title or path" />
+			<span class="sz-filter-count" aria-live="polite"></span>
+		</div>
+
+		<?php if ( $did_save ) : ?>
+			<div class="notice notice-success is-dismissible"><p>SEO &amp; social settings saved.</p></div>
+		<?php endif; ?>
+
+		<form method="post">
+			<?php wp_nonce_field( 'sz_social_seo_manager_save', 'sz_social_seo_manager_nonce' ); ?>
+			<table class="widefat fixed striped">
+				<thead>
+					<tr>
+						<th style="width:220px;">Page</th>
+						<th style="width:240px;">Title</th>
+						<th style="width:300px;">Description</th>
+						<th style="width:220px;">Keywords</th>
+						<th style="width:260px;">Image</th>
+						<th>Preview</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $pages as $page ) : ?>
+						<?php
+						$post_id     = (int) $page->ID;
+						$override    = szGetSocialMetaForPage( $post_id, false );
+						$preview     = szGetSocialMetaForPage( $post_id, true );
+						$page_url    = get_permalink( $post_id ) ?: '';
+						$page_title  = (string) get_the_title( $post_id );
+						$page_path   = '/' . ltrim( (string) get_page_uri( $post_id ), '/' );
+						$has_seo_description = ! empty( $override['description'] );
+						$has_share_image     = ! empty( $override['image_id'] );
+						$is_ready            = $has_seo_description && $has_share_image;
+						$status_text         = $is_ready ? 'Ready for Sharing' : 'Needs SEO Fields';
+						$preview_img = is_array( $preview['image'] ?? null ) && ! empty( $preview['image']['url'] )
+							? (string) $preview['image']['url']
+							: '';
+						?>
+						<tr
+							class="sz-social-row"
+							data-page-title="<?php echo esc_attr( strtolower( $page_title ) ); ?>"
+							data-page-path="<?php echo esc_attr( strtolower( $page_path ) ); ?>"
+						>
+							<td>
+								<strong><?php echo esc_html( $page_title ); ?></strong>
+								<span class="sz-status-badge <?php echo $is_ready ? 'sz-status-complete' : 'sz-status-incomplete'; ?>"><?php echo esc_html( $status_text ); ?></span><br>
+								<small><?php echo esc_html( $page_path ); ?></small><br>
+								<a href="<?php echo esc_url( get_edit_post_link( $post_id, '' ) ?: '' ); ?>">Edit Page</a>
+							</td>
+							<td>
+								<input
+									type="text"
+									class="regular-text sz-social-title"
+									name="social[<?php echo esc_attr( (string) $post_id ); ?>][title]"
+									value="<?php echo esc_attr( (string) ( $override['title'] ?? '' ) ); ?>"
+									placeholder="Same title as the page editor"
+								>
+								<div class="sz-char-guidance" data-kind="title">
+									<small class="sz-char-item" data-limit="60">Google: <span class="sz-char-count">0</span>/60</small>
+									<small class="sz-char-item" data-limit="88">Facebook: <span class="sz-char-count">0</span>/88</small>
+									<small class="sz-char-item" data-limit="70">X: <span class="sz-char-count">0</span>/70</small>
+								</div>
+							</td>
+							<td>
+								<textarea
+									rows="4"
+									class="large-text sz-social-description"
+									name="social[<?php echo esc_attr( (string) $post_id ); ?>][description]"
+									placeholder="Same Page Description field shown in page editor"
+								><?php echo esc_textarea( (string) ( $override['description'] ?? '' ) ); ?></textarea>
+								<div class="sz-char-guidance" data-kind="description">
+									<small class="sz-char-item" data-limit="160">Google: <span class="sz-char-count">0</span>/160</small>
+									<small class="sz-char-item" data-limit="200">Facebook: <span class="sz-char-count">0</span>/200</small>
+									<small class="sz-char-item" data-limit="200">X: <span class="sz-char-count">0</span>/200</small>
+								</div>
+							</td>
+							<td>
+								<input
+									type="text"
+									class="regular-text sz-social-keywords"
+									name="social[<?php echo esc_attr( (string) $post_id ); ?>][keywords]"
+									value="<?php echo esc_attr( (string) ( $override['keywords'] ?? '' ) ); ?>"
+									placeholder="Same Page Keywords field shown in page editor"
+								>
+								<small>Comma-separated keywords for SEO metadata.</small>
+							</td>
+							<td>
+								<input
+									type="hidden"
+									class="sz-social-image-id"
+									name="social[<?php echo esc_attr( (string) $post_id ); ?>][image_id]"
+									value="<?php echo esc_attr( (string) ( $override['image_id'] ?? 0 ) ); ?>"
+								>
+								<input
+									type="text"
+									class="regular-text sz-social-image-url"
+									value="<?php echo esc_attr( $preview_img ); ?>"
+									readonly
+								>
+								<p>
+									<button type="button" class="button sz-pick-image">Choose Image</button>
+									<button type="button" class="button sz-clear-image">Clear</button>
+								</p>
+								<small>Used as the display image for social media link previews.</small>
+							</td>
+							<td>
+								<div
+									class="sz-preview-cards"
+									data-default-title="<?php echo esc_attr( (string) ( $preview['title'] ?? '' ) ); ?>"
+									data-default-description="<?php echo esc_attr( (string) ( $preview['description'] ?? '' ) ); ?>"
+									data-url="<?php echo esc_attr( (string) $page_url ); ?>"
+								>
+									<div class="sz-card sz-card-google">
+										<div class="sz-card-label">Google</div>
+										<div class="sz-card-url"></div>
+										<div class="sz-card-title"></div>
+										<div class="sz-card-description"></div>
+									</div>
+									<div class="sz-card sz-card-facebook">
+										<div class="sz-card-label">Facebook</div>
+										<div class="sz-card-image-wrap"><img class="sz-card-image" alt="" /></div>
+										<div class="sz-card-title"></div>
+										<div class="sz-card-description"></div>
+									</div>
+									<div class="sz-card sz-card-twitter">
+										<div class="sz-card-label">X (Twitter)</div>
+										<div class="sz-card-image-wrap"><img class="sz-card-image" alt="" /></div>
+										<div class="sz-card-title"></div>
+										<div class="sz-card-description"></div>
+									</div>
+								</div>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+
+			<p style="margin-top:16px;">
+				<button type="submit" name="sz_social_save_all" class="button button-primary button-large">Save All Changes</button>
+			</p>
+		</form>
+	</div>
+
+	<style>
+		.sz-social-seo-wrap .sz-social-toolbar {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			margin: 10px 0 14px;
+		}
+		.sz-social-seo-wrap .sz-filter-count {
+			color: #50575e;
+			font-size: 12px;
+		}
+		.sz-social-seo-wrap .sz-status-badge {
+			display: inline-block;
+			margin-left: 8px;
+			padding: 2px 8px;
+			border-radius: 999px;
+			font-size: 11px;
+			line-height: 1.7;
+			font-weight: 600;
+			vertical-align: middle;
+		}
+		.sz-social-seo-wrap .sz-status-complete {
+			background: #d4f5dd;
+			color: #155724;
+		}
+		.sz-social-seo-wrap .sz-status-incomplete {
+			background: #e8eaed;
+			color: #3c434a;
+		}
+		.sz-social-seo-wrap .sz-char-guidance {
+			display: grid;
+			gap: 2px;
+			margin-top: 6px;
+		}
+		.sz-social-seo-wrap .sz-char-item {
+			color: #50575e;
+		}
+		.sz-social-seo-wrap .sz-char-item.sz-near-limit {
+			color: #8a6d3b;
+		}
+		.sz-social-seo-wrap .sz-char-item.sz-over-limit {
+			color: #b32d2e;
+		}
+		.sz-social-seo-wrap .sz-preview-cards {
+			display: grid;
+			gap: 8px;
+		}
+		.sz-social-seo-wrap .sz-card {
+			border: 1px solid #dcdcde;
+			border-radius: 8px;
+			padding: 8px;
+			background: #fff;
+		}
+		.sz-social-seo-wrap .sz-card-label {
+			font-size: 11px;
+			text-transform: uppercase;
+			letter-spacing: 0.06em;
+			color: #666;
+			margin-bottom: 4px;
+		}
+		.sz-social-seo-wrap .sz-card-url {
+			font-size: 12px;
+			color: #188038;
+			margin-bottom: 3px;
+			word-break: break-word;
+		}
+		.sz-social-seo-wrap .sz-card-title {
+			font-weight: 600;
+			color: #1a0dab;
+			margin-bottom: 3px;
+		}
+		.sz-social-seo-wrap .sz-card-description {
+			font-size: 12px;
+			color: #4d5156;
+		}
+		.sz-social-seo-wrap .sz-card-image-wrap {
+			display: none;
+			margin-bottom: 6px;
+			background: #f2f2f2;
+			border-radius: 6px;
+			overflow: hidden;
+		}
+		.sz-social-seo-wrap .sz-card-image-wrap.sz-has-image {
+			display: block;
+		}
+		.sz-social-seo-wrap .sz-card-image {
+			display: block;
+			width: 100%;
+			height: 120px;
+			object-fit: cover;
+		}
+	</style>
+
+	<script>
+	(function () {
+		'use strict';
+
+		var PREVIEW_LIMITS = {
+			google: { title: 60, description: 160 },
+			facebook: { title: 88, description: 200 },
+			twitter: { title: 70, description: 200 }
+		};
+
+		function truncate(text, max) {
+			if (!text) return '';
+			if (text.length <= max) return text;
+			return text.slice(0, max - 1).trimEnd() + '…';
+		}
+
+		function updateRowPreview(row) {
+			var titleInput = row.querySelector('.sz-social-title');
+			var descInput = row.querySelector('.sz-social-description');
+			var imageIdInput = row.querySelector('.sz-social-image-id');
+			var imgUrlInput = row.querySelector('.sz-social-image-url');
+			var statusBadge = row.querySelector('.sz-status-badge');
+			var cards = row.querySelector('.sz-preview-cards');
+
+			if (!cards) return;
+
+			var defaultTitle = cards.getAttribute('data-default-title') || '';
+			var defaultDescription = cards.getAttribute('data-default-description') || '';
+			var pageUrl = cards.getAttribute('data-url') || '';
+
+			var title = (titleInput && titleInput.value.trim()) || defaultTitle;
+			var description = (descInput && descInput.value.trim()) || defaultDescription;
+			var hasSeoDescription = descInput && descInput.value.trim().length > 0;
+			var hasShareImage = imageIdInput && imageIdInput.value.trim().length > 0;
+			var isReady = hasSeoDescription && hasShareImage;
+			var imageUrl = (imgUrlInput && imgUrlInput.value.trim()) || '';
+
+			if (statusBadge) {
+				statusBadge.textContent = isReady ? 'Ready for Sharing' : 'Needs SEO Fields';
+				statusBadge.classList.toggle('sz-status-complete', isReady);
+				statusBadge.classList.toggle('sz-status-incomplete', !isReady);
+			}
+
+			updateCounters(row, title, description);
+
+			cards.querySelectorAll('.sz-card-google .sz-card-url').forEach(function (el) {
+				el.textContent = pageUrl;
+			});
+
+			var googleCard = cards.querySelector('.sz-card-google');
+			if (googleCard) {
+				var googleTitle = googleCard.querySelector('.sz-card-title');
+				var googleDescription = googleCard.querySelector('.sz-card-description');
+				if (googleTitle) googleTitle.textContent = truncate(title, PREVIEW_LIMITS.google.title);
+				if (googleDescription) googleDescription.textContent = truncate(description, PREVIEW_LIMITS.google.description);
+			}
+
+			var facebookCard = cards.querySelector('.sz-card-facebook');
+			if (facebookCard) {
+				var facebookTitle = facebookCard.querySelector('.sz-card-title');
+				var facebookDescription = facebookCard.querySelector('.sz-card-description');
+				if (facebookTitle) facebookTitle.textContent = truncate(title, PREVIEW_LIMITS.facebook.title);
+				if (facebookDescription) facebookDescription.textContent = truncate(description, PREVIEW_LIMITS.facebook.description);
+			}
+
+			var twitterCard = cards.querySelector('.sz-card-twitter');
+			if (twitterCard) {
+				var twitterTitle = twitterCard.querySelector('.sz-card-title');
+				var twitterDescription = twitterCard.querySelector('.sz-card-description');
+				if (twitterTitle) twitterTitle.textContent = truncate(title, PREVIEW_LIMITS.twitter.title);
+				if (twitterDescription) twitterDescription.textContent = truncate(description, PREVIEW_LIMITS.twitter.description);
+			}
+
+			cards.querySelectorAll('.sz-card-image').forEach(function (img) {
+				var wrap = img.closest('.sz-card-image-wrap');
+				if (!wrap) return;
+				if (imageUrl) {
+					img.src = imageUrl;
+					wrap.classList.add('sz-has-image');
+				} else {
+					img.removeAttribute('src');
+					wrap.classList.remove('sz-has-image');
+				}
+			});
+		}
+
+		function updateCounters(row, titleValue, descriptionValue) {
+			var titleLength = (titleValue || '').length;
+			var descriptionLength = (descriptionValue || '').length;
+
+			row.querySelectorAll('.sz-char-guidance[data-kind="title"] .sz-char-item').forEach(function (item) {
+				var limit = parseInt(item.getAttribute('data-limit') || '0', 10);
+				var countEl = item.querySelector('.sz-char-count');
+				if (countEl) countEl.textContent = String(titleLength);
+				item.classList.toggle('sz-near-limit', limit > 0 && titleLength >= Math.floor(limit * 0.9) && titleLength <= limit);
+				item.classList.toggle('sz-over-limit', limit > 0 && titleLength > limit);
+			});
+
+			row.querySelectorAll('.sz-char-guidance[data-kind="description"] .sz-char-item').forEach(function (item) {
+				var limit = parseInt(item.getAttribute('data-limit') || '0', 10);
+				var countEl = item.querySelector('.sz-char-count');
+				if (countEl) countEl.textContent = String(descriptionLength);
+				item.classList.toggle('sz-near-limit', limit > 0 && descriptionLength >= Math.floor(limit * 0.9) && descriptionLength <= limit);
+				item.classList.toggle('sz-over-limit', limit > 0 && descriptionLength > limit);
+			});
+		}
+
+		function bindImagePicker(row) {
+			var pickBtn = row.querySelector('.sz-pick-image');
+			var clearBtn = row.querySelector('.sz-clear-image');
+			var imageIdInput = row.querySelector('.sz-social-image-id');
+			var imageUrlInput = row.querySelector('.sz-social-image-url');
+
+			if (pickBtn && window.wp && window.wp.media) {
+				pickBtn.addEventListener('click', function () {
+					var frame = window.wp.media({
+						title: 'Choose Social Preview Image',
+						button: { text: 'Use this image' },
+						multiple: false,
+					});
+
+					frame.on('select', function () {
+						var media = frame.state().get('selection').first().toJSON();
+						if (imageIdInput) imageIdInput.value = String(media.id || '');
+						if (imageUrlInput) imageUrlInput.value = media.url || '';
+						updateRowPreview(row);
+					});
+
+					frame.open();
+				});
+			}
+
+			if (clearBtn) {
+				clearBtn.addEventListener('click', function () {
+					if (imageIdInput) imageIdInput.value = '';
+					if (imageUrlInput) imageUrlInput.value = '';
+					updateRowPreview(row);
+				});
+			}
+		}
+
+		function filterRows() {
+			var filterInput = document.getElementById('sz-social-filter');
+			var countEl = document.querySelector('.sz-filter-count');
+			if (!filterInput) return;
+
+			var query = (filterInput.value || '').trim().toLowerCase();
+			var visible = 0;
+			var total = 0;
+
+			document.querySelectorAll('.sz-social-row').forEach(function (row) {
+				total += 1;
+				var title = row.getAttribute('data-page-title') || '';
+				var path = row.getAttribute('data-page-path') || '';
+				var match = !query || title.indexOf(query) !== -1 || path.indexOf(query) !== -1;
+				row.style.display = match ? '' : 'none';
+				if (match) visible += 1;
+			});
+
+			if (countEl) {
+				countEl.textContent = visible + ' of ' + total + ' pages shown';
+			}
+		}
+
+			document.querySelectorAll('.sz-social-row').forEach(function (row) {
+			row.querySelectorAll('.sz-social-title, .sz-social-description, .sz-social-keywords, .sz-social-image-url').forEach(function (input) {
+				input.addEventListener('input', function () {
+					updateRowPreview(row);
+				});
+			});
+
+			bindImagePicker(row);
+			updateRowPreview(row);
+		});
+
+		var filterInput = document.getElementById('sz-social-filter');
+		if (filterInput) {
+			filterInput.addEventListener('input', filterRows);
+		}
+		filterRows();
+	})();
+	</script>
+	<?php
+}
+
 /**
  * Use ACF-only editing for Pages.
  *

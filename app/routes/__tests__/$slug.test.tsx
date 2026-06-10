@@ -253,6 +253,7 @@ describe('CmsPage route', () => {
         ...mockPage,
         acf: {
           page_description: 'Custom social and SEO description from Page Settings.',
+          page_keywords: 'wedding photography, melbourne wedding photographer',
         },
         yoast_head_json: {
           title: 'Custom title',
@@ -282,8 +283,13 @@ describe('CmsPage route', () => {
             name: 'twitter:description',
             content: 'Custom social and SEO description from Page Settings.',
           },
+          {
+            name: 'keywords',
+            content: 'wedding photography, melbourne wedding photographer',
+          },
         ]),
       )
     })
+
   })
 })

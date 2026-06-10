@@ -149,12 +149,16 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const pageDescription = page.acf?.page_description
     ? stripHtml(page.acf.page_description)
     : ''
+  const pageKeywords = page.acf?.page_keywords
+    ? stripHtml(page.acf.page_keywords)
+    : ''
   const metaDescription =
     pageDescription ||
     (yoast?.description ? stripHtml(yoast.description) : '') ||
     stripHtml(page.excerpt.rendered).slice(0, 160) ||
     stripHtml(page.content.rendered).slice(0, 160) ||
     `${pageTitle} | Studio Zanetti`
+  const resolvedTitle = yoastTitle || pageTitle
   const socialImage = page.featured_image?.url || yoast?.og_image?.[0]?.url
   const pathname = (() => {
     try {
@@ -168,9 +172,10 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   return [
     { title: yoastTitle || `${pageTitle} | Studio Zanetti` },
     { name: 'description', content: metaDescription },
+    ...(pageKeywords ? [{ name: 'keywords', content: pageKeywords }] : []),
     { name: 'robots', content: 'index, follow, max-image-preview:large' },
     { property: 'og:type', content: 'website' },
-    { property: 'og:title', content: yoastTitle || pageTitle },
+    { property: 'og:title', content: resolvedTitle },
     { property: 'og:description', content: metaDescription },
     { property: 'og:url', content: canonicalUrl },
     ...(socialImage
@@ -179,7 +184,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
           { name: 'twitter:image', content: toAbsoluteSocialImageUrl(socialImage) },
         ]
       : []),
-    { name: 'twitter:title', content: yoastTitle || pageTitle },
+    { name: 'twitter:title', content: resolvedTitle },
     { name: 'twitter:description', content: metaDescription },
     { name: 'twitter:card', content: 'summary_large_image' },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
