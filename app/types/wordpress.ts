@@ -497,6 +497,8 @@ export interface WPPageAcf {
   blocks?: ContentBlock[]
   /** Optional nav menu location override for this page (e.g. primary, weddings, events) */
   menu_override?: string
+  /** Optional SEO/social description used for page meta tags */
+  page_description?: string
   /** When true, this page exists only for URL hierarchy — direct access returns 404 */
   container_only?: boolean
   /** Contact page — set via "Contact Details" field group */

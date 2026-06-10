@@ -778,6 +778,15 @@ add_action( 'acf/init', function () {
 				'instructions' => 'Optional. Choose a menu from Appearance → Menus to display in the header instead of the primary menu. Falls back to Primary when empty or not found.',
 			],
 			[
+				'key' => 'field_sz_page_description',
+				'label' => 'Page Description',
+				'name' => 'page_description',
+				'type' => 'textarea',
+				'rows' => 3,
+				'new_lines' => 'br',
+				'instructions' => 'Used as the page description for social media and SEO.',
+			],
+			[
 				'key' => 'field_sz_container_only',
 				'label' => 'Container Only (no direct access)',
 				'name' => 'container_only',

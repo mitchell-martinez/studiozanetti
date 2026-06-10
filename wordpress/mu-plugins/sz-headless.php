@@ -1053,6 +1053,23 @@ add_action( 'init', function () {
 }, 30 );
 
 /**
+ * Add guidance under the Featured Image metabox for page editors.
+ */
+add_filter( 'admin_post_thumbnail_html', function ( $content, $post_id ) {
+	$post = get_post( $post_id );
+	if ( ! ( $post instanceof WP_Post ) || $post->post_type !== 'page' ) {
+		return $content;
+	}
+
+	if ( strpos( $content, 'sz-featured-image-help' ) !== false ) {
+		return $content;
+	}
+
+	$help = '<p class="description sz-featured-image-help">Used as the display image for social media link previews.</p>';
+	return $content . $help;
+}, 10, 2 );
+
+/**
  * Prevent the page title box from being hidden via per-user Screen Options.
  */
 add_action( 'admin_init', function () {

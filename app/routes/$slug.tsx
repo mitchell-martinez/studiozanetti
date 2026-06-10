@@ -146,7 +146,11 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
   const yoast = page.yoast_head_json
   const pageTitle = stripHtml(page.title.rendered)
   const yoastTitle = yoast?.title ? stripHtml(yoast.title) : ''
+  const pageDescription = page.acf?.page_description
+    ? stripHtml(page.acf.page_description)
+    : ''
   const metaDescription =
+    pageDescription ||
     (yoast?.description ? stripHtml(yoast.description) : '') ||
     stripHtml(page.excerpt.rendered).slice(0, 160) ||
     stripHtml(page.content.rendered).slice(0, 160) ||

@@ -247,5 +247,43 @@ describe('CmsPage route', () => {
         ]),
       )
     })
+
+    it('prefers page settings description for page SEO and social metadata', () => {
+      const pageWithCustomDescription = {
+        ...mockPage,
+        acf: {
+          page_description: 'Custom social and SEO description from Page Settings.',
+        },
+        yoast_head_json: {
+          title: 'Custom title',
+          description: 'Yoast description should not win when page description exists.',
+        },
+      }
+
+      const entries = meta({
+        data: {
+          type: 'page',
+          page: pageWithCustomDescription,
+          canonicalUrl: 'https://www.studiozanetti.com.au/services',
+        },
+      } as never)
+
+      expect(entries).toEqual(
+        expect.arrayContaining([
+          {
+            name: 'description',
+            content: 'Custom social and SEO description from Page Settings.',
+          },
+          {
+            property: 'og:description',
+            content: 'Custom social and SEO description from Page Settings.',
+          },
+          {
+            name: 'twitter:description',
+            content: 'Custom social and SEO description from Page Settings.',
+          },
+        ]),
+      )
+    })
   })
 })
