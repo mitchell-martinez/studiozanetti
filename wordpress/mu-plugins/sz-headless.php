@@ -1296,8 +1296,9 @@ function szRenderSocialSeoManager() {
 									class="regular-text sz-social-title"
 									name="social[<?php echo esc_attr( (string) $post_id ); ?>][title]"
 									value="<?php echo esc_attr( (string) ( $override['title'] ?? '' ) ); ?>"
-									placeholder="Same title as the page editor"
+									placeholder="Page title shown in browser tabs, search results, and social shares"
 								>
+											<small>The title shown in browser tabs, search results, and social shares.</small>
 										<div class="sz-char-guidance" data-kind="title">
 									<small class="sz-char-item" data-limit="60">Google: <span class="sz-char-count">0</span>/60</small>
 									<small class="sz-char-item" data-limit="88">Facebook: <span class="sz-char-count">0</span>/88</small>
@@ -1311,8 +1312,9 @@ function szRenderSocialSeoManager() {
 									rows="4"
 									class="large-text sz-social-description"
 									name="social[<?php echo esc_attr( (string) $post_id ); ?>][description]"
-									placeholder="Same Page Description field shown in page editor"
+									placeholder="Page description shown in search engines and on social media"
 								><?php echo esc_textarea( (string) ( $override['description'] ?? '' ) ); ?></textarea>
+											<small>The page description shown in search results and on social media.</small>
 										<div class="sz-char-guidance" data-kind="description">
 									<small class="sz-char-item" data-limit="160">Google: <span class="sz-char-count">0</span>/160</small>
 									<small class="sz-char-item" data-limit="200">Facebook: <span class="sz-char-count">0</span>/200</small>
@@ -1327,9 +1329,9 @@ function szRenderSocialSeoManager() {
 									class="regular-text sz-social-keywords"
 									name="social[<?php echo esc_attr( (string) $post_id ); ?>][keywords]"
 									value="<?php echo esc_attr( (string) ( $override['keywords'] ?? '' ) ); ?>"
-									placeholder="Same Page Keywords field shown in page editor"
+									placeholder="Search keywords for this page (comma-separated)"
 								>
-										<small>Comma-separated keywords for SEO metadata.</small>
+											<small>Search terms users may type to find this page in search engines.</small>
 									</div>
 									<div class="sz-field-box">
 										<label class="sz-field-label" for="sz-social-image-url-<?php echo esc_attr( (string) $post_id ); ?>">Featured Image</label>
