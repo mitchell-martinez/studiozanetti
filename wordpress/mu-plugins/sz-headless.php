@@ -2147,6 +2147,13 @@ add_action( 'admin_head', function () {
 			opacity: 1 !important;
 		}
 
+		body.post-type-page #postimagediv,
+		body.post-type-page #postimagediv .inside {
+			display: block !important;
+			visibility: visible !important;
+			opacity: 1 !important;
+		}
+
 		body.post-type-page #titlediv {
 			margin: 12px 0 16px !important;
 		}
@@ -2172,9 +2179,73 @@ add_action( 'admin_head', function () {
 			padding-right: 12px !important;
 		}
 
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent {
+			padding: 12px;
+			margin-top: 0;
+			border-bottom: 1px solid #dcdcde;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent #pageparentdiv {
+			margin: 0 !important;
+			border: none;
+			box-shadow: none;
+			background: transparent;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent #pageparentdiv .hndle,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent #pageparentdiv .handlediv {
+			display: none;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent #pageparentdiv .postbox-header,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent #pageparentdiv .handle-actions,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent #pageparentdiv .handle-order-higher,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent #pageparentdiv .handle-order-lower {
+			display: none !important;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent #pageparentdiv .inside {
+			padding: 0 !important;
+			margin: 0 !important;
+		}
+
+		/* Hide Template and Order in Page Attributes — keep Parent only */
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent .page-template-label-wrapper,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent #page_template,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent .menu-order-label-wrapper,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent #menu_order,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-parent .howto {
+			display: none !important;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug {
+			padding: 12px;
+			margin-top: 12px;
+			border-top: 1px solid #dcdcde;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug h3 {
+			margin: 0 0 8px;
+			font-size: 13px;
+			line-height: 1.4;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug p.description {
+			margin: 0 0 8px;
+			color: #50575e;
+			font-size: 13px;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings #sz-editable-slug {
+			padding: 6px 8px;
+			border: 1px solid #dcdcde;
+			border-radius: 4px;
+			font-size: 13px;
+		}
+
 		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image {
-			margin: 12px;
-			padding-top: 12px;
+			padding: 12px;
+			margin: 12px 0 0 0;
 			border-top: 1px solid #dcdcde;
 		}
 
@@ -2184,54 +2255,40 @@ add_action( 'admin_head', function () {
 			line-height: 1.4;
 		}
 
-		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug {
-			margin: 12px;
-			padding-top: 12px;
-			border-top: 1px solid #dcdcde;
-		}
-
-		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug h3,
-
 		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv {
-			margin: 0;
-			border: 0;
-			box-shadow: none;
-
-		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug p.description {
-			margin: 0 0 8px;
-			color: #50575e;
-		}
-
-		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug #edit-slug-box {
-			padding: 0;
-			margin: 0;
-			min-height: 0;
-		}
-
-		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug #edit-slug-box strong {
-			display: none;
-		}
-
-		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug #sample-permalink,
-		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-slug #editable-post-name-full {
-			word-break: break-word;
-		}
-			background: transparent;
+			margin: 0 !important;
+			border: none !important;
+			box-shadow: none !important;
+			background: transparent !important;
 		}
 
 		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv .hndle,
 		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv .handlediv {
-			display: none;
+			display: none !important;
+		}
+
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv .postbox-header,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv .handle-actions,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv .handle-order-higher,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv .handle-order-lower {
+			display: none !important;
 		}
 
 		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv .inside {
-			padding: 0;
-			margin: 0;
+			padding: 0 !important;
+			margin: 0 !important;
 		}
 
-		body.post-type-page #pageparentdiv,
+		body.post-type-page #acf-group_sz_page_settings .sz-page-settings-featured-image #postimagediv.closed .inside {
+			display: block !important;
+		}
+
+		body.post-type-page #pageparentdiv {
+			margin-top: 12px !important;
+		}
+
 		body.post-type-page #authordiv {
-			margin-top: 16px !important;
+			margin-top: 40px !important;
 		}
 
 		/* Keep preview panel clean but non-invasive */
@@ -2482,10 +2539,20 @@ function sz_live_preview_js() {
 			var normalSortables = document.getElementById('normal-sortables');
 			var pageSettingsBox = document.getElementById('acf-group_sz_page_settings');
 			var publishBox = document.getElementById('submitdiv');
-			var slugBox = document.getElementById('edit-slug-box');
 			var featuredImageBox = document.getElementById('postimagediv');
 			var pageAttributesBox = document.getElementById('pageparentdiv');
 			var authorBox = document.getElementById('authordiv');
+			var revisionsBox = document.getElementById('revisionsdiv');
+			var slugBox = document.getElementById('edit-slug-box');
+			var slugMetaBox = document.getElementById('slugdiv');
+
+			// Remove standalone slug box entirely (inline permalink editor + Slug metabox)
+			if (slugBox && slugBox.parentNode) {
+				slugBox.parentNode.removeChild(slugBox);
+			}
+			if (slugMetaBox && slugMetaBox.parentNode) {
+				slugMetaBox.parentNode.removeChild(slugMetaBox);
+			}
 
 			if (sideSortables && pageSettingsBox) {
 				var publishNext = publishBox && publishBox.parentNode === sideSortables
@@ -2494,10 +2561,19 @@ function sz_live_preview_js() {
 				sideSortables.insertBefore(pageSettingsBox, publishNext);
 			}
 
-			if (pageSettingsBox && featuredImageBox) {
+			if (pageSettingsBox) {
 				var inside = pageSettingsBox.querySelector('.inside');
-				var keywordsField = pageSettingsBox.querySelector('.acf-field[data-name="page_keywords"]');
-				if (inside && slugBox && !inside.querySelector('.sz-page-settings-slug')) {
+				
+				// Add Page Parent (Page Attributes) to Page Settings
+				if (inside && pageAttributesBox && !inside.querySelector('#pageparentdiv')) {
+					var parentWrapper = document.createElement('div');
+					parentWrapper.className = 'sz-page-settings-parent';
+					inside.appendChild(parentWrapper);
+					parentWrapper.appendChild(pageAttributesBox);
+				}
+				
+				// Add editable slug field in Page Settings
+				if (inside && !inside.querySelector('.sz-page-settings-slug')) {
 					var slugWrapper = document.createElement('div');
 					slugWrapper.className = 'sz-page-settings-slug';
 					var slugHeading = document.createElement('h3');
@@ -2505,39 +2581,47 @@ function sz_live_preview_js() {
 					var slugCaption = document.createElement('p');
 					slugCaption.className = 'description';
 					slugCaption.textContent = 'Controls the URL of the page. Change this if you want to override the URL to something different to the Page Title.';
+					var slugInput = document.createElement('input');
+					slugInput.type = 'text';
+					slugInput.id = 'sz-editable-slug';
+					slugInput.name = 'post_name';
+					slugInput.value = document.querySelector('input[name="post_name"]') ? document.querySelector('input[name="post_name"]').value : '';
+					slugInput.style.width = '100%';
+					slugInput.style.padding = '6px 8px';
+					slugInput.style.border = '1px solid #dcdcde';
+					slugInput.style.borderRadius = '4px';
+					
 					slugWrapper.appendChild(slugHeading);
 					slugWrapper.appendChild(slugCaption);
-					slugWrapper.appendChild(slugBox);
-
-					if (keywordsField && keywordsField.parentNode === inside) {
-						inside.insertBefore(slugWrapper, keywordsField);
-					} else {
-						inside.appendChild(slugWrapper);
-					}
+					slugWrapper.appendChild(slugInput);
+					inside.appendChild(slugWrapper);
 				}
+			}
 
+			if (pageSettingsBox && featuredImageBox) {
+				var inside = pageSettingsBox.querySelector('.inside');
 				if (inside && !inside.querySelector('.sz-page-settings-featured-image')) {
+					featuredImageBox.classList.remove('closed');
 					var wrapper = document.createElement('div');
 					wrapper.className = 'sz-page-settings-featured-image';
 					var heading = document.createElement('h3');
 					heading.textContent = 'Featured Image';
 					wrapper.appendChild(heading);
 					wrapper.appendChild(featuredImageBox);
-
-					if (keywordsField && keywordsField.parentNode === inside) {
-						inside.insertBefore(wrapper, keywordsField);
-					} else {
-						inside.appendChild(wrapper);
+					inside.appendChild(wrapper);
+					var featuredImageInside = featuredImageBox.querySelector('.inside');
+					if (featuredImageInside) {
+						featuredImageInside.style.display = 'block';
 					}
 				}
 			}
 
 			if (normalSortables) {
-				if (pageAttributesBox) {
-					normalSortables.appendChild(pageAttributesBox);
-				}
 				if (authorBox) {
 					normalSortables.appendChild(authorBox);
+				}
+				if (revisionsBox) {
+					normalSortables.appendChild(revisionsBox);
 				}
 			}
 		}
