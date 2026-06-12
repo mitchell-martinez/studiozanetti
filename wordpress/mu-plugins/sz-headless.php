@@ -1054,10 +1054,8 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 function szGetSocialMetaForPage( int $post_id, bool $with_fallback = false ): array {
 	$title       = trim( (string) get_the_title( $post_id ) );
 	$description = '';
-	$keywords    = '';
 	if ( function_exists( 'get_field' ) ) {
 		$description = trim( (string) get_field( 'page_description', $post_id ) );
-		$keywords    = trim( (string) get_field( 'page_keywords', $post_id ) );
 	}
 	$image_id = (int) get_post_thumbnail_id( $post_id );
 
@@ -1070,7 +1068,6 @@ function szGetSocialMetaForPage( int $post_id, bool $with_fallback = false ): ar
 		return [
 			'title'       => $title,
 			'description' => $description,
-			'keywords'    => $keywords,
 			'image'       => $image,
 			'image_id'    => $image_id,
 		];
@@ -1089,7 +1086,6 @@ function szGetSocialMetaForPage( int $post_id, bool $with_fallback = false ): ar
 	return [
 		'title'       => $title,
 		'description' => $fallback_description,
-		'keywords'    => $keywords,
 		'image'       => $image,
 		'image_id'    => $image_id,
 	];
@@ -1116,7 +1112,6 @@ function szPersistSocialSeoRows( array $raw_rows ): array {
 
 		$title       = isset( $row['title'] ) ? sanitize_text_field( wp_unslash( (string) $row['title'] ) ) : '';
 		$description = isset( $row['description'] ) ? sanitize_textarea_field( wp_unslash( (string) $row['description'] ) ) : '';
-		$keywords    = isset( $row['keywords'] ) ? sanitize_text_field( wp_unslash( (string) $row['keywords'] ) ) : '';
 		$image_id    = isset( $row['image_id'] ) ? (int) $row['image_id'] : 0;
 
 		if ( $title !== '' && $title !== (string) get_the_title( $post_id ) ) {
@@ -1128,10 +1123,8 @@ function szPersistSocialSeoRows( array $raw_rows ): array {
 
 		if ( function_exists( 'update_field' ) ) {
 			update_field( 'page_description', $description, $post_id );
-			update_field( 'page_keywords', $keywords, $post_id );
 		} else {
 			update_post_meta( $post_id, 'page_description', $description );
-			update_post_meta( $post_id, 'page_keywords', $keywords );
 		}
 
 		if ( $image_id > 0 && get_post( $image_id ) ) {
@@ -1177,7 +1170,6 @@ add_action( 'wp_ajax_sz_social_seo_autosave', function () {
 	$row = [
 		'title'       => isset( $_POST['title'] ) ? wp_unslash( (string) $_POST['title'] ) : '',
 		'description' => isset( $_POST['description'] ) ? wp_unslash( (string) $_POST['description'] ) : '',
-		'keywords'    => isset( $_POST['keywords'] ) ? wp_unslash( (string) $_POST['keywords'] ) : '',
 		'image_id'    => isset( $_POST['image_id'] ) ? (int) $_POST['image_id'] : 0,
 	];
 
@@ -1258,7 +1250,6 @@ function szRenderSocialSeoManager() {
 						$page_permalink_label = $page_url !== '' ? $page_url : $page_path;
 						$has_title           = ! empty( $override['title'] );
 						$has_seo_description = ! empty( $override['description'] );
-						$has_keywords        = ! empty( $override['keywords'] );
 						$has_share_image     = (int) ( $override['image_id'] ?? 0 ) > 0;
 						$preview_img = is_array( $preview['image'] ?? null ) && ! empty( $preview['image']['url'] )
 							? (string) $preview['image']['url']
@@ -1278,7 +1269,6 @@ function szRenderSocialSeoManager() {
 									<div class="sz-field-badges">
 										<span class="sz-field-badge" data-field="title"><?php echo $has_title ? '✓' : '○'; ?> Title</span>
 										<span class="sz-field-badge" data-field="description"><?php echo $has_seo_description ? '✓' : '○'; ?> Description</span>
-										<span class="sz-field-badge" data-field="keywords"><?php echo $has_keywords ? '✓' : '○'; ?> Keywords</span>
 										<span class="sz-field-badge" data-field="image"><?php echo $has_share_image ? '✓' : '○'; ?> Image</span>
 									</div>
 									<span class="sz-save-state" aria-live="polite">Saved</span>
@@ -1321,18 +1311,6 @@ function szRenderSocialSeoManager() {
 									<small class="sz-char-item" data-limit="200">X: <span class="sz-char-count">0</span>/200</small>
 										</div>
 								</div>
-									<div class="sz-field-box">
-										<label class="sz-field-label" for="sz-social-keywords-<?php echo esc_attr( (string) $post_id ); ?>">Keywords</label>
-										<input
-											id="sz-social-keywords-<?php echo esc_attr( (string) $post_id ); ?>"
-									type="text"
-									class="regular-text sz-social-keywords"
-									name="social[<?php echo esc_attr( (string) $post_id ); ?>][keywords]"
-									value="<?php echo esc_attr( (string) ( $override['keywords'] ?? '' ) ); ?>"
-									placeholder="Search keywords for this page (comma-separated)"
-								>
-											<small>Search terms users may type to find this page in search engines.</small>
-									</div>
 									<div class="sz-field-box">
 										<label class="sz-field-label" for="sz-social-image-url-<?php echo esc_attr( (string) $post_id ); ?>">Featured Image</label>
 										<input
@@ -1653,8 +1631,7 @@ function szRenderSocialSeoManager() {
 
 		var RECOMMENDED_LIMITS = {
 			title: Math.min(PREVIEW_LIMITS.google.title, PREVIEW_LIMITS.facebook.title, PREVIEW_LIMITS.twitter.title),
-			description: Math.min(PREVIEW_LIMITS.google.description, PREVIEW_LIMITS.facebook.description, PREVIEW_LIMITS.twitter.description),
-			keywords: 255
+			description: Math.min(PREVIEW_LIMITS.google.description, PREVIEW_LIMITS.facebook.description, PREVIEW_LIMITS.twitter.description)
 		};
 
 		function truncate(text, max) {
@@ -1667,10 +1644,6 @@ function szRenderSocialSeoManager() {
 			if (!value) return false;
 			if (/[<>]/.test(value)) return true;
 			if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(value)) return true;
-			if (fieldType === 'keywords') {
-				if (/^,|,$/.test(value)) return true;
-				if (/,,/.test(value)) return true;
-			}
 			return false;
 		}
 
@@ -1710,14 +1683,12 @@ function szRenderSocialSeoManager() {
 			var postId = row.getAttribute('data-post-id') || '';
 			var title = row.querySelector('.sz-social-title');
 			var description = row.querySelector('.sz-social-description');
-			var keywords = row.querySelector('.sz-social-keywords');
 			var imageId = row.querySelector('.sz-social-image-id');
 
 			return {
 				post_id: postId,
 				title: title ? title.value : '',
 				description: description ? description.value : '',
-				keywords: keywords ? keywords.value : '',
 				image_id: imageId ? imageId.value : '0'
 			};
 		}
@@ -1739,7 +1710,6 @@ function szRenderSocialSeoManager() {
 			formData.append('post_id', payload.post_id);
 			formData.append('title', payload.title);
 			formData.append('description', payload.description);
-			formData.append('keywords', payload.keywords);
 			formData.append('image_id', payload.image_id);
 
 			var controller = new AbortController();
@@ -1806,21 +1776,16 @@ function szRenderSocialSeoManager() {
 			var description = (descInput && descInput.value.trim()) || defaultDescription;
 			var hasTitle = titleInput && titleInput.value.trim().length > 0;
 			var hasSeoDescription = descInput && descInput.value.trim().length > 0;
-			var keywordsInput = row.querySelector('.sz-social-keywords');
-			var keywordsValue = keywordsInput ? keywordsInput.value.trim() : '';
-			var hasKeywords = keywordsValue.length > 0;
 			var hasShareImage = imageIdInput && imageIdInput.value.trim().length > 0 && imageIdInput.value.trim() !== '0';
 			var imageUrl = (imgUrlInput && imgUrlInput.value.trim()) || '';
 
 			var titleInvalid = hasTitle && (hasInvalidText(title, 'title') || title.length > RECOMMENDED_LIMITS.title);
 			var descriptionInvalid = hasSeoDescription && (hasInvalidText(description, 'description') || description.length > RECOMMENDED_LIMITS.description);
-			var keywordsInvalid = hasKeywords && (hasInvalidText(keywordsValue, 'keywords') || keywordsValue.length > RECOMMENDED_LIMITS.keywords);
 			var imageInvalid = hasShareImage && !isLikelyValidImageUrl(imageUrl);
 
 			var fieldBadgeStates = {
 				title: !hasTitle ? 'optional' : (titleInvalid ? 'warning' : 'set'),
 				description: !hasSeoDescription ? 'optional' : (descriptionInvalid ? 'warning' : 'set'),
-				keywords: !hasKeywords ? 'optional' : (keywordsInvalid ? 'warning' : 'set'),
 				image: !hasShareImage ? 'optional' : (imageInvalid ? 'warning' : 'set')
 			};
 
@@ -1993,7 +1958,7 @@ function szRenderSocialSeoManager() {
 		});
 
 			document.querySelectorAll('.sz-social-row').forEach(function (row) {
-			row.querySelectorAll('.sz-social-title, .sz-social-description, .sz-social-keywords, .sz-social-image-url').forEach(function (input) {
+			row.querySelectorAll('.sz-social-title, .sz-social-description, .sz-social-image-url').forEach(function (input) {
 				input.addEventListener('input', function () {
 					updateRowPreview(row);
 					scheduleAutosave(row);
