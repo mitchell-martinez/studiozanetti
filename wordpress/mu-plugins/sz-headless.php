@@ -1453,12 +1453,16 @@ function szRenderSocialSeoManager() {
 			color: #155724;
 		}
 		.sz-social-seo-wrap .sz-field-badge.sz-badge-missing {
-			background: #fdf0d5;
-			color: #7a4f00;
+			background: #e8eaed;
+			color: #3c434a;
 		}
 		.sz-social-seo-wrap .sz-field-badge.sz-badge-optional {
 			background: #e8eaed;
 			color: #3c434a;
+		}
+		.sz-social-seo-wrap .sz-field-badge.sz-badge-warning {
+			background: #fdf0d5;
+			color: #7a4f00;
 		}
 		.sz-social-seo-wrap .sz-social-row__body {
 			padding: 18px;
@@ -1635,7 +1639,9 @@ function szRenderSocialSeoManager() {
 		var AUTOSAVE_NONCE = <?php echo wp_json_encode( wp_create_nonce( 'sz_social_seo_manager_save' ) ); ?>;
 		var autosaveTimers = {};
 		var autosaveRequests = {};
+		var dirtyRows = {};
 		var autosaveStatus = document.querySelector('.sz-autosave-status');
+		var isFormSubmitting = false;
 
 		var PREVIEW_LIMITS = {
 			google: { title: 60, description: 160 },
@@ -1643,10 +1649,44 @@ function szRenderSocialSeoManager() {
 			twitter: { title: 70, description: 200 }
 		};
 
+		var RECOMMENDED_LIMITS = {
+			title: Math.min(PREVIEW_LIMITS.google.title, PREVIEW_LIMITS.facebook.title, PREVIEW_LIMITS.twitter.title),
+			description: Math.min(PREVIEW_LIMITS.google.description, PREVIEW_LIMITS.facebook.description, PREVIEW_LIMITS.twitter.description),
+			keywords: 255
+		};
+
 		function truncate(text, max) {
 			if (!text) return '';
 			if (text.length <= max) return text;
 			return text.slice(0, max - 1).trimEnd() + '…';
+		}
+
+		function hasInvalidText(value, fieldType) {
+			if (!value) return false;
+			if (/[<>]/.test(value)) return true;
+			if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(value)) return true;
+			if (fieldType === 'keywords') {
+				if (/^,|,$/.test(value)) return true;
+				if (/,,/.test(value)) return true;
+			}
+			return false;
+		}
+
+		function isLikelyValidImageUrl(value) {
+			if (!value) return true;
+			try {
+				var parsed = new URL(value, window.location.origin);
+				return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+			} catch (e) {
+				return false;
+			}
+		}
+
+		function hasUnsavedChanges() {
+			if (Object.keys(dirtyRows).length > 0) return true;
+			if (Object.keys(autosaveTimers).length > 0) return true;
+			if (Object.keys(autosaveRequests).length > 0) return true;
+			return false;
 		}
 
 		function setGlobalAutosaveStatus(text, state) {
@@ -1714,11 +1754,14 @@ function szRenderSocialSeoManager() {
 					if (!result || !result.success) {
 						throw new Error((result && result.data && result.data.message) || 'Autosave failed.');
 					}
+					delete dirtyRows[payload.post_id];
+					delete autosaveTimers[payload.post_id];
 					setRowSaveState(row, 'Saved', 'sz-state-saved');
 					setGlobalAutosaveStatus('All changes saved', 'sz-state-saved');
 				})
 				.catch(function (error) {
 					if (error && error.name === 'AbortError') return;
+					dirtyRows[payload.post_id] = true;
 					setRowSaveState(row, 'Save failed', 'sz-state-error');
 					setGlobalAutosaveStatus('Autosave failed', 'sz-state-error');
 				})
@@ -1735,6 +1778,7 @@ function szRenderSocialSeoManager() {
 			if (autosaveTimers[postId]) {
 				window.clearTimeout(autosaveTimers[postId]);
 			}
+			dirtyRows[postId] = true;
 			setRowSaveState(row, 'Unsaved changes', null);
 			setGlobalAutosaveStatus('Unsaved changes', null);
 			autosaveTimers[postId] = window.setTimeout(function () {
@@ -1760,24 +1804,31 @@ function szRenderSocialSeoManager() {
 			var description = (descInput && descInput.value.trim()) || defaultDescription;
 			var hasTitle = titleInput && titleInput.value.trim().length > 0;
 			var hasSeoDescription = descInput && descInput.value.trim().length > 0;
-			var hasKeywords = row.querySelector('.sz-social-keywords') && row.querySelector('.sz-social-keywords').value.trim().length > 0;
+			var keywordsInput = row.querySelector('.sz-social-keywords');
+			var keywordsValue = keywordsInput ? keywordsInput.value.trim() : '';
+			var hasKeywords = keywordsValue.length > 0;
 			var hasShareImage = imageIdInput && imageIdInput.value.trim().length > 0 && imageIdInput.value.trim() !== '0';
 			var imageUrl = (imgUrlInput && imgUrlInput.value.trim()) || '';
 
+			var titleInvalid = hasTitle && (hasInvalidText(title, 'title') || title.length > RECOMMENDED_LIMITS.title);
+			var descriptionInvalid = hasSeoDescription && (hasInvalidText(description, 'description') || description.length > RECOMMENDED_LIMITS.description);
+			var keywordsInvalid = hasKeywords && (hasInvalidText(keywordsValue, 'keywords') || keywordsValue.length > RECOMMENDED_LIMITS.keywords);
+			var imageInvalid = hasShareImage && !isLikelyValidImageUrl(imageUrl);
+
 			var fieldBadgeStates = {
-				title: hasTitle ? 'set' : 'missing',
-				description: hasSeoDescription ? 'set' : 'missing',
-				keywords: hasKeywords ? 'set' : 'optional',
-				image: hasShareImage ? 'set' : 'missing'
+				title: !hasTitle ? 'optional' : (titleInvalid ? 'warning' : 'set'),
+				description: !hasSeoDescription ? 'optional' : (descriptionInvalid ? 'warning' : 'set'),
+				keywords: !hasKeywords ? 'optional' : (keywordsInvalid ? 'warning' : 'set'),
+				image: !hasShareImage ? 'optional' : (imageInvalid ? 'warning' : 'set')
 			};
 
 			row.querySelectorAll('.sz-field-badge').forEach(function (badge) {
 				var field = badge.getAttribute('data-field');
 				if (!field || !fieldBadgeStates[field]) return;
 				var state = fieldBadgeStates[field];
-				badge.classList.remove('sz-badge-set', 'sz-badge-missing', 'sz-badge-optional');
+				badge.classList.remove('sz-badge-set', 'sz-badge-missing', 'sz-badge-optional', 'sz-badge-warning');
 				badge.classList.add('sz-badge-' + state);
-				var icon = state === 'set' ? '✓' : '○';
+				var icon = state === 'set' ? '✓' : (state === 'warning' ? '!' : '○');
 				badge.textContent = icon + ' ' + field.charAt(0).toUpperCase() + field.slice(1);
 			});
 
@@ -1933,6 +1984,12 @@ function szRenderSocialSeoManager() {
 			}
 		}
 
+		window.addEventListener('beforeunload', function (event) {
+			if (isFormSubmitting || !hasUnsavedChanges()) return;
+			event.preventDefault();
+			event.returnValue = '';
+		});
+
 			document.querySelectorAll('.sz-social-row').forEach(function (row) {
 			row.querySelectorAll('.sz-social-title, .sz-social-description, .sz-social-keywords, .sz-social-image-url').forEach(function (input) {
 				input.addEventListener('input', function () {
@@ -1946,6 +2003,13 @@ function szRenderSocialSeoManager() {
 			setRowSaveState(row, 'Saved', 'sz-state-saved');
 			updateRowPreview(row);
 		});
+
+		var socialForm = document.querySelector('.sz-social-seo-wrap form');
+		if (socialForm) {
+			socialForm.addEventListener('submit', function () {
+				isFormSubmitting = true;
+			});
+		}
 
 		var expandAllBtn = document.getElementById('sz-expand-all');
 		if (expandAllBtn) {
