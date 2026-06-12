@@ -1219,6 +1219,38 @@ function szRenderSocialSeoManager() {
 		return ! (bool) get_field( 'container_only', $page->ID );
 	} ) );
 
+	// Calculate summary stats for all pages
+	$stats = [
+		'missing_title'         => 0,
+		'missing_description'   => 0,
+		'missing_image'         => 0,
+		'too_long_title'        => 0,
+		'too_long_description'  => 0,
+		'broken_image'          => 0,
+	];
+
+	foreach ( $pages as $page ) {
+		$post_id  = (int) $page->ID;
+		$override = szGetSocialMetaForPage( $post_id, false );
+
+		if ( empty( $override['title'] ) ) {
+			$stats['missing_title']++;
+		} elseif ( strlen( (string) $override['title'] ) > 60 ) {
+			$stats['too_long_title']++;
+		}
+
+		if ( empty( $override['description'] ) ) {
+			$stats['missing_description']++;
+		} elseif ( strlen( (string) $override['description'] ) > 160 ) {
+			$stats['too_long_description']++;
+		}
+
+		$image_id = (int) ( $override['image_id'] ?? 0 );
+		if ( $image_id <= 0 ) {
+			$stats['missing_image']++;
+		}
+	}
+
 	?>
 	<div class="wrap sz-social-seo-wrap">
 		<h1>SEO &amp; Social Previews</h1>
@@ -1234,6 +1266,45 @@ function szRenderSocialSeoManager() {
 
 		<?php if ( $did_save ) : ?>
 			<div class="notice notice-success is-dismissible"><p>SEO &amp; social settings saved.</p></div>
+		<?php endif; ?>
+
+		<!-- Summary Stats Panel -->
+		<?php if ( array_sum( array_values( $stats ) ) > 0 ) : ?>
+			<div class="sz-summary-panel">
+				<div class="sz-summary-title">Compliance Summary</div>
+				<div class="sz-summary-badges">
+					<?php if ( $stats['missing_title'] > 0 ) : ?>
+						<div class="sz-summary-badge sz-badge-missing">
+							<span class="sz-badge-icon">○</span>
+							<span class="sz-badge-label"><?php echo esc_html( $stats['missing_title'] ); ?> page<?php echo $stats['missing_title'] !== 1 ? 's' : ''; ?> missing <strong>title</strong></span>
+						</div>
+					<?php endif; ?>
+					<?php if ( $stats['missing_description'] > 0 ) : ?>
+						<div class="sz-summary-badge sz-badge-missing">
+							<span class="sz-badge-icon">○</span>
+							<span class="sz-badge-label"><?php echo esc_html( $stats['missing_description'] ); ?> page<?php echo $stats['missing_description'] !== 1 ? 's' : ''; ?> missing <strong>description</strong></span>
+						</div>
+					<?php endif; ?>
+					<?php if ( $stats['missing_image'] > 0 ) : ?>
+						<div class="sz-summary-badge sz-badge-missing">
+							<span class="sz-badge-icon">○</span>
+							<span class="sz-badge-label"><?php echo esc_html( $stats['missing_image'] ); ?> page<?php echo $stats['missing_image'] !== 1 ? 's' : ''; ?> missing <strong>image</strong></span>
+						</div>
+					<?php endif; ?>
+					<?php if ( $stats['too_long_title'] > 0 ) : ?>
+						<div class="sz-summary-badge sz-badge-warning">
+							<span class="sz-badge-icon">!</span>
+							<span class="sz-badge-label"><?php echo esc_html( $stats['too_long_title'] ); ?> page<?php echo $stats['too_long_title'] !== 1 ? 's' : ''; ?> with <strong>title too long</strong> (>60 chars)</span>
+						</div>
+					<?php endif; ?>
+					<?php if ( $stats['too_long_description'] > 0 ) : ?>
+						<div class="sz-summary-badge sz-badge-warning">
+							<span class="sz-badge-icon">!</span>
+							<span class="sz-badge-label"><?php echo esc_html( $stats['too_long_description'] ); ?> page<?php echo $stats['too_long_description'] !== 1 ? 's' : ''; ?> with <strong>description too long</strong> (>160 chars)</span>
+						</div>
+					<?php endif; ?>
+				</div>
+			</div>
 		<?php endif; ?>
 
 		<form method="post">
@@ -1482,6 +1553,80 @@ function szRenderSocialSeoManager() {
 			gap: 8px;
 			flex-wrap: wrap;
 			margin: 0;
+		}
+		.sz-social-seo-wrap .sz-summary-panel {
+			margin: 16px 0;
+			padding: 16px;
+			border: 1px solid #e8e8e8;
+			border-radius: 8px;
+			background: #fbfcfd;
+		}
+		.sz-social-seo-wrap .sz-summary-title {
+			font-size: 14px;
+			font-weight: 600;
+			color: #344054;
+			margin-bottom: 12px;
+		}
+		.sz-social-seo-wrap .sz-summary-badges {
+			display: grid;
+			gap: 10px;
+		}
+		.sz-social-seo-wrap .sz-summary-badge {
+			display: flex;
+			align-items: flex-start;
+			gap: 10px;
+			padding: 10px 12px;
+			border-radius: 8px;
+			font-size: 13px;
+			line-height: 1.5;
+		}
+		.sz-social-seo-wrap .sz-summary-badge.sz-badge-missing {
+			background: #fef3f2;
+			border: 1px solid #fecdca;
+			color: #7a271a;
+		}
+		.sz-social-seo-wrap .sz-summary-badge.sz-badge-warning {
+			background: #fdf8f3;
+			border: 1px solid #fed3b5;
+			color: #7a4f00;
+		}
+		.sz-social-seo-wrap .sz-badge-icon {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 20px;
+			height: 20px;
+			min-width: 20px;
+			border-radius: 4px;
+			font-size: 11px;
+			font-weight: 700;
+			background: rgba(0,0,0,0.08);
+		}
+		.sz-social-seo-wrap .sz-summary-badge.sz-badge-missing .sz-badge-icon {
+			background: #d32f2f;
+			color: white;
+		}
+		.sz-social-seo-wrap .sz-summary-badge.sz-badge-warning .sz-badge-icon {
+			background: #f57c00;
+			color: white;
+		}
+		.sz-social-seo-wrap .sz-badge-label {
+			flex: 1;
+		}
+		.sz-social-seo-wrap .sz-image-broken-badge {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: 18px;
+			height: 18px;
+			margin-left: 6px;
+			border-radius: 3px;
+			background: #d32f2f;
+			color: white;
+			font-size: 10px;
+			font-weight: 700;
+			cursor: help;
+			title: "Image URL is broken or inaccessible";
 		}
 		.sz-social-seo-wrap .sz-filter-count {
 			color: #50575e;
@@ -1888,6 +2033,7 @@ function szRenderSocialSeoManager() {
 						if (imageIdInput) imageIdInput.value = String(media.id || '');
 						if (imageUrlInput) imageUrlInput.value = media.url || '';
 						updateRowPreview(row);
+						validateImageInRow(row);
 						scheduleAutosave(row);
 					});
 
@@ -1903,6 +2049,53 @@ function szRenderSocialSeoManager() {
 					scheduleAutosave(row);
 				});
 			}
+		}
+
+		function validateImageInRow(row) {
+			var imageUrlInput = row.querySelector('.sz-social-image-url');
+			if (!imageUrlInput) return;
+
+			var imageUrl = (imageUrlInput.value || '').trim();
+			if (!imageUrl) return;
+
+			var imageBadge = row.querySelector('.sz-image-broken-badge');
+			if (imageBadge) {
+				imageBadge.remove();
+			}
+
+			if (!isLikelyValidImageUrl(imageUrl)) {
+				var newBadge = document.createElement('span');
+				newBadge.className = 'sz-image-broken-badge';
+				newBadge.textContent = '!';
+				newBadge.title = 'Image URL appears to be broken or inaccessible';
+				imageUrlInput.parentElement.insertBefore(newBadge, imageUrlInput.nextSibling);
+				return;
+			}
+
+			var img = new Image();
+			var timeout = window.setTimeout(function () {
+				img.onload = img.onerror = null;
+				var badge = document.createElement('span');
+				badge.className = 'sz-image-broken-badge';
+				badge.textContent = '!';
+				badge.title = 'Image URL is not accessible (timed out after 5s)';
+				imageUrlInput.parentElement.insertBefore(badge, imageUrlInput.nextSibling);
+			}, 5000);
+
+			img.onload = function () {
+				window.clearTimeout(timeout);
+			};
+
+			img.onerror = function () {
+				window.clearTimeout(timeout);
+				var badge = document.createElement('span');
+				badge.className = 'sz-image-broken-badge';
+				badge.textContent = '!';
+				badge.title = 'Image URL is broken or inaccessible';
+				imageUrlInput.parentElement.insertBefore(badge, imageUrlInput.nextSibling);
+			};
+
+			img.src = imageUrl;
 		}
 
 		function setRowExpanded(row, expanded) {
@@ -1969,6 +2162,7 @@ function szRenderSocialSeoManager() {
 			bindImagePicker(row);
 			setRowSaveState(row, 'Saved', 'sz-state-saved');
 			updateRowPreview(row);
+			validateImageInRow(row);
 		});
 
 		var socialForm = document.querySelector('.sz-social-seo-wrap form');
