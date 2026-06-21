@@ -10,7 +10,8 @@ Side-by-side layout with an image and rich text content. Image position can be l
 2. Click **Add Row** → select **Image + Text**
 3. Fill in the fields:
    - **Image** (required): Upload or select an image
-   - **Heading** (optional): Section heading (renders as `<h2>`)
+  - **Heading** (optional): Section heading text
+  - **Semantic Heading Level** (optional, default "H2"): Select the HTML tag (`<h1>` to `<h6>`) for accessibility/SEO structure. Visual styling does not change.
    - **Body** (required): Rich text content (WYSIWYG editor)
    - **Image Position** (optional): "left" (default) or "right"
    - **Image Ratio** (optional): "landscape" (4:3), "portrait" (3:4), "square" (1:1), or "auto" (natural proportions)

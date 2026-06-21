@@ -261,6 +261,7 @@ add_action( 'acf/init', function () {
 	$image_text_fields = array_merge([
 		[ 'key' => 'field_sz_image_text_eyebrow', 'label' => 'Eyebrow', 'name' => 'eyebrow', 'type' => 'text' ],
 		[ 'key' => 'field_sz_image_text_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
+		[ 'key' => 'field_sz_image_text_heading_level', 'label' => 'Semantic Heading Level', 'name' => 'heading_level', 'type' => 'select', 'choices' => [ 'h1' => 'H1', 'h2' => 'H2', 'h3' => 'H3', 'h4' => 'H4', 'h5' => 'H5', 'h6' => 'H6' ], 'default_value' => 'h2', 'instructions' => 'Controls HTML heading level for accessibility/SEO semantics only. Visual styling stays the same.' ],
 		[ 'key' => 'field_sz_image_text_body', 'label' => 'Body', 'name' => 'body', 'type' => 'wysiwyg', 'tabs' => 'all', 'toolbar' => 'full', 'media_upload' => 1 ],
 		[ 'key' => 'field_sz_image_text_image', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'required' => 1 ],
 		[ 'key' => 'field_sz_image_text_image_mobile', 'label' => 'Image (Mobile)', 'name' => 'image_mobile', 'type' => 'image', 'return_format' => 'array' ],

@@ -21,6 +21,15 @@ describe('ImageTextBlock', () => {
     expect(screen.getByText(/simple and enjoyable/i)).toBeInTheDocument()
   })
 
+  it('renders semantic heading level without changing heading style class', () => {
+    const { container } = renderBlock({ heading_level: 'h5' })
+    const heading = screen.getByRole('heading', { level: 5 })
+
+    expect(heading).toHaveTextContent(base.heading!)
+    expect(heading.className).toMatch(/imageTextHeading/)
+    expect(container.querySelector('h5')).toBeInTheDocument()
+  })
+
   it('renders the image', () => {
     renderBlock()
     const img = screen.getByRole('img')

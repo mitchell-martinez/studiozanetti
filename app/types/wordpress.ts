@@ -102,6 +102,7 @@ export interface ImageTextBlock extends BlockStyleOptions {
   image: WPImage
   image_mobile?: WPImage
   heading?: string
+  heading_level?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
   body: string
   image_position?: 'left' | 'right'
   image_ratio?: 'landscape' | 'portrait' | 'square' | 'auto'

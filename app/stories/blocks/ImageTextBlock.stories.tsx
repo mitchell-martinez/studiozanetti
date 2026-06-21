@@ -13,6 +13,7 @@ const meta: Meta<ImageTextArgs> = {
   tags: ['autodocs'],
   args: {
     heading: imageTextBlock.heading,
+    heading_level: imageTextBlock.heading_level ?? 'h2',
     body: imageTextBlock.body,
     eyebrow: imageTextBlock.eyebrow,
     image: imageTextBlock.image,
@@ -33,6 +34,11 @@ const meta: Meta<ImageTextArgs> = {
   },
   argTypes: {
     heading: { control: 'text', description: 'Section heading beside the image' },
+    heading_level: {
+      control: 'inline-radio',
+      options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+      description: 'Semantic heading tag only; visual style stays unchanged',
+    },
     body: { control: 'text', description: 'Rich-text body content (HTML from WP WYSIWYG)' },
     eyebrow: { control: 'text', description: 'Small label above the heading' },
     image: { control: 'object', description: 'Primary image object { url, alt, width, height }' },

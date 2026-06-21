@@ -1,9 +1,12 @@
+import { createElement } from 'react'
 import { Link } from 'react-router'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
 import { getSectionStyle } from '../helpers/styleOptions'
 import styles from './ImageTextBlock.module.scss'
 import type { ImageTextBlockProps } from './types'
+
+type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 
 const ratioClass = (ratio?: string) => {
   switch (ratio) {
@@ -63,6 +66,7 @@ const horizontalAlignClass = (align?: string) => {
 }
 
 const ImageTextBlock = ({ block }: ImageTextBlockProps) => {
+  const headingLevel: HeadingLevel = block.heading_level ?? 'h2'
   const imgStyle: React.CSSProperties = {}
   if (block.image_max_width) imgStyle.maxWidth = `${block.image_max_width}px`
   if (block.image_max_height) imgStyle.maxHeight = `${block.image_max_height}px`
@@ -109,7 +113,7 @@ const ImageTextBlock = ({ block }: ImageTextBlockProps) => {
         }`}
       >
         {block.eyebrow && <p className={styles.eyebrow}>{block.eyebrow}</p>}
-        {block.heading && <h2 className={styles.imageTextHeading}>{block.heading}</h2>}
+        {block.heading && createElement(headingLevel, { className: styles.imageTextHeading }, block.heading)}
         <RichText html={block.body} fontSize={block.font_size} />
         {!block.url && block.cta_text && block.cta_url && (
           <Button href={block.cta_url} variant="text" size="sm">
