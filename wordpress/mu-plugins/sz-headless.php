@@ -1582,6 +1582,18 @@ function sz_live_preview_js() {
 			var revisionsBox = document.getElementById('revisionsdiv');
 			var slugBox = document.getElementById('edit-slug-box');
 			var slugMetaBox = document.getElementById('slugdiv');
+			var postNameInput = document.querySelector('input[name="post_name"]');
+			var editablePostName = document.getElementById('editable-post-name');
+			var slugMetaInput = document.getElementById('new-post-slug');
+			var currentSlug = '';
+
+			if (postNameInput && postNameInput.value) {
+				currentSlug = postNameInput.value;
+			} else if (editablePostName && editablePostName.textContent) {
+				currentSlug = editablePostName.textContent.trim();
+			} else if (slugMetaInput && slugMetaInput.value) {
+				currentSlug = slugMetaInput.value;
+			}
 
 			// Remove standalone slug box entirely (inline permalink editor + Slug metabox)
 			if (slugBox && slugBox.parentNode) {
@@ -1621,8 +1633,8 @@ function sz_live_preview_js() {
 					var slugInput = document.createElement('input');
 					slugInput.type = 'text';
 					slugInput.id = 'sz-editable-slug';
-					slugInput.name = 'post_name';
-					slugInput.value = document.querySelector('input[name="post_name"]') ? document.querySelector('input[name="post_name"]').value : '';
+					slugInput.value = currentSlug;
+					slugInput.setAttribute('data-original-slug', currentSlug);
 					slugInput.style.width = '100%';
 					slugInput.style.padding = '6px 8px';
 					slugInput.style.border = '1px solid #dcdcde';
@@ -1673,11 +1685,32 @@ function sz_live_preview_js() {
 		var frameWrapper    = document.getElementById('sz-preview-frame-wrapper');
 		var fullscreenBtn   = document.getElementById('sz-fullscreen-btn');
 		var postForm        = document.getElementById('post');
+		var customSlugInput = document.getElementById('sz-editable-slug');
 		var maxInputVars    = <?php echo (int) ini_get( 'max_input_vars' ); ?>;
 		var frontendBaseUrl = <?php echo wp_json_encode( rtrim( SZ_FRONTEND_URL, '/' ) ); ?>;
 		var frontendOrigin  = '';
 		var previewWindows  = [];
 		var draftSyncTimer  = null;
+
+		function syncSlugToPostName() {
+			if (!postForm || !customSlugInput) return;
+
+			var slugValue = (customSlugInput.value || '').trim();
+			if (!slugValue) {
+				slugValue = customSlugInput.getAttribute('data-original-slug') || '';
+			}
+
+			var syncInput = postForm.querySelector('#sz-post-name-sync');
+			if (!syncInput) {
+				syncInput = document.createElement('input');
+				syncInput.type = 'hidden';
+				syncInput.id = 'sz-post-name-sync';
+				syncInput.name = 'post_name';
+				postForm.appendChild(syncInput);
+			}
+
+			syncInput.value = slugValue;
+		}
 
 		try {
 			frontendOrigin = new URL(frontendBaseUrl).origin;
@@ -1688,7 +1721,16 @@ function sz_live_preview_js() {
 		if (!iframe || !refreshBtn) return;
 
 		if (postForm) {
+			syncSlugToPostName();
+
+			if (customSlugInput) {
+				customSlugInput.addEventListener('input', syncSlugToPostName);
+				customSlugInput.addEventListener('change', syncSlugToPostName);
+			}
+
 			postForm.addEventListener('submit', function (event) {
+				syncSlugToPostName();
+
 				var namedInputs = postForm.querySelectorAll('input[name], select[name], textarea[name]').length;
 				var threshold = maxInputVars > 0 ? Math.floor(maxInputVars * 0.9) : 0;
 
