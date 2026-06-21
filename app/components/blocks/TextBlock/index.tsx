@@ -1,9 +1,12 @@
+import { createElement } from 'react'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
 import { getBackgroundImageStyle, getSectionStyle } from '../helpers/styleOptions'
 import sharedStyles from '../shared.module.scss'
 import styles from './TextBlock.module.scss'
 import type { TextBlockProps } from './types'
+
+type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
 
 const textAlignClass: Record<string, string | undefined> = {
   left: styles.textLeft,
@@ -25,6 +28,8 @@ const widthClass: Record<string, string | undefined> = {
 }
 
 const TextBlock = ({ block, dark }: TextBlockProps) => {
+  const headingLevel: HeadingLevel = block.heading_level ?? 'h2'
+
   // TextBlock uses max_width for its inner text container, not the outer section.
   // Strip both so getSectionStyle doesn't constrain the full-width section background.
   const { max_width: _textWidth, max_width_px: _textWidthPx, ...sectionOptions } = block
@@ -59,7 +64,7 @@ const TextBlock = ({ block, dark }: TextBlockProps) => {
         style={block.max_width_px ? { maxWidth: `${block.max_width_px}px` } : undefined}
       >
         {block.eyebrow && <p className={styles.eyebrow}>{block.eyebrow}</p>}
-        {block.heading && <h2 className={styles.textHeading}>{block.heading}</h2>}
+        {block.heading && createElement(headingLevel, { className: styles.textHeading }, block.heading)}
         <RichText html={block.body} fontSize={block.font_size} />
         {block.cta_text && block.cta_url && (
           <Button href={block.cta_url} variant="text" size="sm">

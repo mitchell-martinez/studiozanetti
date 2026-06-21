@@ -21,6 +21,15 @@ describe('TextBlock', () => {
     expect(screen.getByText('Test body content')).toBeInTheDocument()
   })
 
+  it('renders semantic heading level without changing heading style class', () => {
+    const { container } = renderBlock({ heading_level: 'h4' })
+    const heading = screen.getByRole('heading', { level: 4 })
+
+    expect(heading).toHaveTextContent('Test Heading')
+    expect(heading.className).toMatch(/textHeading/)
+    expect(container.querySelector('h4')).toBeInTheDocument()
+  })
+
   it('renders eyebrow when provided', () => {
     renderBlock({ eyebrow: 'Label' })
     expect(screen.getByText('Label')).toBeInTheDocument()

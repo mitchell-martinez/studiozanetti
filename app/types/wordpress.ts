@@ -86,6 +86,7 @@ export interface HeroBlock {
 export interface TextBlock extends BlockStyleOptions {
   acf_fc_layout: 'text_block'
   heading?: string
+  heading_level?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
   body: string
   align?: TextAlign
   block_align?: BlockAlign

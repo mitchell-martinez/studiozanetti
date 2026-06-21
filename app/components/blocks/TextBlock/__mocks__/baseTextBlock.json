@@ -1,5 +1,6 @@
 {
   "acf_fc_layout": "text_block",
   "heading": "Test Heading",
+  "heading_level": "h2",
   "body": "<p>Test body content</p>"
 }

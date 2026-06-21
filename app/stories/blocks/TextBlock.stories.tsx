@@ -13,6 +13,7 @@ const meta: Meta<TextArgs> = {
   tags: ['autodocs'],
   args: {
     heading: textBlock.heading,
+    heading_level: textBlock.heading_level ?? 'h2',
     body: textBlock.body,
     eyebrow: textBlock.eyebrow,
     align: textBlock.align,
@@ -26,6 +27,11 @@ const meta: Meta<TextArgs> = {
   },
   argTypes: {
     heading: { control: 'text', description: 'Section heading' },
+    heading_level: {
+      control: 'inline-radio',
+      options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+      description: 'Semantic heading tag only; visual style stays unchanged',
+    },
     body: { control: 'text', description: 'Rich-text body content (HTML from WP WYSIWYG)' },
     eyebrow: { control: 'text', description: 'Small label above the heading' },
     cta_text: { control: 'text', description: 'Call-to-action button label' },

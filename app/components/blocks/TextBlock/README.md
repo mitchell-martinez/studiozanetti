@@ -11,7 +11,8 @@ Supports independent **text alignment** (left / centre / right / justified) and 
 2. Click **Add Row** → select **Text Block**
 3. Fill in the fields:
    - **Eyebrow** (optional): Small uppercase label above the heading
-   - **Heading** (optional): Section heading (renders as `<h2>`)
+  - **Heading** (optional): Section heading text
+  - **Semantic Heading Level** (optional, default "H2"): Select the HTML tag (`<h1>` to `<h6>`) for accessibility/SEO structure. Visual styling does not change.
    - **Body** (required): Rich text content (WYSIWYG editor)
    - **Text Align** (optional, default "Left"): Alignment of text _within_ the block — Left, Centre, Right, or Justified
    - **Block Align** (optional, default "Left"): Horizontal position of the _entire block_ on the page — Left, Centre, or Right
