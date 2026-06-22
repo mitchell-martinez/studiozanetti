@@ -78,8 +78,8 @@
 }
 
 .heroTagline {
-  font-size: var(--text-xl);
-  color: #ffe6be;
+  font-size: calc(var(--text-xl) * 0.85);
+  color: #fff;
   font-style: italic;
   letter-spacing: 0.03em;
   max-width: 38ch;
