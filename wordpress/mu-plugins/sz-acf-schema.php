@@ -831,23 +831,37 @@ add_action( 'acf/init', function () {
 add_filter( 'acf/load_field/key=field_sz_menu_override', 'sz_populate_menu_override_choices' );
 add_filter( 'acf/load_field/key=field_sz_cat_menu_override', 'sz_populate_menu_override_choices' );
 
+// Clear menu cache when menus are created, updated, or deleted
+add_action( 'wp_create_nav_menu', function () { delete_transient( 'sz_menu_choices_cache' ); } );
+add_action( 'wp_update_nav_menu', function () { delete_transient( 'sz_menu_choices_cache' ); } );
+add_action( 'wp_delete_nav_menu', function () { delete_transient( 'sz_menu_choices_cache' ); } );
+
 function sz_populate_menu_override_choices( array $field ): array {
-	$choices = [];
+	// Cache menu choices for 1 hour to avoid expensive queries on pages with many blocks
+	$cache_key = 'sz_menu_choices_cache';
+	$choices = get_transient( $cache_key );
 
-	// 1. Add registered theme locations
-	$locations = get_registered_nav_menus();
-	foreach ( $locations as $slug => $label ) {
-		$choices[ $slug ] = $label . ' (' . $slug . ')';
-	}
+	if ( false === $choices ) {
+		$choices = [];
 
-	// 2. Add all menus created in Appearance → Menus
-	$nav_menus = wp_get_nav_menus();
-	foreach ( $nav_menus as $menu ) {
-		$slug = $menu->slug;
-		// Avoid duplicate if a menu slug matches a theme location slug
-		if ( ! isset( $choices[ $slug ] ) ) {
-			$choices[ $slug ] = $menu->name . ' (' . $slug . ')';
+		// 1. Add registered theme locations
+		$locations = get_registered_nav_menus();
+		foreach ( $locations as $slug => $label ) {
+			$choices[ $slug ] = $label . ' (' . $slug . ')';
 		}
+
+		// 2. Add all menus created in Appearance → Menus
+		$nav_menus = wp_get_nav_menus();
+		foreach ( $nav_menus as $menu ) {
+			$slug = $menu->slug;
+			// Avoid duplicate if a menu slug matches a theme location slug
+			if ( ! isset( $choices[ $slug ] ) ) {
+				$choices[ $slug ] = $menu->name . ' (' . $slug . ')';
+			}
+		}
+
+		// Cache for 1 hour (3600 seconds)
+		set_transient( $cache_key, $choices, 3600 );
 	}
 
 	// 3. Preserve any existing saved value that doesn't match current menus
