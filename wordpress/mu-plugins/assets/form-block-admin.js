@@ -180,8 +180,17 @@
     });
   };
 
+  // Debounce initial ready to avoid layout thrashing on pages with many form blocks
+  let readyTimeout;
+  const scheduleReadySync = ($el) => {
+    clearTimeout(readyTimeout);
+    readyTimeout = setTimeout(() => {
+      scheduleSync($el || document);
+    }, 50);
+  };
+
   if (typeof acf !== 'undefined' && acf.addAction) {
-    acf.addAction('ready', ($el) => scheduleSync($el || document));
+    acf.addAction('ready', scheduleReadySync);
     acf.addAction('append', ($el) => scheduleSync($el || document));
   } else {
     $(document).ready(() => scheduleSync(document));
