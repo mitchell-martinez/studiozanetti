@@ -3,12 +3,23 @@ import { getBackgroundImageStyle, getSectionStyle } from '../helpers/styleOption
 import sharedStyles from '../shared.module.scss'
 import styles from './TextGridBlock.module.scss'
 import type { TextGridBlockProps } from './types'
+import type { ButtonSize, ButtonVariant } from '~/components/Button/types'
 
 const alignClass: Record<string, string> = {
   left: styles.alignLeft,
   center: styles.alignCenter,
   right: styles.alignRight,
 }
+
+const isButtonVariant = (value: unknown): value is ButtonVariant =>
+  value === 'primary' ||
+  value === 'secondary' ||
+  value === 'outline' ||
+  value === 'dark' ||
+  value === 'text'
+
+const isButtonSize = (value: unknown): value is ButtonSize =>
+  value === 'sm' || value === 'md' || value === 'lg'
 
 const TextGridBlock = ({ block }: TextGridBlockProps) => {
   if (!block.items?.length) return null
@@ -43,7 +54,25 @@ const TextGridBlock = ({ block }: TextGridBlockProps) => {
               : undefined
           }
         >
-          {block.items.map((item, index) => (
+          {block.items.map((item, index) => {
+            // ACF select fields can come through as empty strings when set to
+            // "Use block default". Treat blank values as unset.
+            const rawItemVariant = typeof item.cta_variant === 'string' ? item.cta_variant.trim() : undefined
+            const rawBlockVariant = typeof block.cta_variant === 'string' ? block.cta_variant.trim() : undefined
+            const rawItemSize = typeof item.cta_size === 'string' ? item.cta_size.trim() : undefined
+            const rawBlockSize = typeof block.cta_size === 'string' ? block.cta_size.trim() : undefined
+
+            const ctaVariant: ButtonVariant =
+              (isButtonVariant(rawItemVariant) && rawItemVariant) ||
+              (isButtonVariant(rawBlockVariant) && rawBlockVariant) ||
+              'outline'
+
+            const ctaSize: ButtonSize =
+              (isButtonSize(rawItemSize) && rawItemSize) ||
+              (isButtonSize(rawBlockSize) && rawBlockSize) ||
+              'sm'
+
+            return (
             <article
               key={item.title ?? `item-${index}`}
               className={`${styles.card} ${cardStyleClass} ${textAlignClass} ${fontSizeClass}`.trim()}
@@ -52,17 +81,14 @@ const TextGridBlock = ({ block }: TextGridBlockProps) => {
               {item.body && <p className={styles.cardBody}>{item.body}</p>}
               {item.cta_text && item.cta_url && (
                 <div className={styles.cardCta}>
-                  <Button
-                    href={item.cta_url}
-                    variant={item.cta_variant ?? block.cta_variant ?? 'outline'}
-                    size={item.cta_size ?? block.cta_size ?? 'sm'}
-                  >
+                  <Button href={item.cta_url} variant={ctaVariant} size={ctaSize}>
                     {item.cta_text}
                   </Button>
                 </div>
               )}
             </article>
-          ))}
+            )
+          })}
         </div>
       </div>
     </section>

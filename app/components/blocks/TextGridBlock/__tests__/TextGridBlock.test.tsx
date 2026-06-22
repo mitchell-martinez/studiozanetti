@@ -242,4 +242,25 @@ describe('TextGridBlock', () => {
     expect(btn.className).toMatch(/secondary/)
     expect(btn.className).toMatch(/sizeMd/)
   })
+
+  it('falls back to block-level CTA variant and size when item overrides are blank strings', () => {
+    const itemWithBlankOverrides = {
+      title: 'Blank Override CTA',
+      body: 'Body',
+      cta_text: 'Read',
+      cta_url: '/read',
+      cta_variant: '',
+      cta_size: '',
+    } as unknown as TextGridBlockType['items'][number]
+
+    const { container } = renderBlock({
+      cta_variant: 'secondary',
+      cta_size: 'md',
+      items: [itemWithBlankOverrides],
+    })
+
+    const btn = container.querySelector('[class*="cardCta"] button')!
+    expect(btn.className).toMatch(/secondary/)
+    expect(btn.className).toMatch(/sizeMd/)
+  })
 })

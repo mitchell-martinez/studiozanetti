@@ -117,15 +117,21 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 1px solid var(--color-accent);
-  color: var(--color-accent-strong);
+  border: 2px solid #ffbdcd;
+  background: #ffbdcd;
+  color: #121212;
   padding: 0.65rem 0.9rem;
   text-decoration: none;
+  transition:
+    background g.$transition-fast,
+    color g.$transition-fast,
+    border-color g.$transition-fast;
 
   &:hover,
   &:active {
-    background: var(--color-accent);
-    color: #fff;
+    background: transparent;
+    color: #121212;
+    border-color: #eb8ba0;
   }
 }
 
@@ -137,22 +143,24 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 2px solid var(--color-accent);
-  background: var(--color-accent);
-  color: #fff;
+  border: 2px solid #ffbdcd;
+  background: #ffbdcd;
+  color: #121212;
   font-weight: 600;
   letter-spacing: 0.03em;
   padding: 0.7rem 1.8rem;
   text-decoration: none;
   transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
+    background g.$transition-fast,
+    color g.$transition-fast,
+    border-color g.$transition-fast,
+    box-shadow g.$transition-fast;
 
   &:hover,
   &:active {
     background: transparent;
-    color: var(--color-accent);
+    color: #121212;
+    border-color: #eb8ba0;
   }
 
   &:focus-visible {
