@@ -256,6 +256,16 @@
     gap: 0.625rem;
   }
 
+  // Keep desktop alignment options intact, but improve mobile readability
+  // when text wraps over complex imagery.
+  .title,
+  .subtitle,
+  .overlayText {
+    text-align: justify;
+    text-justify: inter-word;
+    text-align-last: left;
+  }
+
   .title {
     font-size: clamp(1.6rem, 7.2vw, 3rem);
   }

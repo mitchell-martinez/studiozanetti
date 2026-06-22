@@ -205,3 +205,20 @@
 .clickable {
   cursor: pointer;
 }
+
+@media (max-width: #{g.$bp-md}) {
+  // Keep desktop alignment controls unchanged, but normalize mobile reading flow.
+  .imageTextBody {
+    text-align: justify;
+    text-justify: inter-word;
+    text-align-last: left;
+    align-items: stretch;
+  }
+
+  .imageTextHeading,
+  .eyebrow,
+  .imageTextBody :global(p),
+  .imageTextBody :global(li) {
+    text-align: inherit;
+  }
+}
