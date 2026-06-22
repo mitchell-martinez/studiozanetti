@@ -14,6 +14,7 @@
   "image_shadow_strength": 0.3,
   "overlay_text": "Capturing Life's Beautiful Moments",
   "text_align": "center",
+  "mobile_justify_text": false,
   "parallax_scroll": false,
   "aria_label": "Scenic landscape image"
 }

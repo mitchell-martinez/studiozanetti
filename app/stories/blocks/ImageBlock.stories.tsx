@@ -20,6 +20,7 @@ const meta: Meta<ImageArgs> = {
     image_shadow_strength: baseBlock.image_shadow_strength,
     overlay_text: baseBlock.overlay_text,
     text_align: baseBlock.text_align,
+    mobile_justify_text: baseBlock.mobile_justify_text ?? false,
     parallax_scroll: baseBlock.parallax_scroll,
     aria_label: baseBlock.aria_label,
   },
@@ -68,6 +69,10 @@ const meta: Meta<ImageArgs> = {
       control: 'inline-radio',
       options: ['left', 'center', 'right'],
       description: 'Overlay text alignment',
+    },
+    mobile_justify_text: {
+      control: 'boolean',
+      description: 'Opt-in: justify overlay/title/subtitle text on mobile screens only',
     },
     parallax_scroll: {
       control: 'boolean',

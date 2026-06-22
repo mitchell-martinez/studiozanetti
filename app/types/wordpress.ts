@@ -240,6 +240,7 @@ export interface ImageBlock {
   heading_opacity?: number
   image_shadow_strength?: number
   color_theme?: 'default' | 'corporate'
+  mobile_justify_text?: boolean
 }
 
 // ─── Form block ───────────────────────────────────────────────────────────────

@@ -23,6 +23,7 @@ This block is available as an **Image** layout within the **Page Blocks** flexib
 | Heading Opacity     | Number     | —        | Opacity for title + subtitle text (`0` to `1`). Example: `0.8` = slightly transparent text.                             |
 | Image Shadow Strength | Number   | —        | Darkens the image itself (`0` to `1`). Example: `0.3` = moderate shadow, `1` = fully black image.                       |
 | Text Align          | Select     | —        | Alignment of overlay text: **Centre** (default), **Left**, or **Right**.                                                  |
+| Mobile Justify Text | True/False | —        | Optional mobile readability override. When enabled, title/subtitle/overlay text is justified on mobile screens only. **Off by default**. |
 | Parallax Scroll     | True/False | —        | Toggle parallax depth effect on or off. **Off by default** (static banner).                                               |
 | Accessibility Label | Text       | —        | Custom `aria-label` for the section. Defaults to "Full-width image banner".                                               |
 

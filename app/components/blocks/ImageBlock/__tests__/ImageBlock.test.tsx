@@ -125,6 +125,18 @@ describe('ImageBlock', () => {
     expect(content.className).toMatch(/alignRight/)
   })
 
+  it('does not apply mobileJustify class by default', () => {
+    const { container } = renderBlock({ title: 'Heading' })
+    const content = container.querySelector('[class*="content"]')!
+    expect(content.className).not.toMatch(/mobileJustify/)
+  })
+
+  it('applies mobileJustify class when enabled', () => {
+    const { container } = renderBlock({ title: 'Heading', mobile_justify_text: true })
+    const content = container.querySelector('[class*="content"]')!
+    expect(content.className).toMatch(/mobileJustify/)
+  })
+
   // ─── Image loading (static mode) ────────────────────────────────────────────
 
   it('sets loading="lazy" on the static image', () => {

@@ -221,4 +221,10 @@
   .imageTextBody :global(li) {
     text-align: inherit;
   }
+
+  .imageTextHeading,
+  .eyebrow {
+    align-self: center;
+    text-align: center;
+  }
 }

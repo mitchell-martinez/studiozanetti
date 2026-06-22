@@ -101,7 +101,7 @@ const ImageBlock = ({ block }: ImageBlockProps) => {
 
       {(block.title || block.subtitle || block.overlay_text) && (
         <div
-          className={`${styles.content} ${alignClass} ${textMaxWidthClass}`}
+          className={`${styles.content} ${alignClass} ${textMaxWidthClass} ${block.mobile_justify_text ? styles.mobileJustify : ''}`}
           style={{ '--heading-opacity': headingOpacity } as CSSProperties}
         >
           {block.title && (

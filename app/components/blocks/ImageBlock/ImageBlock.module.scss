@@ -256,11 +256,10 @@
     gap: 0.625rem;
   }
 
-  // Keep desktop alignment options intact, but improve mobile readability
-  // when text wraps over complex imagery.
-  .title,
-  .subtitle,
-  .overlayText {
+  // Keep desktop alignment options intact and apply only when enabled per block.
+  .mobileJustify .title,
+  .mobileJustify .subtitle,
+  .mobileJustify .overlayText {
     text-align: justify;
     text-justify: inter-word;
     text-align-last: left;
