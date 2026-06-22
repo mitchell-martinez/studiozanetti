@@ -135,13 +135,33 @@ describe('TextGridBlock', () => {
   })
 
   it('renders CTA buttons with primary variant when set', () => {
-    const { container } = renderBlock({ cta_variant: 'primary' })
+    const { container } = renderBlock({
+      cta_variant: 'primary',
+      items: [
+        {
+          title: 'Primary CTA',
+          body: 'Body',
+          cta_text: 'Read',
+          cta_url: '/read',
+        },
+      ],
+    })
     const btn = container.querySelector('[class*="cardCta"] button')!
     expect(btn.className).toMatch(/primary/)
   })
 
   it('renders CTA buttons with text variant when set', () => {
-    const { container } = renderBlock({ cta_variant: 'text' })
+    const { container } = renderBlock({
+      cta_variant: 'text',
+      items: [
+        {
+          title: 'Text CTA',
+          body: 'Body',
+          cta_text: 'Read',
+          cta_url: '/read',
+        },
+      ],
+    })
     const btn = container.querySelector('[class*="cardCta"] button')!
     expect(btn.className).toMatch(/text/)
   })
@@ -153,8 +173,73 @@ describe('TextGridBlock', () => {
   })
 
   it('renders CTA buttons with md size when set', () => {
-    const { container } = renderBlock({ cta_size: 'md' })
+    const { container } = renderBlock({
+      cta_size: 'md',
+      items: [
+        {
+          title: 'Medium CTA',
+          body: 'Body',
+          cta_text: 'Read',
+          cta_url: '/read',
+        },
+      ],
+    })
     const btn = container.querySelector('[class*="cardCta"] button')!
+    expect(btn.className).toMatch(/sizeMd/)
+  })
+
+  it('uses per-item CTA variant override when provided', () => {
+    const { container } = renderBlock({
+      cta_variant: 'outline',
+      items: [
+        {
+          title: 'Custom CTA',
+          body: 'Body',
+          cta_text: 'Read',
+          cta_url: '/read',
+          cta_variant: 'dark',
+        },
+      ],
+    })
+
+    const btn = container.querySelector('[class*="cardCta"] button')!
+    expect(btn.className).toMatch(/dark/)
+  })
+
+  it('uses per-item CTA size override when provided', () => {
+    const { container } = renderBlock({
+      cta_size: 'sm',
+      items: [
+        {
+          title: 'Custom CTA',
+          body: 'Body',
+          cta_text: 'Read',
+          cta_url: '/read',
+          cta_size: 'lg',
+        },
+      ],
+    })
+
+    const btn = container.querySelector('[class*="cardCta"] button')!
+    expect(btn.className).toMatch(/sizeLg/)
+  })
+
+  it('falls back to block-level CTA variant and size when item overrides are missing', () => {
+    const { container } = renderBlock({
+      cta_variant: 'secondary',
+      cta_size: 'md',
+      items: [
+        {
+          title: 'Fallback CTA',
+          body: 'Body',
+          cta_text: 'Read',
+          cta_url: '/read',
+        },
+      ],
+    })
+
+    const btn = container.querySelector('[class*="cardCta"] button')!
+    expect(btn.className).toMatch(/secondary/)
     expect(btn.className).toMatch(/sizeMd/)
   })
 })

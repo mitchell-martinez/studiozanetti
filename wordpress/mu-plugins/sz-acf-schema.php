@@ -541,6 +541,8 @@ add_action( 'acf/init', function () {
 				[ 'key' => 'field_sz_text_grid_item_body', 'label' => 'Body', 'name' => 'body', 'type' => 'textarea' ],
 				[ 'key' => 'field_sz_text_grid_item_cta_text', 'label' => 'CTA Text', 'name' => 'cta_text', 'type' => 'text', 'instructions' => 'Optional link label for this card.' ],
 				[ 'key' => 'field_sz_text_grid_item_cta_url', 'label' => 'CTA URL', 'name' => 'cta_url', 'type' => 'url', 'instructions' => 'Optional link destination for this card.' ],
+				[ 'key' => 'field_sz_text_grid_item_cta_variant', 'label' => 'CTA Button Style (This Card)', 'name' => 'cta_variant', 'type' => 'select', 'choices' => [ '' => 'Use block default', 'outline' => 'Outline', 'primary' => 'Primary (Accent Fill)', 'secondary' => 'Secondary (Soft Fill)', 'dark' => 'Dark', 'text' => 'Text (Link-style)' ], 'default_value' => '', 'instructions' => 'Optional override for this card only. Leave blank to use the block-level CTA style.' ],
+				[ 'key' => 'field_sz_text_grid_item_cta_size', 'label' => 'CTA Button Size (This Card)', 'name' => 'cta_size', 'type' => 'select', 'choices' => [ '' => 'Use block default', 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => '', 'instructions' => 'Optional override for this card only. Leave blank to use the block-level CTA size.' ],
 			],
 		],
 		[ 'key' => 'field_sz_text_grid_font_size', 'label' => 'Font Size', 'name' => 'font_size', 'type' => 'select', 'choices' => [ 'sm' => 'Small', 'md' => 'Medium', 'lg' => 'Large' ], 'default_value' => 'sm', 'instructions' => 'Controls the font size of the card title and body text.' ],

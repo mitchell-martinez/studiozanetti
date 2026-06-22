@@ -17,6 +17,8 @@ This block appears in the **Page Blocks** flexible content field as **"Text Grid
 | ↳ Body               | Textarea | Card body text (required)                                                                              |
 | ↳ CTA Text           | Text     | Optional link label                                                                                    |
 | ↳ CTA URL            | URL      | Optional link destination                                                                              |
+| ↳ CTA Button Style   | Select   | Optional per-card override: `Outline` · `Primary` · `Secondary` · `Dark` · `Text`                    |
+| ↳ CTA Button Size    | Select   | Optional per-card override: `Small` · `Medium` · `Large`                                              |
 | **Columns**          | Select   | `2` · `3` · `4` — number of columns at widest breakpoint                                               |
 | **Card Style**       | Select   | `elevated` · `outline` · `minimal`                                                                     |
 | **Text Align**       | Select   | `left` · `center` · `right`                                                                            |
@@ -33,7 +35,8 @@ This block appears in the **Page Blocks** flexible content field as **"Text Grid
 - Use **2 columns** for longer descriptions or alongside other narrow blocks.
 - Cards without a CTA URL will simply omit the link — no empty button is rendered.
 - The `minimal` card style removes all card chrome — perfect when used with the Dark theme.
-- Each card CTA uses the Button component — configure the style and size at the block level for consistent appearance across all cards.
+- Each card CTA uses the Button component.
+- You can set a default CTA style/size at the block level, then optionally override style/size per individual card inside the repeater.
 
 ### Difference from PillarGrid
 

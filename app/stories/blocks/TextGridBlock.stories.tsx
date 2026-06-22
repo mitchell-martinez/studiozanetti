@@ -60,7 +60,8 @@ const meta: Meta<TextGridArgs> = {
     },
     items: {
       control: 'object',
-      description: 'Repeater: array of { title?, body?, cta_text?, cta_url? }',
+      description:
+        'Repeater: array of { title?, body?, cta_text?, cta_url?, cta_variant?, cta_size? }',
     },
     ...blockStyleArgTypes,
   },

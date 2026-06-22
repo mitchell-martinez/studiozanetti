@@ -384,6 +384,8 @@ export interface WPTextGridItem {
   body?: string
   cta_text?: string
   cta_url?: string
+  cta_variant?: 'primary' | 'secondary' | 'outline' | 'dark' | 'text'
+  cta_size?: 'sm' | 'md' | 'lg'
 }
 
 export interface TextGridBlock extends BlockStyleOptions {

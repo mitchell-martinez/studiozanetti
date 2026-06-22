@@ -54,8 +54,8 @@ const TextGridBlock = ({ block }: TextGridBlockProps) => {
                 <div className={styles.cardCta}>
                   <Button
                     href={item.cta_url}
-                    variant={block.cta_variant ?? 'outline'}
-                    size={block.cta_size ?? 'sm'}
+                    variant={item.cta_variant ?? block.cta_variant ?? 'outline'}
+                    size={item.cta_size ?? block.cta_size ?? 'sm'}
                   >
                     {item.cta_text}
                   </Button>
