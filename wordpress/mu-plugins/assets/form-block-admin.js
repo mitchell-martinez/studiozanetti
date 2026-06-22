@@ -184,6 +184,16 @@
   let readyTimeout;
   const scheduleReadySync = ($el) => {
     clearTimeout(readyTimeout);
+    
+    // Check if this element or its children actually contain form blocks
+    const $rootElement = $el instanceof $ ? $el : $($el || document);
+    const hasFormBlocks = $rootElement.is(FORM_BLOCK_SELECTOR).length > 0 || 
+                          $rootElement.find(FORM_BLOCK_SELECTOR).length > 0;
+    
+    if (!hasFormBlocks) {
+      return; // Skip entirely if no form blocks on this page
+    }
+    
     readyTimeout = setTimeout(() => {
       scheduleSync($el || document);
     }, 50);
@@ -191,7 +201,14 @@
 
   if (typeof acf !== 'undefined' && acf.addAction) {
     acf.addAction('ready', scheduleReadySync);
-    acf.addAction('append', ($el) => scheduleSync($el || document));
+    acf.addAction('append', ($el) => {
+      const $rootElement = $el instanceof $ ? $el : $($el || document);
+      const hasFormBlocks = $rootElement.is(FORM_BLOCK_SELECTOR).length > 0 || 
+                            $rootElement.find(FORM_BLOCK_SELECTOR).length > 0;
+      if (hasFormBlocks) {
+        scheduleSync($el || document);
+      }
+    });
   } else {
     $(document).ready(() => scheduleSync(document));
   }
