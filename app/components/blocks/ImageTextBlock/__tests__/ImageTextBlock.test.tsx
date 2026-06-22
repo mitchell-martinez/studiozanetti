@@ -42,15 +42,15 @@ describe('ImageTextBlock', () => {
     expect(screen.getByText('Our Approach')).toBeInTheDocument()
   })
 
-  it('renders CTA link when both text and url are provided', () => {
+  it('renders CTA button when both text and url are provided', () => {
     renderBlock({ cta_text: 'Learn more', cta_url: '/about' })
-    const link = screen.getByRole('link', { name: /learn more/i })
-    expect(link).toHaveAttribute('href', '/about')
+    const button = screen.getByRole('button', { name: /learn more/i })
+    expect(button).toHaveAttribute('data-href', '/about')
   })
 
   it('does not render CTA when cta_text is missing', () => {
     renderBlock({ cta_text: undefined })
-    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /learn more/i })).not.toBeInTheDocument()
   })
 
   // ─── Image caption ──────────────────────────────────────────────────────────

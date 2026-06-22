@@ -7,10 +7,10 @@ Shared, reusable Button / CTA component used across the entire site. Consolidate
 ```tsx
 import Button from '~/components/Button'
 
-// Internal link (uses React Router <Link>)
+// Internal route navigation
 <Button href="/contact" variant="primary">Send Enquiry</Button>
 
-// External link (uses <a target="_blank">)
+// External URL (opens in a new tab)
 <Button href="https://instagram.com/studiozanetti" variant="outline">Instagram</Button>
 
 // Native <button> (no href)
@@ -24,14 +24,14 @@ import Button from '~/components/Button'
 | `children`     | `ReactNode`                                                 | —           | Button label content (required)                |
 | `variant`      | `'primary' \| 'secondary' \| 'outline' \| 'dark' \| 'text'` | `'primary'` | Visual style                                   |
 | `size`         | `'sm' \| 'md' \| 'lg'`                                      | `'md'`      | Size preset                                    |
-| `href`         | `string`                                                    | —           | URL — renders Link or `<a>` when set           |
+| `href`         | `string`                                                    | —           | URL to navigate to on click                    |
 | `openInNewTab` | `boolean`                                                   | `false`     | Open link in a new browser tab                 |
 | `inverted`     | `boolean`                                                   | `false`     | Inverted colour scheme for dark/image overlays |
 | `fullWidth`    | `boolean`                                                   | `false`     | Stretch to full container width                |
 | `className`    | `string`                                                    | —           | Extra CSS class for composition                |
 | `ariaLabel`    | `string`                                                    | —           | Accessible label override                      |
-| `type`         | `'button' \| 'submit' \| 'reset'`                           | `'button'`  | Native button type (ignored when href is set)  |
-| `onClick`      | `() => void`                                                | —           | Click handler (ignored when href is set)       |
+| `type`         | `'button' \| 'submit' \| 'reset'`                           | `'button'`  | Native button type                             |
+| `onClick`      | `() => void`                                                | —           | Click handler (runs before href navigation)    |
 
 ## Variants
 
@@ -60,15 +60,15 @@ Use `inverted` on dark overlays (Hero, ImageBlock):
 <Button href="/gallery" variant="secondary" inverted>View Gallery</Button>
 ```
 
-## Smart Element Selection
+## Semantic Behavior
 
-- **No `href`** → renders `<button>` (native)
-- **Internal `href`** (e.g. `/contact`) → renders React Router `<Link>`
-- **External `href`** (e.g. `https://...`) or `openInNewTab` → renders `<a target="_blank" rel="noopener noreferrer">`
+- Always renders a semantic native `<button>`.
+- **Internal `href`** (e.g. `/contact`) navigates via React Router.
+- **External `href`** (e.g. `https://...`) or `openInNewTab` opens a new tab with `noopener,noreferrer`.
 
 ## Accessibility
 
 - Minimum tap target: 44×44px on all sizes
 - `focus-visible` ring: 3px accent outline
 - `aria-label` prop for screen reader overrides
-- External links include `rel="noopener noreferrer"`
+- Primary buttons use a contrast-safe darker pink token so white text remains compliant

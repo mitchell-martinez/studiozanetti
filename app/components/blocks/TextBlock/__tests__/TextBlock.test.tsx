@@ -35,15 +35,15 @@ describe('TextBlock', () => {
     expect(screen.getByText('Label')).toBeInTheDocument()
   })
 
-  it('renders CTA link when both text and url are provided', () => {
+  it('renders CTA button when both text and url are provided', () => {
     renderBlock({ cta_text: 'Learn more', cta_url: '/about' })
-    const link = screen.getByRole('link', { name: /learn more/i })
-    expect(link).toHaveAttribute('href', '/about')
+    const button = screen.getByRole('button', { name: /learn more/i })
+    expect(button).toHaveAttribute('data-href', '/about')
   })
 
   it('does not render CTA when cta_text is missing', () => {
     renderBlock({ cta_url: '/about' })
-    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
   // ─── Text alignment ─────────────────────────────────────────────────────────

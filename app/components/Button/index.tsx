@@ -1,4 +1,4 @@
-import { Link } from 'react-router'
+import { useNavigate } from 'react-router'
 import styles from './Button.module.scss'
 import type { ButtonProps, ButtonSize, ButtonVariant } from './types'
 
@@ -17,22 +17,33 @@ const sizeClass: Record<ButtonSize, string> = {
 }
 
 /**
- * Checks whether a URL is external (absolute http/https or protocol-relative).
+ * Returns true when URL points to a non-studiozanetti domain and should open in a new tab.
  */
-const isExternal = (url: string): boolean => /^https?:\/\/|^\/\//.test(url)
+const shouldOpenInNewTabForDomain = (url: string): boolean => {
+  if (!/^https?:\/\/|^\/\//.test(url)) return false
+
+  try {
+    const parsed = new URL(url.startsWith('//') ? `https:${url}` : url)
+    const host = parsed.hostname.toLowerCase()
+    return host !== 'studiozanetti.com.au' && !host.endsWith('.studiozanetti.com.au')
+  } catch {
+    return true
+  }
+}
 
 /**
  * Shared Button / CTA component.
  *
- * - `href` supplied → renders `<Link>` (internal) or `<a>` (external / new-tab).
- * - No `href` → renders a native `<button>`.
+ * Always renders a semantic native `<button>`.
+ *
+ * - Relative/internal paths and studiozanetti absolute URLs navigate in the same tab.
+ * - Non-studiozanetti absolute URLs open in a new tab.
  */
 const Button = ({
   children,
   variant = 'primary',
   size = 'md',
   href,
-  openInNewTab = false,
   inverted = false,
   fullWidth = false,
   className,
@@ -41,6 +52,8 @@ const Button = ({
   disabled = false,
   onClick,
 }: ButtonProps) => {
+  const navigate = useNavigate()
+
   const cls = [
     styles.btn,
     variantClass[variant],
@@ -52,37 +65,33 @@ const Button = ({
     .filter(Boolean)
     .join(' ')
 
-  // External URL or new-tab → standard <a> with security attrs
-  if (href && (openInNewTab || isExternal(href))) {
-    return (
-      <a
-        href={href}
-        className={cls}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={ariaLabel}
-      >
-        {children}
-      </a>
-    )
+  const handleClick = () => {
+    if (disabled) return
+
+    onClick?.()
+
+    if (!href) return
+
+    if (shouldOpenInNewTabForDomain(href)) {
+      window.open(href, '_blank', 'noopener,noreferrer')
+      return
+    }
+
+    try {
+      const parsed = new URL(href.startsWith('//') ? `https:${href}` : href)
+      navigate(`${parsed.pathname || '/'}${parsed.search}${parsed.hash}`)
+    } catch {
+      navigate(href)
+    }
   }
 
-  // Internal URL → react-router <Link>
-  if (href) {
-    return (
-      <Link to={href} className={cls} aria-label={ariaLabel}>
-        {children}
-      </Link>
-    )
-  }
-
-  // No URL → native <button>
   return (
     <button
       type={type}
       className={cls}
       aria-label={ariaLabel}
-      onClick={onClick}
+      data-href={href}
+      onClick={handleClick}
       disabled={disabled}
     >
       {children}

@@ -33,14 +33,14 @@ describe('BlockRenderer', () => {
     renderBlocks([heroBlock])
     expect(screen.getByRole('heading', { name: 'Hero Title', level: 1 })).toBeInTheDocument()
     expect(screen.getByText('Hero tagline')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'View Gallery' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'View Gallery' })).toBeInTheDocument()
   })
 
   it('renders a text_block', () => {
     renderBlocks([textBlock])
     expect(screen.getByRole('heading', { name: 'Text heading', level: 2 })).toBeInTheDocument()
     expect(screen.getByText('Rich text content')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Read more/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Read more/i })).toBeInTheDocument()
   })
 
   it('renders an image_text block', () => {
@@ -55,7 +55,7 @@ describe('BlockRenderer', () => {
     renderBlocks([servicesBlock])
     expect(screen.getByRole('heading', { name: 'Our Services', level: 2 })).toBeInTheDocument()
     expect(screen.getByText('Weddings')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Browse work' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Browse work' })).toBeInTheDocument()
   })
 
   it('renders a pillar_grid block', () => {
@@ -103,8 +103,8 @@ describe('BlockRenderer', () => {
 
   it('renders a button_group block', () => {
     renderBlocks([buttonGroupBlock])
-    expect(screen.getByRole('link', { name: 'Book Now' })).toHaveAttribute('href', '/contact')
-    expect(screen.getByRole('link', { name: 'Learn More' })).toHaveAttribute('href', '/about')
+    expect(screen.getByRole('button', { name: 'Book Now' })).toHaveAttribute('data-href', '/contact')
+    expect(screen.getByRole('button', { name: 'Learn More' })).toHaveAttribute('data-href', '/about')
   })
 
   it('renders a text_grid block', () => {
@@ -112,7 +112,7 @@ describe('BlockRenderer', () => {
     expect(screen.getByRole('heading', { name: 'Why Choose Us', level: 2 })).toBeInTheDocument()
     expect(screen.getByText('Quality')).toBeInTheDocument()
     expect(screen.getByText('Experience')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /see work/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /see work/i })).toBeInTheDocument()
   })
 
   it('renders multiple blocks in order', () => {

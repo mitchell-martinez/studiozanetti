@@ -62,7 +62,7 @@ describe('InstagramFeedBlock', () => {
 
   it('renders the follow CTA button', () => {
     renderBlock()
-    const button = screen.getByRole('link', { name: /follow @studiozanetti on instagram/i })
+    const button = screen.getByRole('button', { name: /follow @studiozanetti on instagram/i })
     expect(button).toBeInTheDocument()
   })
 

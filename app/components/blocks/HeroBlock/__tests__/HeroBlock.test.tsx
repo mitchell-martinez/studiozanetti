@@ -40,7 +40,7 @@ afterEach(() => {
 })
 
 describe('HeroBlock', () => {
-  it('renders absolute Studio Zanetti CTA URLs as same-tab internal links', () => {
+  it('renders absolute Studio Zanetti CTA URLs as same-tab internal button targets', () => {
     vi.stubEnv('SITE_URL', 'https://studiozanetti.com.au')
 
     render(
@@ -54,9 +54,9 @@ describe('HeroBlock', () => {
       </MemoryRouter>,
     )
 
-    const link = screen.getByRole('link', { name: /enquire now/i })
-    expect(link).toHaveAttribute('href', '/contact?src=hero#form')
-    expect(link).not.toHaveAttribute('target', '_blank')
+    const button = screen.getByRole('button', { name: /enquire now/i })
+    expect(button).toHaveAttribute('data-href', '/contact?src=hero#form')
+    expect(button).not.toHaveAttribute('target', '_blank')
   })
 
   it('renders one visible active slide by default', () => {

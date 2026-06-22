@@ -28,17 +28,23 @@ describe('TextGridBlock', () => {
     expect(screen.getByText('Fast Turnaround')).toBeInTheDocument()
   })
 
-  it('renders CTA links when both text and url are provided', () => {
+  it('renders CTA buttons when both text and url are provided', () => {
     renderBlock()
-    expect(screen.getByRole('link', { name: /learn more/i })).toHaveAttribute('href', '/about')
-    expect(screen.getByRole('link', { name: /our process/i })).toHaveAttribute('href', '/process')
+    expect(screen.getByRole('button', { name: /learn more/i })).toHaveAttribute(
+      'data-href',
+      '/about',
+    )
+    expect(screen.getByRole('button', { name: /our process/i })).toHaveAttribute(
+      'data-href',
+      '/process',
+    )
   })
 
-  it('does not render CTA for items without cta_url', () => {
+  it('does not render CTA button for items without cta_url', () => {
     renderBlock()
-    // "Fast Turnaround" has no cta — there should be exactly 2 links
-    const links = screen.getAllByRole('link')
-    expect(links).toHaveLength(2)
+    // "Fast Turnaround" has no cta - there should be exactly 2 CTA buttons
+    const buttons = screen.getAllByRole('button')
+    expect(buttons).toHaveLength(2)
   })
 
   it('renders nothing when items array is empty', () => {
@@ -124,31 +130,31 @@ describe('TextGridBlock', () => {
 
   it('renders CTA buttons with outline variant by default', () => {
     const { container } = renderBlock()
-    const btn = container.querySelector('[class*="cardCta"] a')!
+    const btn = container.querySelector('[class*="cardCta"] button')!
     expect(btn.className).toMatch(/outline/)
   })
 
   it('renders CTA buttons with primary variant when set', () => {
     const { container } = renderBlock({ cta_variant: 'primary' })
-    const btn = container.querySelector('[class*="cardCta"] a')!
+    const btn = container.querySelector('[class*="cardCta"] button')!
     expect(btn.className).toMatch(/primary/)
   })
 
   it('renders CTA buttons with text variant when set', () => {
     const { container } = renderBlock({ cta_variant: 'text' })
-    const btn = container.querySelector('[class*="cardCta"] a')!
+    const btn = container.querySelector('[class*="cardCta"] button')!
     expect(btn.className).toMatch(/text/)
   })
 
   it('renders CTA buttons with sm size by default', () => {
     const { container } = renderBlock()
-    const btn = container.querySelector('[class*="cardCta"] a')!
+    const btn = container.querySelector('[class*="cardCta"] button')!
     expect(btn.className).toMatch(/sizeSm/)
   })
 
   it('renders CTA buttons with md size when set', () => {
     const { container } = renderBlock({ cta_size: 'md' })
-    const btn = container.querySelector('[class*="cardCta"] a')!
+    const btn = container.querySelector('[class*="cardCta"] button')!
     expect(btn.className).toMatch(/sizeMd/)
   })
 })

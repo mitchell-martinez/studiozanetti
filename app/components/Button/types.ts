@@ -22,10 +22,10 @@ export interface ButtonProps {
   className?: string
   /** Accessible label override */
   ariaLabel?: string
-  /** Native button type (ignored when href is set) */
+  /** Native button type */
   type?: 'button' | 'submit' | 'reset'
-  /** Disable native button interaction (ignored when href is set) */
+  /** Disable button interaction */
   disabled?: boolean
-  /** Click handler (ignored when href is set) */
+  /** Optional click handler (runs before href navigation when both are provided) */
   onClick?: () => void
 }

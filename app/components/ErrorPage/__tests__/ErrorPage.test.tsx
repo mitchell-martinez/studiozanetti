@@ -6,7 +6,7 @@ import ErrorPage from '..'
 import variants from '../__mocks__/errorVariants.json'
 import type { ErrorVariant } from '../types'
 
-/** Wrap in MemoryRouter so the <Link>-based Button renders without errors. */
+  /** Wrap in MemoryRouter for components that may navigate on button click. */
 const renderErrorPage = (variant: ErrorVariant, status?: number) =>
   render(
     <MemoryRouter>
@@ -46,10 +46,10 @@ describe('ErrorPage', () => {
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
   })
 
-  it('renders a Back to Home link', () => {
+  it('renders a Back to Home button', () => {
     renderErrorPage('generic')
-    const link = screen.getByRole('link', { name: /back to home/i })
-    expect(link).toHaveAttribute('href', '/')
+    const button = screen.getByRole('button', { name: /back to home/i })
+    expect(button).toHaveAttribute('data-href', '/')
   })
 
   it('calls window.location.reload when Try Again is clicked', async () => {

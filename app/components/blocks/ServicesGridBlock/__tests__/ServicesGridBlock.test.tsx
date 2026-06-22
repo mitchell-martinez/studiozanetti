@@ -45,15 +45,15 @@ describe('ServicesGridBlock', () => {
     expect(img).toHaveAttribute('src', 'https://picsum.photos/seed/zanetti-5/1600/1000')
   })
 
-  it('renders CTA link when both text and url are provided', () => {
+  it('renders CTA button when both text and url are provided', () => {
     renderBlock()
-    const link = screen.getByRole('link', { name: /enquire now/i })
-    expect(link).toHaveAttribute('href', '/contact')
+    const button = screen.getByRole('button', { name: /enquire now/i })
+    expect(button).toHaveAttribute('data-href', '/contact')
   })
 
   it('does not render CTA when cta_text is missing', () => {
     renderBlock({ cta_text: undefined, cta_url: '/contact' })
-    expect(screen.queryByRole('link', { name: /enquire now/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /enquire now/i })).not.toBeInTheDocument()
   })
 
   it('does not render heading when omitted', () => {

@@ -17,8 +17,8 @@ const renderBlock = (overrides: Partial<ButtonGroupBlockType> = {}) =>
 describe('ButtonGroupBlock', () => {
   it('renders all buttons', () => {
     renderBlock()
-    expect(screen.getByRole('link', { name: 'Send Enquiry' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'View Gallery' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Send Enquiry' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'View Gallery' })).toBeInTheDocument()
   })
 
   it('renders nothing when buttons array is empty', () => {
@@ -54,14 +54,14 @@ describe('ButtonGroupBlock', () => {
     expect(container.querySelector('section')!.className).toMatch(/spacingLoose/)
   })
 
-  it('links point to the correct URLs', () => {
+  it('buttons point to the correct URLs via data-href', () => {
     renderBlock()
-    expect(screen.getByRole('link', { name: 'Send Enquiry' })).toHaveAttribute(
-      'href',
+    expect(screen.getByRole('button', { name: 'Send Enquiry' })).toHaveAttribute(
+      'data-href',
       '/contact',
     )
-    expect(screen.getByRole('link', { name: 'View Gallery' })).toHaveAttribute(
-      'href',
+    expect(screen.getByRole('button', { name: 'View Gallery' })).toHaveAttribute(
+      'data-href',
       '/gallery',
     )
   })

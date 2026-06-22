@@ -13,28 +13,21 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: /click/i })).toBeInTheDocument()
   })
 
-  it('renders a <Link> for an internal href', () => {
+  it('renders a semantic <button> for an internal href', () => {
     wrap(<Button href="/about">About</Button>)
-    const link = screen.getByRole('link', { name: /about/i })
-    expect(link).toHaveAttribute('href', '/about')
-    expect(link).not.toHaveAttribute('target')
+    const button = screen.getByRole('button', { name: /about/i })
+    expect(button).toHaveAttribute('data-href', '/about')
   })
 
-  it('renders an <a> for an external href', () => {
+  it('renders a semantic <button> for an external href', () => {
     wrap(<Button href="https://example.com">External</Button>)
-    const link = screen.getByRole('link', { name: /external/i })
-    expect(link).toHaveAttribute('target', '_blank')
-    expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    const button = screen.getByRole('button', { name: /external/i })
+    expect(button).toHaveAttribute('data-href', 'https://example.com')
   })
 
-  it('renders an <a> with target _blank when openInNewTab is true', () => {
-    wrap(
-      <Button href="/internal" openInNewTab>
-        New Tab
-      </Button>,
-    )
-    const link = screen.getByRole('link', { name: /new tab/i })
-    expect(link).toHaveAttribute('target', '_blank')
+  it('renders a semantic <button> when openInNewTab is true', () => {
+    wrap(<Button href="/internal" openInNewTab>New Tab</Button>)
+    expect(screen.getByRole('button', { name: /new tab/i })).toBeInTheDocument()
   })
 
   // ─── Variant classes ──────────────────────────────────────────────────────
@@ -104,6 +97,18 @@ describe('Button', () => {
     wrap(<Button onClick={fn}>Press</Button>)
     await user.click(screen.getByRole('button'))
     expect(fn).toHaveBeenCalledOnce()
+  })
+
+  it('stores studiozanetti absolute URLs as same-tab navigation targets', () => {
+    wrap(<Button href="https://studiozanetti.com.au/contact">Contact</Button>)
+    const button = screen.getByRole('button', { name: /contact/i })
+    expect(button).toHaveAttribute('data-href', 'https://studiozanetti.com.au/contact')
+  })
+
+  it('stores studiozanetti subdomain absolute URLs as same-tab navigation targets', () => {
+    wrap(<Button href="https://blog.studiozanetti.com.au/article">Article</Button>)
+    const button = screen.getByRole('button', { name: /article/i })
+    expect(button).toHaveAttribute('data-href', 'https://blog.studiozanetti.com.au/article')
   })
 
   // ─── button type ──────────────────────────────────────────────────────────
