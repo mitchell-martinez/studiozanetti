@@ -27,15 +27,17 @@ export function getSectionStyle(
   fallbackTheme: NonNullable<BlockStyleOptions['section_theme']> = 'light',
 ): CSSProperties {
   const theme = options?.section_theme ?? fallbackTheme
+  const eyebrowColor = theme === 'dark' ? 'var(--color-gold)' : 'var(--color-accent-strong)'
   const style: CSSProperties & Record<string, string> = {
     background: SECTION_BG_MAP[theme],
     paddingTop: SPACING_MAP[options?.top_spacing ?? 'md'],
     paddingBottom: SPACING_MAP[options?.bottom_spacing ?? 'md'],
+    '--section-eyebrow-color': eyebrowColor,
   }
 
   if (theme === 'corporate') {
     style['--color-accent'] = '#333333'
-    style['--color-accent-strong'] = '#1a1a1a'
+    style['--color-accent-strong'] = '#8f3753'
     style['--color-accent-rgb'] = '51 51 51'
     style['--color-surface-soft'] = '#f5f5f5'
     style['--color-border-soft'] = '#d0d0d0'

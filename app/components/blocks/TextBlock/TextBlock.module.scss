@@ -68,7 +68,7 @@
   font-size: var(--text-sm);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-accent-strong);
+  color: var(--section-eyebrow-color, var(--color-ink-strong));
   font-weight: 700;
 }
 

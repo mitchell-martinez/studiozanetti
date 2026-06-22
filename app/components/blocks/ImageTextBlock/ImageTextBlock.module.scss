@@ -178,7 +178,7 @@
   font-size: var(--text-sm);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-accent-strong);
+  color: var(--section-eyebrow-color, var(--color-ink-strong));
   font-weight: 700;
 }
 
@@ -200,6 +200,23 @@
   display: block;
   text-decoration: none;
   color: inherit;
+
+  .eyebrow,
+  .imageTextHeading,
+  .imageTextBody :global(p),
+  .imageTextBody :global(li) {
+    transition: color g.$transition-fast;
+  }
+
+  &:hover,
+  &:focus-visible {
+    .eyebrow,
+    .imageTextHeading,
+    .imageTextBody :global(p),
+    .imageTextBody :global(li) {
+      color: var(--color-accent-strong);
+    }
+  }
 }
 
 .clickable {

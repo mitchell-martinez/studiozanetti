@@ -234,7 +234,7 @@ describe('PricingPackagesBlock', () => {
 
     const section = container.querySelector('section') as HTMLElement
     expect(section.style.getPropertyValue('--color-accent')).toBe('#333333')
-    expect(section.style.getPropertyValue('--color-accent-strong')).toBe('#1a1a1a')
+    expect(section.style.getPropertyValue('--color-accent-strong')).toBe('#8f3753')
     expect(section.style.getPropertyValue('--color-border-soft')).toBe('#d0d0d0')
   })
 })
