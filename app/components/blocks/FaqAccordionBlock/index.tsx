@@ -5,7 +5,7 @@ import styles from './FaqAccordionBlock.module.scss'
 import type { FaqAccordionBlockProps } from './types'
 
 const FaqAccordionBlock = ({ block }: FaqAccordionBlockProps) => {
-  const [openIndex, setOpenIndex] = useState(block.open_first_item ? 0 : -1)
+  const [openIndexes, setOpenIndexes] = useState<number[]>(block.open_first_item ? [0] : [])
 
   if (!block.faq_items?.length) return null
 
@@ -17,13 +17,19 @@ const FaqAccordionBlock = ({ block }: FaqAccordionBlockProps) => {
 
         <div className={styles.items}>
           {block.faq_items.map((item, index) => {
-            const isOpen = openIndex === index
+            const isOpen = openIndexes.includes(index)
             return (
               <article key={`${item.question}-${index}`} className={styles.item}>
                 <button
                   type="button"
                   className={styles.question}
-                  onClick={() => setOpenIndex(isOpen ? -1 : index)}
+                  onClick={() =>
+                    setOpenIndexes((prevIndexes) =>
+                      prevIndexes.includes(index)
+                        ? prevIndexes.filter((openIndex) => openIndex !== index)
+                        : [...prevIndexes, index],
+                    )
+                  }
                   aria-expanded={isOpen}
                 >
                   <span>{item.question}</span>
