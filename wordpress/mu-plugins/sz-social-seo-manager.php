@@ -340,13 +340,14 @@ function szRenderSocialSeoManager() {
 						<section
 							class="sz-social-row"
 							data-post-id="<?php echo esc_attr( (string) $post_id ); ?>"
+							data-base-title="<?php echo esc_attr( $page_title ); ?>"
 							data-page-title="<?php echo esc_attr( strtolower( $page_title ) ); ?>"
 							data-page-path="<?php echo esc_attr( strtolower( $page_permalink_label ) ); ?>"
 							data-expanded="true"
 						>
 							<div class="sz-social-row__header">
 								<div class="sz-social-row__titleblock">
-									<strong><?php echo esc_html( $page_title ); ?></strong>
+									<strong class="sz-page-card-title"><?php echo esc_html( $page_title ); ?></strong>
 									<small><?php echo esc_html( $page_permalink_label ); ?></small>
 									<div class="sz-field-badges">
 										<span class="sz-field-badge" data-field="title"><?php echo $has_title ? '✓' : '○'; ?> Title</span>
@@ -849,6 +850,19 @@ function szRenderSocialSeoManager() {
 			};
 		}
 
+		function syncRowHeaderTitle(row, nextTitle) {
+			var titleEl = row.querySelector('.sz-page-card-title');
+			var safeTitle = (nextTitle || '').trim();
+
+			if (!safeTitle) return;
+
+			if (titleEl) {
+				titleEl.textContent = safeTitle;
+			}
+
+			row.setAttribute('data-page-title', safeTitle.toLowerCase());
+		}
+
 		function saveRow(row) {
 			var payload = collectRowPayload(row);
 			if (!payload.post_id) return;
@@ -882,6 +896,19 @@ function szRenderSocialSeoManager() {
 					if (!result || !result.success) {
 						throw new Error((result && result.data && result.data.message) || 'Autosave failed.');
 					}
+
+					var savedMeta = result && result.data && result.data.meta ? result.data.meta : null;
+					if (savedMeta && typeof savedMeta.title === 'string' && savedMeta.title.trim()) {
+						var canonicalTitle = savedMeta.title.trim();
+						row.setAttribute('data-base-title', canonicalTitle);
+						syncRowHeaderTitle(row, canonicalTitle);
+
+						var cards = row.querySelector('.sz-preview-cards');
+						if (cards) {
+							cards.setAttribute('data-default-title', canonicalTitle);
+						}
+					}
+
 					delete dirtyRows[payload.post_id];
 					delete autosaveTimers[payload.post_id];
 					setRowSaveState(row, 'Saved', 'sz-state-saved');
@@ -927,9 +954,12 @@ function szRenderSocialSeoManager() {
 			var defaultTitle = cards.getAttribute('data-default-title') || '';
 			var defaultDescription = cards.getAttribute('data-default-description') || '';
 			var pageUrl = cards.getAttribute('data-url') || '';
+			var baseTitle = row.getAttribute('data-base-title') || defaultTitle;
 
 			var title = (titleInput && titleInput.value.trim()) || defaultTitle;
 			var description = (descInput && descInput.value.trim()) || defaultDescription;
+			var cardHeadingTitle = (titleInput && titleInput.value.trim()) || baseTitle;
+			syncRowHeaderTitle(row, cardHeadingTitle);
 			var hasTitle = titleInput && titleInput.value.trim().length > 0;
 			var hasSeoDescription = descInput && descInput.value.trim().length > 0;
 			var hasShareImage = imageIdInput && imageIdInput.value.trim().length > 0 && imageIdInput.value.trim() !== '0';
