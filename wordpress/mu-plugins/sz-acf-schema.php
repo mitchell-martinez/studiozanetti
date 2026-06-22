@@ -60,6 +60,9 @@ if ( ! function_exists( 'sz_validate_form_field_rows' ) ) {
 
 add_action( 'acf/input/admin_enqueue_scripts', 'sz_enqueue_form_block_admin_assets' );
 function sz_enqueue_form_block_admin_assets() {
+	// Temporarily disabled: causes editor freeze on pages with form blocks
+	return;
+	
 	if ( ! function_exists( 'wp_enqueue_script' ) ) {
 		return;
 	}
