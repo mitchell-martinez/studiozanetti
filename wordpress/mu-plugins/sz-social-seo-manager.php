@@ -219,10 +219,12 @@ function szRenderSocialSeoManager() {
 	] );
 
 	$pages = array_values( array_filter( $pages, function ( $page ) {
-		if ( ! ( $page instanceof WP_Post ) ) {
-			return false;
-		}
+		return $page instanceof WP_Post;
+	} ) );
 
+	$total_pages = count( $pages );
+
+	$pages = array_values( array_filter( $pages, function ( $page ) {
 		if ( ! function_exists( 'get_field' ) ) {
 			return true;
 		}
@@ -232,6 +234,7 @@ function szRenderSocialSeoManager() {
 
 	// Calculate summary stats for all pages
 	$stats = [
+		'good_pages'            => 0,
 		'missing_title'         => 0,
 		'missing_description'   => 0,
 		'missing_image'         => 0,
@@ -243,22 +246,32 @@ function szRenderSocialSeoManager() {
 	foreach ( $pages as $page ) {
 		$post_id  = (int) $page->ID;
 		$override = szGetSocialMetaForPage( $post_id, false );
+		$needs_action = false;
 
 		if ( empty( $override['title'] ) ) {
 			$stats['missing_title']++;
+			$needs_action = true;
 		} elseif ( strlen( (string) $override['title'] ) > 60 ) {
 			$stats['too_long_title']++;
+			$needs_action = true;
 		}
 
 		if ( empty( $override['description'] ) ) {
 			$stats['missing_description']++;
+			$needs_action = true;
 		} elseif ( strlen( (string) $override['description'] ) > 160 ) {
 			$stats['too_long_description']++;
+			$needs_action = true;
 		}
 
 		$image_id = (int) ( $override['image_id'] ?? 0 );
 		if ( $image_id <= 0 ) {
 			$stats['missing_image']++;
+			$needs_action = true;
+		}
+
+		if ( ! $needs_action ) {
+			$stats['good_pages']++;
 		}
 	}
 
@@ -272,7 +285,7 @@ function szRenderSocialSeoManager() {
 			<button type="button" class="button" id="sz-expand-all">Expand All</button>
 			<button type="button" class="button" id="sz-collapse-all">Collapse All</button>
 			<span class="sz-autosave-status" aria-live="polite">Autosave ready</span>
-			<span class="sz-filter-count" aria-live="polite"></span>
+			<span class="sz-filter-count" aria-live="polite" data-total-pages="<?php echo esc_attr( (string) $total_pages ); ?>"></span>
 		</div>
 
 		<?php if ( $did_save ) : ?>
@@ -280,43 +293,35 @@ function szRenderSocialSeoManager() {
 		<?php endif; ?>
 
 		<!-- Summary Stats Panel -->
-		<?php if ( array_sum( array_values( $stats ) ) > 0 ) : ?>
-			<div class="sz-summary-panel">
-				<div class="sz-summary-title">Compliance Summary</div>
-				<div class="sz-summary-badges">
-					<?php if ( $stats['missing_title'] > 0 ) : ?>
-						<div class="sz-summary-badge sz-badge-missing">
-							<span class="sz-badge-icon">○</span>
-							<span class="sz-badge-label"><?php echo esc_html( $stats['missing_title'] ); ?> page<?php echo $stats['missing_title'] !== 1 ? 's' : ''; ?> missing <strong>title</strong></span>
-						</div>
-					<?php endif; ?>
-					<?php if ( $stats['missing_description'] > 0 ) : ?>
-						<div class="sz-summary-badge sz-badge-missing">
-							<span class="sz-badge-icon">○</span>
-							<span class="sz-badge-label"><?php echo esc_html( $stats['missing_description'] ); ?> page<?php echo $stats['missing_description'] !== 1 ? 's' : ''; ?> missing <strong>description</strong></span>
-						</div>
-					<?php endif; ?>
-					<?php if ( $stats['missing_image'] > 0 ) : ?>
-						<div class="sz-summary-badge sz-badge-missing">
-							<span class="sz-badge-icon">○</span>
-							<span class="sz-badge-label"><?php echo esc_html( $stats['missing_image'] ); ?> page<?php echo $stats['missing_image'] !== 1 ? 's' : ''; ?> missing <strong>image</strong></span>
-						</div>
-					<?php endif; ?>
-					<?php if ( $stats['too_long_title'] > 0 ) : ?>
-						<div class="sz-summary-badge sz-badge-warning">
-							<span class="sz-badge-icon">!</span>
-							<span class="sz-badge-label"><?php echo esc_html( $stats['too_long_title'] ); ?> page<?php echo $stats['too_long_title'] !== 1 ? 's' : ''; ?> with <strong>title too long</strong> (>60 chars)</span>
-						</div>
-					<?php endif; ?>
-					<?php if ( $stats['too_long_description'] > 0 ) : ?>
-						<div class="sz-summary-badge sz-badge-warning">
-							<span class="sz-badge-icon">!</span>
-							<span class="sz-badge-label"><?php echo esc_html( $stats['too_long_description'] ); ?> page<?php echo $stats['too_long_description'] !== 1 ? 's' : ''; ?> with <strong>description too long</strong> (>160 chars)</span>
-						</div>
-					<?php endif; ?>
+		<div class="sz-summary-panel">
+			<div class="sz-summary-title">Compliance Summary</div>
+			<div class="sz-summary-badges">
+				<div class="sz-summary-badge sz-badge-good" data-summary-key="good_pages">
+					<span class="sz-badge-icon">✓</span>
+					<span class="sz-badge-label"><span class="sz-summary-count"><?php echo esc_html( $stats['good_pages'] ); ?></span> page<?php echo $stats['good_pages'] !== 1 ? 's' : ''; ?> with full SEO furnishing</span>
+				</div>
+				<div class="sz-summary-badge sz-badge-missing" data-summary-key="missing_title"<?php echo $stats['missing_title'] > 0 ? '' : ' hidden'; ?>>
+					<span class="sz-badge-icon">○</span>
+					<span class="sz-badge-label"><span class="sz-summary-count"><?php echo esc_html( $stats['missing_title'] ); ?></span> page<?php echo $stats['missing_title'] !== 1 ? 's' : ''; ?> missing <strong>title</strong></span>
+				</div>
+				<div class="sz-summary-badge sz-badge-missing" data-summary-key="missing_description"<?php echo $stats['missing_description'] > 0 ? '' : ' hidden'; ?>>
+					<span class="sz-badge-icon">○</span>
+					<span class="sz-badge-label"><span class="sz-summary-count"><?php echo esc_html( $stats['missing_description'] ); ?></span> page<?php echo $stats['missing_description'] !== 1 ? 's' : ''; ?> missing <strong>description</strong></span>
+				</div>
+				<div class="sz-summary-badge sz-badge-missing" data-summary-key="missing_image"<?php echo $stats['missing_image'] > 0 ? '' : ' hidden'; ?>>
+					<span class="sz-badge-icon">○</span>
+					<span class="sz-badge-label"><span class="sz-summary-count"><?php echo esc_html( $stats['missing_image'] ); ?></span> page<?php echo $stats['missing_image'] !== 1 ? 's' : ''; ?> missing <strong>image</strong></span>
+				</div>
+				<div class="sz-summary-badge sz-badge-warning" data-summary-key="too_long_title"<?php echo $stats['too_long_title'] > 0 ? '' : ' hidden'; ?>>
+					<span class="sz-badge-icon">!</span>
+					<span class="sz-badge-label"><span class="sz-summary-count"><?php echo esc_html( $stats['too_long_title'] ); ?></span> page<?php echo $stats['too_long_title'] !== 1 ? 's' : ''; ?> with <strong>title too long</strong> (&gt;60 chars)</span>
+				</div>
+				<div class="sz-summary-badge sz-badge-warning" data-summary-key="too_long_description"<?php echo $stats['too_long_description'] > 0 ? '' : ' hidden'; ?>>
+					<span class="sz-badge-icon">!</span>
+					<span class="sz-badge-label"><span class="sz-summary-count"><?php echo esc_html( $stats['too_long_description'] ); ?></span> page<?php echo $stats['too_long_description'] !== 1 ? 's' : ''; ?> with <strong>description too long</strong> (&gt;160 chars)</span>
 				</div>
 			</div>
-		<?php endif; ?>
+		</div>
 
 		<form method="post">
 			<?php wp_nonce_field( 'sz_social_seo_manager_save', 'sz_social_seo_manager_nonce' ); ?>
@@ -602,6 +607,11 @@ function szRenderSocialSeoManager() {
 			border: 1px solid #fed3b5;
 			color: #7a4f00;
 		}
+		.sz-social-seo-wrap .sz-summary-badge.sz-badge-good {
+			background: #ecfdf3;
+			border: 1px solid #abefc6;
+			color: #067647;
+		}
 		.sz-social-seo-wrap .sz-badge-icon {
 			display: inline-flex;
 			align-items: center;
@@ -621,6 +631,13 @@ function szRenderSocialSeoManager() {
 		.sz-social-seo-wrap .sz-summary-badge.sz-badge-warning .sz-badge-icon {
 			background: #f57c00;
 			color: white;
+		}
+		.sz-social-seo-wrap .sz-summary-badge.sz-badge-good .sz-badge-icon {
+			background: #12b76a;
+			color: white;
+		}
+		.sz-social-seo-wrap .sz-summary-badge[hidden] {
+			display: none;
 		}
 		.sz-social-seo-wrap .sz-badge-label {
 			flex: 1;
@@ -941,6 +958,98 @@ function szRenderSocialSeoManager() {
 			}, 700);
 		}
 
+		function pluralizePageLabel(count, phrase) {
+			return count + ' page' + (count === 1 ? '' : 's') + ' ' + phrase;
+		}
+
+		function getRowComplianceState(row) {
+			var titleInput = row.querySelector('.sz-social-title');
+			var descInput = row.querySelector('.sz-social-description');
+			var imageIdInput = row.querySelector('.sz-social-image-id');
+			var cards = row.querySelector('.sz-preview-cards');
+			var baseTitle = row.getAttribute('data-base-title') || (cards ? cards.getAttribute('data-default-title') || '' : '');
+
+			var titleValue = titleInput && titleInput.value.trim() ? titleInput.value.trim() : baseTitle;
+			var descriptionValue = descInput ? descInput.value.trim() : '';
+			var imageValue = imageIdInput ? imageIdInput.value.trim() : '';
+
+			var state = {
+				missing_title: !titleValue,
+				missing_description: !descriptionValue,
+				missing_image: !imageValue || imageValue === '0',
+				too_long_title: !!titleValue && titleValue.length > RECOMMENDED_LIMITS.title,
+				too_long_description: !!descriptionValue && descriptionValue.length > RECOMMENDED_LIMITS.description
+			};
+
+			state.good_pages = !state.missing_title && !state.missing_description && !state.missing_image && !state.too_long_title && !state.too_long_description;
+
+			return state;
+		}
+
+		function updateComplianceSummary() {
+			var totals = {
+				good_pages: 0,
+				missing_title: 0,
+				missing_description: 0,
+				missing_image: 0,
+				too_long_title: 0,
+				too_long_description: 0
+			};
+
+			document.querySelectorAll('.sz-social-row').forEach(function (row) {
+				var state = getRowComplianceState(row);
+				Object.keys(totals).forEach(function (key) {
+					if (state[key]) {
+						totals[key] += 1;
+					}
+				});
+			});
+
+			var labelBuilders = {
+				good_pages: function (count) {
+					return count + ' good page' + (count === 1 ? '' : 's');
+				},
+				missing_title: function (count) {
+					return pluralizePageLabel(count, 'missing title');
+				},
+				missing_description: function (count) {
+					return pluralizePageLabel(count, 'missing description');
+				},
+				missing_image: function (count) {
+					return pluralizePageLabel(count, 'missing image');
+				},
+				too_long_title: function (count) {
+					return pluralizePageLabel(count, 'with title too long (>60 chars)');
+				},
+				too_long_description: function (count) {
+					return pluralizePageLabel(count, 'with description too long (>160 chars)');
+				}
+			};
+
+			document.querySelectorAll('.sz-summary-badge[data-summary-key]').forEach(function (badge) {
+				var key = badge.getAttribute('data-summary-key');
+				if (!key || !(key in totals)) return;
+
+				var count = totals[key];
+				var countEl = badge.querySelector('.sz-summary-count');
+				var labelEl = badge.querySelector('.sz-badge-label');
+
+				if (countEl) {
+					countEl.textContent = String(count);
+				}
+
+				if (labelEl && labelBuilders[key]) {
+					labelEl.innerHTML = '<span class="sz-summary-count">' + count + '</span> ' + labelBuilders[key](count).replace(/^\d+\s/, '');
+				}
+
+				if (key === 'good_pages') {
+					badge.hidden = false;
+				} else {
+					badge.hidden = count === 0;
+				}
+			});
+		}
+
 		function updateRowPreview(row) {
 			var titleInput = row.querySelector('.sz-social-title');
 			var descInput = row.querySelector('.sz-social-description');
@@ -1026,6 +1135,8 @@ function szRenderSocialSeoManager() {
 					wrap.classList.remove('sz-has-image');
 				}
 			});
+
+			updateComplianceSummary();
 		}
 
 		function updateCounters(row, titleValue, descriptionValue) {
@@ -1166,10 +1277,9 @@ function szRenderSocialSeoManager() {
 
 			var query = (filterInput.value || '').trim().toLowerCase();
 			var visible = 0;
-			var total = 0;
+			var total = countEl ? parseInt(countEl.getAttribute('data-total-pages') || '0', 10) : 0;
 
 			document.querySelectorAll('.sz-social-row').forEach(function (row) {
-				total += 1;
 				var title = row.getAttribute('data-page-title') || '';
 				var path = row.getAttribute('data-page-path') || '';
 				var match = !query || title.indexOf(query) !== -1 || path.indexOf(query) !== -1;
