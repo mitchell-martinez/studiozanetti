@@ -377,7 +377,7 @@ Field Group "Gallery Photo" — Applied to: Post Type = `gallery_photo`
 
 ## 9. WordPress mu-plugins
 
-Two must-use plugins live in `wordpress/mu-plugins/` and should be copied into your WordPress installation at `wp-content/mu-plugins/`. They activate automatically and cannot be deactivated.
+Must-use plugins live in `wordpress/mu-plugins/` and should be copied into your WordPress installation at `wp-content/mu-plugins/`. They activate automatically and cannot be deactivated.
 
 ### `sz-headless.php` — Headless Configuration
 
