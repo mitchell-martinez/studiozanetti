@@ -117,9 +117,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 2px solid #ffbdcd;
-  background: #ffbdcd;
-  color: #121212;
+  border: 2px solid var(--color-button-primary-bg);
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
   padding: 0.65rem 0.9rem;
   text-decoration: none;
   transition:
@@ -130,8 +130,8 @@
   &:hover,
   &:active {
     background: transparent;
-    color: #121212;
-    border-color: #eb8ba0;
+    color: var(--color-button-primary-text-hover);
+    border-color: var(--color-button-primary-bg-hover);
   }
 }
 
@@ -143,9 +143,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  border: 2px solid #ffbdcd;
-  background: #ffbdcd;
-  color: #121212;
+  border: 2px solid var(--color-button-primary-bg);
+  background: var(--color-button-primary-bg);
+  color: var(--color-button-primary-text);
   font-weight: 600;
   letter-spacing: 0.03em;
   padding: 0.7rem 1.8rem;
@@ -159,8 +159,8 @@
   &:hover,
   &:active {
     background: transparent;
-    color: #121212;
-    border-color: #eb8ba0;
+    color: var(--color-button-primary-text-hover);
+    border-color: var(--color-button-primary-bg-hover);
   }
 
   &:focus-visible {

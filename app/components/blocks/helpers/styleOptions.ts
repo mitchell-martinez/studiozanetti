@@ -43,6 +43,10 @@ export function getSectionStyle(
     style['--color-border-soft'] = '#d0d0d0'
     style['--shadow-card'] = '0 10px 30px rgb(0 0 0 / 12%)'
     style['--color-ink-soft'] = '#555555'
+    style['--color-button-primary-bg'] = '#2e2e2e'
+    style['--color-button-primary-bg-hover'] = '#333333'
+    style['--color-button-primary-text'] = '#ffffff'
+    style['--color-button-primary-text-hover'] = '#000000'
   }
 
   if (options?.max_width_px) {

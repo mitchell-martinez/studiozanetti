@@ -226,9 +226,7 @@ describe('PricingPackagesBlock', () => {
   it('applies corporate CSS variables when section_theme is corporate', () => {
     const { container } = render(
       <MemoryRouter>
-        <PricingPackagesBlock
-          block={{ ...mockPricingPackagesBlock, section_theme: 'corporate' }}
-        />
+        <PricingPackagesBlock block={{ ...mockPricingPackagesBlock, section_theme: 'corporate' }} />
       </MemoryRouter>,
     )
 
@@ -236,5 +234,8 @@ describe('PricingPackagesBlock', () => {
     expect(section.style.getPropertyValue('--color-accent')).toBe('#333333')
     expect(section.style.getPropertyValue('--color-accent-strong')).toBe('#8f3753')
     expect(section.style.getPropertyValue('--color-border-soft')).toBe('#d0d0d0')
+    expect(section.style.getPropertyValue('--color-button-primary-bg')).toBe('#2e2e2e')
+    expect(section.style.getPropertyValue('--color-button-primary-bg-hover')).toBe('#333333')
+    expect(section.style.getPropertyValue('--color-button-primary-text')).toBe('#ffffff')
   })
 })
