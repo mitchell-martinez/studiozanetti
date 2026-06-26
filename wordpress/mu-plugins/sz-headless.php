@@ -1520,9 +1520,8 @@ function sz_live_preview_html( $post ) {
 				<iframe
 					id="sz-preview-frame"
 					data-src="<?php echo esc_url( $preview_url ); ?>"
-					src="<?php echo esc_url( $preview_url ); ?>&_cb=<?php echo time(); ?>"
+					src="about:blank"
 					style="width:100%;height:800px;border:none;display:block;transition:width 0.3s;margin:0 auto;"
-					data-loaded="true"
 					title="Live front-end preview"
 				></iframe>
 			</div>
@@ -2028,8 +2027,27 @@ function sz_live_preview_js() {
 		/* Show initial loading state */
 		showLoading();
 		setStatus('Loading preview…');
-		iframe.dataset.loaded = 'true';
 		bindPreviewFrame(iframe);
+
+		/*
+		 * Defer the first preview load until the admin editor page has finished
+		 * loading. Loading the iframe eagerly (via a hard-coded src) made the
+		 * React preview call back into the WP REST preview endpoint while the
+		 * editor page was still rendering, starving PHP-FPM workers and tripping
+		 * the front-end fetch timeout — which surfaced as an intermittent
+		 * "server error" that only cleared after a manual Refresh.
+		 */
+		function initialPreviewLoad() {
+			window.setTimeout(function () {
+				ensurePreviewLoaded(false);
+			}, 300);
+		}
+
+		if (document.readyState === 'complete') {
+			initialPreviewLoad();
+		} else {
+			window.addEventListener('load', initialPreviewLoad, { once: true });
+		}
 
 		if (typeof jQuery !== 'undefined') {
 			jQuery(document).on('after-autosave', function () {
