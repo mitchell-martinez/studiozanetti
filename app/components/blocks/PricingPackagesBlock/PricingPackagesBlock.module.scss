@@ -239,12 +239,15 @@
 }
 
 .thSummary {
-  display: block;
-  color: var(--color-ink-soft);
-  font-size: 0.82rem;
-  line-height: 1.45;
-  margin: 0.4rem auto 0;
-  max-width: 30ch;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 .priceQualifier {
@@ -367,12 +370,15 @@
 }
 
 .panelSummary {
-  color: var(--color-ink-soft);
-  font-size: 0.83rem;
-  line-height: 1.45;
-  flex-basis: 100%;
-  text-align: center;
-  margin-top: 0.35rem;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 .chevron {
