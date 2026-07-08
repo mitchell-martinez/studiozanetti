@@ -32,10 +32,20 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
                       {item.is_featured && <span className={styles.badge}>Most Popular</span>}
                       <span className={styles.thName}>{item.name}</span>
                       {item.price_label && (
-                        <span className={styles.thPrice}>{item.price_label}</span>
+                        <span className={styles.thPrice}>
+                          {item.price_qualifier && (
+                            <span className={styles.priceQualifier}>
+                              {item.price_qualifier}{' '}
+                            </span>
+                          )}
+                          {item.price_label}
+                        </span>
                       )}
                       {item.description && (
                         <span className={styles.thDesc}>{item.description}</span>
+                      )}
+                      {item.summary && (
+                        <span className={styles.thSummary}>{item.summary}</span>
                       )}
                     </th>
                   ))}
@@ -120,10 +130,20 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
                     <span className={styles.panelTitle}>
                       <span className={styles.panelName}>{item.name}</span>
                       {item.price_label && (
-                        <span className={styles.panelPrice}>{item.price_label}</span>
+                        <span className={styles.panelPrice}>
+                          {item.price_qualifier && (
+                            <span className={styles.priceQualifier}>
+                              {item.price_qualifier}{' '}
+                            </span>
+                          )}
+                          {item.price_label}
+                        </span>
                       )}
                       {item.description && (
                         <span className={styles.panelDesc}>{item.description}</span>
+                      )}
+                      {item.summary && (
+                        <span className={styles.panelSummary}>{item.summary}</span>
                       )}
                     </span>
                     <span className={styles.chevron} aria-hidden="true" />

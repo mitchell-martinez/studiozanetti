@@ -4,7 +4,9 @@
   "packages": [
     {
       "name": "The Essentials",
+      "price_qualifier": "From",
       "price_label": "$1,980",
+      "summary": "An affordable entry point covering the key moments of your day with beautifully edited high-resolution images.",
       "inclusions": "<ul><li>High-res edited images</li></ul>",
       "cta_text": "Send Enquiry",
       "cta_url": "/contact"

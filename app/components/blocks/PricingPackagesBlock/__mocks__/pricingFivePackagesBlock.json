@@ -25,8 +25,10 @@
     },
     {
       "name": "The Essentials",
-      "price_label": "From $1,980",
+      "price_qualifier": "From",
+      "price_label": "$1,980",
       "description": "Digital Only Package",
+      "summary": "Our most popular choice — full start-to-finish coverage of your day with a detailed planning session and a private online gallery for guests.",
       "pricing": "<p><strong>Pricing:</strong></p><ul><li>Half Day, up to 6 hours: $1,980</li><li>Full Day, up to 12 hours: $2,780</li><li>Additional Hours: $220 per hour</li></ul>",
       "inclusions": "<p><strong>Includes:</strong></p><ul><li>Professionally edited, high-resolution images on USB in a presentation box</li><li>Detailed pre-wedding planning session</li><li>Private online gallery with free guest downloads (device resolution)</li></ul>",
       "tagline": "Perfect for couples looking to capture their special day from start to finish.",
@@ -46,8 +48,10 @@
     },
     {
       "name": "The Ultimate",
-      "price_label": "From $2,900",
+      "price_qualifier": "From",
+      "price_label": "$2,900",
       "description": "Digital, Album & Engagement",
+      "summary": "Our most complete package for couples who want every moment captured — half or full-day coverage plus a bespoke fine-art album and a separate engagement session.",
       "pricing": "<p><strong>Pricing:</strong></p><ul><li>Half Day, up to 6 hours: $2,900</li><li>Full Day, up to 12 hours: $3,700</li><li>Additional Hours: $220 per hour</li></ul>",
       "inclusions": "<p><strong>Includes:</strong></p><ul><li>Professionally edited, print-resolution images on USB in a presentation box</li><li>Pre-wedding planning session</li><li>Private online gallery with free guest downloads (device resolution)</li><li>30×30cm Bespoke Album (30 pages) with choice of linen, leather-like, or photo cover</li><li>Engagement Session – 2-hour shoot with all images included (perfect for save-the-date cards!)</li></ul>",
       "tagline": "Perfect for couples looking to have every moment of their journey captured.",

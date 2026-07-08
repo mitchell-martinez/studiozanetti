@@ -62,6 +62,67 @@ function buildFaqSchema(blocks: ContentBlock[]): Record<string, unknown> | null 
   }
 }
 
+function parsePriceAmount(label: string | undefined): number | null {
+  if (!label) return null
+  // Strip currency symbols and thousands separators, keep the first number found.
+  const match = label.replace(/,/g, '').match(/\d+(?:\.\d+)?/)
+  if (!match) return null
+  const value = Number.parseFloat(match[0])
+  return Number.isFinite(value) ? value : null
+}
+
+function buildPricingSchema(blocks: ContentBlock[]): Record<string, unknown> | null {
+  const packages = blocks
+    .filter((block) => block.acf_fc_layout === 'pricing_packages')
+    .flatMap((block) => block.packages ?? [])
+    .filter((item) => (item.name ?? '').trim().length > 0)
+
+  if (!packages.length) return null
+
+  const offers = packages.map((item) => {
+    const price = parsePriceAmount(item.price_label)
+    const description =
+      plainText(item.summary) || plainText(item.description) || plainText(item.inclusions)
+
+    return {
+      '@type': 'Offer',
+      name: item.name,
+      ...(description ? { description } : {}),
+      ...(price !== null ? { price, priceCurrency: 'AUD' } : {}),
+    }
+  })
+
+  const prices = offers
+    .map((offer) => ('price' in offer ? (offer.price as number) : null))
+    .filter((value): value is number => typeof value === 'number')
+
+  const provider = {
+    '@type': 'ProfessionalService',
+    name: 'Studio Zanetti',
+    url: getSiteUrlFromEnv(),
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    serviceType: 'Photography',
+    provider,
+    offers: prices.length
+      ? {
+          '@type': 'AggregateOffer',
+          priceCurrency: 'AUD',
+          offerCount: offers.length,
+          lowPrice: Math.min(...prices),
+          highPrice: Math.max(...prices),
+          offers,
+        }
+      : {
+          '@type': 'OfferCatalog',
+          itemListElement: offers,
+        },
+  }
+}
+
 function buildServiceSchema(blocks: ContentBlock[]): Record<string, unknown> | null {
   const services = blocks
     .filter((block) => block.acf_fc_layout === 'services_grid')
@@ -190,9 +251,10 @@ export function buildPageSchemas(
   const blocks = page.acf?.blocks ?? []
   const faqSchema = buildFaqSchema(blocks)
   const serviceSchema = buildServiceSchema(blocks)
+  const pricingSchema = buildPricingSchema(blocks)
   const breadcrumbSchema = buildBreadcrumbSchema(pathname, pageTitle)
 
-  return [webpageSchema, faqSchema, serviceSchema, breadcrumbSchema].filter(
+  return [webpageSchema, faqSchema, serviceSchema, pricingSchema, breadcrumbSchema].filter(
     (schema): schema is Record<string, unknown> => schema !== null,
   )
 }

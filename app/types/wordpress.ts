@@ -169,8 +169,10 @@ export interface FaqAccordionBlock extends BlockStyleOptions {
 
 export interface WPPackageItem {
   name: string
+  price_qualifier?: string
   price_label?: string
   description?: string
+  summary?: string
   pricing?: string
   inclusions?: string
   tagline?: string

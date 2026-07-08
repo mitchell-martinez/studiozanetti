@@ -238,6 +238,23 @@
   margin: 0.15rem 0;
 }
 
+.thSummary {
+  display: block;
+  color: var(--color-ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: 0.4rem auto 0;
+  max-width: 30ch;
+}
+
+.priceQualifier {
+  font-size: 0.78em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+
 .td {
   vertical-align: top;
   text-align: center;
@@ -347,6 +364,15 @@
   font-size: 0.85rem;
   flex-basis: 100%;
   text-align: center;
+}
+
+.panelSummary {
+  color: var(--color-ink-soft);
+  font-size: 0.83rem;
+  line-height: 1.45;
+  flex-basis: 100%;
+  text-align: center;
+  margin-top: 0.35rem;
 }
 
 .chevron {

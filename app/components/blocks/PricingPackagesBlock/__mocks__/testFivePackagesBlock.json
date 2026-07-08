@@ -46,8 +46,10 @@
     },
     {
       "name": "The Ultimate",
-      "price_label": "From $2,900",
+      "price_qualifier": "From",
+      "price_label": "$2,900",
       "description": "Digital, Album & Engagement Package",
+      "summary": "Our most complete wedding package — half or full-day coverage plus an engagement session and a bespoke fine-art album, for couples who want every moment captured and printed.",
       "pricing": "<ul><li>Half Day: $2,900</li><li>Full Day: $3,700</li></ul>",
       "inclusions": "<ul><li>Print-res images on USB</li><li>30×30cm Bespoke Album</li><li>Engagement Session</li></ul>",
       "tagline": "Perfect for couples looking to have every moment captured.",

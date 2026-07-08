@@ -78,6 +78,67 @@ describe('seo helpers', () => {
     expect(list[0].name).toBe('Home')
   })
 
+  it('builds an AggregateOffer Service schema from pricing packages', () => {
+    const pricingPage = {
+      ...mockPageData,
+      title: { rendered: 'Wedding Prices' },
+      excerpt: { rendered: '<p>Prices</p>' },
+      content: { rendered: '<p>Prices</p>' },
+      acf: {
+        blocks: [
+          {
+            acf_fc_layout: 'pricing_packages' as const,
+            heading: 'Packages',
+            packages: [
+              {
+                name: 'The Essentials',
+                price_qualifier: 'From',
+                price_label: '$1,980',
+                summary: 'Entry-level coverage of the key moments.',
+              },
+              {
+                name: 'The Ultimate',
+                price_qualifier: 'From',
+                price_label: '$2,900',
+                summary: 'Our most complete package with a second photographer and album.',
+              },
+            ],
+          },
+        ],
+      },
+    }
+
+    const schemas = buildPageSchemas(
+      pricingPage,
+      'https://test.example.com/prices',
+      '/prices',
+    )
+    const service = schemas.find((schema) => schema['@type'] === 'Service') as
+      | Record<string, unknown>
+      | undefined
+
+    expect(service).toBeDefined()
+
+    const offers = service?.offers as {
+      '@type': string
+      lowPrice: number
+      highPrice: number
+      offerCount: number
+      offers: Array<{ name: string; price?: number; description?: string }>
+    }
+
+    expect(offers['@type']).toBe('AggregateOffer')
+    expect(offers.lowPrice).toBe(1980)
+    expect(offers.highPrice).toBe(2900)
+    expect(offers.offerCount).toBe(2)
+    expect(offers.offers[1]).toMatchObject({
+      name: 'The Ultimate',
+      price: 2900,
+      priceCurrency: 'AUD',
+    })
+    expect(offers.offers[1].description).toContain('most complete package')
+  })
+
   it('decodes HTML entities in schema and breadcrumb titles', () => {
     const pageWithEntities = {
       ...mockPage,

@@ -36,6 +36,20 @@ describe('PricingPackagesBlock', () => {
     expect(screen.getByRole('link', { name: 'Send Enquiry' })).toBeInTheDocument()
   })
 
+  it('renders the price qualifier and summary beside the price', () => {
+    render(
+      <MemoryRouter>
+        <PricingPackagesBlock block={mockPricingPackagesBlock} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('From')).toBeInTheDocument()
+    expect(screen.getByText('$1,980')).toBeInTheDocument()
+    expect(
+      screen.getByText(/An affordable entry point covering the key moments/i),
+    ).toBeInTheDocument()
+  })
+
   it('renders inline images inside pricing tiers and inclusions content', () => {
     render(
       <MemoryRouter>
