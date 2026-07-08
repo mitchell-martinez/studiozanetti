@@ -50,6 +50,18 @@ describe('PricingPackagesBlock', () => {
     ).toBeInTheDocument()
   })
 
+  it('renders each package name as a level-3 heading under the block heading', () => {
+    render(
+      <MemoryRouter>
+        <PricingPackagesBlock block={mockFivePackagesBlock} />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Our Packages', level: 2 })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'The Ultimate', level: 3 })).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(5)
+  })
+
   it('renders inline images inside pricing tiers and inclusions content', () => {
     render(
       <MemoryRouter>

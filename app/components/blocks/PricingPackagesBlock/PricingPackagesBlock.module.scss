@@ -217,10 +217,10 @@
 
 .thName {
   display: block;
+  margin: 0 0 0.1rem;
   font-size: var(--text-lg);
   font-weight: 700;
   color: var(--color-ink-strong);
-  margin-bottom: 0.1rem;
 }
 
 .thPrice {
@@ -350,6 +350,7 @@
 }
 
 .panelName {
+  margin: 0;
   font-size: var(--text-lg);
   font-weight: 700;
   color: var(--color-ink-strong);

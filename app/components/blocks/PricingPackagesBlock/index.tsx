@@ -20,7 +20,7 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
 
         {!isMobile && (
           <div className={styles.tableWrap}>
-            <table className={styles.table} role="table">
+            <table className={styles.table}>
               <thead>
                 <tr>
                   {block.packages.map((item) => (
@@ -30,7 +30,7 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
                       scope="col"
                     >
                       {item.is_featured && <span className={styles.badge}>Most Popular</span>}
-                      <span className={styles.thName}>{item.name}</span>
+                      <h3 className={styles.thName}>{item.name}</h3>
                       {item.price_label && (
                         <span className={styles.thPrice}>
                           {item.price_qualifier && (
@@ -128,7 +128,7 @@ const PricingPackagesBlock = ({ block }: PricingPackagesBlockProps) => {
                   >
                     {item.is_featured && <span className={styles.badge}>Most Popular</span>}
                     <span className={styles.panelTitle}>
-                      <span className={styles.panelName}>{item.name}</span>
+                      <h3 className={styles.panelName}>{item.name}</h3>
                       {item.price_label && (
                         <span className={styles.panelPrice}>
                           {item.price_qualifier && (
