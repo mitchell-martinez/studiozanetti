@@ -65,13 +65,40 @@ const horizontalAlignClass = (align?: string) => {
   }
 }
 
+// Hostnames that belong to this site. Absolute URLs pointing here are treated as
+// internal links (same tab) rather than external ones (new tab).
+const SITE_HOSTS = ['studiozanetti.com.au', 'www.studiozanetti.com.au']
+
+/**
+ * Resolves a clickable URL into either an internal same-tab path or an external URL.
+ * Relative URLs and absolute URLs on a site host resolve to an internal path.
+ */
+const resolveClickableUrl = (
+  url: string,
+): { internalPath: string } | { externalUrl: string } => {
+  const isAbsolute = /^https?:\/\//i.test(url) || url.startsWith('//')
+
+  if (!isAbsolute) return { internalPath: url }
+
+  try {
+    const parsed = new URL(url.startsWith('//') ? `https:${url}` : url)
+    if (SITE_HOSTS.includes(parsed.hostname.toLowerCase())) {
+      return { internalPath: `${parsed.pathname}${parsed.search}${parsed.hash}` || '/' }
+    }
+  } catch {
+    // Fall through and treat as external.
+  }
+
+  return { externalUrl: url }
+}
+
 const ImageTextBlock = ({ block }: ImageTextBlockProps) => {
   const headingLevel: HeadingLevel = block.heading_level ?? 'h2'
   const imgStyle: React.CSSProperties = {}
   if (block.image_max_width) imgStyle.maxWidth = `${block.image_max_width}px`
   if (block.image_max_height) imgStyle.maxHeight = `${block.image_max_height}px`
 
-  const isExternal = block.url && /^https?:\/\/|^\/\//.test(block.url)
+  const resolvedUrl = block.url ? resolveClickableUrl(block.url) : null
 
   const hasHeading = Boolean(block.eyebrow || block.heading)
   const hasBody = Boolean(block.body)
@@ -126,10 +153,10 @@ const ImageTextBlock = ({ block }: ImageTextBlockProps) => {
 
   return (
     <section className={styles.section} style={getSectionStyle(block)}>
-      {block.url ? (
-        isExternal ? (
+      {resolvedUrl ? (
+        'externalUrl' in resolvedUrl ? (
           <a
-            href={block.url}
+            href={resolvedUrl.externalUrl}
             className={styles.blockLink}
             target="_blank"
             rel="noopener noreferrer"
@@ -137,7 +164,7 @@ const ImageTextBlock = ({ block }: ImageTextBlockProps) => {
             {content}
           </a>
         ) : (
-          <Link to={block.url} className={styles.blockLink}>
+          <Link to={resolvedUrl.internalPath} className={styles.blockLink}>
             {content}
           </Link>
         )
