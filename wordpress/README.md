@@ -101,6 +101,20 @@ The Navbar renders top-level items as links and child items as dropdown sub-menu
 
 > **Tip:** The Gallery sub-links use `?category=` query parameters. The Gallery page reads this from the URL and auto-filters to that category.
 
+### Visual Site Menu Manager
+
+The **Appearance → Menus → Site Menus** tab shows every site menu side by side. It uses the same WordPress menus as the front-end, so updates appear in the Navbar without maintaining a second list.
+
+To create and organize the weddings site:
+
+1. Open **Appearance → Menus → Site Menus**.
+2. Enter `Straight Weddings Site` for the site name and `weddings-site` for the menu slug, then select **Add site menu**.
+3. Drag pages from **Primary Navigation** into **Straight Weddings Site**. Changes save automatically.
+4. Drag a page to **Unassigned pages** to remove it from its current menu without deleting the page.
+5. Select a page name to preview it. The preview opens on the right on desktop and in the bottom half of the screen on mobile. Select the **X**, press Escape, or select outside the preview to close it.
+
+The menu dropdown and arrow buttons on each item provide alternatives to drag-and-drop. Custom links can move between menus, but only pages can move into **Unassigned pages**. Use the standard **Edit Menus** tab when you need to create nested dropdown links or edit a custom URL.
+
 ### Page Preview
 
 **REST endpoint:** `GET /wp-json/sz/v1/preview/<page_id>?secret=<secret>`

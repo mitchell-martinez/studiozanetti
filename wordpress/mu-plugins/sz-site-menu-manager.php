@@ -1,0 +1,473 @@
+<?php
+/**
+ * Plugin Name:  Studio Zanetti - Site Menu Manager
+ * Description:  Adds a visual, autosaving menu board to Appearance > Menus.
+ * Version:      1.0.0
+ * Author:       Studio Zanetti Dev
+ *
+ * Copy this file and the assets/site-menu-manager files into wp-content/mu-plugins.
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Register the visual menu manager beneath Appearance.
+ */
+function sz_site_menu_manager_register_page() {
+	add_submenu_page(
+		'themes.php',
+		__( 'Site Menus', 'studio-zanetti' ),
+		__( 'Site Menus', 'studio-zanetti' ),
+		'edit_theme_options',
+		'sz-site-menu-manager',
+		'sz_site_menu_manager_render_page'
+	);
+}
+add_action( 'admin_menu', 'sz_site_menu_manager_register_page' );
+
+/**
+ * Add the manager to the tabs on WordPress's native Menus screen.
+ */
+function sz_site_menu_manager_add_native_tab() {
+	$url = admin_url( 'themes.php?page=sz-site-menu-manager' );
+	?>
+	<script>
+	(function () {
+		var tabs = document.querySelector('.nav-tab-wrapper');
+		if (!tabs || tabs.querySelector('[data-sz-site-menus-tab]')) {
+			return;
+		}
+
+		var tab = document.createElement('a');
+		tab.className = 'nav-tab';
+		tab.href = <?php echo wp_json_encode( $url ); ?>;
+		tab.textContent = <?php echo wp_json_encode( __( 'Site Menus', 'studio-zanetti' ) ); ?>;
+		tab.setAttribute('data-sz-site-menus-tab', 'true');
+		tabs.appendChild(tab);
+	}());
+	</script>
+	<?php
+}
+add_action( 'admin_footer-nav-menus.php', 'sz_site_menu_manager_add_native_tab' );
+
+/**
+ * Load the manager assets only on its admin screen.
+ */
+function sz_site_menu_manager_enqueue_assets( $hook ) {
+	if ( 'appearance_page_sz-site-menu-manager' !== $hook ) {
+		return;
+	}
+
+	$script_path = __DIR__ . '/assets/site-menu-manager.js';
+	$style_path  = __DIR__ . '/assets/site-menu-manager.css';
+
+	wp_enqueue_style( 'dashicons' );
+	wp_enqueue_style(
+		'sz-site-menu-manager',
+		plugins_url( 'assets/site-menu-manager.css', __FILE__ ),
+		[],
+		file_exists( $style_path ) ? filemtime( $style_path ) : '1.0.0'
+	);
+
+	wp_enqueue_script( 'jquery-ui-sortable' );
+	wp_enqueue_script(
+		'sz-site-menu-manager',
+		plugins_url( 'assets/site-menu-manager.js', __FILE__ ),
+		[ 'jquery', 'jquery-ui-sortable' ],
+		file_exists( $script_path ) ? filemtime( $script_path ) : '1.0.0',
+		true
+	);
+
+	wp_localize_script( 'sz-site-menu-manager', 'szSiteMenuManager', [
+		'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+		'nonce'   => wp_create_nonce( 'sz_site_menu_manager' ),
+		'strings' => [
+			'idle'        => __( 'All changes saved', 'studio-zanetti' ),
+			'saving'      => __( 'Saving...', 'studio-zanetti' ),
+			'saveError'   => __( 'Changes could not be saved. Try moving the item again.', 'studio-zanetti' ),
+			'creating'    => __( 'Creating menu...', 'studio-zanetti' ),
+			'createError' => __( 'The menu could not be created.', 'studio-zanetti' ),
+			'viewing'     => __( 'Viewing %s', 'studio-zanetti' ),
+		],
+	] );
+}
+add_action( 'admin_enqueue_scripts', 'sz_site_menu_manager_enqueue_assets' );
+
+/**
+ * Return published and editable non-published pages for the board.
+ */
+function sz_site_menu_manager_get_pages() {
+	return get_posts( [
+		'post_type'      => 'page',
+		'post_status'    => [ 'publish', 'draft', 'pending', 'private', 'future' ],
+		'posts_per_page' => -1,
+		'orderby'        => 'title',
+		'order'          => 'ASC',
+	] );
+}
+
+/**
+ * Build the front-end preview URL already used by the page editor.
+ */
+function sz_site_menu_manager_get_preview_url( $page_id ) {
+	if ( defined( 'SZ_FRONTEND_URL' ) && defined( 'SZ_PREVIEW_SECRET' ) ) {
+		return add_query_arg(
+			[
+				'id'     => (int) $page_id,
+				'secret' => SZ_PREVIEW_SECRET,
+				'iframe' => 'true',
+			],
+			rtrim( SZ_FRONTEND_URL, '/' ) . '/preview'
+		);
+	}
+
+	return get_permalink( $page_id );
+}
+
+/**
+ * Render one draggable item card.
+ */
+function sz_site_menu_manager_render_card( $item, $menus, $current_menu_id = 0 ) {
+	$item_id    = isset( $item['item_id'] ) ? (int) $item['item_id'] : 0;
+	$page_id    = isset( $item['page_id'] ) ? (int) $item['page_id'] : 0;
+	$title      = isset( $item['title'] ) ? $item['title'] : '';
+	$type_label = isset( $item['type_label'] ) ? $item['type_label'] : __( 'Page', 'studio-zanetti' );
+	$preview    = isset( $item['preview_url'] ) ? $item['preview_url'] : '';
+	$client_id  = $item_id > 0 ? 'item-' . $item_id : 'page-' . $page_id;
+	?>
+	<li
+		class="sz-site-menu-card"
+		data-item-id="<?php echo esc_attr( $item_id ); ?>"
+		data-page-id="<?php echo esc_attr( $page_id ); ?>"
+		data-client-id="<?php echo esc_attr( $client_id ); ?>"
+	>
+		<div class="sz-site-menu-card__main">
+			<span class="dashicons dashicons-menu sz-site-menu-card__handle" aria-hidden="true"></span>
+			<?php if ( $preview ) : ?>
+				<button
+					type="button"
+					class="sz-site-menu-card__preview"
+					data-preview-url="<?php echo esc_url( $preview ); ?>"
+					data-page-title="<?php echo esc_attr( $title ); ?>"
+				>
+					<span class="sz-site-menu-card__title"><?php echo esc_html( $title ); ?></span>
+					<span class="sz-site-menu-card__type"><?php echo esc_html( $type_label ); ?></span>
+				</button>
+			<?php else : ?>
+				<span class="sz-site-menu-card__copy">
+					<span class="sz-site-menu-card__title"><?php echo esc_html( $title ); ?></span>
+					<span class="sz-site-menu-card__type"><?php echo esc_html( $type_label ); ?></span>
+				</span>
+			<?php endif; ?>
+		</div>
+		<div class="sz-site-menu-card__actions">
+			<label class="screen-reader-text" for="sz-move-<?php echo esc_attr( $client_id ); ?>">
+				<?php echo esc_html( sprintf( __( 'Move %s to another menu', 'studio-zanetti' ), $title ) ); ?>
+			</label>
+			<select id="sz-move-<?php echo esc_attr( $client_id ); ?>" class="sz-site-menu-card__move">
+				<?php if ( $page_id > 0 ) : ?>
+					<option value="0" <?php selected( 0, $current_menu_id ); ?>><?php esc_html_e( 'Unassigned pages', 'studio-zanetti' ); ?></option>
+				<?php endif; ?>
+				<?php foreach ( $menus as $menu ) : ?>
+					<option value="<?php echo esc_attr( $menu->term_id ); ?>" <?php selected( (int) $menu->term_id, $current_menu_id ); ?>>
+						<?php echo esc_html( $menu->name ); ?>
+					</option>
+				<?php endforeach; ?>
+			</select>
+			<button type="button" class="button-link sz-site-menu-card__order" data-direction="up" title="<?php esc_attr_e( 'Move up', 'studio-zanetti' ); ?>">
+				<span class="dashicons dashicons-arrow-up-alt2" aria-hidden="true"></span>
+				<span class="screen-reader-text"><?php esc_html_e( 'Move up', 'studio-zanetti' ); ?></span>
+			</button>
+			<button type="button" class="button-link sz-site-menu-card__order" data-direction="down" title="<?php esc_attr_e( 'Move down', 'studio-zanetti' ); ?>">
+				<span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span>
+				<span class="screen-reader-text"><?php esc_html_e( 'Move down', 'studio-zanetti' ); ?></span>
+			</button>
+		</div>
+	</li>
+	<?php
+}
+
+/**
+ * Render the Appearance > Site Menus board.
+ */
+function sz_site_menu_manager_render_page() {
+	if ( ! current_user_can( 'edit_theme_options' ) ) {
+		wp_die( esc_html__( 'You do not have permission to manage menus.', 'studio-zanetti' ) );
+	}
+
+	$menus          = wp_get_nav_menus( [ 'orderby' => 'name' ] );
+	$pages          = sz_site_menu_manager_get_pages();
+	$locations      = get_nav_menu_locations();
+	$location_names = get_registered_nav_menus();
+	$assigned_pages = [];
+	$menu_cards     = [];
+
+	foreach ( $menus as $menu ) {
+		$menu_cards[ $menu->term_id ] = [];
+		$items = wp_get_nav_menu_items( $menu->term_id, [ 'post_status' => 'any' ] );
+
+		if ( ! $items ) {
+			continue;
+		}
+
+		foreach ( $items as $menu_item ) {
+			$page_id = ( 'post_type' === $menu_item->type && 'page' === $menu_item->object )
+				? (int) $menu_item->object_id
+				: 0;
+
+			if ( $page_id > 0 ) {
+				$assigned_pages[ $page_id ] = true;
+			}
+
+			$menu_cards[ $menu->term_id ][] = [
+				'item_id'    => (int) $menu_item->ID,
+				'page_id'    => $page_id,
+				'title'      => $menu_item->title,
+				'type_label' => $page_id > 0 ? __( 'Page', 'studio-zanetti' ) : $menu_item->type_label,
+				'preview_url'=> $page_id > 0 ? sz_site_menu_manager_get_preview_url( $page_id ) : $menu_item->url,
+			];
+		}
+	}
+	?>
+	<div class="wrap sz-site-menu-manager">
+		<h1><?php esc_html_e( 'Menus', 'studio-zanetti' ); ?></h1>
+		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Secondary menu', 'studio-zanetti' ); ?>">
+			<a href="<?php echo esc_url( admin_url( 'nav-menus.php' ) ); ?>" class="nav-tab"><?php esc_html_e( 'Edit Menus', 'studio-zanetti' ); ?></a>
+			<a href="<?php echo esc_url( admin_url( 'nav-menus.php?action=locations' ) ); ?>" class="nav-tab"><?php esc_html_e( 'Manage Locations', 'studio-zanetti' ); ?></a>
+			<a href="<?php echo esc_url( admin_url( 'themes.php?page=sz-site-menu-manager' ) ); ?>" class="nav-tab nav-tab-active" aria-current="page"><?php esc_html_e( 'Site Menus', 'studio-zanetti' ); ?></a>
+		</nav>
+
+		<div class="sz-site-menu-toolbar">
+			<form id="sz-site-menu-create" class="sz-site-menu-create">
+				<label>
+					<span><?php esc_html_e( 'Site name', 'studio-zanetti' ); ?></span>
+					<input type="text" name="name" required placeholder="<?php esc_attr_e( 'Straight Weddings Site', 'studio-zanetti' ); ?>">
+				</label>
+				<label>
+					<span><?php esc_html_e( 'Menu slug', 'studio-zanetti' ); ?></span>
+					<input type="text" name="slug" placeholder="<?php esc_attr_e( 'weddings-site', 'studio-zanetti' ); ?>" pattern="[a-z0-9-]+">
+				</label>
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Add site menu', 'studio-zanetti' ); ?></button>
+			</form>
+			<output id="sz-site-menu-status" class="sz-site-menu-status" aria-live="polite">
+				<span class="dashicons dashicons-saved" aria-hidden="true"></span>
+				<span><?php esc_html_e( 'All changes saved', 'studio-zanetti' ); ?></span>
+			</output>
+		</div>
+
+		<div class="sz-site-menu-board" data-site-menu-board>
+			<section class="sz-site-menu-column sz-site-menu-column--unassigned" data-menu-id="0">
+				<header class="sz-site-menu-column__header">
+					<div>
+						<h2><?php esc_html_e( 'Unassigned pages', 'studio-zanetti' ); ?></h2>
+						<span class="sz-site-menu-column__count"></span>
+					</div>
+				</header>
+				<ul class="sz-site-menu-list" aria-label="<?php esc_attr_e( 'Unassigned pages', 'studio-zanetti' ); ?>">
+					<?php foreach ( $pages as $page ) : ?>
+						<?php
+						if ( isset( $assigned_pages[ $page->ID ] ) ) {
+							continue;
+						}
+						sz_site_menu_manager_render_card(
+							[
+								'page_id'     => $page->ID,
+								'title'       => get_the_title( $page ),
+								'type_label'  => ucfirst( $page->post_status ) . ' ' . __( 'page', 'studio-zanetti' ),
+								'preview_url' => sz_site_menu_manager_get_preview_url( $page->ID ),
+							],
+							$menus
+						);
+						?>
+					<?php endforeach; ?>
+				</ul>
+			</section>
+
+			<?php foreach ( $menus as $menu ) : ?>
+				<section class="sz-site-menu-column" data-menu-id="<?php echo esc_attr( $menu->term_id ); ?>">
+					<header class="sz-site-menu-column__header">
+						<div>
+							<h2><?php echo esc_html( $menu->name ); ?></h2>
+							<span class="sz-site-menu-column__count"></span>
+						</div>
+						<div class="sz-site-menu-column__badges">
+							<?php foreach ( $locations as $location => $menu_id ) : ?>
+								<?php if ( (int) $menu_id === (int) $menu->term_id ) : ?>
+									<span class="sz-site-menu-badge"><?php echo esc_html( $location_names[ $location ] ?? $location ); ?></span>
+								<?php endif; ?>
+							<?php endforeach; ?>
+						</div>
+					</header>
+					<ul class="sz-site-menu-list" aria-label="<?php echo esc_attr( $menu->name ); ?>">
+						<?php foreach ( $menu_cards[ $menu->term_id ] as $card ) : ?>
+							<?php sz_site_menu_manager_render_card( $card, $menus, (int) $menu->term_id ); ?>
+						<?php endforeach; ?>
+					</ul>
+				</section>
+			<?php endforeach; ?>
+		</div>
+	</div>
+
+	<dialog id="sz-site-menu-preview" class="sz-site-menu-preview" aria-labelledby="sz-site-menu-preview-title">
+		<header class="sz-site-menu-preview__header">
+			<h2 id="sz-site-menu-preview-title"><?php esc_html_e( 'Viewing page', 'studio-zanetti' ); ?></h2>
+			<button type="button" class="sz-site-menu-preview__close" aria-label="<?php esc_attr_e( 'Close preview', 'studio-zanetti' ); ?>">
+				<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+			</button>
+		</header>
+		<div class="sz-site-menu-preview__loading" aria-hidden="true"><?php esc_html_e( 'Loading preview...', 'studio-zanetti' ); ?></div>
+		<iframe title="<?php esc_attr_e( 'Page preview', 'studio-zanetti' ); ?>" src="about:blank"></iframe>
+	</dialog>
+	<div class="sz-site-menu-preview-backdrop" hidden></div>
+	<?php
+}
+
+/**
+ * Persist card positions and cross-menu moves.
+ */
+function sz_site_menu_manager_save_board() {
+	check_ajax_referer( 'sz_site_menu_manager', 'nonce' );
+
+	if ( ! current_user_can( 'edit_theme_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'You do not have permission to manage menus.', 'studio-zanetti' ) ], 403 );
+	}
+
+	$raw_board = isset( $_POST['board'] ) ? wp_unslash( $_POST['board'] ) : '';
+	$board     = json_decode( $raw_board, true );
+
+	if ( ! is_array( $board ) ) {
+		wp_send_json_error( [ 'message' => __( 'The menu layout was invalid.', 'studio-zanetti' ) ], 400 );
+	}
+
+	$valid_menus = [];
+	foreach ( wp_get_nav_menus() as $menu ) {
+		$valid_menus[ (int) $menu->term_id ] = true;
+	}
+
+	$created = [];
+	$deleted = [];
+	foreach ( $board as $column ) {
+		$menu_id = isset( $column['menuId'] ) ? absint( $column['menuId'] ) : 0;
+		$items   = isset( $column['items'] ) && is_array( $column['items'] ) ? $column['items'] : [];
+
+		if ( $menu_id > 0 && ! isset( $valid_menus[ $menu_id ] ) ) {
+			wp_send_json_error( [ 'message' => __( 'A menu no longer exists.', 'studio-zanetti' ) ], 400 );
+		}
+
+		foreach ( $items as $index => $submitted_item ) {
+			$item_id   = isset( $submitted_item['itemId'] ) ? absint( $submitted_item['itemId'] ) : 0;
+			$page_id   = isset( $submitted_item['pageId'] ) ? absint( $submitted_item['pageId'] ) : 0;
+			$client_id = isset( $submitted_item['clientId'] ) ? sanitize_key( $submitted_item['clientId'] ) : '';
+
+			if ( 0 === $menu_id ) {
+				$is_page_item = $item_id > 0
+					&& 'nav_menu_item' === get_post_type( $item_id )
+					&& 'page' === get_post_meta( $item_id, '_menu_item_object', true );
+
+				if ( $is_page_item ) {
+					wp_delete_post( $item_id, true );
+					$deleted[] = [
+						'clientId' => $client_id,
+						'itemId'   => $item_id,
+					];
+				}
+				continue;
+			}
+
+			if ( $item_id > 0 ) {
+				if ( 'nav_menu_item' !== get_post_type( $item_id ) ) {
+					continue;
+				}
+
+				$current_menu_ids = wp_get_object_terms( $item_id, 'nav_menu', [ 'fields' => 'ids' ] );
+				$moved_between_menus = ! is_wp_error( $current_menu_ids ) && ! in_array( $menu_id, array_map( 'intval', $current_menu_ids ), true );
+				$term_result = wp_set_object_terms( $item_id, [ $menu_id ], 'nav_menu', false );
+
+				if ( is_wp_error( $term_result ) ) {
+					wp_send_json_error( [ 'message' => $term_result->get_error_message() ], 500 );
+				}
+
+				wp_update_post( [
+					'ID'         => $item_id,
+					'menu_order' => $index + 1,
+				] );
+
+				if ( $moved_between_menus ) {
+					update_post_meta( $item_id, '_menu_item_menu_item_parent', '0' );
+				}
+				continue;
+			}
+
+			if ( $page_id <= 0 || 'page' !== get_post_type( $page_id ) ) {
+				continue;
+			}
+
+			$new_item_id = wp_update_nav_menu_item(
+				$menu_id,
+				0,
+				[
+					'menu-item-object-id' => $page_id,
+					'menu-item-object'    => 'page',
+					'menu-item-type'      => 'post_type',
+					'menu-item-position'  => $index + 1,
+					'menu-item-status'    => 'publish',
+				]
+			);
+
+			if ( is_wp_error( $new_item_id ) ) {
+				wp_send_json_error( [ 'message' => $new_item_id->get_error_message() ], 500 );
+			}
+
+			$created[] = [
+				'clientId' => $client_id,
+				'itemId'   => (int) $new_item_id,
+			];
+		}
+	}
+
+	wp_send_json_success( [
+		'message' => __( 'All changes saved', 'studio-zanetti' ),
+		'created' => $created,
+		'deleted' => $deleted,
+	] );
+}
+add_action( 'wp_ajax_sz_site_menu_manager_save', 'sz_site_menu_manager_save_board' );
+
+/**
+ * Create a menu/site column without leaving the board.
+ */
+function sz_site_menu_manager_create_menu() {
+	check_ajax_referer( 'sz_site_menu_manager', 'nonce' );
+
+	if ( ! current_user_can( 'edit_theme_options' ) ) {
+		wp_send_json_error( [ 'message' => __( 'You do not have permission to manage menus.', 'studio-zanetti' ) ], 403 );
+	}
+
+	$name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
+	$slug = isset( $_POST['slug'] ) ? sanitize_title( wp_unslash( $_POST['slug'] ) ) : '';
+
+	if ( '' === $name ) {
+		wp_send_json_error( [ 'message' => __( 'Enter a site name.', 'studio-zanetti' ) ], 400 );
+	}
+
+	$menu_id = wp_create_nav_menu( $name );
+	if ( is_wp_error( $menu_id ) ) {
+		wp_send_json_error( [ 'message' => $menu_id->get_error_message() ], 400 );
+	}
+
+	if ( '' !== $slug ) {
+		$result = wp_update_term( $menu_id, 'nav_menu', [ 'slug' => $slug ] );
+		if ( is_wp_error( $result ) ) {
+			wp_delete_nav_menu( $menu_id );
+			wp_send_json_error( [ 'message' => $result->get_error_message() ], 400 );
+		}
+	}
+
+	wp_send_json_success( [
+		'menuId' => (int) $menu_id,
+		'name'   => $name,
+	] );
+}
+add_action( 'wp_ajax_sz_site_menu_manager_create', 'sz_site_menu_manager_create_menu' );
