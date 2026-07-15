@@ -938,6 +938,12 @@ add_action( 'template_redirect', function () {
 		exit;
 	}
 
+	// Keep attachment pages in their collision-proof /image/{id}/ namespace.
+	if ( is_attachment() ) {
+		wp_redirect( $frontend_url . '/image/' . get_queried_object_id(), 302 );
+		exit;
+	}
+
 	// For single posts (blog), redirect to /{slug}
 	if ( is_single() ) {
 		$slug = get_post_field( 'post_name', get_queried_object_id() );

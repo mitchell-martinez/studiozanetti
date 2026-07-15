@@ -15,6 +15,7 @@ wp-content/
   mu-plugins/
     sz-headless.php        ← headless config + APIs
     sz-media-folders.php   ← media folder organization
+    sz-attachment-permalinks.php ← collision-proof media permalinks
 ```
 
 > **mu-plugins** are "must-use" plugins that are always active and cannot be deactivated from the admin. This is ideal for headless infrastructure code.
@@ -28,6 +29,12 @@ After `sz-media-folders.php` is installed, editors can organize assets under:
 3. Attachment details panel to assign a file to a folder
 
 This keeps a large media library manageable for non-technical admins.
+
+### 1c. Media permalinks
+
+`sz-attachment-permalinks.php` keeps attachment records from consuming useful page slugs. Attachment pages use ID-based URLs such as `/image/893/`, while internal attachment slugs use `sz-image-893`.
+
+Existing media is migrated automatically in small batches whenever an administrator loads WordPress admin. This changes only WordPress attachment records. Uploaded files remain at their existing `/wp-content/uploads/...` URLs, so images already used by pages, ACF fields, galleries, and posts continue to work.
 
 ### 2. Add constants to `wp-config.php`
 
