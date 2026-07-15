@@ -103,17 +103,17 @@ The Navbar renders top-level items as links and child items as dropdown sub-menu
 
 ### Visual Site Menu Manager
 
-The **Appearance → Menus → Site Menus** tab shows every site menu side by side. It uses the same WordPress menus as the front-end, so updates appear in the Navbar without maintaining a second list.
+The **Appearance → Menus → Site Menus** tab shows every page grouped by the menu that page uses as its site header. It reads and updates each page's **Menu Override** setting, which is the same setting the front-end uses to select a subsite. Pages with no override belong to the menu assigned to **Primary Navigation**.
 
 To create and organize the weddings site:
 
 1. Open **Appearance → Menus → Site Menus**.
 2. Enter `Straight Weddings Site` for the site name and `weddings-site` for the menu slug, then select **Add site menu**.
-3. Drag pages from **Primary Navigation** into **Straight Weddings Site**. Changes save automatically.
-4. Drag a page to **Unassigned pages** to remove it from its current menu without deleting the page.
-5. Select a page name to preview it. The preview opens on the right on desktop and in the bottom half of the screen on mobile. Select the **X**, press Escape, or select outside the preview to close it.
+3. Drag pages from **Primary Navigation** into **Straight Weddings Site**. Changes save their Menu Override automatically; this does not add the page as a visible navigation link.
+4. Select a page name to preview it. The preview opens at full height on the right on desktop and in the bottom half of the screen on mobile. On desktop, drag its left edge or select the expand icon to change its width.
+5. Select the **X**, press Escape, or select outside the preview to close it.
 
-The menu dropdown and arrow buttons on each item provide alternatives to drag-and-drop. Custom links can move between menus, but only pages can move into **Unassigned pages**. Use the standard **Edit Menus** tab when you need to create nested dropdown links or edit a custom URL.
+The menu dropdown and arrow buttons on each item provide alternatives to drag-and-drop. Use the standard **Edit Menus** tab to choose which pages and custom links are visibly shown in each navigation menu, create nested dropdown links, or edit a custom URL.
 
 ### Page Preview
 

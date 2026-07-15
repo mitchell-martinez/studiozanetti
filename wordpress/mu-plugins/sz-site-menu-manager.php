@@ -80,9 +80,12 @@ function sz_site_menu_manager_enqueue_assets( $hook ) {
 		true
 	);
 
+	$locations = get_nav_menu_locations();
+
 	wp_localize_script( 'sz-site-menu-manager', 'szSiteMenuManager', [
 		'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 		'nonce'   => wp_create_nonce( 'sz_site_menu_manager' ),
+		'primaryMenuId' => isset( $locations['primary'] ) ? (int) $locations['primary'] : 0,
 		'strings' => [
 			'idle'        => __( 'All changes saved', 'studio-zanetti' ),
 			'saving'      => __( 'Saving...', 'studio-zanetti' ),
@@ -90,6 +93,8 @@ function sz_site_menu_manager_enqueue_assets( $hook ) {
 			'creating'    => __( 'Creating menu...', 'studio-zanetti' ),
 			'createError' => __( 'The menu could not be created.', 'studio-zanetti' ),
 			'viewing'     => __( 'Viewing %s', 'studio-zanetti' ),
+			'expand'      => __( 'Expand preview', 'studio-zanetti' ),
+			'collapse'    => __( 'Restore preview width', 'studio-zanetti' ),
 		],
 	] );
 }
@@ -112,7 +117,14 @@ function sz_site_menu_manager_get_pages() {
  * Build the front-end preview URL already used by the page editor.
  */
 function sz_site_menu_manager_get_preview_url( $page_id ) {
-	if ( defined( 'SZ_FRONTEND_URL' ) && defined( 'SZ_PREVIEW_SECRET' ) ) {
+	$page = get_post( $page_id );
+
+	if ( $page && 'publish' === $page->post_status && defined( 'SZ_FRONTEND_URL' ) ) {
+		$page_path = trim( (string) get_page_uri( $page_id ), '/' );
+		return rtrim( SZ_FRONTEND_URL, '/' ) . ( '' !== $page_path ? '/' . $page_path : '/' );
+	}
+
+	if ( $page && defined( 'SZ_FRONTEND_URL' ) && defined( 'SZ_PREVIEW_SECRET' ) ) {
 		return add_query_arg(
 			[
 				'id'     => (int) $page_id,
@@ -129,17 +141,15 @@ function sz_site_menu_manager_get_preview_url( $page_id ) {
 /**
  * Render one draggable item card.
  */
-function sz_site_menu_manager_render_card( $item, $menus, $current_menu_id = 0 ) {
-	$item_id    = isset( $item['item_id'] ) ? (int) $item['item_id'] : 0;
+function sz_site_menu_manager_render_card( $item, $menus, $current_menu_id = 0, $has_primary_menu = true ) {
 	$page_id    = isset( $item['page_id'] ) ? (int) $item['page_id'] : 0;
 	$title      = isset( $item['title'] ) ? $item['title'] : '';
 	$type_label = isset( $item['type_label'] ) ? $item['type_label'] : __( 'Page', 'studio-zanetti' );
 	$preview    = isset( $item['preview_url'] ) ? $item['preview_url'] : '';
-	$client_id  = $item_id > 0 ? 'item-' . $item_id : 'page-' . $page_id;
+	$client_id  = 'page-' . $page_id;
 	?>
 	<li
 		class="sz-site-menu-card"
-		data-item-id="<?php echo esc_attr( $item_id ); ?>"
 		data-page-id="<?php echo esc_attr( $page_id ); ?>"
 		data-client-id="<?php echo esc_attr( $client_id ); ?>"
 	>
@@ -167,7 +177,7 @@ function sz_site_menu_manager_render_card( $item, $menus, $current_menu_id = 0 )
 				<?php echo esc_html( sprintf( __( 'Move %s to another menu', 'studio-zanetti' ), $title ) ); ?>
 			</label>
 			<select id="sz-move-<?php echo esc_attr( $client_id ); ?>" class="sz-site-menu-card__move">
-				<?php if ( $page_id > 0 ) : ?>
+				<?php if ( ! $has_primary_menu || 0 === $current_menu_id ) : ?>
 					<option value="0" <?php selected( 0, $current_menu_id ); ?>><?php esc_html_e( 'Unassigned pages', 'studio-zanetti' ); ?></option>
 				<?php endif; ?>
 				<?php foreach ( $menus as $menu ) : ?>
@@ -201,35 +211,60 @@ function sz_site_menu_manager_render_page() {
 	$pages          = sz_site_menu_manager_get_pages();
 	$locations      = get_nav_menu_locations();
 	$location_names = get_registered_nav_menus();
-	$assigned_pages = [];
 	$menu_cards     = [];
+	$unassigned     = [];
+	$primary_menu_id = isset( $locations['primary'] ) ? (int) $locations['primary'] : 0;
 
 	foreach ( $menus as $menu ) {
 		$menu_cards[ $menu->term_id ] = [];
-		$items = wp_get_nav_menu_items( $menu->term_id, [ 'post_status' => 'any' ] );
+	}
 
-		if ( ! $items ) {
-			continue;
+	foreach ( $pages as $page ) {
+		$override = function_exists( 'get_field' ) ? (string) get_field( 'menu_override', $page->ID ) : (string) get_post_meta( $page->ID, 'menu_override', true );
+		$override = sanitize_title( $override );
+		$target_menu_id = 0;
+
+		if ( '' === $override && $primary_menu_id > 0 ) {
+			$target_menu_id = $primary_menu_id;
+		} else {
+			foreach ( $menus as $menu ) {
+				if ( $override === $menu->slug ) {
+					$target_menu_id = (int) $menu->term_id;
+					break;
+				}
+			}
 		}
 
-		foreach ( $items as $menu_item ) {
-			$page_id = ( 'post_type' === $menu_item->type && 'page' === $menu_item->object )
-				? (int) $menu_item->object_id
-				: 0;
+		$card = [
+			'page_id'     => (int) $page->ID,
+			'title'       => get_the_title( $page ),
+			'type_label'  => ucfirst( $page->post_status ) . ' ' . __( 'page', 'studio-zanetti' ),
+			'preview_url' => sz_site_menu_manager_get_preview_url( $page->ID ),
+		];
 
-			if ( $page_id > 0 ) {
-				$assigned_pages[ $page_id ] = true;
-			}
-
-			$menu_cards[ $menu->term_id ][] = [
-				'item_id'    => (int) $menu_item->ID,
-				'page_id'    => $page_id,
-				'title'      => $menu_item->title,
-				'type_label' => $page_id > 0 ? __( 'Page', 'studio-zanetti' ) : $menu_item->type_label,
-				'preview_url'=> $page_id > 0 ? sz_site_menu_manager_get_preview_url( $page_id ) : $menu_item->url,
-			];
+		if ( $target_menu_id > 0 && isset( $menu_cards[ $target_menu_id ] ) ) {
+			$menu_cards[ $target_menu_id ][] = $card;
+		} else {
+			$unassigned[] = $card;
 		}
 	}
+
+	$order_cards = function ( $left, $right ) {
+		$left_order  = (int) get_post_meta( $left['page_id'], '_sz_site_menu_manager_order', true );
+		$right_order = (int) get_post_meta( $right['page_id'], '_sz_site_menu_manager_order', true );
+
+		if ( $left_order === $right_order ) {
+			return strcasecmp( $left['title'], $right['title'] );
+		}
+
+		return $left_order <=> $right_order;
+	};
+
+	usort( $unassigned, $order_cards );
+	foreach ( $menu_cards as &$cards ) {
+		usort( $cards, $order_cards );
+	}
+	unset( $cards );
 	?>
 	<div class="wrap sz-site-menu-manager">
 		<h1><?php esc_html_e( 'Menus', 'studio-zanetti' ); ?></h1>
@@ -266,21 +301,8 @@ function sz_site_menu_manager_render_page() {
 					</div>
 				</header>
 				<ul class="sz-site-menu-list" aria-label="<?php esc_attr_e( 'Unassigned pages', 'studio-zanetti' ); ?>">
-					<?php foreach ( $pages as $page ) : ?>
-						<?php
-						if ( isset( $assigned_pages[ $page->ID ] ) ) {
-							continue;
-						}
-						sz_site_menu_manager_render_card(
-							[
-								'page_id'     => $page->ID,
-								'title'       => get_the_title( $page ),
-								'type_label'  => ucfirst( $page->post_status ) . ' ' . __( 'page', 'studio-zanetti' ),
-								'preview_url' => sz_site_menu_manager_get_preview_url( $page->ID ),
-							],
-							$menus
-						);
-						?>
+					<?php foreach ( $unassigned as $card ) : ?>
+						<?php sz_site_menu_manager_render_card( $card, $menus, 0, $primary_menu_id > 0 ); ?>
 					<?php endforeach; ?>
 				</ul>
 			</section>
@@ -302,7 +324,7 @@ function sz_site_menu_manager_render_page() {
 					</header>
 					<ul class="sz-site-menu-list" aria-label="<?php echo esc_attr( $menu->name ); ?>">
 						<?php foreach ( $menu_cards[ $menu->term_id ] as $card ) : ?>
-							<?php sz_site_menu_manager_render_card( $card, $menus, (int) $menu->term_id ); ?>
+							<?php sz_site_menu_manager_render_card( $card, $menus, (int) $menu->term_id, $primary_menu_id > 0 ); ?>
 						<?php endforeach; ?>
 					</ul>
 				</section>
@@ -310,16 +332,22 @@ function sz_site_menu_manager_render_page() {
 		</div>
 	</div>
 
-	<dialog id="sz-site-menu-preview" class="sz-site-menu-preview" aria-labelledby="sz-site-menu-preview-title">
+	<aside id="sz-site-menu-preview" class="sz-site-menu-preview" role="dialog" aria-modal="true" aria-labelledby="sz-site-menu-preview-title" aria-hidden="true" hidden>
+		<hr class="sz-site-menu-preview__resize" aria-label="<?php esc_attr_e( 'Resize page preview', 'studio-zanetti' ); ?>">
 		<header class="sz-site-menu-preview__header">
 			<h2 id="sz-site-menu-preview-title"><?php esc_html_e( 'Viewing page', 'studio-zanetti' ); ?></h2>
-			<button type="button" class="sz-site-menu-preview__close" aria-label="<?php esc_attr_e( 'Close preview', 'studio-zanetti' ); ?>">
-				<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
-			</button>
+			<div class="sz-site-menu-preview__controls">
+				<button type="button" class="sz-site-menu-preview__expand" aria-label="<?php esc_attr_e( 'Expand preview', 'studio-zanetti' ); ?>" title="<?php esc_attr_e( 'Expand preview', 'studio-zanetti' ); ?>">
+					<span class="dashicons dashicons-editor-expand" aria-hidden="true"></span>
+				</button>
+				<button type="button" class="sz-site-menu-preview__close" aria-label="<?php esc_attr_e( 'Close preview', 'studio-zanetti' ); ?>">
+					<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+				</button>
+			</div>
 		</header>
 		<div class="sz-site-menu-preview__loading" aria-hidden="true"><?php esc_html_e( 'Loading preview...', 'studio-zanetti' ); ?></div>
 		<iframe title="<?php esc_attr_e( 'Page preview', 'studio-zanetti' ); ?>" src="about:blank"></iframe>
-	</dialog>
+	</aside>
 	<div class="sz-site-menu-preview-backdrop" hidden></div>
 	<?php
 }
@@ -343,11 +371,12 @@ function sz_site_menu_manager_save_board() {
 
 	$valid_menus = [];
 	foreach ( wp_get_nav_menus() as $menu ) {
-		$valid_menus[ (int) $menu->term_id ] = true;
+		$valid_menus[ (int) $menu->term_id ] = (string) $menu->slug;
 	}
 
-	$created = [];
-	$deleted = [];
+	$locations       = get_nav_menu_locations();
+	$primary_menu_id = isset( $locations['primary'] ) ? (int) $locations['primary'] : 0;
+	$updated_pages   = [];
 	foreach ( $board as $column ) {
 		$menu_id = isset( $column['menuId'] ) ? absint( $column['menuId'] ) : 0;
 		$items   = isset( $column['items'] ) && is_array( $column['items'] ) ? $column['items'] : [];
@@ -357,80 +386,26 @@ function sz_site_menu_manager_save_board() {
 		}
 
 		foreach ( $items as $index => $submitted_item ) {
-			$item_id   = isset( $submitted_item['itemId'] ) ? absint( $submitted_item['itemId'] ) : 0;
 			$page_id   = isset( $submitted_item['pageId'] ) ? absint( $submitted_item['pageId'] ) : 0;
-			$client_id = isset( $submitted_item['clientId'] ) ? sanitize_key( $submitted_item['clientId'] ) : '';
-
-			if ( 0 === $menu_id ) {
-				$is_page_item = $item_id > 0
-					&& 'nav_menu_item' === get_post_type( $item_id )
-					&& 'page' === get_post_meta( $item_id, '_menu_item_object', true );
-
-				if ( $is_page_item ) {
-					wp_delete_post( $item_id, true );
-					$deleted[] = [
-						'clientId' => $client_id,
-						'itemId'   => $item_id,
-					];
-				}
-				continue;
-			}
-
-			if ( $item_id > 0 ) {
-				if ( 'nav_menu_item' !== get_post_type( $item_id ) ) {
-					continue;
-				}
-
-				$current_menu_ids = wp_get_object_terms( $item_id, 'nav_menu', [ 'fields' => 'ids' ] );
-				$moved_between_menus = ! is_wp_error( $current_menu_ids ) && ! in_array( $menu_id, array_map( 'intval', $current_menu_ids ), true );
-				$term_result = wp_set_object_terms( $item_id, [ $menu_id ], 'nav_menu', false );
-
-				if ( is_wp_error( $term_result ) ) {
-					wp_send_json_error( [ 'message' => $term_result->get_error_message() ], 500 );
-				}
-
-				wp_update_post( [
-					'ID'         => $item_id,
-					'menu_order' => $index + 1,
-				] );
-
-				if ( $moved_between_menus ) {
-					update_post_meta( $item_id, '_menu_item_menu_item_parent', '0' );
-				}
-				continue;
-			}
 
 			if ( $page_id <= 0 || 'page' !== get_post_type( $page_id ) ) {
 				continue;
 			}
 
-			$new_item_id = wp_update_nav_menu_item(
-				$menu_id,
-				0,
-				[
-					'menu-item-object-id' => $page_id,
-					'menu-item-object'    => 'page',
-					'menu-item-type'      => 'post_type',
-					'menu-item-position'  => $index + 1,
-					'menu-item-status'    => 'publish',
-				]
-			);
-
-			if ( is_wp_error( $new_item_id ) ) {
-				wp_send_json_error( [ 'message' => $new_item_id->get_error_message() ], 500 );
+			$override = ( $menu_id > 0 && $menu_id !== $primary_menu_id ) ? $valid_menus[ $menu_id ] : '';
+			if ( function_exists( 'update_field' ) ) {
+				update_field( 'field_sz_menu_override', $override, $page_id );
+			} else {
+				update_post_meta( $page_id, 'menu_override', $override );
 			}
-
-			$created[] = [
-				'clientId' => $client_id,
-				'itemId'   => (int) $new_item_id,
-			];
+			update_post_meta( $page_id, '_sz_site_menu_manager_order', $index + 1 );
+			$updated_pages[] = $page_id;
 		}
 	}
 
 	wp_send_json_success( [
-		'message' => __( 'All changes saved', 'studio-zanetti' ),
-		'created' => $created,
-		'deleted' => $deleted,
+		'message'      => __( 'All changes saved', 'studio-zanetti' ),
+		'updatedPages' => array_values( array_unique( $updated_pages ) ),
 	] );
 }
 add_action( 'wp_ajax_sz_site_menu_manager_save', 'sz_site_menu_manager_save_board' );
