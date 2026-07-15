@@ -48,6 +48,7 @@ const TextGridBlock = ({ block }: TextGridBlockProps) => {
         {block.subheading && <p className={styles.subheading}>{block.subheading}</p>}
         <div
           className={styles.grid}
+          data-columns={block.max_columns || 3}
           style={
             block.max_columns
               ? ({ '--max-cols': block.max_columns } as React.CSSProperties)

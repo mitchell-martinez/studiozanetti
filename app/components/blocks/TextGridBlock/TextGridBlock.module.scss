@@ -33,6 +33,10 @@
 
   @media (max-width: #{g.$bp-lg}) {
     grid-template-columns: repeat(min(2, var(--max-cols)), minmax(0, var(--col-max)));
+
+    &[data-columns='3'] {
+      grid-template-columns: minmax(0, var(--col-max));
+    }
   }
 
   @media (max-width: #{g.$bp-sm}) {

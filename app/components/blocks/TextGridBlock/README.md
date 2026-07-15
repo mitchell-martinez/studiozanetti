@@ -33,6 +33,7 @@ This block appears in the **Page Blocks** flexible content field as **"Text Grid
 
 - Use **3 columns** (default) for balanced layouts on most pages.
 - Use **2 columns** for longer descriptions or alongside other narrow blocks.
+- Three-column grids stack to one column on tablets to avoid an uneven `2 + 1` layout. Two- and four-column grids retain two columns on tablets.
 - Cards without a CTA URL will simply omit the link — no empty button is rendered.
 - The `minimal` card style removes all card chrome — perfect when used with the Dark theme.
 - Each card CTA uses the Button component.

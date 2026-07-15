@@ -56,12 +56,14 @@ describe('TextGridBlock', () => {
     const { container } = renderBlock({ max_columns: 2 })
     const grid = container.querySelector('[class*="grid"]')! as HTMLElement
     expect(grid.style.getPropertyValue('--max-cols')).toBe('2')
+    expect(grid).toHaveAttribute('data-columns', '2')
   })
 
   it('does not set --max-cols when max_columns is not set', () => {
     const { container } = renderBlock({ max_columns: undefined })
     const grid = container.querySelector('[class*="grid"]')! as HTMLElement
     expect(grid.style.getPropertyValue('--max-cols')).toBe('')
+    expect(grid).toHaveAttribute('data-columns', '3')
   })
 
   // ─── Optional title/body ──────────────────────────────────────────────────
