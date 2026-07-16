@@ -12,6 +12,8 @@ const FALLBACK_ITEMS: WPMenuItem[] = [
   { id: 4, title: 'Contact', url: '/contact', children: [] },
 ]
 
+const CREATOR_URL = 'https://mitchellmartinez.tech/'
+
 const Footer = ({ items, siteSettings }: FooterProps) => {
   const navItems = items.length > 0 ? items : FALLBACK_ITEMS
   const year = new Date().getFullYear()
@@ -56,6 +58,29 @@ const Footer = ({ items, siteSettings }: FooterProps) => {
 
       <div className={styles.bottom}>
         <p>{copyrightDisplay}</p>
+        <p className={styles.credit}>
+          Created by{' '}
+          <a
+            href={CREATOR_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.creditLink}
+            aria-label="Mitchell Martinez (opens in new tab)"
+          >
+            Mitchell Martinez
+          </a>
+          . Looking for help improving your digital presence?{' '}
+          <a
+            href={CREATOR_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.creditLink}
+            aria-label="Get in touch with Mitchell today (opens in new tab)"
+          >
+            Get in touch with Mitchell today
+          </a>
+          .
+        </p>
       </div>
     </footer>
   )

@@ -170,6 +170,17 @@ export const TextHorizontalCentre: Story = {
   args: { text_horizontal_align: 'center' },
 }
 
+/** Long heading for verifying that every wrapped line stays centred on small viewports. */
+export const MobileWrappingHeading: Story = {
+  args: {
+    heading: 'Corporate and events photography services',
+    text_horizontal_align: 'left',
+  },
+  parameters: {
+    viewport: { defaultViewport: 'mobile1' },
+  },
+}
+
 /** Right-aligned text. */
 export const TextHorizontalRight: Story = {
   args: { text_horizontal_align: 'right' },

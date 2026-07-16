@@ -43,6 +43,16 @@ export const EmptyMenu: NavStory = {
 
 type FooterArgs = { items: WPMenuItem[]; siteSettings: WPSiteSettings }
 
+const wrappingFooterMenu: WPMenuItem[] = [
+  { id: 101, title: 'Home', url: '/', children: [] },
+  { id: 102, title: 'About', url: '/about', children: [] },
+  { id: 103, title: 'Wedding Galleries', url: '/galleries/weddings', children: [] },
+  { id: 104, title: 'Client Reviews', url: '/reviews', children: [] },
+  { id: 105, title: 'Photography Prices', url: '/prices', children: [] },
+  { id: 106, title: 'Services', url: '/services', children: [] },
+  { id: 107, title: 'Contact', url: '/contact', children: [] },
+]
+
 export const FooterDefault: StoryObj<FooterArgs> = {
   args: {
     items: demoMenu,
@@ -56,6 +66,15 @@ export const FooterDefault: StoryObj<FooterArgs> = {
     },
   },
   render: (args) => <Footer items={args.items} siteSettings={args.siteSettings} />,
+}
+
+/** Footer with enough varied menu labels to exercise responsive link wrapping. */
+export const FooterWrappingNavigation: StoryObj<FooterArgs> = {
+  ...FooterDefault,
+  args: {
+    items: wrappingFooterMenu,
+    siteSettings: demoSiteSettings,
+  },
 }
 
 /* ── Gallery Grid ───────────────────────────────────────────────────────────── */

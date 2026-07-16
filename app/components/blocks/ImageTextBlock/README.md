@@ -37,6 +37,7 @@ Set **Image Ratio** to **Auto** when you want the image to display at its natura
 - **Vertical alignment** controls how the text column lines up against the image: top-aligned, centred (default), or bottom-aligned.
 - **Horizontal alignment** controls whether text content is left-aligned (default), centred, or right-aligned within its column.
 - If only a heading is provided (no body), or only body content is provided (no heading), the single piece of content is perfectly centred in the text column. When both are present they align as a combined block.
+- On tablet and mobile layouts, headings and eyebrow text are centred independently of the body alignment. Every line of a wrapped heading remains centred.
 
 ---
 

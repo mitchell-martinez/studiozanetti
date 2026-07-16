@@ -85,4 +85,26 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: /youtube.*new tab/i })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /instagram/i })).not.toBeInTheDocument()
   })
+
+  it('renders the creator credit with secure portfolio links', () => {
+    renderFooter()
+
+    expect(screen.getByText(/looking for help improving your digital presence/i)).toBeInTheDocument()
+
+    const creatorLink = screen.getByRole('link', {
+      name: 'Mitchell Martinez (opens in new tab)',
+    })
+    const contactLink = screen.getByRole('link', {
+      name: 'Get in touch with Mitchell today (opens in new tab)',
+    })
+
+    expect(creatorLink).toHaveTextContent('Mitchell Martinez')
+    expect(contactLink).toHaveTextContent('Get in touch with Mitchell today')
+
+    for (const link of [creatorLink, contactLink]) {
+      expect(link).toHaveAttribute('href', 'https://mitchellmartinez.tech/')
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    }
+  })
 })

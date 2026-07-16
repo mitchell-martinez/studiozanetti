@@ -9,15 +9,16 @@
 .container {
   max-width: #{g.$bp-xl};
   margin: 0 auto;
-  padding: 3.25rem var(--space-page-x) 2rem;
+  padding: 1.5rem var(--space-page-x) 1rem;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 2rem;
+  grid-template-columns: minmax(12rem, auto) minmax(0, 1fr) max-content;
+  gap: 1rem 2.5rem;
   align-items: start;
 
   @media (max-width: #{g.$bp-sm}) {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 0.75rem;
+    padding-block: 1.25rem 0.75rem;
   }
 }
 
@@ -41,8 +42,8 @@
 
 .links {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0 1.5rem;
 }
 
 .link {
@@ -60,8 +61,8 @@
 
 .social {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0 1.5rem;
 }
 
 .socialLink {
@@ -79,8 +80,38 @@
 
 .bottom {
   border-top: 1px solid var(--color-border-soft);
-  padding: 1rem var(--space-page-x);
-  text-align: center;
+  padding: 0.75rem var(--space-page-x);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
   font-size: var(--text-sm);
+  line-height: 1.5;
   color: var(--color-ink-soft);
+
+  p {
+    margin: 0;
+  }
+}
+
+.credit {
+  text-align: center;
+}
+
+.creditLink {
+  color: var(--color-ink-strong);
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent-strong);
+  text-underline-offset: 0.2em;
+  transition: color g.$transition-fast;
+
+  &:hover {
+    color: var(--color-accent-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent-strong);
+    outline-offset: 3px;
+  }
 }

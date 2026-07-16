@@ -34,6 +34,7 @@ dist-ssr
 
 # Build output
 build/
+storybook-static/
 
 # Test coverage
 coverage/
