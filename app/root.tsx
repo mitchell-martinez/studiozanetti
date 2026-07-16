@@ -9,15 +9,21 @@ import {
   ScrollRestoration,
   useRouteError,
   useRouteLoaderData,
+  useMatches,
 } from 'react-router'
 import ErrorPage from '~/components/ErrorPage'
 import Footer from '~/components/Footer'
 import Navbar from '~/components/Navbar'
 import OfflineBanner from '~/components/OfflineBanner'
-import { getSiteUrlFromEnv } from '~/lib/seo'
+import {
+  buildPageSchemas,
+  buildPostSchemas,
+  buildStructuredDataGraph,
+  serializeStructuredData,
+} from '~/lib/seo'
 import { getNavMenu, getPageBySlug, getPostBySlug, getSiteSettings } from '~/lib/wordpress'
 import globalStyles from '~/styles/global.scss?url'
-import type { WPMenuItem, WPSiteSettings } from '~/types/wordpress'
+import type { WPMenuItem, WPPage, WPPost, WPSiteSettings } from '~/types/wordpress'
 
 export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://picsum.photos' },
@@ -85,18 +91,43 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const data = useRouteLoaderData('root') as RootLoaderData | undefined
   const navMenu = data?.navMenu ?? []
   const siteSettings = data?.siteSettings
+  const matches = useMatches()
+  const activeContentData = [...matches]
+    .reverse()
+    .map((match) => match.data)
+    .find((matchData) => {
+      if (!matchData || typeof matchData !== 'object' || !('type' in matchData)) return false
+      return matchData.type === 'page' || matchData.type === 'post'
+    }) as
+    | { type: 'page'; page: WPPage; canonicalUrl: string }
+    | { type: 'post'; post: WPPost; canonicalUrl: string }
+    | undefined
+  const contentSchemas = activeContentData
+    ? (() => {
+        let pathname = '/'
+        try {
+          pathname = new URL(activeContentData.canonicalUrl).pathname || '/'
+        } catch {
+          pathname = '/'
+        }
 
-  const siteUrl = getSiteUrlFromEnv()
-  const organizationSchema = siteSettings
-    ? {
-        '@context': 'https://schema.org',
-        '@type': 'ProfessionalService',
-        name: siteSettings.site_name || 'Studio Zanetti',
-        url: siteUrl,
-        sameAs: siteSettings.social_links
-          .map((link) => link.url)
-          .filter((url) => url.trim().length > 0),
-      }
+        return activeContentData.type === 'page'
+          ? buildPageSchemas(
+              activeContentData.page,
+              activeContentData.canonicalUrl,
+              pathname,
+              siteSettings,
+            )
+          : buildPostSchemas(
+              activeContentData.post,
+              activeContentData.canonicalUrl,
+              pathname,
+              siteSettings,
+            )
+      })()
+    : []
+  const structuredData = siteSettings
+    ? buildStructuredDataGraph(siteSettings, contentSchemas)
     : null
 
   return (
@@ -106,10 +137,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" type="image/png" href="/SZ Favicon.png" />
         <link rel="apple-touch-icon" href="/SZ Favicon.png" />
-        {organizationSchema && (
+        {structuredData && (
           <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+            dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
           />
         )}
         <Meta />

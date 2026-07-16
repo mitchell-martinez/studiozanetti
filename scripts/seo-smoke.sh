@@ -38,6 +38,38 @@ check_body_contains() {
   fi
 }
 
+check_structured_data_graph() {
+  local url="$1"
+  local label="$2"
+  local html
+  html="$(curl -sL "$url")"
+
+  if printf '%s' "$html" | node -e '
+    let html = "";
+    process.stdin.setEncoding("utf8");
+    process.stdin.on("data", (chunk) => { html += chunk; });
+    process.stdin.on("end", () => {
+      const scripts = [...html.matchAll(/<script[^>]+type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi)];
+      const graphs = scripts
+        .map((match) => {
+          try { return JSON.parse(match[1]); } catch { return null; }
+        })
+        .filter((value) => value && Array.isArray(value["@graph"]));
+      if (graphs.length !== 1) process.exit(1);
+      const nodes = graphs[0]["@graph"];
+      const hasId = (suffix) => nodes.some((node) => typeof node["@id"] === "string" && node["@id"].endsWith(suffix));
+      const hasType = (type) => nodes.some((node) => node["@type"] === type);
+      if (!hasId("/#business") || !hasId("/#website") || !hasType("WebPage") || !hasType("BreadcrumbList")) process.exit(1);
+    });
+  '; then
+    echo "PASS  $label contains one parseable connected graph"
+    pass_count=$((pass_count + 1))
+  else
+    echo "FAIL  $label must contain one graph with #business, #website, WebPage, and BreadcrumbList"
+    fail_count=$((fail_count + 1))
+  fi
+}
+
 echo "SEO smoke checks for: $TARGET"
 echo
 
@@ -50,7 +82,7 @@ check_body_contains "$TARGET/robots.txt" "Sitemap:" "robots.txt"
 check_body_contains "$TARGET/sitemap.xml" "<urlset" "sitemap.xml"
 
 check_body_contains "$TARGET/" "rel=\"canonical\"" "homepage HTML"
-check_body_contains "$TARGET/" "application/ld+json" "homepage HTML"
+check_structured_data_graph "$TARGET/" "homepage HTML"
 
 echo
 

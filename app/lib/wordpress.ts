@@ -82,6 +82,15 @@ function safeImage(raw: unknown): WPImage | undefined {
         alt: typeof img.alt === 'string' ? img.alt : '',
         width: typeof img.width === 'number' ? img.width : undefined,
         height: typeof img.height === 'number' ? img.height : undefined,
+        caption: typeof img.caption === 'string' ? img.caption : undefined,
+        creator:
+          img.creator === 'business' || img.creator === 'primary_photographer'
+            ? img.creator
+            : undefined,
+        location_created:
+          typeof img.location_created === 'object' && img.location_created !== null
+            ? (img.location_created as WPImage['location_created'])
+            : undefined,
       }
     }
     return undefined
@@ -197,21 +206,29 @@ function normalizeBlockImages(blocks: ContentBlock[]): ContentBlock[] {
 
 function normalizePage(page: RawWPPage): WPPage {
   const featuredMedia = page._embedded?.['wp:featuredmedia']?.[0]
-  const featured_image = featuredMedia?.source_url
-    ? {
-        url: featuredMedia.source_url,
-        alt:
-          featuredMedia.alt_text ||
-          decodeHtmlEntities(page.title.rendered.replace(/<[^>]+>/g, '')).trim(),
-        width: featuredMedia.media_details?.width,
-        height: featuredMedia.media_details?.height,
-      }
-    : undefined
+  const featured_image =
+    safeImage(page.featured_image) ??
+    (featuredMedia?.source_url
+      ? {
+          url: featuredMedia.source_url,
+          alt:
+            featuredMedia.alt_text ||
+            decodeHtmlEntities(page.title.rendered.replace(/<[^>]+>/g, '')).trim(),
+          width: featuredMedia.media_details?.width,
+          height: featuredMedia.media_details?.height,
+        }
+      : undefined)
 
   const acf = page.acf
     ? {
         ...page.acf,
         blocks: page.acf.blocks ? normalizeBlockImages(page.acf.blocks) : undefined,
+        venue: page.acf.venue
+          ? {
+              ...page.acf.venue,
+              image: safeImage(page.acf.venue.image),
+            }
+          : undefined,
       }
     : undefined
 
@@ -387,6 +404,68 @@ const DEFAULT_SITE_SETTINGS: WPSiteSettings = {
   ],
 }
 
+function normalizeStringList(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined
+
+  const values = value
+    .map((item) => {
+      if (typeof item === 'string') return item.trim()
+      if (!item || typeof item !== 'object') return ''
+
+      const row = item as Record<string, unknown>
+      const candidate = row.name ?? row.value ?? row.url ?? row.award ?? row.topic
+      return typeof candidate === 'string' ? candidate.trim() : ''
+    })
+    .filter((item) => item.length > 0)
+
+  return values.length > 0 ? values : undefined
+}
+
+function normalizeSiteSettings(data: WPSiteSettings): WPSiteSettings {
+  const business = data.business
+  const photographer = data.primary_photographer
+  const services = Array.isArray(data.services)
+    ? data.services
+        .filter((service) => service && service.key?.trim() && service.name?.trim())
+        .map((service) => ({
+          ...service,
+          key: service.key.trim(),
+          name: service.name.trim(),
+          image: safeImage(service.image),
+          area_served: normalizeStringList(service.area_served),
+        }))
+    : undefined
+
+  return {
+    site_name: data.site_name || DEFAULT_SITE_SETTINGS.site_name,
+    tagline: data.tagline || DEFAULT_SITE_SETTINGS.tagline,
+    copyright_text: data.copyright_text || DEFAULT_SITE_SETTINGS.copyright_text,
+    social_links: data.social_links?.length
+      ? data.social_links
+      : DEFAULT_SITE_SETTINGS.social_links,
+    business: business
+      ? {
+          ...business,
+          logo: safeImage(business.logo),
+          image: safeImage(business.image),
+          area_served: normalizeStringList(business.area_served),
+          awards: normalizeStringList(business.awards),
+          same_as: normalizeStringList(business.same_as),
+        }
+      : undefined,
+    primary_photographer: photographer
+      ? {
+          ...photographer,
+          image: safeImage(photographer.image),
+          same_as: normalizeStringList(photographer.same_as),
+          knows_about: normalizeStringList(photographer.knows_about),
+          awards: normalizeStringList(photographer.awards),
+        }
+      : undefined,
+    services: services?.length ? services : undefined,
+  }
+}
+
 /**
  * Fetch global site settings from the ACF Options Page.
  * These control header branding, footer text, and social links site-wide.
@@ -395,14 +474,7 @@ const DEFAULT_SITE_SETTINGS: WPSiteSettings = {
 export async function getSiteSettings(): Promise<WPSiteSettings> {
   const data = await wpFetch<WPSiteSettings>('/sz/v1/site-settings')
   if (!data) return DEFAULT_SITE_SETTINGS
-  return {
-    site_name: data.site_name || DEFAULT_SITE_SETTINGS.site_name,
-    tagline: data.tagline || DEFAULT_SITE_SETTINGS.tagline,
-    copyright_text: data.copyright_text || DEFAULT_SITE_SETTINGS.copyright_text,
-    social_links: data.social_links?.length
-      ? data.social_links
-      : DEFAULT_SITE_SETTINGS.social_links,
-  }
+  return normalizeSiteSettings(data)
 }
 
 // ─── Blog post helpers ──────────────────────────────────────────────────────

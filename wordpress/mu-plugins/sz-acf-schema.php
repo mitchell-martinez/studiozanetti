@@ -13,6 +13,11 @@ if ( file_exists( $sz_form_validation_include ) ) {
 	require_once $sz_form_validation_include;
 }
 
+$sz_heading_validation_include = __DIR__ . '/includes/page-heading-validation.php';
+if ( file_exists( $sz_heading_validation_include ) ) {
+	require_once $sz_heading_validation_include;
+}
+
 if ( ! function_exists( 'sz_validate_form_field_rows' ) ) {
 	function sz_validate_form_field_rows( $value ): array {
 		if ( ! is_array( $value ) || empty( $value ) ) {
@@ -298,6 +303,7 @@ add_action( 'acf/init', function () {
 			'layout' => 'row',
 			'button_label' => 'Add Service',
 			'sub_fields' => [
+				[ 'key' => 'field_sz_services_item_service_reference', 'label' => 'Global Service', 'name' => 'service_reference', 'type' => 'select', 'allow_null' => 1, 'ui' => 1, 'choices' => [], 'instructions' => 'Optional. Link this visible card to the matching authoritative service in Site Settings. Leave blank for a page-specific service.' ],
 				[ 'key' => 'field_sz_services_item_title', 'label' => 'Title', 'name' => 'title', 'type' => 'text', 'required' => 1 ],
 				[ 'key' => 'field_sz_services_item_description', 'label' => 'Description', 'name' => 'description', 'type' => 'textarea', 'required' => 1 ],
 				[ 'key' => 'field_sz_services_item_image', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array' ],
@@ -348,6 +354,7 @@ add_action( 'acf/init', function () {
 	$pricing_fields = array_merge([
 		[ 'key' => 'field_sz_pricing_heading', 'label' => 'Heading', 'name' => 'heading', 'type' => 'text' ],
 		[ 'key' => 'field_sz_pricing_subheading', 'label' => 'Subheading', 'name' => 'subheading', 'type' => 'text' ],
+		[ 'key' => 'field_sz_pricing_service_reference', 'label' => 'Global Service', 'name' => 'service_reference', 'type' => 'select', 'allow_null' => 1, 'ui' => 1, 'choices' => [], 'instructions' => 'Optional. Select the authoritative Site Settings service these packages price. Leave blank for page-specific pricing.' ],
 		[
 			'key' => 'field_sz_pricing_packages',
 			'label' => 'Packages',
@@ -598,6 +605,200 @@ add_action( 'acf/init', function () {
 		[ 'key' => 'field_sz_blog_posts_show_reading_time', 'label' => 'Show Reading Time', 'name' => 'show_reading_time', 'type' => 'true_false', 'ui' => 1, 'default_value' => 1 ],
 	], $style_fields( 'sz_blog_posts' ));
 
+	$address_fields = function ( string $prefix ): array {
+		return [
+			[ 'key' => "field_{$prefix}_street_address", 'label' => 'Street Address', 'name' => 'street_address', 'type' => 'text' ],
+			[ 'key' => "field_{$prefix}_address_locality", 'label' => 'City / Locality', 'name' => 'address_locality', 'type' => 'text' ],
+			[ 'key' => "field_{$prefix}_address_region", 'label' => 'State / Region', 'name' => 'address_region', 'type' => 'text' ],
+			[ 'key' => "field_{$prefix}_postal_code", 'label' => 'Postal Code', 'name' => 'postal_code', 'type' => 'text' ],
+			[ 'key' => "field_{$prefix}_address_country", 'label' => 'Country Code', 'name' => 'address_country', 'type' => 'text', 'instructions' => 'Use the two-letter country code, for example AU.' ],
+		];
+	};
+
+	$geo_fields = function ( string $prefix ): array {
+		return [
+			[ 'key' => "field_{$prefix}_latitude", 'label' => 'Latitude', 'name' => 'latitude', 'type' => 'number', 'step' => 'any' ],
+			[ 'key' => "field_{$prefix}_longitude", 'label' => 'Longitude', 'name' => 'longitude', 'type' => 'number', 'step' => 'any' ],
+		];
+	};
+
+	// ─── Site Settings entities ──────────────────────────────────────────────
+	// These optional settings form the canonical public entity graph. Editors
+	// should enter public, verifiable facts only; blank fields are omitted.
+
+	acf_add_local_field_group([
+		'key' => 'group_sz_site_settings',
+		'title' => 'Site Settings',
+		'show_in_rest' => 1,
+		'fields' => [
+			[ 'key' => 'field_sz_site_name', 'label' => 'Site Name', 'name' => 'site_name', 'type' => 'text', 'instructions' => 'Public brand name shown in the header and structured data.' ],
+			[ 'key' => 'field_sz_site_tagline', 'label' => 'Tagline', 'name' => 'tagline', 'type' => 'text' ],
+			[ 'key' => 'field_sz_site_copyright', 'label' => 'Copyright Text', 'name' => 'copyright_text', 'type' => 'text', 'instructions' => 'Leave blank to use the current year and site name.' ],
+			[
+				'key' => 'field_sz_site_social_links',
+				'label' => 'Social Links',
+				'name' => 'social_links',
+				'type' => 'repeater',
+				'layout' => 'table',
+				'button_label' => 'Add Social Link',
+				'sub_fields' => [
+					[ 'key' => 'field_sz_site_social_platform', 'label' => 'Platform', 'name' => 'platform', 'type' => 'text', 'required' => 1 ],
+					[ 'key' => 'field_sz_site_social_url', 'label' => 'Profile URL', 'name' => 'url', 'type' => 'url', 'required' => 1 ],
+				],
+			],
+			[
+				'key' => 'field_sz_business',
+				'label' => 'Business Entity',
+				'name' => 'business',
+				'type' => 'group',
+				'instructions' => 'Optional public facts used for LocalBusiness structured data. Keep the name, address and contact details consistent with public business listings.',
+				'layout' => 'block',
+				'sub_fields' => [
+					[ 'key' => 'field_sz_business_description', 'label' => 'Public Description', 'name' => 'description', 'type' => 'textarea', 'rows' => 4 ],
+					[ 'key' => 'field_sz_business_email', 'label' => 'Public Email', 'name' => 'email', 'type' => 'email' ],
+					[ 'key' => 'field_sz_business_telephone', 'label' => 'Public Phone', 'name' => 'telephone', 'type' => 'text', 'instructions' => 'Use international format where possible.' ],
+					[ 'key' => 'field_sz_business_logo', 'label' => 'Logo', 'name' => 'logo', 'type' => 'image', 'return_format' => 'id', 'preview_size' => 'medium' ],
+					[ 'key' => 'field_sz_business_image', 'label' => 'Representative Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'id', 'preview_size' => 'medium' ],
+					[ 'key' => 'field_sz_business_address', 'label' => 'Public Address', 'name' => 'address', 'type' => 'group', 'layout' => 'block', 'sub_fields' => $address_fields( 'sz_business_address' ) ],
+					[ 'key' => 'field_sz_business_geo', 'label' => 'Map Coordinates', 'name' => 'geo', 'type' => 'group', 'layout' => 'table', 'sub_fields' => $geo_fields( 'sz_business_geo' ) ],
+					[
+						'key' => 'field_sz_business_area_served',
+						'label' => 'Service Areas',
+						'name' => 'area_served',
+						'type' => 'repeater',
+						'layout' => 'table',
+						'button_label' => 'Add Service Area',
+						'sub_fields' => [ [ 'key' => 'field_sz_business_area_name', 'label' => 'Place Name', 'name' => 'name', 'type' => 'text', 'required' => 1 ] ],
+					],
+					[ 'key' => 'field_sz_business_price_range', 'label' => 'Price Range', 'name' => 'price_range', 'type' => 'text', 'instructions' => 'A broad public indicator such as $$$. Do not enter private pricing notes.' ],
+					[ 'key' => 'field_sz_business_founding_date', 'label' => 'Founding Date', 'name' => 'founding_date', 'type' => 'date_picker', 'display_format' => 'd/m/Y', 'return_format' => 'Y-m-d' ],
+					[
+						'key' => 'field_sz_business_awards',
+						'label' => 'Awards',
+						'name' => 'awards',
+						'type' => 'repeater',
+						'layout' => 'table',
+						'button_label' => 'Add Award',
+						'sub_fields' => [ [ 'key' => 'field_sz_business_award', 'label' => 'Award Name', 'name' => 'award', 'type' => 'text', 'required' => 1 ] ],
+					],
+					[
+						'key' => 'field_sz_business_same_as',
+						'label' => 'Identity URLs',
+						'name' => 'same_as',
+						'type' => 'repeater',
+						'layout' => 'table',
+						'instructions' => 'Official profiles or authoritative pages that identify this business.',
+						'button_label' => 'Add Identity URL',
+						'sub_fields' => [ [ 'key' => 'field_sz_business_same_as_url', 'label' => 'URL', 'name' => 'url', 'type' => 'url', 'required' => 1 ] ],
+					],
+				],
+			],
+			[
+				'key' => 'field_sz_primary_photographer',
+				'label' => 'Primary Photographer',
+				'name' => 'primary_photographer',
+				'type' => 'group',
+				'layout' => 'block',
+				'instructions' => 'Enable only when the named person is intended to be identified publicly as the primary photographer.',
+				'sub_fields' => [
+					[ 'key' => 'field_sz_photographer_enabled', 'label' => 'Publish Person Entity', 'name' => 'enabled', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0 ],
+					[ 'key' => 'field_sz_photographer_name', 'label' => 'Public Name', 'name' => 'name', 'type' => 'text' ],
+					[ 'key' => 'field_sz_photographer_job_title', 'label' => 'Job Title', 'name' => 'job_title', 'type' => 'text' ],
+					[ 'key' => 'field_sz_photographer_description', 'label' => 'Public Biography', 'name' => 'description', 'type' => 'textarea', 'rows' => 4 ],
+					[ 'key' => 'field_sz_photographer_url', 'label' => 'About Page URL', 'name' => 'url', 'type' => 'url' ],
+					[ 'key' => 'field_sz_photographer_image', 'label' => 'Profile Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'id', 'preview_size' => 'medium' ],
+					[
+						'key' => 'field_sz_photographer_same_as',
+						'label' => 'Identity URLs',
+						'name' => 'same_as',
+						'type' => 'repeater',
+						'layout' => 'table',
+						'button_label' => 'Add Identity URL',
+						'sub_fields' => [ [ 'key' => 'field_sz_photographer_same_as_url', 'label' => 'URL', 'name' => 'url', 'type' => 'url', 'required' => 1 ] ],
+					],
+					[
+						'key' => 'field_sz_photographer_knows_about',
+						'label' => 'Areas of Expertise',
+						'name' => 'knows_about',
+						'type' => 'repeater',
+						'layout' => 'table',
+						'button_label' => 'Add Expertise',
+						'sub_fields' => [ [ 'key' => 'field_sz_photographer_topic', 'label' => 'Topic', 'name' => 'topic', 'type' => 'text', 'required' => 1 ] ],
+					],
+					[
+						'key' => 'field_sz_photographer_awards',
+						'label' => 'Awards',
+						'name' => 'awards',
+						'type' => 'repeater',
+						'layout' => 'table',
+						'button_label' => 'Add Award',
+						'sub_fields' => [ [ 'key' => 'field_sz_photographer_award', 'label' => 'Award Name', 'name' => 'award', 'type' => 'text', 'required' => 1 ] ],
+					],
+				],
+			],
+			[
+				'key' => 'field_sz_services',
+				'label' => 'Service Catalog',
+				'name' => 'services',
+				'type' => 'repeater',
+				'layout' => 'block',
+				'instructions' => 'Authoritative public services. The stable key is used in linked schema IDs and should not change after publishing.',
+				'button_label' => 'Add Service',
+				'sub_fields' => [
+					[ 'key' => 'field_sz_service_key', 'label' => 'Stable Key', 'name' => 'key', 'type' => 'text', 'required' => 1, 'instructions' => 'Lowercase letters, numbers and hyphens only, for example wedding-photography.' ],
+					[ 'key' => 'field_sz_service_name', 'label' => 'Service Name', 'name' => 'name', 'type' => 'text', 'required' => 1 ],
+					[ 'key' => 'field_sz_service_type', 'label' => 'Service Type', 'name' => 'service_type', 'type' => 'text' ],
+					[ 'key' => 'field_sz_service_description', 'label' => 'Description', 'name' => 'description', 'type' => 'textarea', 'rows' => 3 ],
+					[ 'key' => 'field_sz_service_url', 'label' => 'Canonical Page URL', 'name' => 'url', 'type' => 'url' ],
+					[ 'key' => 'field_sz_service_image', 'label' => 'Representative Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'id', 'preview_size' => 'medium' ],
+					[
+						'key' => 'field_sz_service_area_served',
+						'label' => 'Areas Served',
+						'name' => 'area_served',
+						'type' => 'repeater',
+						'layout' => 'table',
+						'button_label' => 'Add Area',
+						'sub_fields' => [ [ 'key' => 'field_sz_service_area_name', 'label' => 'Place Name', 'name' => 'name', 'type' => 'text', 'required' => 1 ] ],
+					],
+				],
+			],
+		],
+		'location' => [
+			[
+				[ 'param' => 'options_page', 'operator' => '==', 'value' => 'site-settings' ],
+			],
+		],
+	]);
+
+	acf_add_local_field_group([
+		'key' => 'group_sz_image_entity_metadata',
+		'title' => 'Image Search Metadata',
+		'show_in_rest' => 1,
+		'fields' => [
+			[ 'key' => 'field_sz_image_seo_caption', 'label' => 'SEO Caption Override', 'name' => 'seo_caption', 'type' => 'text', 'instructions' => 'Optional factual caption for structured data. The standard media caption is used when this is blank.' ],
+			[ 'key' => 'field_sz_image_schema_creator', 'label' => 'Image Creator', 'name' => 'schema_creator', 'type' => 'select', 'allow_null' => 1, 'choices' => [ 'business' => 'Business', 'primary_photographer' => 'Primary Photographer' ], 'instructions' => 'Leave blank to use the business. Choose Primary Photographer only when the configured person created the image.' ],
+			[
+				'key' => 'field_sz_image_location_created',
+				'label' => 'Location Created',
+				'name' => 'location_created',
+				'type' => 'group',
+				'layout' => 'block',
+				'instructions' => 'Optional public location where this selected image was created.',
+				'sub_fields' => [
+					[ 'key' => 'field_sz_image_location_name', 'label' => 'Place Name', 'name' => 'name', 'type' => 'text' ],
+					[ 'key' => 'field_sz_image_location_url', 'label' => 'Canonical Place URL', 'name' => 'url', 'type' => 'url' ],
+					[ 'key' => 'field_sz_image_location_address', 'label' => 'Address', 'name' => 'address', 'type' => 'group', 'layout' => 'block', 'sub_fields' => $address_fields( 'sz_image_location_address' ) ],
+					[ 'key' => 'field_sz_image_location_geo', 'label' => 'Map Coordinates', 'name' => 'geo', 'type' => 'group', 'layout' => 'table', 'sub_fields' => $geo_fields( 'sz_image_location_geo' ) ],
+				],
+			],
+		],
+		'location' => [
+			[
+				[ 'param' => 'attachment', 'operator' => '==', 'value' => 'all' ],
+			],
+		],
+	]);
+
 	acf_add_local_field_group([
 		'key' => 'group_sz_gallery_library',
 		'title' => 'Gallery Library',
@@ -625,6 +826,7 @@ add_action( 'acf/init', function () {
 				'name' => 'blocks',
 				'type' => 'flexible_content',
 				'button_label' => 'Add Block',
+				'instructions' => 'Use exactly one visible H1 per flexible-content page. A Hero title is the usual H1; describe the page’s truthful main offer and location in natural language. Other section headings should normally begin at H2.',
 				'layouts' => [
 					'layout_sz_hero' => [
 						'key' => 'layout_sz_hero',
@@ -778,6 +980,42 @@ add_action( 'acf/init', function () {
 				'ui' => 1,
 				'instructions' => 'When enabled, this page exists only for URL hierarchy (e.g. /gallery/) — visiting the page directly returns a 404. Child pages underneath it still work normally.',
 			],
+			[
+				'key' => 'field_sz_page_service_reference',
+				'label' => 'Primary Service',
+				'name' => 'service_reference',
+				'type' => 'select',
+				'allow_null' => 1,
+				'ui' => 1,
+				'choices' => [],
+				'instructions' => 'Optional. Link this page to one authoritative service from Site Settings. Do not infer a service from the page title.',
+			],
+			[
+				'key' => 'field_sz_is_venue_page',
+				'label' => 'Venue Experience Page',
+				'name' => 'is_venue_page',
+				'type' => 'true_false',
+				'default_value' => 0,
+				'ui' => 1,
+				'instructions' => 'Enable only when this page is substantially about experience at one real venue or place.',
+			],
+			[
+				'key' => 'field_sz_page_venue',
+				'label' => 'Venue Entity',
+				'name' => 'venue',
+				'type' => 'group',
+				'layout' => 'block',
+				'instructions' => 'Enter public, verifiable venue facts. These are published as Place structured data.',
+				'conditional_logic' => [ [ [ 'field' => 'field_sz_is_venue_page', 'operator' => '==', 'value' => '1' ] ] ],
+				'sub_fields' => [
+					[ 'key' => 'field_sz_page_venue_name', 'label' => 'Venue Name', 'name' => 'name', 'type' => 'text', 'required' => 1 ],
+					[ 'key' => 'field_sz_page_venue_url', 'label' => 'Official / Canonical URL', 'name' => 'url', 'type' => 'url' ],
+					[ 'key' => 'field_sz_page_venue_description', 'label' => 'Description', 'name' => 'description', 'type' => 'textarea', 'rows' => 3 ],
+					[ 'key' => 'field_sz_page_venue_image', 'label' => 'Representative Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'id', 'preview_size' => 'medium' ],
+					[ 'key' => 'field_sz_page_venue_address', 'label' => 'Address', 'name' => 'address', 'type' => 'group', 'layout' => 'block', 'sub_fields' => $address_fields( 'sz_page_venue_address' ) ],
+					[ 'key' => 'field_sz_page_venue_geo', 'label' => 'Map Coordinates', 'name' => 'geo', 'type' => 'group', 'layout' => 'table', 'sub_fields' => $geo_fields( 'sz_page_venue_geo' ) ],
+				],
+			],
 		],
 		'location' => [
 			[
@@ -835,6 +1073,35 @@ add_action( 'acf/init', function () {
 
 add_filter( 'acf/load_field/key=field_sz_menu_override', 'sz_populate_menu_override_choices' );
 add_filter( 'acf/load_field/key=field_sz_cat_menu_override', 'sz_populate_menu_override_choices' );
+add_filter( 'acf/load_field/key=field_sz_page_service_reference', 'sz_populate_service_reference_choices' );
+add_filter( 'acf/load_field/key=field_sz_services_item_service_reference', 'sz_populate_service_reference_choices' );
+add_filter( 'acf/load_field/key=field_sz_pricing_service_reference', 'sz_populate_service_reference_choices' );
+
+function sz_populate_service_reference_choices( array $field ): array {
+	$choices = [];
+	$services = function_exists( 'get_field' ) ? get_field( 'services', 'option' ) : [];
+
+	if ( is_array( $services ) ) {
+		foreach ( $services as $service ) {
+			if ( ! is_array( $service ) ) {
+				continue;
+			}
+
+			$key = sanitize_title( (string) ( $service['key'] ?? '' ) );
+			$name = sanitize_text_field( (string) ( $service['name'] ?? '' ) );
+			if ( '' !== $key && '' !== $name ) {
+				$choices[ $key ] = $name . ' (' . $key . ')';
+			}
+		}
+	}
+
+	if ( ! empty( $field['value'] ) && is_string( $field['value'] ) && ! isset( $choices[ $field['value'] ] ) ) {
+		$choices[ $field['value'] ] = $field['value'] . ' (legacy or unavailable)';
+	}
+
+	$field['choices'] = $choices;
+	return $field;
+}
 
 function sz_populate_menu_override_choices( array $field ): array {
 	$choices = [];
@@ -885,4 +1152,22 @@ function sz_form_validate_required_name_or_firstname( $valid, $value, $field = n
 	}
 
 	return implode( ' ', array_values( array_unique( $errors ) ) );
+}
+
+/*
+ * Page heading publication guard: flexible-content pages need exactly one
+ * rendered H1. Heading-order skips are advisory and belong in the audit UI.
+ */
+add_filter( 'acf/validate_value/key=field_sz_blocks', 'sz_validate_page_block_headings', 20, 4 );
+function sz_validate_page_block_headings( $valid, $value ) {
+	if ( true !== $valid || ! is_array( $value ) || empty( $value ) ) {
+		return $valid;
+	}
+
+	if ( ! function_exists( 'sz_audit_page_headings' ) ) {
+		return $valid;
+	}
+
+	$audit = sz_audit_page_headings( $value );
+	return empty( $audit['errors'] ) ? $valid : implode( ' ', $audit['errors'] );
 }

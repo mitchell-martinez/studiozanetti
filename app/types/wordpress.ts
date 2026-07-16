@@ -9,6 +9,29 @@ export interface WPImage {
   alt: string
   width?: number
   height?: number
+  caption?: string
+  creator?: 'business' | 'primary_photographer'
+  location_created?: WPPlaceReference
+}
+
+export interface WPPostalAddress {
+  street_address?: string
+  address_locality?: string
+  address_region?: string
+  postal_code?: string
+  address_country?: string
+}
+
+export interface WPGeoCoordinates {
+  latitude?: number
+  longitude?: number
+}
+
+export interface WPPlaceReference {
+  name: string
+  url?: string
+  address?: WPPostalAddress
+  geo?: WPGeoCoordinates
 }
 
 export interface HeroSlide extends WPImage {
@@ -126,6 +149,8 @@ export interface WPServiceItem {
   description: string
   image?: WPImage
   url?: string
+  /** Optional stable key from the global Site Settings service catalog */
+  service_reference?: string
 }
 
 export interface ServicesGridBlock extends BlockStyleOptions {
@@ -185,6 +210,8 @@ export interface PricingPackagesBlock extends BlockStyleOptions {
   acf_fc_layout: 'pricing_packages'
   heading?: string
   subheading?: string
+  /** Optional stable key from the global Site Settings service catalog */
+  service_reference?: string
   packages: WPPackageItem[]
 }
 
@@ -500,6 +527,14 @@ export interface WPPageAcf {
   page_keywords?: string
   /** When true, this page exists only for URL hierarchy — direct access returns 404 */
   container_only?: boolean
+  /** Stable key of a service configured in Site Settings */
+  service_reference?: string
+  /** Enables explicit Place schema for a venue-experience page */
+  is_venue_page?: boolean
+  venue?: WPPlaceReference & {
+    description?: string
+    image?: WPImage
+  }
   /** Contact page — set via "Contact Details" field group */
   contact_email?: string
   contact_phone?: string
@@ -596,9 +631,49 @@ export interface WPSocialLink {
   url: string
 }
 
+export interface WPBusinessProfile {
+  description?: string
+  email?: string
+  telephone?: string
+  address?: WPPostalAddress
+  geo?: WPGeoCoordinates
+  area_served?: string[]
+  logo?: WPImage
+  image?: WPImage
+  price_range?: string
+  founding_date?: string
+  awards?: string[]
+  same_as?: string[]
+}
+
+export interface WPPrimaryPhotographer {
+  enabled?: boolean
+  name?: string
+  job_title?: string
+  description?: string
+  url?: string
+  image?: WPImage
+  same_as?: string[]
+  knows_about?: string[]
+  awards?: string[]
+}
+
+export interface WPServiceProfile {
+  key: string
+  name: string
+  service_type?: string
+  description?: string
+  url?: string
+  image?: WPImage
+  area_served?: string[]
+}
+
 export interface WPSiteSettings {
   site_name: string
   tagline: string
   copyright_text: string
   social_links: WPSocialLink[]
+  business?: WPBusinessProfile
+  primary_photographer?: WPPrimaryPhotographer
+  services?: WPServiceProfile[]
 }

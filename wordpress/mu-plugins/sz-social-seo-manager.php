@@ -1,13 +1,13 @@
 <?php
 /**
- * Plugin Name: Studio Zanetti — SEO & Social Manager
- * Description: Centralised admin page for managing page titles, descriptions, and featured images with live previews.
+ * Plugin Name: Studio Zanetti — SEO, AI & Social
+ * Description: Centralised search/social previews and deterministic page searchability audits.
  * Version: 1.0.0
  * Author: Studio Zanetti
  * License: GPL v2
  * Requires: sz-headless.php
  *
- * Adds a dedicated WordPress admin page (SEO & Social Previews) where editors can
+ * Adds a dedicated WordPress admin page where editors can
  * manage canonical page metadata (title, description, featured image) for all pages
  * in one place with live previews for Google, Facebook, and X (Twitter).
  *
@@ -15,14 +15,29 @@
  * editing to ensure consistency across the admin interface.
  */
 
+$sz_heading_audit_include = __DIR__ . '/includes/page-heading-validation.php';
+if ( file_exists( $sz_heading_audit_include ) ) {
+	require_once $sz_heading_audit_include;
+}
+
+$sz_ai_audit_include = __DIR__ . '/includes/seo-ai-audit.php';
+if ( file_exists( $sz_ai_audit_include ) ) {
+	require_once $sz_ai_audit_include;
+}
+
+$sz_entity_settings_include = __DIR__ . '/includes/site-entity-settings.php';
+if ( file_exists( $sz_entity_settings_include ) ) {
+	require_once $sz_entity_settings_include;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN MENU & ENQUEUE
 // ─────────────────────────────────────────────────────────────────────────────
 
 add_action( 'admin_menu', function () {
 	add_menu_page(
-		'SEO & Social Previews',
-		'SEO & Social',
+		'SEO, AI & Social',
+		'SEO, AI & Social',
 		'edit_pages',
 		'sz-social-seo-manager',
 		'szRenderSocialSeoManager',
@@ -92,6 +107,136 @@ function szGetSocialMetaForPage( int $post_id, bool $with_fallback = false ): ar
 		'image'       => $image,
 		'image_id'    => $image_id,
 	];
+}
+
+/**
+ * Build the sanitized site context consumed by the pure audit helper.
+ */
+function szGetAiAuditSiteContext(): array {
+	$image_resolver = function_exists( 'sz_resolve_image' ) ? 'sz_resolve_image' : null;
+	$raw = [
+		'business'            => function_exists( 'get_field' ) ? get_field( 'business', 'option' ) : [],
+		'primary_photographer' => function_exists( 'get_field' ) ? get_field( 'primary_photographer', 'option' ) : [],
+		'services'            => function_exists( 'get_field' ) ? get_field( 'services', 'option' ) : [],
+	];
+	$entities = function_exists( 'sz_sanitize_site_entity_settings' )
+		? sz_sanitize_site_entity_settings( $raw, $image_resolver )
+		: [ 'business' => [], 'primary_photographer' => [ 'enabled' => false ], 'services' => [] ];
+	$site_name = function_exists( 'get_field' ) ? get_field( 'site_name', 'option' ) : '';
+	$entities['site_name'] = is_string( $site_name ) && '' !== trim( $site_name )
+		? sanitize_text_field( $site_name )
+		: get_bloginfo( 'name' );
+
+	return $entities;
+}
+
+/**
+ * Adapt one saved WordPress page into the pure audit input contract.
+ */
+function szGetAiAuditPageContext( int $post_id ): array {
+	$meta = szGetSocialMetaForPage( $post_id, false );
+	$image_id = (int) ( $meta['image_id'] ?? 0 );
+	$image = is_array( $meta['image'] ?? null ) ? $meta['image'] : [];
+	if ( $image_id > 0 ) {
+		$image['id'] = $image_id;
+	}
+	$blocks = function_exists( 'get_field' ) ? get_field( 'blocks', $post_id ) : [];
+	$venue = function_exists( 'get_field' ) ? get_field( 'venue', $post_id ) : [];
+	$blocks = is_array( $blocks ) ? $blocks : [];
+	$venue = is_array( $venue ) ? $venue : [];
+
+	return [
+		'title'             => (string) ( $meta['title'] ?? '' ),
+		'description'       => (string) ( $meta['description'] ?? '' ),
+		'content'           => (string) get_post_field( 'post_content', $post_id ),
+		'blocks'            => $blocks,
+		'featured_image'    => $image,
+		'service_reference' => function_exists( 'get_field' ) ? (string) get_field( 'service_reference', $post_id ) : '',
+		'is_venue_page'     => function_exists( 'get_field' ) ? (bool) get_field( 'is_venue_page', $post_id ) : false,
+		'venue'             => $venue,
+	];
+}
+
+/**
+ * Render one expandable page audit. Shared by initial render and AJAX refresh.
+ */
+function szRenderAiAuditPageCard( WP_Post $page, array $site_context ): void {
+	$audit = function_exists( 'sz_audit_page_ai_searchability' )
+		? sz_audit_page_ai_searchability( szGetAiAuditPageContext( $page->ID ), $site_context )
+		: [ 'findings' => [], 'counts' => [ 'pass' => 0, 'warning' => 1, 'error' => 0 ] ];
+	$findings = is_array( $audit['findings'] ?? null ) ? $audit['findings'] : [];
+	$counts = is_array( $audit['counts'] ?? null ) ? $audit['counts'] : [ 'pass' => 0, 'warning' => 0, 'error' => 0 ];
+	$categories = array_values( array_unique( array_column( $findings, 'category' ) ) );
+	$statuses = array_values( array_unique( array_column( $findings, 'status' ) ) );
+	$page_title = (string) get_the_title( $page->ID );
+	$page_path = '/' . ltrim( (string) get_page_uri( $page->ID ), '/' );
+	$edit_url = get_edit_post_link( $page->ID, '' ) ?: '';
+	$image_id = (int) get_post_thumbnail_id( $page->ID );
+	$category_labels = [
+		'content'            => 'Content Structure',
+		'search_social'      => 'Search & Social',
+		'entities'           => 'Entity Graph',
+		'schema_consistency' => 'Schema Consistency',
+	];
+	$target_urls = [
+		'page_blocks'    => $edit_url,
+		'page_content'   => $edit_url,
+		'page_settings'  => $edit_url,
+		'search_preview' => admin_url( 'admin.php?page=sz-social-seo-manager&tab=previews' ),
+		'featured_image' => $image_id > 0 ? get_edit_post_link( $image_id, '' ) : $edit_url,
+		'site_settings'  => admin_url( 'admin.php?page=site-settings' ),
+	];
+	?>
+	<details
+		class="sz-ai-audit-page"
+		data-post-id="<?php echo esc_attr( (string) $page->ID ); ?>"
+		data-page-search="<?php echo esc_attr( strtolower( $page_title . ' ' . $page_path ) ); ?>"
+		data-statuses="<?php echo esc_attr( implode( ' ', $statuses ) ); ?>"
+		data-categories="<?php echo esc_attr( implode( ' ', $categories ) ); ?>"
+		<?php echo (int) ( $counts['error'] ?? 0 ) > 0 ? ' open' : ''; ?>
+	>
+		<summary>
+			<span><strong><?php echo esc_html( $page_title ); ?></strong><small><?php echo esc_html( $page_path ); ?></small></span>
+			<span class="sz-ai-audit-counts">
+				<span class="sz-ai-count sz-ai-count-error"><?php echo esc_html( (string) ( $counts['error'] ?? 0 ) ); ?> errors</span>
+				<span class="sz-ai-count sz-ai-count-warning"><?php echo esc_html( (string) ( $counts['warning'] ?? 0 ) ); ?> warnings</span>
+				<span class="sz-ai-count sz-ai-count-pass"><?php echo esc_html( (string) ( $counts['pass'] ?? 0 ) ); ?> passed</span>
+			</span>
+		</summary>
+		<div class="sz-ai-audit-page__body">
+			<div class="sz-ai-page-actions">
+				<a class="button" href="<?php echo esc_url( $edit_url ); ?>">Edit Page</a>
+				<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=site-settings' ) ); ?>">Edit Site Settings</a>
+				<button type="button" class="button sz-ai-audit-refresh" data-post-id="<?php echo esc_attr( (string) $page->ID ); ?>">Refresh Audit</button>
+			</div>
+			<?php foreach ( $category_labels as $category => $label ) : ?>
+				<?php $category_findings = array_values( array_filter( $findings, static function ( $finding ) use ( $category ) { return ( $finding['category'] ?? '' ) === $category; } ) ); ?>
+				<?php if ( ! empty( $category_findings ) ) : ?>
+				<section class="sz-ai-audit-category" data-category="<?php echo esc_attr( $category ); ?>">
+					<h2><?php echo esc_html( $label ); ?></h2>
+					<div class="sz-ai-findings">
+						<?php foreach ( $category_findings as $finding ) : ?>
+							<?php
+							$status = in_array( $finding['status'] ?? '', [ 'pass', 'warning', 'error' ], true ) ? $finding['status'] : 'warning';
+							$target = (string) ( $finding['target'] ?? '' );
+							$target_url = $target_urls[ $target ] ?? '';
+							?>
+							<article class="sz-ai-finding sz-ai-finding-<?php echo esc_attr( $status ); ?>" data-status="<?php echo esc_attr( $status ); ?>" data-category="<?php echo esc_attr( $category ); ?>">
+								<span class="sz-ai-status-label"><?php echo esc_html( ucfirst( $status ) ); ?></span>
+								<div>
+									<strong><?php echo esc_html( (string) ( $finding['summary'] ?? '' ) ); ?></strong>
+									<p><?php echo esc_html( (string) ( $finding['evidence'] ?? '' ) ); ?></p>
+									<?php if ( '' !== $target_url ) : ?><a href="<?php echo esc_url( $target_url ); ?>">Open remediation target</a><?php endif; ?>
+								</div>
+							</article>
+						<?php endforeach; ?>
+					</div>
+				</section>
+				<?php endif; ?>
+			<?php endforeach; ?>
+		</div>
+	</details>
+	<?php
 }
 
 /**
@@ -193,6 +338,195 @@ add_action( 'wp_ajax_sz_social_seo_autosave', function () {
 	] );
 } );
 
+add_action( 'wp_ajax_sz_seo_ai_audit_page', function () {
+	if ( ! current_user_can( 'edit_pages' ) ) {
+		wp_send_json_error( [ 'message' => 'Insufficient permissions.' ], 403 );
+	}
+
+	check_ajax_referer( 'sz_social_seo_manager_save', 'nonce' );
+	$post_id = isset( $_POST['post_id'] ) ? (int) $_POST['post_id'] : 0;
+	$post = $post_id > 0 ? get_post( $post_id ) : null;
+	if ( ! $post instanceof WP_Post || 'page' !== $post->post_type || ! current_user_can( 'edit_post', $post_id ) ) {
+		wp_send_json_error( [ 'message' => 'Invalid page.' ], 400 );
+	}
+	if ( function_exists( 'get_field' ) && (bool) get_field( 'container_only', $post_id ) ) {
+		wp_send_json_error( [ 'message' => 'Container-only pages are outside audit scope.' ], 400 );
+	}
+
+	ob_start();
+	szRenderAiAuditPageCard( $post, szGetAiAuditSiteContext() );
+	$html = ob_get_clean();
+	wp_send_json_success( [ 'post_id' => $post_id, 'html' => $html ] );
+} );
+
+/**
+ * Render the stable manager tab navigation.
+ */
+function szRenderSeoAiSocialTabs( string $active_tab ): void {
+	$base_url = admin_url( 'admin.php?page=sz-social-seo-manager' );
+	?>
+	<nav class="nav-tab-wrapper wp-clearfix" aria-label="SEO, AI and social views">
+		<a href="<?php echo esc_url( add_query_arg( 'tab', 'previews', $base_url ) ); ?>" class="nav-tab <?php echo 'previews' === $active_tab ? 'nav-tab-active' : ''; ?>" <?php echo 'previews' === $active_tab ? 'aria-current="page"' : ''; ?>>Search &amp; Social Previews</a>
+		<a href="<?php echo esc_url( add_query_arg( 'tab', 'audit', $base_url ) ); ?>" class="nav-tab <?php echo 'audit' === $active_tab ? 'nav-tab-active' : ''; ?>" <?php echo 'audit' === $active_tab ? 'aria-current="page"' : ''; ?>>AI Searchability Audit</a>
+	</nav>
+	<?php
+}
+
+/**
+ * Render the page-only deterministic audit tab.
+ */
+function szRenderAiSearchabilityAudit( array $pages ): void {
+	$site_context = szGetAiAuditSiteContext();
+	?>
+	<div class="wrap sz-social-seo-wrap sz-ai-audit-wrap">
+		<h1>SEO, AI &amp; Social</h1>
+		<?php szRenderSeoAiSocialTabs( 'audit' ); ?>
+		<p class="sz-ai-audit-intro">Automatic checks of saved page content, search metadata, images, and entity inputs. Results are transparent advisories, not a ranking or citation score. Only the exactly-one-H1 rule blocks publishing.</p>
+		<div class="sz-ai-audit-toolbar">
+			<label for="sz-ai-audit-search">Find a page</label>
+			<input id="sz-ai-audit-search" type="search" class="regular-text" placeholder="Search page title or path" />
+			<label for="sz-ai-audit-status">Status</label>
+			<select id="sz-ai-audit-status">
+				<option value="all">All statuses</option>
+				<option value="error">Errors</option>
+				<option value="warning">Warnings</option>
+				<option value="pass">Passed</option>
+			</select>
+			<label for="sz-ai-audit-category">Category</label>
+			<select id="sz-ai-audit-category">
+				<option value="all">All categories</option>
+				<option value="content">Content Structure</option>
+				<option value="search_social">Search &amp; Social</option>
+				<option value="entities">Entity Graph</option>
+				<option value="schema_consistency">Schema Consistency</option>
+			</select>
+			<span id="sz-ai-audit-state" aria-live="polite"><?php echo esc_html( (string) count( $pages ) ); ?> pages audited</span>
+		</div>
+		<div class="sz-ai-audit-pages">
+			<?php foreach ( $pages as $page ) : ?>
+				<?php if ( $page instanceof WP_Post ) : ?>
+					<?php szRenderAiAuditPageCard( $page, $site_context ); ?>
+				<?php endif; ?>
+			<?php endforeach; ?>
+		</div>
+	</div>
+
+	<style>
+		.sz-ai-audit-wrap .nav-tab-wrapper { margin: 14px 0 18px; }
+		.sz-ai-audit-intro { max-width: 900px; }
+		.sz-ai-audit-toolbar {
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 8px 12px;
+			margin: 18px 0;
+			padding: 14px;
+			border: 1px solid #c3c4c7;
+			background: #fff;
+		}
+		.sz-ai-audit-toolbar label { font-weight: 600; }
+		.sz-ai-audit-toolbar #sz-ai-audit-state { margin-left: auto; color: #50575e; }
+		.sz-ai-audit-pages { display: grid; gap: 12px; }
+		.sz-ai-audit-page { border: 1px solid #c3c4c7; background: #fff; }
+		.sz-ai-audit-page[hidden] { display: none; }
+		.sz-ai-audit-page > summary {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 18px;
+			padding: 14px 16px;
+			cursor: pointer;
+		}
+		.sz-ai-audit-page > summary > span:first-child { display: grid; gap: 3px; }
+		.sz-ai-audit-page > summary small { color: #646970; font-weight: 400; }
+		.sz-ai-audit-counts, .sz-ai-page-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+		.sz-ai-count, .sz-ai-status-label { display: inline-block; padding: 3px 7px; border: 1px solid; font-size: 12px; font-weight: 600; }
+		.sz-ai-count-error, .sz-ai-finding-error .sz-ai-status-label { color: #8a2424; background: #fcf0f1; border-color: #d63638; }
+		.sz-ai-count-warning, .sz-ai-finding-warning .sz-ai-status-label { color: #6e4b00; background: #fcf9e8; border-color: #dba617; }
+		.sz-ai-count-pass, .sz-ai-finding-pass .sz-ai-status-label { color: #005c12; background: #edfaef; border-color: #00a32a; }
+		.sz-ai-audit-page__body { display: grid; gap: 18px; padding: 0 16px 18px; border-top: 1px solid #dcdcde; }
+		.sz-ai-page-actions { padding-top: 16px; }
+		.sz-ai-audit-category h2 { margin: 0 0 8px; font-size: 15px; }
+		.sz-ai-audit-category[hidden], .sz-ai-finding[hidden] { display: none; }
+		.sz-ai-findings { display: grid; gap: 8px; }
+		.sz-ai-finding { display: grid; grid-template-columns: 76px 1fr; gap: 12px; padding: 11px 12px; border-left: 4px solid #c3c4c7; background: #f6f7f7; }
+		.sz-ai-finding-error { border-left-color: #d63638; }
+		.sz-ai-finding-warning { border-left-color: #dba617; }
+		.sz-ai-finding-pass { border-left-color: #00a32a; }
+		.sz-ai-finding p { margin: 4px 0; color: #50575e; }
+		@media screen and (max-width: 782px) {
+			.sz-ai-audit-toolbar { align-items: stretch; }
+			.sz-ai-audit-toolbar label { width: 100%; }
+			.sz-ai-audit-toolbar input, .sz-ai-audit-toolbar select { width: 100%; max-width: none; }
+			.sz-ai-audit-toolbar #sz-ai-audit-state { margin-left: 0; }
+			.sz-ai-audit-page > summary { align-items: flex-start; flex-direction: column; }
+			.sz-ai-finding { grid-template-columns: 1fr; }
+		}
+	</style>
+
+	<script>
+	(function () {
+		var nonce = <?php echo wp_json_encode( wp_create_nonce( 'sz_social_seo_manager_save' ) ); ?>;
+		var search = document.getElementById('sz-ai-audit-search');
+		var status = document.getElementById('sz-ai-audit-status');
+		var category = document.getElementById('sz-ai-audit-category');
+		var state = document.getElementById('sz-ai-audit-state');
+
+		function filterAudit() {
+			var query = search ? search.value.trim().toLowerCase() : '';
+			var selectedStatus = status ? status.value : 'all';
+			var selectedCategory = category ? category.value : 'all';
+			var visible = 0;
+			document.querySelectorAll('.sz-ai-audit-page').forEach(function (page) {
+				var matchesSearch = !query || (page.getAttribute('data-page-search') || '').indexOf(query) !== -1;
+				var matchesStatus = selectedStatus === 'all' || (page.getAttribute('data-statuses') || '').split(' ').indexOf(selectedStatus) !== -1;
+				var matchesCategory = selectedCategory === 'all' || (page.getAttribute('data-categories') || '').split(' ').indexOf(selectedCategory) !== -1;
+				page.hidden = !(matchesSearch && matchesStatus && matchesCategory);
+				if (!page.hidden) visible += 1;
+				page.querySelectorAll('.sz-ai-audit-category').forEach(function (section) {
+					section.hidden = selectedCategory !== 'all' && section.getAttribute('data-category') !== selectedCategory;
+				});
+				page.querySelectorAll('.sz-ai-finding').forEach(function (finding) {
+					finding.hidden = selectedStatus !== 'all' && finding.getAttribute('data-status') !== selectedStatus;
+				});
+			});
+			if (state) state.textContent = visible + ' pages shown';
+		}
+
+		document.addEventListener('click', function (event) {
+			var button = event.target.closest('.sz-ai-audit-refresh');
+			if (!button) return;
+			var card = button.closest('.sz-ai-audit-page');
+			var form = new FormData();
+			form.append('action', 'sz_seo_ai_audit_page');
+			form.append('nonce', nonce);
+			form.append('post_id', button.getAttribute('data-post-id') || '0');
+			button.disabled = true;
+			if (state) state.textContent = 'Refreshing page audit…';
+			fetch(ajaxurl, { method: 'POST', credentials: 'same-origin', body: form })
+				.then(function (response) { return response.json(); })
+				.then(function (payload) {
+					if (!payload.success || !payload.data || !payload.data.html) throw new Error('Audit refresh failed');
+					var template = document.createElement('template');
+					template.innerHTML = payload.data.html.trim();
+					if (card && template.content.firstElementChild) card.replaceWith(template.content.firstElementChild);
+					filterAudit();
+				})
+				.catch(function () {
+					button.disabled = false;
+					if (state) state.textContent = 'Audit refresh failed';
+				});
+		});
+
+		[search, status, category].forEach(function (control) {
+			if (control) control.addEventListener('input', filterAudit);
+		});
+		filterAudit();
+	})();
+	</script>
+	<?php
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // RENDER ADMIN PAGE
 // ─────────────────────────────────────────────────────────────────────────────
@@ -231,6 +565,13 @@ function szRenderSocialSeoManager() {
 
 		return ! (bool) get_field( 'container_only', $page->ID );
 	} ) );
+
+	$requested_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( (string) $_GET['tab'] ) ) : 'previews';
+	$active_tab = 'audit' === $requested_tab ? 'audit' : 'previews';
+	if ( 'audit' === $active_tab ) {
+		szRenderAiSearchabilityAudit( $pages );
+		return;
+	}
 
 	// Calculate summary stats for all pages
 	$stats = [
@@ -277,7 +618,8 @@ function szRenderSocialSeoManager() {
 
 	?>
 	<div class="wrap sz-social-seo-wrap">
-		<h1>SEO &amp; Social Previews</h1>
+		<h1>SEO, AI &amp; Social</h1>
+		<?php szRenderSeoAiSocialTabs( 'previews' ); ?>
 		<p>Manage page title, page description, and featured image in one place. This editor uses the same fields as the single-page editor to keep SEO and social previews consistent.</p>
 		<div class="sz-social-toolbar">
 			<label for="sz-social-filter" class="screen-reader-text">Filter pages</label>

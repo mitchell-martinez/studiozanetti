@@ -7,7 +7,14 @@ import prettier from 'eslint-config-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', '.react-router', 'build', 'coverage', 'playwright-report']),
+  globalIgnores([
+    'dist',
+    '.react-router',
+    'build',
+    'storybook-static',
+    'coverage',
+    'playwright-report',
+  ]),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

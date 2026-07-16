@@ -6,7 +6,7 @@ import ErrorPage from '~/components/ErrorPage'
 import RichText from '~/components/RichText'
 import { stripSensitiveFormBlockData } from '~/lib/forms'
 import { stripHtml } from '~/lib/html'
-import { buildPageSchemas, buildPostSchemas, getSiteUrlFromEnv, toCanonicalUrl } from '~/lib/seo'
+import { getSiteUrlFromEnv, toCanonicalUrl } from '~/lib/seo'
 import
   {
     getPageByPath,
@@ -105,15 +105,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
       (yoast?.description ? stripHtml(yoast.description) : '') ||
       stripHtml(post.excerpt.rendered).slice(0, 160)
     const socialImage = post.featured_image?.url || yoast?.og_image?.[0]?.url
-    const pathname = (() => {
-      try {
-        return new URL(canonicalUrl).pathname || '/'
-      } catch {
-        return '/'
-      }
-    })()
-    const schemas = buildPostSchemas(post, canonicalUrl, pathname)
-
     return [
       { title: yoastTitle || `${title} | Studio Zanetti` },
       { name: 'description', content: metaDescription },
@@ -134,11 +125,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
       { property: 'article:published_time', content: post.date },
       { property: 'article:modified_time', content: post.modified },
       { tagName: 'link', rel: 'canonical', href: canonicalUrl },
-      ...schemas.map((schema) => ({
-        tagName: 'script',
-        type: 'application/ld+json',
-        children: JSON.stringify(schema),
-      })),
     ]
   }
 
@@ -160,15 +146,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     `${pageTitle} | Studio Zanetti`
   const resolvedTitle = yoastTitle || pageTitle
   const socialImage = page.featured_image?.url || yoast?.og_image?.[0]?.url
-  const pathname = (() => {
-    try {
-      return new URL(canonicalUrl).pathname || '/'
-    } catch {
-      return '/'
-    }
-  })()
-  const schemas = buildPageSchemas(page, canonicalUrl, pathname)
-
   return [
     { title: yoastTitle || `${pageTitle} | Studio Zanetti` },
     { name: 'description', content: metaDescription },
@@ -188,11 +165,6 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     { name: 'twitter:description', content: metaDescription },
     { name: 'twitter:card', content: 'summary_large_image' },
     { tagName: 'link', rel: 'canonical', href: canonicalUrl },
-    ...schemas.map((schema) => ({
-      tagName: 'script',
-      type: 'application/ld+json',
-      children: JSON.stringify(schema),
-    })),
   ]
 }
 

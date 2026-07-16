@@ -258,6 +258,51 @@ describe('getSiteSettings', () => {
     expect(result.tagline).toBe('Capturing moments, creating memories')
     expect(result.social_links.length).toBeGreaterThan(0)
   })
+
+  it('normalizes optional business, photographer, and service entity settings', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok({
+        ...mockSettings,
+        business: {
+          description: 'Public business description',
+          area_served: [{ name: 'Primary service area' }, { name: '' }],
+          awards: [{ award: 'Industry recognition' }],
+          image: { url: '/uploads/business.jpg', alt: 'Business representative' },
+        },
+        primary_photographer: {
+          enabled: true,
+          job_title: 'Primary photographer',
+          knows_about: [{ topic: 'Wedding photography' }],
+        },
+        services: [
+          {
+            key: ' weddings ',
+            name: ' Wedding photography ',
+            area_served: [{ name: 'Primary service area' }],
+          },
+          { key: '', name: 'Incomplete service' },
+        ],
+      }),
+    )
+
+    const result = await getSiteSettings()
+
+    expect(result.business).toMatchObject({
+      description: 'Public business description',
+      area_served: ['Primary service area'],
+      awards: ['Industry recognition'],
+      image: { url: '/uploads/business.jpg', alt: 'Business representative' },
+    })
+    expect(result.primary_photographer?.knows_about).toEqual(['Wedding photography'])
+    expect(result.services).toEqual([
+      {
+        key: 'weddings',
+        name: 'Wedding photography',
+        area_served: ['Primary service area'],
+        image: undefined,
+      },
+    ])
+  })
 })
 
 describe('getPageByPath', () => {
@@ -356,6 +401,41 @@ describe('image normalisation in normalizePage', () => {
   const pageWithBlocks = (blocks: unknown[]) => ({
     ...mockPage,
     acf: { blocks },
+  })
+
+  it('normalises selected venue image metadata', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([
+        {
+          ...mockPage,
+          acf: {
+            is_venue_page: true,
+            venue: {
+              name: 'Example Venue',
+              image: {
+                url: 'https://example.com/venue.jpg',
+                alt: 'Venue exterior',
+                caption: 'Venue exterior at dusk',
+                creator: 'primary_photographer',
+                location_created: { name: 'Example City' },
+              },
+            },
+          },
+        },
+      ]),
+    )
+
+    const page = await getPageBySlug('home')
+
+    expect(page?.acf?.venue?.image).toEqual({
+      url: 'https://example.com/venue.jpg',
+      alt: 'Venue exterior',
+      width: undefined,
+      height: undefined,
+      caption: 'Venue exterior at dusk',
+      creator: 'primary_photographer',
+      location_created: { name: 'Example City' },
+    })
   })
 
   it('passes through valid WPImage objects untouched', async () => {

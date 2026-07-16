@@ -152,6 +152,69 @@ The mu-plugin configures CORS headers on the REST API to allow requests from `SZ
 
 The mu-plugin ensures ACF fields are exposed in the REST API via the `acf/rest_api/field_settings/show_in_rest` filter.
 
+### Site Settings and public entities
+
+Open **Site Settings** in the WordPress sidebar to manage the public facts used across the header, footer, and structured data. The fields are registered by `sz-acf-schema.php`; no manual ACF field-group setup is required.
+
+Only enter information that is already intended to be public and can be verified:
+
+1. **Site Name, Tagline, Copyright and Social Links** control the existing site branding and footer.
+2. **Business Entity** supplies the business description, public contact details, full postal address, coordinates, service areas, logo, representative image, price range, founding date, awards, and authoritative profile URLs.
+3. **Primary Photographer** optionally publishes a linked Person entity. Enable it only when the named person should be publicly identified. Complete the public name and job title before using that person as an image or article creator.
+4. **Service Catalog** is the authoritative list of services. Give every service a short stable key made from lowercase letters, numbers, and hyphens. Do not change a key after publishing because it forms the service's permanent structured-data ID.
+
+Keep the public business name, address, phone number, and profile URLs consistent with external business listings. Blank optional fields are omitted from structured data rather than guessed.
+
+### Page entities and selected images
+
+The **Page Settings** panel provides two optional entity controls:
+
+- **Primary Service** links a page to one service from the global catalog. Select the real service; the frontend never guesses from the page title or URL.
+- **Venue Experience Page** enables a Place entity for pages substantially about one venue. Enter the public venue name, official URL, description, address, coordinates, and representative image.
+
+Services Grid cards and Pricing Packages blocks also have an optional **Global Service** selector. Use it when the visible card or prices describe an authoritative service from Site Settings. Leave it blank for genuinely page-specific content; the frontend will publish a stable page-specific Service instead. Existing blocks continue to work without being edited.
+
+For featured images, Hero images, Image blocks, Image + Text images, service images, and venue images, open the image in the Media Library to manage **Image Search Metadata**:
+
+- Use **SEO Caption Override** only for a concise factual caption. The standard Media caption is used when the override is blank.
+- Set **Image Creator** only when the configured business or primary photographer actually created the image. Blank values use the business.
+- Add **Location Created** only when the place is known and suitable for publication.
+
+Always complete the standard Media Library alternative text for meaningful images. Alternative text remains an accessibility field; the SEO caption does not replace it.
+
+### Page headings
+
+Every Flexible Content page must render exactly one H1. A Hero title is the usual H1. Text, Image + Text, Image and Form blocks can also be configured as H1 when they are the page lead, but using more than one H1 blocks the page save.
+
+Write a truthful, descriptive H1 that identifies the page's main subject. For a location-specific service page, naturally include the real service and area when useful. Do not repeat keywords or add locations the page does not serve. Other page sections should normally start at H2; heading-level skips appear as advisory audit findings.
+
+Pages that use the native WordPress content editor instead of Flexible Content automatically render the page title as their H1.
+
+### SEO, AI & Social manager
+
+Open **SEO, AI & Social** in the WordPress sidebar. The existing URL and bookmarks remain valid.
+
+The screen has two tabs:
+
+1. **Search & Social Previews** manages canonical page titles, descriptions, and featured images with Google, Facebook, and X previews. These are the same fields used by each Page editor and continue to autosave.
+2. **AI Searchability Audit** automatically reviews saved, non-container Pages. It does not send content to an AI service. Filter by page, status, or category, expand a page for evidence, and use the edit links to open the relevant page, Site Settings, or image. **Refresh Audit** recalculates one page after changes.
+
+The audit groups transparent checks into Content Structure, Search & Social, Entity Graph, and Schema Consistency. Only zero or multiple H1 headings are publishing errors. Missing or long metadata, thin copy, heading skips, missing service/locality language, incomplete entities, image metadata, unresolved references, and incomplete FAQ rows are advisory warnings.
+
+A page passing the audit does not guarantee rankings, rich results, or inclusion in an AI answer. The audit verifies code and editor inputs it can observe. Search authority still depends on useful original content, reputable links, consistent public business profiles and citations, relationships with venues and suppliers, and ongoing Search Console review.
+
+The frontend emits one server-rendered Schema.org graph linking the business, website, optional primary photographer, services, pages, breadcrumbs, explicit venues, and selected images through stable IDs. It intentionally excludes self-serving Review/AggregateRating data, the deprecated ProfessionalService type, and a standalone Award type. FAQ data remains machine-readable only when complete visible FAQ rows exist; it should not be treated as a guaranteed Google rich-result feature.
+
+### Lightweight WordPress tests
+
+Run all pure-PHP validation and audit fixtures with:
+
+```bash
+npm run test:wordpress
+```
+
+The command requires a local `php` executable. It does not bootstrap WordPress or connect to production data.
+
 ---
 
 ## Developing Locally

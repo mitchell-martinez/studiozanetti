@@ -50,6 +50,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+$sz_site_entity_settings_include = __DIR__ . '/includes/site-entity-settings.php';
+if ( file_exists( $sz_site_entity_settings_include ) ) {
+	require_once $sz_site_entity_settings_include;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. REGISTER NAVIGATION MENU LOCATIONS
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2331,6 +2336,9 @@ function sz_get_site_settings() {
 			'tagline'        => get_bloginfo( 'description' ),
 			'copyright_text' => '',
 			'social_links'   => [],
+			'business'       => [],
+			'primary_photographer' => [ 'enabled' => false ],
+			'services'       => [],
 		], 200 );
 	}
 
@@ -2351,12 +2359,31 @@ function sz_get_site_settings() {
 		}
 	}
 
-	return new WP_REST_Response( [
+	$business_raw = get_field( 'business', 'option' );
+	$photographer_raw = get_field( 'primary_photographer', 'option' );
+	$services_raw = get_field( 'services', 'option' );
+	$business_raw = is_array( $business_raw ) ? $business_raw : [];
+	$photographer_raw = is_array( $photographer_raw ) ? $photographer_raw : [];
+	$services_raw = is_array( $services_raw ) ? $services_raw : [];
+
+	$entity_settings = function_exists( 'sz_sanitize_site_entity_settings' )
+		? sz_sanitize_site_entity_settings( [
+			'business'            => $business_raw,
+			'primary_photographer' => $photographer_raw,
+			'services'            => $services_raw,
+		], 'sz_resolve_image' )
+		: [
+			'business'            => [],
+			'primary_photographer' => [ 'enabled' => false ],
+			'services'            => [],
+		];
+
+	return new WP_REST_Response( array_merge( [
 		'site_name'      => $site_name,
 		'tagline'        => $tagline,
 		'copyright_text' => $copyright_text,
 		'social_links'   => $social_links,
-	], 200 );
+	], $entity_settings ), 200 );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2387,14 +2414,27 @@ add_filter( 'rest_prepare_page', 'sz_normalize_page_images', 20, 3 );
 
 function sz_normalize_page_images( WP_REST_Response $response, WP_Post $post, WP_REST_Request $request ): WP_REST_Response {
 	$data = $response->get_data();
+	$thumb_id = get_post_thumbnail_id( $post->ID );
+	if ( $thumb_id ) {
+		$data['featured_image'] = sz_resolve_image( $thumb_id );
+	}
 
 	if ( ! empty( $data['acf']['blocks'] ) && is_array( $data['acf']['blocks'] ) ) {
 		$hydrate_gallery_references = $request->get_param( 'context' ) !== 'edit';
 		$data['acf']['blocks']      = array_map( function ( $block ) use ( $hydrate_gallery_references ) {
 			return sz_normalize_block_images( $block, $hydrate_gallery_references );
 		}, $data['acf']['blocks'] );
-		$response->set_data( $data );
 	}
+
+	if (
+		! empty( $data['acf']['venue'] ) &&
+		is_array( $data['acf']['venue'] ) &&
+		array_key_exists( 'image', $data['acf']['venue'] )
+	) {
+		$data['acf']['venue']['image'] = sz_resolve_image( $data['acf']['venue']['image'] );
+	}
+
+	$response->set_data( $data );
 
 	return $response;
 }
@@ -2480,7 +2520,7 @@ function sz_normalize_block_images( array $block, bool $hydrate_gallery_referenc
 }
 
 /**
- * Resolve a single image value to { url, alt, width, height } or null.
+ * Resolve a single image value to public image and selected schema metadata.
  *
  * Handles three formats ACF may return:
  *   1. Numeric attachment ID  →  look up via WP functions
@@ -2498,12 +2538,14 @@ function sz_resolve_image( $value ) {
 
 	// Already a resolved image object (ACF return_format = array)
 	if ( is_array( $value ) && ! empty( $value['url'] ) ) {
-		return [
+		$id = (int) ( $value['ID'] ?? $value['id'] ?? 0 );
+		$image = [
 			'url'    => $value['url'],
 			'alt'    => $value['alt'] ?? '',
 			'width'  => $value['width'] ?? null,
 			'height' => $value['height'] ?? null,
 		];
+		return array_merge( $image, sz_get_image_entity_metadata( $id, $value['caption'] ?? '' ) );
 	}
 
 	// Numeric attachment ID (ACF return_format = id, or manual entry)
@@ -2513,12 +2555,13 @@ function sz_resolve_image( $value ) {
 		if ( ! $src ) {
 			return null;
 		}
-		return [
+		$image = [
 			'url'    => $src[0],
 			'alt'    => get_post_meta( $id, '_wp_attachment_image_alt', true ) ?: '',
 			'width'  => $src[1],
 			'height' => $src[2],
 		];
+		return array_merge( $image, sz_get_image_entity_metadata( $id ) );
 	}
 
 	// URL string (ACF return_format = url)
@@ -2530,6 +2573,57 @@ function sz_resolve_image( $value ) {
 	}
 
 	return null;
+}
+
+/**
+ * Read reusable structured-data metadata from a media attachment.
+ */
+function sz_get_image_entity_metadata( int $attachment_id, $fallback_caption = '' ): array {
+	$caption = sanitize_text_field( (string) $fallback_caption );
+	$creator = '';
+	$location = [];
+
+	if ( $attachment_id > 0 ) {
+		$attachment_caption = wp_get_attachment_caption( $attachment_id );
+		if ( is_string( $attachment_caption ) && '' !== trim( $attachment_caption ) ) {
+			$caption = sanitize_text_field( $attachment_caption );
+		}
+
+		if ( function_exists( 'get_field' ) ) {
+			$seo_caption = get_field( 'seo_caption', $attachment_id );
+			if ( is_string( $seo_caption ) && '' !== trim( $seo_caption ) ) {
+				$caption = sanitize_text_field( $seo_caption );
+			}
+
+			$raw_creator = get_field( 'schema_creator', $attachment_id );
+			if ( in_array( $raw_creator, [ 'business', 'primary_photographer' ], true ) ) {
+				$creator = $raw_creator;
+			}
+
+			$raw_location = get_field( 'location_created', $attachment_id );
+			if ( is_array( $raw_location ) ) {
+				$name = sanitize_text_field( (string) ( $raw_location['name'] ?? '' ) );
+				if ( '' !== $name ) {
+					$location = array_filter( [
+						'name'    => $name,
+						'url'     => esc_url_raw( (string) ( $raw_location['url'] ?? '' ) ),
+						'address' => function_exists( 'sz_entity_address' ) ? sz_entity_address( $raw_location['address'] ?? [] ) : [],
+						'geo'     => function_exists( 'sz_entity_geo' ) ? sz_entity_geo( $raw_location['geo'] ?? [] ) : [],
+					], static function ( $item ) {
+						return '' !== $item && [] !== $item;
+					} );
+				}
+			}
+		}
+	}
+
+	return array_filter( [
+		'caption'         => $caption,
+		'creator'         => $creator,
+		'location_created' => $location,
+	], static function ( $item ) {
+		return '' !== $item && [] !== $item;
+	} );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
