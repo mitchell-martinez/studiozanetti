@@ -13,6 +13,7 @@ const FALLBACK_ITEMS: WPMenuItem[] = [
 ]
 
 const CREATOR_URL = 'https://mitchellmartinez.tech/'
+const CREATOR_URL_CONTACT = 'https://mitchellmartinez.tech/contact'
 
 const Footer = ({ items, siteSettings }: FooterProps) => {
   const navItems = items.length > 0 ? items : FALLBACK_ITEMS
@@ -71,7 +72,7 @@ const Footer = ({ items, siteSettings }: FooterProps) => {
           </a>
           . Looking for help improving your digital presence?{' '}
           <a
-            href={CREATOR_URL}
+            href={CREATOR_URL_CONTACT}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.creditLink}

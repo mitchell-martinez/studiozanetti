@@ -100,9 +100,10 @@ describe('Footer', () => {
 
     expect(creatorLink).toHaveTextContent('Mitchell Martinez')
     expect(contactLink).toHaveTextContent('Get in touch with Mitchell today')
+    expect(creatorLink).toHaveAttribute('href', 'https://mitchellmartinez.tech/')
+    expect(contactLink).toHaveAttribute('href', 'https://mitchellmartinez.tech/contact')
 
     for (const link of [creatorLink, contactLink]) {
-      expect(link).toHaveAttribute('href', 'https://mitchellmartinez.tech/')
       expect(link).toHaveAttribute('target', '_blank')
       expect(link).toHaveAttribute('rel', 'noopener noreferrer')
     }

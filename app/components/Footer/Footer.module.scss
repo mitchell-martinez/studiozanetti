@@ -9,7 +9,7 @@
 .container {
   max-width: #{g.$bp-xl};
   margin: 0 auto;
-  padding: 1.5rem var(--space-page-x) 1rem;
+  padding: 2rem var(--space-page-x) 2rem;
   display: grid;
   grid-template-columns: minmax(12rem, auto) minmax(0, 1fr) max-content;
   gap: 1rem 2.5rem;
@@ -43,6 +43,7 @@
 .links {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0 1.5rem;
 }
 
@@ -80,22 +81,18 @@
 
 .bottom {
   border-top: 1px solid var(--color-border-soft);
-  padding: 0.75rem var(--space-page-x);
+  padding: 2.25rem var(--space-page-x);
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 0.25rem 1.5rem;
   font-size: var(--text-sm);
   line-height: 1.5;
   color: var(--color-ink-soft);
-
-  p {
-    margin: 0;
-  }
 }
 
 .credit {
+  margin: 1.5rem 0rem 0.5rem !important;
   text-align: center;
 }
 
