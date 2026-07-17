@@ -52,6 +52,14 @@ describe('seo helpers', () => {
     expect(getSiteUrlFromEnv()).toBe('https://test.example.com')
   })
 
+  it('defaults to the canonical apex origin when no site URL is configured', () => {
+    vi.stubEnv('SITE_URL', '')
+    vi.stubEnv('PUBLIC_SITE_URL', '')
+    vi.stubEnv('APP_URL', '')
+
+    expect(getSiteUrlFromEnv()).toBe('https://studiozanetti.com.au')
+  })
+
   it('builds canonical URLs for root and slug paths', () => {
     expect(toCanonicalUrl('/')).toBe('https://test.example.com')
     expect(toCanonicalUrl('pricing')).toBe('https://test.example.com/pricing')

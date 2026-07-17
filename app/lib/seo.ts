@@ -9,7 +9,7 @@ import type {
 } from '~/types/wordpress'
 import { decodeHtmlEntities } from '~/lib/html'
 
-const FALLBACK_SITE_URL = 'https://www.studiozanetti.com.au'
+const FALLBACK_SITE_URL = 'https://studiozanetti.com.au'
 
 function normalizeBaseUrl(url: string): string {
   return url.replace(/\/+$/, '')
