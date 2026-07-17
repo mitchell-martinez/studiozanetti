@@ -32,6 +32,7 @@ $settings = sz_sanitize_site_entity_settings( [
 	'primary_photographer' => [
 		'enabled' => '1',
 		'name' => ' Primary Photographer ',
+		'business_relationship' => 'founder',
 		'job_title' => 'Photographer',
 		'image' => 42,
 		'knows_about' => [ [ 'topic' => 'Wedding photography' ] ],
@@ -58,6 +59,7 @@ assert_same( [ 'https://example.com/profile' ], $settings['business']['same_as']
 assert_same( 41, $settings['business']['logo']['id'], 'Image resolver should control public media output.' );
 assert_same( true, $settings['primary_photographer']['enabled'], 'Photographer enabled flag should normalize.' );
 assert_same( 'Primary Photographer', $settings['primary_photographer']['name'], 'Photographer name should be trimmed.' );
+assert_same( 'founder', $settings['primary_photographer']['business_relationship'], 'Photographer business relationship should normalize.' );
 assert_same( 1, count( $settings['services'] ), 'Services need a unique non-empty key and name.' );
 assert_same( 'wedding-photography', $settings['services'][0]['key'], 'Service keys should be stable slugs.' );
 

@@ -160,7 +160,7 @@ Only enter information that is already intended to be public and can be verified
 
 1. **Site Name, Tagline, Copyright and Social Links** control the existing site branding and footer.
 2. **Business Entity** supplies the business description, public contact details, full postal address, coordinates, service areas, logo, representative image, price range, founding date, awards, and authoritative profile URLs.
-3. **Primary Photographer** optionally publishes a linked Person entity. Enable it only when the named person should be publicly identified. Complete the public name and job title before using that person as an image or article creator.
+3. **Primary Photographer** optionally publishes a linked Person entity. Enable it only when the named person should be publicly identified. Set **Business Relationship** to **Founder / owner** when the person owns the business or operates it as a sole trader; otherwise use **Employee**. Complete the public name and job title before using that person as an image or article creator.
 4. **Service Catalog** is the authoritative list of services. Give every service a short stable key made from lowercase letters, numbers, and hyphens. Do not change a key after publishing because it forms the service's permanent structured-data ID.
 
 Keep the public business name, address, phone number, and profile URLs consistent with external business listings. Blank optional fields are omitted from structured data rather than guessed.

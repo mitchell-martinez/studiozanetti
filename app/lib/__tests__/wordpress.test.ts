@@ -271,6 +271,7 @@ describe('getSiteSettings', () => {
         },
         primary_photographer: {
           enabled: true,
+          business_relationship: 'founder',
           job_title: 'Primary photographer',
           knows_about: [{ topic: 'Wedding photography' }],
         },
@@ -293,7 +294,10 @@ describe('getSiteSettings', () => {
       awards: ['Industry recognition'],
       image: { url: '/uploads/business.jpg', alt: 'Business representative' },
     })
-    expect(result.primary_photographer?.knows_about).toEqual(['Wedding photography'])
+    expect(result.primary_photographer).toMatchObject({
+      business_relationship: 'founder',
+      knows_about: ['Wedding photography'],
+    })
     expect(result.services).toEqual([
       {
         key: 'weddings',

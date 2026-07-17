@@ -703,6 +703,7 @@ add_action( 'acf/init', function () {
 				'sub_fields' => [
 					[ 'key' => 'field_sz_photographer_enabled', 'label' => 'Publish Person Entity', 'name' => 'enabled', 'type' => 'true_false', 'ui' => 1, 'default_value' => 0 ],
 					[ 'key' => 'field_sz_photographer_name', 'label' => 'Public Name', 'name' => 'name', 'type' => 'text' ],
+					[ 'key' => 'field_sz_photographer_business_relationship', 'label' => 'Business Relationship', 'name' => 'business_relationship', 'type' => 'select', 'choices' => [ 'employee' => 'Employee', 'founder' => 'Founder / owner (including sole trader)' ], 'default_value' => 'employee', 'instructions' => 'Choose Founder / owner when this person owns the business or operates it as a sole trader.' ],
 					[ 'key' => 'field_sz_photographer_job_title', 'label' => 'Job Title', 'name' => 'job_title', 'type' => 'text' ],
 					[ 'key' => 'field_sz_photographer_description', 'label' => 'Public Biography', 'name' => 'description', 'type' => 'textarea', 'rows' => 4 ],
 					[ 'key' => 'field_sz_photographer_url', 'label' => 'About Page URL', 'name' => 'url', 'type' => 'url' ],

@@ -206,7 +206,9 @@ export function buildSiteEntitySchemas(siteSettings: WPSiteSettings): Record<str
     ...(business?.awards?.length ? { award: business.awards } : {}),
     ...(sameAs.length ? { sameAs } : {}),
     ...(hasPrimaryPhotographer
-      ? { employee: { '@id': photographerId } }
+      ? photographer?.business_relationship === 'founder'
+        ? { founder: { '@id': photographerId } }
+        : { employee: { '@id': photographerId } }
       : {}),
     ...(serviceIds.length
       ? {

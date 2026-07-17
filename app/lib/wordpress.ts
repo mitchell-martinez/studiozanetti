@@ -456,6 +456,11 @@ function normalizeSiteSettings(data: WPSiteSettings): WPSiteSettings {
     primary_photographer: photographer
       ? {
           ...photographer,
+          business_relationship:
+            photographer.business_relationship === 'founder' ||
+            photographer.business_relationship === 'employee'
+              ? photographer.business_relationship
+              : undefined,
           image: safeImage(photographer.image),
           same_as: normalizeStringList(photographer.same_as),
           knows_about: normalizeStringList(photographer.knows_about),

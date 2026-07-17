@@ -649,6 +649,7 @@ export interface WPBusinessProfile {
 export interface WPPrimaryPhotographer {
   enabled?: boolean
   name?: string
+  business_relationship?: 'founder' | 'employee'
   job_title?: string
   description?: string
   url?: string

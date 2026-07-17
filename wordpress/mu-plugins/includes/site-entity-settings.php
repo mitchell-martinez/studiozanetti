@@ -184,15 +184,16 @@ if ( ! function_exists( 'sz_sanitize_site_entity_settings' ) ) {
 		} );
 
 		$photographer = array_filter( [
-			'enabled'     => sz_entity_truthy( $photographer_raw['enabled'] ?? false ),
-			'name'        => sz_entity_text( $photographer_raw['name'] ?? '' ),
-			'job_title'   => sz_entity_text( $photographer_raw['job_title'] ?? '' ),
-			'description' => sz_entity_textarea( $photographer_raw['description'] ?? '' ),
-			'url'         => sz_entity_url( $photographer_raw['url'] ?? '' ),
-			'image'       => sz_entity_image( $photographer_raw['image'] ?? null, $image_resolver ),
-			'same_as'     => sz_entity_url_list( $photographer_raw['same_as'] ?? [] ),
-			'knows_about' => sz_entity_string_list( $photographer_raw['knows_about'] ?? [], [ 'topic', 'name', 'value' ] ),
-			'awards'      => sz_entity_string_list( $photographer_raw['awards'] ?? [], [ 'award', 'name', 'value' ] ),
+			'enabled'               => sz_entity_truthy( $photographer_raw['enabled'] ?? false ),
+			'name'                  => sz_entity_text( $photographer_raw['name'] ?? '' ),
+			'business_relationship' => in_array( $photographer_raw['business_relationship'] ?? '', [ 'founder', 'employee' ], true ) ? $photographer_raw['business_relationship'] : '',
+			'job_title'             => sz_entity_text( $photographer_raw['job_title'] ?? '' ),
+			'description'           => sz_entity_textarea( $photographer_raw['description'] ?? '' ),
+			'url'                   => sz_entity_url( $photographer_raw['url'] ?? '' ),
+			'image'                 => sz_entity_image( $photographer_raw['image'] ?? null, $image_resolver ),
+			'same_as'               => sz_entity_url_list( $photographer_raw['same_as'] ?? [] ),
+			'knows_about'           => sz_entity_string_list( $photographer_raw['knows_about'] ?? [], [ 'topic', 'name', 'value' ] ),
+			'awards'                => sz_entity_string_list( $photographer_raw['awards'] ?? [], [ 'award', 'name', 'value' ] ),
 		], static function ( $value, $key ) {
 			return 'enabled' === $key || ( null !== $value && '' !== $value && [] !== $value );
 		}, ARRAY_FILTER_USE_BOTH );

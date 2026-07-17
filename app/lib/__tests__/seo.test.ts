@@ -80,6 +80,7 @@ describe('seo helpers', () => {
       primary_photographer: {
         enabled: true,
         name: 'Example Photographer',
+        business_relationship: 'founder',
         job_title: 'Wedding Photographer',
         knows_about: ['Wedding photography'],
       },
@@ -113,7 +114,7 @@ describe('seo helpers', () => {
         addressLocality: 'Example City',
         addressCountry: 'AU',
       },
-      employee: { '@id': 'https://test.example.com/#primary-photographer' },
+      founder: { '@id': 'https://test.example.com/#primary-photographer' },
     })
     expect(website).toMatchObject({
       '@type': 'WebSite',
@@ -129,6 +130,27 @@ describe('seo helpers', () => {
     })
     expect(JSON.stringify(graph)).not.toContain('ProfessionalService')
     expect(JSON.stringify(graph)).not.toContain('"Photographer"')
+  })
+
+  it('keeps the primary photographer as an employee when no founder role is selected', () => {
+    const graph = buildStructuredDataGraph({
+      site_name: 'Example Studio',
+      tagline: '',
+      copyright_text: '',
+      social_links: [],
+      primary_photographer: {
+        enabled: true,
+        name: 'Example Photographer',
+      },
+    })
+
+    const nodes = graph['@graph'] as Array<Record<string, unknown>>
+    const business = nodes.find((node) => node['@id'] === 'https://test.example.com/#business')
+
+    expect(business).toMatchObject({
+      employee: { '@id': 'https://test.example.com/#primary-photographer' },
+    })
+    expect(business).not.toHaveProperty('founder')
   })
 
   it('safely serializes editor-controlled structured data inside a script element', () => {
