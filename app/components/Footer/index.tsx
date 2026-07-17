@@ -14,11 +14,17 @@ const FALLBACK_ITEMS: WPMenuItem[] = [
 
 const CREATOR_URL = 'https://mitchellmartinez.tech/'
 const CREATOR_URL_CONTACT = 'https://mitchellmartinez.tech/contact'
+const SOCIAL_LINKS = [
+  { platform: 'Instagram', url: 'https://www.instagram.com/studiozanetti' },
+  { platform: 'LinkedIn', url: 'https://www.linkedin.com/company/studio-zanetti/' },
+  { platform: 'TikTok', url: 'https://www.tiktok.com/@studiozanetti' },
+  { platform: 'Facebook', url: 'https://www.facebook.com/studiozanetti' },
+] as const
 
 const Footer = ({ items, siteSettings }: FooterProps) => {
   const navItems = items.length > 0 ? items : FALLBACK_ITEMS
   const year = new Date().getFullYear()
-  const { site_name, tagline, copyright_text, social_links } = siteSettings
+  const { site_name, tagline, copyright_text } = siteSettings
 
   // Build copyright string: use custom text if provided, otherwise auto-generate
   const copyrightDisplay = copyright_text || `\u00A9 ${year} ${site_name}. All rights reserved.`
@@ -39,22 +45,20 @@ const Footer = ({ items, siteSettings }: FooterProps) => {
           ))}
         </nav>
 
-        {social_links.length > 0 && (
-          <div className={styles.social}>
-            {social_links.map((social) => (
-              <a
-                key={social.platform}
-                href={social.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={styles.socialLink}
-                aria-label={`${site_name} on ${social.platform} (opens in new tab)`}
-              >
-                {social.platform}
-              </a>
-            ))}
-          </div>
-        )}
+        <div className={styles.social} aria-label="Social profiles">
+          {SOCIAL_LINKS.map((social) => (
+            <a
+              key={social.platform}
+              href={social.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.socialLink}
+              aria-label={`${site_name} on ${social.platform} (opens in new tab)`}
+            >
+              {social.platform}
+            </a>
+          ))}
+        </div>
       </div>
 
       <div className={styles.bottom}>

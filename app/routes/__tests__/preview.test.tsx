@@ -52,6 +52,10 @@ describe('PreviewPage route', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Saved heading', level: 2 })).toBeInTheDocument()
+      expect(postMessage).toHaveBeenCalledWith(
+        { source: 'sz-preview', action: 'ready-for-state' },
+        '*',
+      )
     })
 
     await act(async () => {
@@ -81,6 +85,5 @@ describe('PreviewPage route', () => {
       expect(screen.getByRole('heading', { name: 'Unsaved heading', level: 2 })).toBeInTheDocument()
     })
 
-    expect(postMessage).toHaveBeenCalledWith({ source: 'sz-preview', action: 'ready-for-state' }, '*')
   })
 })

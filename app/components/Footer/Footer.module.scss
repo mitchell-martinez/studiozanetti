@@ -11,21 +11,30 @@
   margin: 0 auto;
   padding: 2rem var(--space-page-x) 2rem;
   display: grid;
-  grid-template-columns: minmax(12rem, auto) minmax(0, 1fr) max-content;
-  gap: 1rem 2.5rem;
+  grid-template-columns: minmax(16rem, 1.1fr) minmax(20rem, 0.9fr);
+  grid-template-areas:
+    'brand links'
+    'brand social';
+  gap: 0.75rem 3rem;
   align-items: start;
 
-  @media (max-width: #{g.$bp-sm}) {
+  @media (max-width: #{g.$bp-md}) {
     grid-template-columns: 1fr;
-    gap: 0.75rem;
+    grid-template-areas:
+      'brand'
+      'links'
+      'social';
+    gap: 1rem;
     padding-block: 1.25rem 0.75rem;
   }
 }
 
 .brand {
+  grid-area: brand;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  max-width: 36rem;
 }
 
 .logo {
@@ -41,9 +50,10 @@
 }
 
 .links {
+  grid-area: links;
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0 1.5rem;
 }
 
@@ -61,21 +71,26 @@
 }
 
 .social {
+  grid-area: social;
   display: flex;
   flex-wrap: wrap;
   gap: 0 1.5rem;
 }
 
 .socialLink {
-  font-size: var(--text-base);
+  min-height: 44px;
   color: var(--color-ink-soft);
   transition: color g.$transition-fast;
-  min-height: 44px;
   display: flex;
   align-items: center;
 
   &:hover {
     color: var(--color-accent-strong);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent-strong);
+    outline-offset: 3px;
   }
 }
 

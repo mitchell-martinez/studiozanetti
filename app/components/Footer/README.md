@@ -1,6 +1,6 @@
 # Footer Component
 
-Compact site footer that renders navigation links from WordPress, site details, social media links, copyright information, and a fixed creator credit.
+Compact site footer that renders navigation links from WordPress, site details, social profile links, copyright information, and a fixed creator credit.
 
 ---
 
@@ -8,7 +8,7 @@ Compact site footer that renders navigation links from WordPress, site details, 
 
 The Footer receives the same `WPMenuItem[]` data as the Navbar (from the WordPress **Appearance → Menus** system). It renders top-level menu and social links in wrapping rows so larger menus remain compact. When WordPress is unavailable, it falls back to default links.
 
-The site name, tagline, social links, and optional copyright text come from WordPress Site Settings. The creator credit is fixed site content and links to the creator's professional portfolio.
+The site name, tagline, and optional copyright text come from WordPress Site Settings. The creator credit and four visible Studio Zanetti social profiles are fixed site content.
 
 ---
 
@@ -22,7 +22,7 @@ The Footer shares the same navigation menu as the Navbar.
 
 ### Social Media Links
 
-Manage social media links in the WordPress **Site Settings** options page. Each entry needs a platform name and a complete URL. The Footer hides the social section when no links are provided.
+The Footer shows four fixed text links in a wrapping row: Studio Zanetti on Instagram, LinkedIn, TikTok, and Facebook. The broader **Site Settings → Social Links** list remains available for public identity data and structured data, but it does not add links to the visible Footer.
 
 ### Site Details and Copyright
 
@@ -39,7 +39,7 @@ The creator credit is fixed in the Footer component and is not editable in WordP
 | Prop           | Type             | Required | Description                                                                       |
 | -------------- | ---------------- | -------- | --------------------------------------------------------------------------------- |
 | `items`        | `WPMenuItem[]`   | Yes      | Menu items from WordPress. Pass an empty array to use fallback items.             |
-| `siteSettings` | `WPSiteSettings` | Yes      | Site name, tagline, copyright text, and social links from WordPress Site Settings. |
+| `siteSettings` | `WPSiteSettings` | Yes      | Site name, tagline, and copyright text from WordPress Site Settings. |
 
 ---
 
@@ -48,6 +48,7 @@ The creator credit is fixed in the Footer component and is not editable in WordP
 - `<footer>` landmark element for screen readers
 - `aria-label` on the navigation region
 - External links include "(opens in new tab)" in their aria-labels
+- Social links expose the platform name visibly and a complete accessible label to assistive technology
 - `rel="noopener noreferrer"` on external links for security
 - Navigation and social links retain a minimum 44px touch target
 - Creator links have visible hover and keyboard-focus states

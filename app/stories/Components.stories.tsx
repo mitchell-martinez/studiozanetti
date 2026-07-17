@@ -62,7 +62,7 @@ export const FooterDefault: StoryObj<FooterArgs> = {
     items: { control: 'object', description: 'Footer navigation items (WPMenuItem[])' },
     siteSettings: {
       control: 'object',
-      description: 'Site settings (name, tagline, socials, copyright)',
+      description: 'Site settings (name, tagline, copyright)',
     },
   },
   render: (args) => <Footer items={args.items} siteSettings={args.siteSettings} />,

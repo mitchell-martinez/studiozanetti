@@ -40,10 +40,23 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: /Bookings/i })).toBeInTheDocument()
   })
 
-  it('renders social media links with correct aria-labels', () => {
+  it('renders the four Studio Zanetti social profiles as text links', () => {
     renderFooter()
-    expect(screen.getByRole('link', { name: /instagram.*new tab/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /facebook.*new tab/i })).toBeInTheDocument()
+
+    const expectedLinks = [
+      ['Instagram', 'https://www.instagram.com/studiozanetti'],
+      ['LinkedIn', 'https://www.linkedin.com/company/studio-zanetti/'],
+      ['TikTok', 'https://www.tiktok.com/@studiozanetti'],
+      ['Facebook', 'https://www.facebook.com/studiozanetti'],
+    ] as const
+
+    for (const [platform, url] of expectedLinks) {
+      expect(
+        screen.getByRole('link', {
+          name: new RegExp(`Studio Zanetti on ${platform}.*new tab`, 'i'),
+        }),
+      ).toHaveAttribute('href', url)
+    }
   })
 
   it('renders the current year in auto-generated copyright', () => {
@@ -72,18 +85,17 @@ describe('Footer', () => {
     expect(screen.getByText('Best photos ever')).toBeInTheDocument()
   })
 
-  it('renders custom social links from site settings', () => {
+  it('does not add WordPress identity profiles to the visible footer', () => {
     const custom: WPSiteSettings = {
       ...DEFAULT_SETTINGS,
       social_links: [
-        { platform: 'TikTok', url: 'https://tiktok.com/@studio' },
-        { platform: 'YouTube', url: 'https://youtube.com/studio' },
+        { platform: 'YouTube', url: 'https://youtube.com/example' },
+        { platform: 'Instagram', url: 'https://instagram.com/another-profile' },
       ],
     }
     renderFooter([], custom)
-    expect(screen.getByRole('link', { name: /tiktok.*new tab/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /youtube.*new tab/i })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /instagram/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /youtube/i })).not.toBeInTheDocument()
+    expect(screen.queryByText('@another-profile')).not.toBeInTheDocument()
   })
 
   it('renders the creator credit with secure portfolio links', () => {
