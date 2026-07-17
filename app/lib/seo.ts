@@ -113,13 +113,37 @@ function buildImageObject(
   id?: string,
   defaultCreatorId = entityId('business'),
   hasPrimaryPhotographer = true,
+  siteSettings?: WPSiteSettings,
+  defaultCreator: WPImage['creator'] = 'primary_photographer',
 ): Record<string, unknown> | undefined {
   if (!image?.url) return undefined
 
-  const creatorId =
-    image.creator === 'primary_photographer' && hasPrimaryPhotographer
-      ? entityId('primary-photographer')
-      : defaultCreatorId
+  const photographerName = nonEmpty(siteSettings?.primary_photographer?.name)
+  const requestedCreator = image.creator ?? defaultCreator
+  const usesPrimaryPhotographer = Boolean(
+    requestedCreator === 'primary_photographer' &&
+      hasPrimaryPhotographer &&
+      photographerName,
+  )
+  const creatorId = usesPrimaryPhotographer
+    ? entityId('primary-photographer')
+    : defaultCreatorId
+  const creator = {
+    '@type': usesPrimaryPhotographer ? 'Person' : 'Organization',
+    '@id': creatorId,
+    name: usesPrimaryPhotographer
+      ? photographerName
+      : siteSettings?.site_name || 'Studio Zanetti',
+  }
+  const license = nonEmpty(image.license) ?? nonEmpty(siteSettings?.business?.image_license)
+  const acquireLicensePage =
+    nonEmpty(image.acquire_license_page) ??
+    nonEmpty(siteSettings?.business?.image_acquire_license_page)
+  const creditText =
+    nonEmpty(image.credit_text) ?? nonEmpty(siteSettings?.business?.image_credit_text)
+  const copyrightNotice =
+    nonEmpty(image.copyright_notice) ??
+    nonEmpty(siteSettings?.business?.image_copyright_notice)
   const locationAddress = buildPostalAddress(image.location_created?.address)
   const locationGeo = buildGeo(image.location_created?.geo)
 
@@ -132,7 +156,11 @@ function buildImageObject(
       : {}),
     ...(image.width ? { width: image.width } : {}),
     ...(image.height ? { height: image.height } : {}),
-    creator: { '@id': creatorId },
+    creator,
+    ...(license ? { license } : {}),
+    ...(acquireLicensePage ? { acquireLicensePage } : {}),
+    ...(creditText ? { creditText } : {}),
+    ...(copyrightNotice ? { copyrightNotice } : {}),
     ...(image.location_created?.name
       ? {
           locationCreated: {
@@ -175,12 +203,15 @@ export function buildSiteEntitySchemas(siteSettings: WPSiteSettings): Record<str
     entityId('logo'),
     businessId,
     hasPrimaryPhotographer,
+    siteSettings,
+    'business',
   )
   const image = buildImageObject(
     business?.image,
     entityId('business-image'),
     businessId,
     hasPrimaryPhotographer,
+    siteSettings,
   )
   const serviceIds = services
     .filter((service) => nonEmpty(service.key) && nonEmpty(service.name))
@@ -242,11 +273,20 @@ export function buildSiteEntitySchemas(siteSettings: WPSiteSettings): Record<str
             ? { description: nonEmpty(photographer.description) }
             : {}),
           ...(nonEmpty(photographer.url) ? { url: nonEmpty(photographer.url) } : {}),
-          ...(buildImageObject(photographer.image, entityId('primary-photographer-image'))
+          ...(buildImageObject(
+            photographer.image,
+            entityId('primary-photographer-image'),
+            businessId,
+            hasPrimaryPhotographer,
+            siteSettings,
+          )
             ? {
                 image: buildImageObject(
                   photographer.image,
                   entityId('primary-photographer-image'),
+                  businessId,
+                  hasPrimaryPhotographer,
+                  siteSettings,
                 ),
               }
             : {}),
@@ -265,6 +305,7 @@ export function buildSiteEntitySchemas(siteSettings: WPSiteSettings): Record<str
         entityId(`service-${service.key.trim()}-image`),
         businessId,
         hasPrimaryPhotographer,
+        siteSettings,
       )
 
       return {
@@ -460,6 +501,7 @@ function buildServiceSchemas(
             ),
             entityId('business'),
             hasPrimaryPhotographer,
+            siteSettings,
           )
           fallbackServices.push({
             '@context': 'https://schema.org',
@@ -584,6 +626,7 @@ export function buildPageSchemas(
     pageEntityId(canonicalUrl, 'venue-image'),
     entityId('business'),
     hasPrimaryPhotographer,
+    siteSettings,
   )
   const venueSchema = nonEmpty(venue?.name)
     ? {
@@ -641,6 +684,7 @@ export function buildPageSchemas(
               pageEntityId(canonicalUrl, 'primary-image'),
               entityId('business'),
               hasPrimaryPhotographer,
+              siteSettings,
             ),
           },
         }

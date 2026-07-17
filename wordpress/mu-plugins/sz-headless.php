@@ -2581,6 +2581,10 @@ function sz_resolve_image( $value ) {
 function sz_get_image_entity_metadata( int $attachment_id, $fallback_caption = '' ): array {
 	$caption = sanitize_text_field( (string) $fallback_caption );
 	$creator = '';
+	$license = '';
+	$acquire_license_page = '';
+	$credit_text = '';
+	$copyright_notice = '';
 	$location = [];
 
 	if ( $attachment_id > 0 ) {
@@ -2600,6 +2604,11 @@ function sz_get_image_entity_metadata( int $attachment_id, $fallback_caption = '
 				$creator = $raw_creator;
 			}
 
+			$license = esc_url_raw( (string) get_field( 'image_license', $attachment_id ) );
+			$acquire_license_page = esc_url_raw( (string) get_field( 'image_acquire_license_page', $attachment_id ) );
+			$credit_text = sanitize_text_field( (string) get_field( 'image_credit_text', $attachment_id ) );
+			$copyright_notice = sanitize_text_field( (string) get_field( 'image_copyright_notice', $attachment_id ) );
+
 			$raw_location = get_field( 'location_created', $attachment_id );
 			if ( is_array( $raw_location ) ) {
 				$name = sanitize_text_field( (string) ( $raw_location['name'] ?? '' ) );
@@ -2618,8 +2627,12 @@ function sz_get_image_entity_metadata( int $attachment_id, $fallback_caption = '
 	}
 
 	return array_filter( [
-		'caption'         => $caption,
-		'creator'         => $creator,
+		'caption'          => $caption,
+		'creator'          => $creator,
+		'license'          => $license,
+		'acquire_license_page' => $acquire_license_page,
+		'credit_text'      => $credit_text,
+		'copyright_notice' => $copyright_notice,
 		'location_created' => $location,
 	], static function ( $item ) {
 		return '' !== $item && [] !== $item;

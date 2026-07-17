@@ -657,6 +657,10 @@ add_action( 'acf/init', function () {
 					[ 'key' => 'field_sz_business_description', 'label' => 'Public Description', 'name' => 'description', 'type' => 'textarea', 'rows' => 4 ],
 					[ 'key' => 'field_sz_business_email', 'label' => 'Public Email', 'name' => 'email', 'type' => 'email' ],
 					[ 'key' => 'field_sz_business_telephone', 'label' => 'Public Phone', 'name' => 'telephone', 'type' => 'text', 'instructions' => 'Use international format where possible.' ],
+					[ 'key' => 'field_sz_business_image_license', 'label' => 'Default Image License URL', 'name' => 'image_license', 'type' => 'url', 'instructions' => 'Public page describing the licence or terms that apply to images owned by this business. Used for images without an attachment-specific value.' ],
+					[ 'key' => 'field_sz_business_image_acquire_license_page', 'label' => 'Default Image Licensing Page', 'name' => 'image_acquire_license_page', 'type' => 'url', 'instructions' => 'Public page explaining how someone can request or acquire permission to use an image.' ],
+					[ 'key' => 'field_sz_business_image_credit_text', 'label' => 'Default Image Credit', 'name' => 'image_credit_text', 'type' => 'text', 'instructions' => 'Credit line for images owned by this business, for example Studio Zanetti.' ],
+					[ 'key' => 'field_sz_business_image_copyright_notice', 'label' => 'Default Image Copyright Notice', 'name' => 'image_copyright_notice', 'type' => 'text', 'instructions' => 'Copyright notice for images owned by this business. Enter only a truthful rights statement.' ],
 					[ 'key' => 'field_sz_business_logo', 'label' => 'Logo', 'name' => 'logo', 'type' => 'image', 'return_format' => 'id', 'preview_size' => 'medium' ],
 					[ 'key' => 'field_sz_business_image', 'label' => 'Representative Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'id', 'preview_size' => 'medium' ],
 					[ 'key' => 'field_sz_business_address', 'label' => 'Public Address', 'name' => 'address', 'type' => 'group', 'layout' => 'block', 'sub_fields' => $address_fields( 'sz_business_address' ) ],
@@ -777,7 +781,11 @@ add_action( 'acf/init', function () {
 		'show_in_rest' => 1,
 		'fields' => [
 			[ 'key' => 'field_sz_image_seo_caption', 'label' => 'SEO Caption Override', 'name' => 'seo_caption', 'type' => 'text', 'instructions' => 'Optional factual caption for structured data. The standard media caption is used when this is blank.' ],
-			[ 'key' => 'field_sz_image_schema_creator', 'label' => 'Image Creator', 'name' => 'schema_creator', 'type' => 'select', 'allow_null' => 1, 'choices' => [ 'business' => 'Business', 'primary_photographer' => 'Primary Photographer' ], 'instructions' => 'Leave blank to use the business. Choose Primary Photographer only when the configured person created the image.' ],
+			[ 'key' => 'field_sz_image_schema_creator', 'label' => 'Image Creator', 'name' => 'schema_creator', 'type' => 'select', 'allow_null' => 1, 'choices' => [ 'business' => 'Business / non-photographic asset', 'primary_photographer' => 'Primary Photographer' ], 'instructions' => 'Leave blank to use the published Primary Photographer. Choose Business only for a logo, graphic or other asset created by the business rather than the photographer.' ],
+			[ 'key' => 'field_sz_image_license', 'label' => 'License URL Override', 'name' => 'image_license', 'type' => 'url', 'instructions' => 'Optional public licence or terms URL for this image. Leave blank to use the Business Entity default.' ],
+			[ 'key' => 'field_sz_image_acquire_license_page', 'label' => 'Licensing Page Override', 'name' => 'image_acquire_license_page', 'type' => 'url', 'instructions' => 'Optional page explaining how to request or acquire permission for this image. Leave blank to use the Business Entity default.' ],
+			[ 'key' => 'field_sz_image_credit_text', 'label' => 'Credit Override', 'name' => 'image_credit_text', 'type' => 'text', 'instructions' => 'Optional credit for this image. Leave blank to use the Business Entity default.' ],
+			[ 'key' => 'field_sz_image_copyright_notice', 'label' => 'Copyright Notice Override', 'name' => 'image_copyright_notice', 'type' => 'text', 'instructions' => 'Optional copyright notice for this image. Leave blank to use the Business Entity default.' ],
 			[
 				'key' => 'field_sz_image_location_created',
 				'label' => 'Location Created',

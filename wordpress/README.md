@@ -159,7 +159,7 @@ Open **Site Settings** in the WordPress sidebar to manage the public facts used 
 Only enter information that is already intended to be public and can be verified:
 
 1. **Site Name, Tagline, Copyright and Social Links** control the existing site branding and footer.
-2. **Business Entity** supplies the business description, public contact details, full postal address, coordinates, service areas, logo, representative image, price range, founding date, awards, and authoritative profile URLs.
+2. **Business Entity** supplies the business description, public contact details, full postal address, coordinates, service areas, logo, representative image, price range, founding date, awards, authoritative profile URLs, and reusable image-rights defaults.
 3. **Primary Photographer** optionally publishes a linked Person entity. Enable it only when the named person should be publicly identified. Set **Business Relationship** to **Founder / owner** when the person owns the business or operates it as a sole trader; otherwise use **Employee**. Complete the public name and job title before using that person as an image or article creator.
 4. **Service Catalog** is the authoritative list of services. Give every service a short stable key made from lowercase letters, numbers, and hyphens. Do not change a key after publishing because it forms the service's permanent structured-data ID.
 
@@ -177,7 +177,8 @@ Services Grid cards and Pricing Packages blocks also have an optional **Global S
 For featured images, Hero images, Image blocks, Image + Text images, service images, and venue images, open the image in the Media Library to manage **Image Search Metadata**:
 
 - Use **SEO Caption Override** only for a concise factual caption. The standard Media caption is used when the override is blank.
-- Set **Image Creator** only when the configured business or primary photographer actually created the image. Blank values use the business.
+- Blank **Image Creator** values use the published Primary Photographer. Choose **Business / non-photographic asset** only for a logo, graphic, or other asset created by the business rather than the photographer.
+- Use the licence, licensing-page, credit, and copyright overrides only when this image differs from the defaults under **Site Settings → Business Entity**. Never claim rights the business does not hold.
 - Add **Location Created** only when the place is known and suitable for publication.
 
 Always complete the standard Media Library alternative text for meaningful images. Alternative text remains an accessibility field; the SEO caption does not replace it.

@@ -379,7 +379,6 @@ describe('seo helpers', () => {
         url: '/images/primary.jpg',
         alt: 'Couple portrait',
         caption: 'Couple portrait at an example venue',
-        creator: 'primary_photographer' as const,
         width: 1600,
         height: 900,
         location_created: {
@@ -393,6 +392,22 @@ describe('seo helpers', () => {
       pageWithImageMetadata,
       'https://test.example.com/example-page',
       '/example-page',
+      {
+        site_name: 'Example Studio',
+        tagline: '',
+        copyright_text: '',
+        social_links: [],
+        business: {
+          image_license: 'https://test.example.com/image-licence',
+          image_acquire_license_page: 'https://test.example.com/image-licensing',
+          image_credit_text: 'Example Photographer / Example Studio',
+          image_copyright_notice: 'Copyright Example Studio',
+        },
+        primary_photographer: {
+          enabled: true,
+          name: 'Example Photographer',
+        },
+      },
     )
     const webpage = schemas.find((schema) => schema['@type'] === 'WebPage') as {
       '@id': string
@@ -410,10 +425,54 @@ describe('seo helpers', () => {
         '@id': 'https://test.example.com/example-page#primary-image',
         contentUrl: 'https://test.example.com/images/primary.jpg',
         caption: 'Couple portrait at an example venue',
-        creator: { '@id': 'https://test.example.com/#primary-photographer' },
+        creator: {
+          '@type': 'Person',
+          '@id': 'https://test.example.com/#primary-photographer',
+          name: 'Example Photographer',
+        },
+        license: 'https://test.example.com/image-licence',
+        acquireLicensePage: 'https://test.example.com/image-licensing',
+        creditText: 'Example Photographer / Example Studio',
+        copyrightNotice: 'Copyright Example Studio',
         locationCreated: {
           '@type': 'Place',
           name: 'Example Venue',
+        },
+      },
+    })
+  })
+
+  it('honours an explicit business creator for a non-photographic asset', () => {
+    const schemas = buildPageSchemas(
+      {
+        ...mockPage,
+        featured_image: {
+          url: '/images/graphic.jpg',
+          alt: 'Studio graphic',
+          creator: 'business' as const,
+        },
+      },
+      'https://test.example.com/example-page',
+      '/example-page',
+      {
+        site_name: 'Example Studio',
+        tagline: '',
+        copyright_text: '',
+        social_links: [],
+        primary_photographer: {
+          enabled: true,
+          name: 'Example Photographer',
+        },
+      },
+    )
+    const webpage = schemas.find((schema) => schema['@type'] === 'WebPage')
+
+    expect(webpage).toMatchObject({
+      primaryImageOfPage: {
+        creator: {
+          '@type': 'Organization',
+          '@id': 'https://test.example.com/#business',
+          name: 'Example Studio',
         },
       },
     })
@@ -446,7 +505,11 @@ describe('seo helpers', () => {
 
     expect(webpage).toMatchObject({
       primaryImageOfPage: {
-        creator: { '@id': 'https://test.example.com/#business' },
+        creator: {
+          '@type': 'Organization',
+          '@id': 'https://test.example.com/#business',
+          name: 'Example Studio',
+        },
       },
     })
   })

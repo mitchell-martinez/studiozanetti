@@ -421,6 +421,10 @@ describe('image normalisation in normalizePage', () => {
                 alt: 'Venue exterior',
                 caption: 'Venue exterior at dusk',
                 creator: 'primary_photographer',
+                license: 'https://example.com/image-licence',
+                acquire_license_page: 'https://example.com/image-licensing',
+                credit_text: 'Example Photographer / Example Studio',
+                copyright_notice: 'Copyright Example Studio',
                 location_created: { name: 'Example City' },
               },
             },
@@ -438,6 +442,10 @@ describe('image normalisation in normalizePage', () => {
       height: undefined,
       caption: 'Venue exterior at dusk',
       creator: 'primary_photographer',
+      license: 'https://example.com/image-licence',
+      acquire_license_page: 'https://example.com/image-licensing',
+      credit_text: 'Example Photographer / Example Studio',
+      copyright_notice: 'Copyright Example Studio',
       location_created: { name: 'Example City' },
     })
   })

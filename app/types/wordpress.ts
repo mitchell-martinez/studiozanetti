@@ -11,6 +11,10 @@ export interface WPImage {
   height?: number
   caption?: string
   creator?: 'business' | 'primary_photographer'
+  license?: string
+  acquire_license_page?: string
+  credit_text?: string
+  copyright_notice?: string
   location_created?: WPPlaceReference
 }
 
@@ -635,6 +639,10 @@ export interface WPBusinessProfile {
   description?: string
   email?: string
   telephone?: string
+  image_license?: string
+  image_acquire_license_page?: string
+  image_credit_text?: string
+  image_copyright_notice?: string
   address?: WPPostalAddress
   geo?: WPGeoCoordinates
   area_served?: string[]

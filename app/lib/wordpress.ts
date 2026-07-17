@@ -87,6 +87,14 @@ function safeImage(raw: unknown): WPImage | undefined {
           img.creator === 'business' || img.creator === 'primary_photographer'
             ? img.creator
             : undefined,
+        license: typeof img.license === 'string' ? img.license : undefined,
+        acquire_license_page:
+          typeof img.acquire_license_page === 'string'
+            ? img.acquire_license_page
+            : undefined,
+        credit_text: typeof img.credit_text === 'string' ? img.credit_text : undefined,
+        copyright_notice:
+          typeof img.copyright_notice === 'string' ? img.copyright_notice : undefined,
         location_created:
           typeof img.location_created === 'object' && img.location_created !== null
             ? (img.location_created as WPImage['location_created'])

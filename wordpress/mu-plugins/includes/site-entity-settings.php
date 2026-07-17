@@ -146,11 +146,15 @@ if ( ! function_exists( 'sz_entity_image' ) ) {
 
 		if ( is_array( $value ) && ! empty( $value['url'] ) ) {
 			return array_filter( [
-				'url'     => sz_entity_url( $value['url'] ),
-				'alt'     => sz_entity_text( $value['alt'] ?? '' ),
-				'width'   => sz_entity_number( $value['width'] ?? null ),
-				'height'  => sz_entity_number( $value['height'] ?? null ),
-				'caption' => sz_entity_text( $value['caption'] ?? '' ),
+				'url'                  => sz_entity_url( $value['url'] ),
+				'alt'                  => sz_entity_text( $value['alt'] ?? '' ),
+				'width'                => sz_entity_number( $value['width'] ?? null ),
+				'height'               => sz_entity_number( $value['height'] ?? null ),
+				'caption'              => sz_entity_text( $value['caption'] ?? '' ),
+				'license'              => sz_entity_url( $value['license'] ?? '' ),
+				'acquire_license_page' => sz_entity_url( $value['acquire_license_page'] ?? '' ),
+				'credit_text'          => sz_entity_text( $value['credit_text'] ?? '' ),
+				'copyright_notice'     => sz_entity_text( $value['copyright_notice'] ?? '' ),
 			], static function ( $item ) {
 				return null !== $item && '' !== $item;
 			} );
@@ -167,18 +171,22 @@ if ( ! function_exists( 'sz_sanitize_site_entity_settings' ) ) {
 		$services_raw = is_array( $raw['services'] ?? null ) ? $raw['services'] : [];
 
 		$business = array_filter( [
-			'description'   => sz_entity_textarea( $business_raw['description'] ?? '' ),
-			'email'         => sz_entity_email( $business_raw['email'] ?? '' ),
-			'telephone'     => sz_entity_text( $business_raw['telephone'] ?? '' ),
-			'address'       => sz_entity_address( $business_raw['address'] ?? [] ),
-			'geo'           => sz_entity_geo( $business_raw['geo'] ?? [] ),
-			'area_served'   => sz_entity_string_list( $business_raw['area_served'] ?? [], [ 'name', 'value' ] ),
-			'logo'          => sz_entity_image( $business_raw['logo'] ?? null, $image_resolver ),
-			'image'         => sz_entity_image( $business_raw['image'] ?? null, $image_resolver ),
-			'price_range'   => sz_entity_text( $business_raw['price_range'] ?? '' ),
-			'founding_date' => sz_entity_text( $business_raw['founding_date'] ?? '' ),
-			'awards'        => sz_entity_string_list( $business_raw['awards'] ?? [], [ 'award', 'name', 'value' ] ),
-			'same_as'       => sz_entity_url_list( $business_raw['same_as'] ?? [] ),
+			'description'                => sz_entity_textarea( $business_raw['description'] ?? '' ),
+			'email'                      => sz_entity_email( $business_raw['email'] ?? '' ),
+			'telephone'                  => sz_entity_text( $business_raw['telephone'] ?? '' ),
+			'image_license'              => sz_entity_url( $business_raw['image_license'] ?? '' ),
+			'image_acquire_license_page' => sz_entity_url( $business_raw['image_acquire_license_page'] ?? '' ),
+			'image_credit_text'          => sz_entity_text( $business_raw['image_credit_text'] ?? '' ),
+			'image_copyright_notice'     => sz_entity_text( $business_raw['image_copyright_notice'] ?? '' ),
+			'address'                    => sz_entity_address( $business_raw['address'] ?? [] ),
+			'geo'                        => sz_entity_geo( $business_raw['geo'] ?? [] ),
+			'area_served'                => sz_entity_string_list( $business_raw['area_served'] ?? [], [ 'name', 'value' ] ),
+			'logo'                       => sz_entity_image( $business_raw['logo'] ?? null, $image_resolver ),
+			'image'                      => sz_entity_image( $business_raw['image'] ?? null, $image_resolver ),
+			'price_range'                => sz_entity_text( $business_raw['price_range'] ?? '' ),
+			'founding_date'              => sz_entity_text( $business_raw['founding_date'] ?? '' ),
+			'awards'                     => sz_entity_string_list( $business_raw['awards'] ?? [], [ 'award', 'name', 'value' ] ),
+			'same_as'                    => sz_entity_url_list( $business_raw['same_as'] ?? [] ),
 		], static function ( $value ) {
 			return null !== $value && '' !== $value && [] !== $value;
 		} );

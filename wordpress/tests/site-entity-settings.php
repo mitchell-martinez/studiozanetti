@@ -16,6 +16,10 @@ $settings = sz_sanitize_site_entity_settings( [
 		'description' => '  Documentary <b>photography</b>  ',
 		'email' => ' hello@example.com ',
 		'telephone' => ' 0400 000 000 ',
+		'image_license' => ' https://example.com/image-licence ',
+		'image_acquire_license_page' => ' https://example.com/image-licensing ',
+		'image_credit_text' => ' Example Studio ',
+		'image_copyright_notice' => ' Copyright Example Studio ',
 		'address' => [
 			'street_address' => ' 1 Example Street ',
 			'address_locality' => ' Sydney ',
@@ -52,6 +56,8 @@ $settings = sz_sanitize_site_entity_settings( [
 } );
 
 assert_same( 'Documentary photography', $settings['business']['description'], 'Business description should be sanitized.' );
+assert_same( 'https://example.com/image-licence', $settings['business']['image_license'], 'Default image licence URL should be sanitized.' );
+assert_same( 'Example Studio', $settings['business']['image_credit_text'], 'Default image credit should be sanitized.' );
 assert_same( '-33.8688', (string) $settings['business']['geo']['latitude'], 'Latitude should be numeric.' );
 assert_same( [ 'Sydney', 'New South Wales' ], $settings['business']['area_served'], 'Repeater strings should normalize.' );
 assert_same( [ 'Industry Award' ], $settings['business']['awards'], 'Repeated awards should be deduplicated.' );
