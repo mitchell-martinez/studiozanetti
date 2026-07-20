@@ -77,7 +77,11 @@ describe('CmsPage route', () => {
     it('maps root path to the home slug', async () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(mockPage as never)
       const result = await loader(makeArgs('') as never)
-      expect(result).toEqual({ type: 'page', page: mockPage, canonicalUrl: 'https://www.studiozanetti.com.au' })
+      expect(result).toEqual({
+        type: 'page',
+        page: mockPage,
+        canonicalUrl: 'https://studiozanetti.com.au',
+      })
       expect(getPageBySlug).toHaveBeenCalledWith('home')
     })
 
@@ -87,7 +91,7 @@ describe('CmsPage route', () => {
       expect(result).toEqual({
         type: 'page',
         page: mockPage,
-        canonicalUrl: 'https://www.studiozanetti.com.au/pricing',
+        canonicalUrl: 'https://studiozanetti.com.au/pricing',
       })
     })
 
@@ -119,7 +123,7 @@ describe('CmsPage route', () => {
 
       expect(result).toMatchObject({
         type: 'page',
-        canonicalUrl: 'https://www.studiozanetti.com.au/get-in-touch',
+        canonicalUrl: 'https://studiozanetti.com.au/get-in-touch',
       })
       expect(result.type).toBe('page')
       if (result.type === 'page') {
@@ -158,7 +162,7 @@ describe('CmsPage route', () => {
       expect(result).toEqual({
         type: 'page',
         page: galleryChild,
-        canonicalUrl: 'https://www.studiozanetti.com.au/gallery/stylish-brides',
+        canonicalUrl: 'https://studiozanetti.com.au/gallery/stylish-brides',
       })
       expect(getPageByPath).toHaveBeenCalledWith('gallery/stylish-brides')
     })
@@ -238,11 +242,11 @@ describe('CmsPage route', () => {
           },
           {
             property: 'og:image',
-            content: 'https://www.studiozanetti.com.au/uploads/hero-share.jpg',
+            content: 'https://studiozanetti.com.au/uploads/hero-share.jpg',
           },
           {
             name: 'twitter:image',
-            content: 'https://www.studiozanetti.com.au/uploads/hero-share.jpg',
+            content: 'https://studiozanetti.com.au/uploads/hero-share.jpg',
           },
         ]),
       )

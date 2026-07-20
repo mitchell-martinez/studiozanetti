@@ -76,7 +76,12 @@ export async function loader({ params, request }: LoaderFunctionArgs): Promise<L
       blogPostsData = await getPostsByCategories(categoryIds, blogPage, perPage)
     }
 
-    return { type: 'page', page: publicPage, canonicalUrl, blogPostsData }
+    return {
+      type: 'page',
+      page: publicPage,
+      canonicalUrl,
+      ...(blogPostsData ? { blogPostsData } : {}),
+    }
   }
 
   // Fallback: try as a blog post (single-segment slugs only)
