@@ -122,17 +122,30 @@ To create and organize the weddings site:
 
 The menu dropdown and arrow buttons on each item provide alternatives to drag-and-drop. Use the standard **Edit Menus** tab to choose which pages and custom links are visibly shown in each navigation menu, create nested dropdown links, or edit a custom URL.
 
-### Page Preview
+### Content Preview
 
-**REST endpoint:** `GET /wp-json/sz/v1/preview/<page_id>?secret=<secret>`
+**REST endpoint:** `GET /wp-json/sz/v1/preview/<content_id>?secret=<secret>`
 
-When you click **"Preview"** on any page in WordPress, it opens the React front-end with a preview banner showing the draft content — exactly as it will look when published.
+When you click **Preview** on a page or blog post, WordPress opens the React front-end with the latest saved content or autosave. Pages use the ACF page renderer; posts use the same blog layout as published posts. Private and draft posts remain unavailable at their public URL and are only exposed through the secret preview link.
 
 **How it works:**
 
 1. WordPress "Preview" button URL is rewritten to point to `SZ_FRONTEND_URL/preview?id=<id>&secret=<secret>`
 2. The React front-end calls back to WordPress to fetch the draft content
-3. It renders using the same BlockRenderer components, with a gold "Preview Mode" banner
+3. The endpoint identifies the content as a page or post
+4. The front end renders it with the corresponding production renderer and a preview banner
+
+### Blog Post Buttons
+
+The Classic Editor for blog posts includes **Add Button** beside **Add Media**.
+
+1. Place the cursor where the button should appear.
+2. Select **Add Button**.
+3. Enter the required button text and link.
+4. Choose **Left** or **Centre** alignment. Centre is selected by default.
+5. Select **Insert Button**.
+
+Use a full web address or a site-relative link beginning with `/`. Page editors do not show this control: pages must use the **Button Group** layout in the ACF page builder.
 
 ### Admin Cleanup
 

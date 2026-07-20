@@ -31,8 +31,9 @@
  *  • REST endpoint GET /wp-json/sz/v1/nav-menu/<location>
  *      Returns a nested JSON tree of menu items (with children for dropdowns).
  *  • REST endpoint GET /wp-json/sz/v1/preview/<id>?secret=<secret>
- *      Returns the latest revision/autosave of a page for front-end preview.
+ *      Returns the latest revision/autosave of a page or post for front-end preview.
  *  • Rewrites the WP "Preview" button URL to point at the React front-end.
+ *  • Adds a branded link control to the Classic Editor for blog posts only.
  *  • Hides the "Posts" menu (not used on this photography site).
  *  • Sets the admin default landing page to Pages instead of the Dashboard.
  *  • Removes unnecessary dashboard widgets to declutter the admin.
@@ -811,9 +812,8 @@ function sz_find_attachment_by_source_url( string $source_url ): int {
 //
 // GET /wp-json/sz/v1/preview/<id>?secret=<SZ_PREVIEW_SECRET>
 //
-// Returns the latest autosave / revision of a page in the same shape as
-// the standard wp/v2/pages response, so the front-end BlockRenderer can
-// render it identically.
+// Returns the latest autosave / revision of a page or post with an explicit
+// type discriminator so the front end can use the matching renderer.
 
 add_action( 'rest_api_init', function () {
 	register_rest_route( 'sz/v1', '/preview/(?P<id>\d+)', [
@@ -836,7 +836,7 @@ add_action( 'rest_api_init', function () {
 } );
 
 /**
- * REST callback: return the latest revision of a page for preview.
+ * REST callback: return the latest revision of a page or post for preview.
  */
 function sz_get_preview( WP_REST_Request $request ) {
 	// Validate shared secret
@@ -850,50 +850,69 @@ function sz_get_preview( WP_REST_Request $request ) {
 	$post_id = (int) $request->get_param( 'id' );
 	$post    = get_post( $post_id );
 
-	if ( ! $post || $post->post_type !== 'page' ) {
-		return new WP_REST_Response( [ 'message' => 'Page not found.' ], 404 );
+	if ( ! $post || ! in_array( $post->post_type, [ 'page', 'post' ], true ) ) {
+		return new WP_REST_Response( [ 'message' => 'Preview content not found.' ], 404 );
 	}
 
 	// Try to get the latest autosave (preview revision)
 	$autosave = wp_get_post_autosave( $post_id );
 	$source   = $autosave ?: $post;
+	$title    = [ 'rendered' => get_the_title( $source ) ];
+	$content  = [ 'rendered' => apply_filters( 'the_content', $source->post_content ) ];
+	$excerpt  = [ 'rendered' => get_the_excerpt( $source ) ];
 
-	// Build a response matching the WPPage interface.
-	// ACF values (especially repeater + WYSIWYG combinations like pricing packages)
-	// are often not persisted on autosave/revision posts, so fall back to the
-	// parent page ID when revision ACF is empty.
-	$acf_data = [];
-	if ( function_exists( 'get_fields' ) ) {
-		$acf_data = get_fields( $source->ID );
+	if ( $post->post_type === 'post' ) {
+		$post_data                 = sz_format_post_for_rest( $post );
+		$post_data['title']        = $title;
+		$post_data['content']      = $content;
+		$post_data['excerpt']      = $excerpt;
+		$post_data['reading_time'] = max( 1, (int) round( str_word_count( wp_strip_all_tags( $source->post_content ) ) / 200 ) );
 
-		if ( ( $acf_data === false || empty( $acf_data ) ) && $source->ID !== $post_id ) {
-			$acf_data = get_fields( $post_id );
+		$preview = [
+			'type'    => 'post',
+			'content' => $post_data,
+		];
+	} else {
+		// ACF revision data can be absent, so fall back to the saved page fields.
+		$acf_data = [];
+		if ( function_exists( 'get_fields' ) ) {
+			$acf_data = get_fields( $source->ID );
+
+			if ( ( $acf_data === false || empty( $acf_data ) ) && $source->ID !== $post_id ) {
+				$acf_data = get_fields( $post_id );
+			}
 		}
-	}
 
-	if ( is_array( $acf_data ) && ! empty( $acf_data['blocks'] ) && is_array( $acf_data['blocks'] ) ) {
-		$acf_data['blocks'] = array_map( 'sz_normalize_block_images', $acf_data['blocks'] );
-	}
+		if ( is_array( $acf_data ) && ! empty( $acf_data['blocks'] ) && is_array( $acf_data['blocks'] ) ) {
+			$acf_data['blocks'] = array_map( 'sz_normalize_block_images', $acf_data['blocks'] );
+		}
 
-	$response = [
-		'id'      => $post_id,
-		'slug'    => $post->post_name,
-		'status'  => $post->post_status,
-		'title'   => [ 'rendered' => get_the_title( $source ) ],
-		'content' => [ 'rendered' => apply_filters( 'the_content', $source->post_content ) ],
-		'excerpt' => [ 'rendered' => get_the_excerpt( $source ) ],
-		'acf'     => $acf_data ?: new stdClass(),
-	];
+		$page_data = [
+			'id'             => $post_id,
+			'slug'           => $post->post_name,
+			'parent'         => (int) $post->post_parent,
+			'status'         => $post->post_status,
+			'title'          => $title,
+			'content'        => $content,
+			'excerpt'        => $excerpt,
+			'acf'            => $acf_data ?: new stdClass(),
+			'featured_image' => sz_resolve_image( get_post_thumbnail_id( $post_id ) ),
+		];
 
-	// Include Yoast SEO meta if available
-	if ( class_exists( 'WPSEO_Meta' ) ) {
-		$response['yoast_head_json'] = [
-			'title'       => WPSEO_Meta::get_value( 'title', $post_id ),
-			'description' => WPSEO_Meta::get_value( 'metadesc', $post_id ),
+		if ( class_exists( 'WPSEO_Meta' ) ) {
+			$page_data['yoast_head_json'] = [
+				'title'       => WPSEO_Meta::get_value( 'title', $post_id ),
+				'description' => WPSEO_Meta::get_value( 'metadesc', $post_id ),
+			];
+		}
+
+		$preview = [
+			'type'    => 'page',
+			'content' => $page_data,
 		];
 	}
 
-	return new WP_REST_Response( $response, 200 );
+	return new WP_REST_Response( $preview, 200 );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1039,6 +1058,50 @@ add_filter( 'use_block_editor_for_post_type', function ( $use_block_editor, $pos
 
 	return $use_block_editor;
 }, 10, 2 );
+
+/**
+ * Add a branded link control beside Add Media in the main post editor.
+ * Pages use ACF button blocks and intentionally do not receive this control.
+ */
+add_action( 'media_buttons', function ( $editor_id ) {
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( $editor_id !== 'content' || ! $screen || $screen->base !== 'post' || $screen->post_type !== 'post' ) {
+		return;
+	}
+
+	echo '<button type="button" class="button sz-add-post-button" data-editor-id="content">';
+	echo '<span class="dashicons dashicons-button" aria-hidden="true"></span> ';
+	echo esc_html__( 'Add Button', 'studio-zanetti' );
+	echo '</button>';
+}, 20 );
+
+add_action( 'admin_enqueue_scripts', function ( $hook ) {
+	if ( $hook !== 'post.php' && $hook !== 'post-new.php' ) {
+		return;
+	}
+
+	$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if ( ! $screen || $screen->post_type !== 'post' ) {
+		return;
+	}
+
+	$script_path = __DIR__ . '/assets/post-editor-button.js';
+	if ( ! file_exists( $script_path ) ) {
+		return;
+	}
+	$script_url = defined( 'WPMU_PLUGIN_URL' )
+		? WPMU_PLUGIN_URL . '/assets/post-editor-button.js'
+		: content_url( 'mu-plugins/assets/post-editor-button.js' );
+
+	wp_enqueue_style( 'dashicons' );
+	wp_enqueue_script(
+		'sz-post-editor-button',
+		$script_url,
+		[],
+		(string) filemtime( $script_path ),
+		true
+	);
+} );
 
 /**
  * Extra safety: disable block patterns globally in admin.

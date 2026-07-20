@@ -1,37 +1,8 @@
-@use '~/styles/global' as g;
-
-:global(:root) {
-  --color-button-primary-bg: #ffbdcd;
-  --color-button-primary-bg-hover: #eb8ba0;
-  --color-button-primary-text: #121212;
-  --color-button-primary-text-hover: #121212;
-}
+@use '~/styles/button' as button;
 
 // ─── Base ────────────────────────────────────────────────────────────────────
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  font-family: inherit;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-decoration: none;
-  border: 2px solid transparent;
-  border-radius: 999px;
-  cursor: pointer;
-  transition:
-    background g.$transition-fast,
-    color g.$transition-fast,
-    border-color g.$transition-fast,
-    box-shadow g.$transition-fast,
-    opacity g.$transition-fast,
-    transform g.$transition-fast;
-
-  &:focus-visible {
-    outline: 3px solid var(--color-accent);
-    outline-offset: 2px;
-  }
+  @include button.base;
 
   &:disabled {
     opacity: 0.6;
@@ -53,10 +24,7 @@
 }
 
 .sizeMd {
-  font-size: var(--text-sm);
-  padding: 0.85rem 2rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  @include button.medium;
 }
 
 .sizeLg {
@@ -68,15 +36,7 @@
 
 // ─── Primary ─────────────────────────────────────────────────────────────────
 .primary {
-  background: var(--color-button-primary-bg);
-  color: var(--color-button-primary-text);
-  border-color: var(--color-button-primary-bg);
-
-  &:hover {
-    background: transparent;
-    color: var(--color-button-primary-text);
-    border-color: var(--color-button-primary-bg-hover);
-  }
+  @include button.primary;
 
   &:disabled {
     background: var(--color-mid-gray);

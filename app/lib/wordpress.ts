@@ -36,6 +36,7 @@ import type {
   WPMenuItem,
   WPPage,
   WPPost,
+  WPPreviewContent,
   WPSiteSettings,
 } from '~/types/wordpress'
 
@@ -53,6 +54,10 @@ interface RawWPPage extends WPPage {
     'wp:featuredmedia'?: RawWPEmbeddedMedia[]
   }
 }
+
+type RawWPPreviewContent =
+  | { type: 'page'; content: RawWPPage }
+  | { type: 'post'; content: WPPost }
 
 // ─── Image normalisation ─────────────────────────────────────────────────────
 //
@@ -263,12 +268,15 @@ export function clearCache(): void {
 }
 
 /** Low-level typed fetch with in-process cache and error isolation. */
-async function wpFetch<T>(path: string): Promise<T | null> {
+async function wpFetch<T>(
+  path: string,
+  options: { cache?: boolean } = {},
+): Promise<T | null> {
   const baseUrl = getWpUrl()
   if (!baseUrl) return null
 
   const url = `${baseUrl}/wp-json${path}`
-  const cacheTtlMs = getCacheTtlMs()
+  const cacheTtlMs = options.cache === false ? 0 : getCacheTtlMs()
 
   if (cacheTtlMs > 0) {
     const cached = _cache.get(url)
@@ -393,12 +401,22 @@ function decodeMenuTitles(items: WPMenuItem[]): WPMenuItem[] {
 }
 
 /**
- * Fetch a page preview by post ID and a shared secret.
- * Used by the /preview route to render draft content from WordPress.
+ * Fetch preview content by WordPress object ID and a shared secret.
+ * Preview responses bypass the optional process cache so autosaves stay current.
  */
-export async function getPreviewPage(id: number, secret: string): Promise<WPPage | null> {
-  const page = await wpFetch<RawWPPage>(`/sz/v1/preview/${id}?secret=${encodeURIComponent(secret)}`)
-  return page ? normalizePage(page) : null
+export async function getPreviewContent(
+  id: number,
+  secret: string,
+): Promise<WPPreviewContent | null> {
+  const preview = await wpFetch<RawWPPreviewContent>(
+    `/sz/v1/preview/${id}?secret=${encodeURIComponent(secret)}`,
+    { cache: false },
+  )
+  if (!preview) return null
+
+  return preview.type === 'page'
+    ? { type: 'page', content: normalizePage(preview.content) }
+    : preview
 }
 
 /** Default site settings used when WP is unavailable or options page not yet configured. */

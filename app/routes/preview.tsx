@@ -2,19 +2,32 @@ import { useEffect, useState } from 'react'
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
 import { useLoaderData } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
+import BlogPostPage from '~/components/BlogPostPage'
 import RichText from '~/components/RichText'
 import { stripSensitiveFormBlockData } from '~/lib/forms'
 import { stripHtml } from '~/lib/html'
-import { getPostsByCategories, getPreviewPage } from '~/lib/wordpress'
-import type { BlogPostsData, WPPage } from '~/types/wordpress'
+import { toCanonicalUrl } from '~/lib/seo'
+import { getPostsByCategories, getPreviewContent, getRelatedPosts } from '~/lib/wordpress'
+import type { BlogPostsData, WPPage, WPPost } from '~/types/wordpress'
 import styles from './preview.module.scss'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-interface PreviewLoaderData {
+interface PagePreviewLoaderData {
+  type: 'page'
   page: WPPage
   isIframe: boolean
   blogPostsData?: BlogPostsData
 }
+
+interface PostPreviewLoaderData {
+  type: 'post'
+  post: WPPost
+  isIframe: boolean
+  relatedPosts: WPPost[]
+  canonicalUrl: string
+}
+
+type PreviewLoaderData = PagePreviewLoaderData | PostPreviewLoaderData
 
 interface DraftPreviewMessage {
   source: 'sz-editor'
@@ -89,10 +102,24 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<PreviewLo
 
   if (!id) throw new Response('Missing preview id', { status: 400 })
 
-  const page = await getPreviewPage(Number(id), secret)
-  if (!page) throw new Response('Preview not found or secret invalid', { status: 404 })
+  const preview = await getPreviewContent(Number(id), secret)
+  if (!preview) throw new Response('Preview not found or secret invalid', { status: 404 })
 
-  const publicPage = stripSensitiveFormBlockData(page)
+  if (preview.type === 'post') {
+    const post = preview.content
+    const categoryIds = post.categories.map((category) => category.id)
+    const relatedPosts = await getRelatedPosts(post.id, categoryIds, 3)
+
+    return {
+      type: 'post',
+      post,
+      isIframe,
+      relatedPosts,
+      canonicalUrl: toCanonicalUrl(`/${post.slug}`),
+    }
+  }
+
+  const publicPage = stripSensitiveFormBlockData(preview.content)
 
   // If the page has a blog_posts block, pre-fetch posts for preview
   let blogPostsData: BlogPostsData | undefined
@@ -107,22 +134,26 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<PreviewLo
     blogPostsData = await getPostsByCategories(categoryIds, 1, perPage)
   }
 
-  return { page: publicPage, isIframe, blogPostsData }
+  return { type: 'page', page: publicPage, isIframe, blogPostsData }
 }
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data) return [{ title: 'Preview | Studio Zanetti' }]
-  const pageTitle = stripHtml(data.page.title.rendered)
+  const title = stripHtml(data.type === 'page' ? data.page.title.rendered : data.post.title.rendered)
   return [
-    { title: `Preview: ${pageTitle} | Studio Zanetti` },
+    { title: `Preview: ${title} | Studio Zanetti` },
     { name: 'robots', content: 'noindex, nofollow' },
   ]
 }
 
 // ─── Route component ──────────────────────────────────────────────────────────
-const PreviewPage = () => {
-  const loaderData = useLoaderData<typeof loader>()
-  const { page, isIframe, blogPostsData } = loaderData
+interface PagePreviewProps {
+  page: WPPage
+  isIframe: boolean
+  blogPostsData?: BlogPostsData
+}
+
+const PagePreview = ({ page, isIframe, blogPostsData }: PagePreviewProps) => {
   const [draftPageOverride, setDraftPageOverride] = useState<Partial<WPPage> | null>(null)
   const [draftBlogPostsData, setDraftBlogPostsData] = useState<BlogPostsData | undefined>(
     undefined,
@@ -162,33 +193,53 @@ const PreviewPage = () => {
 
   const blocks = currentPage.acf?.blocks
 
+  if (blocks?.length) {
+    return (
+      <BlockRenderer
+        blocks={blocks}
+        interactive={isIframe}
+        blogPostsData={currentBlogPostsData}
+      />
+    )
+  }
+
+  return (
+    <div className={styles.page}>
+      <header className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>{stripHtml(currentPage.title.rendered)}</h1>
+      </header>
+      <div className={styles.pageContent}>
+        <RichText html={currentPage.content.rendered} />
+      </div>
+    </div>
+  )
+}
+
+const PreviewPage = () => {
+  const data = useLoaderData<typeof loader>()
+
   return (
     <div className={styles.previewWrapper}>
-      {/* Hide the preview banner when embedded in the WordPress editor iframe */}
-      {!isIframe && (
+      {!data.isIframe && (
         <div className={styles.previewBanner} role="status">
           <p>
-            <strong>Preview Mode</strong> — You are viewing a draft. This page is not publicly
-            visible.
+            <strong>Preview Mode</strong> — You are viewing unpublished content.
           </p>
         </div>
       )}
 
-      {blocks?.length ? (
-        <BlockRenderer
-          blocks={blocks}
-          interactive={isIframe}
-          blogPostsData={currentBlogPostsData}
+      {data.type === 'post' ? (
+        <BlogPostPage
+          post={data.post}
+          relatedPosts={data.relatedPosts}
+          canonicalUrl={data.canonicalUrl}
         />
       ) : (
-        <div className={styles.page}>
-          <header className={styles.pageHeader}>
-            <h1 className={styles.pageTitle}>{stripHtml(currentPage.title.rendered)}</h1>
-          </header>
-          <div className={styles.pageContent}>
-            <RichText html={currentPage.content.rendered} />
-          </div>
-        </div>
+        <PagePreview
+          page={data.page}
+          isIframe={data.isIframe}
+          blogPostsData={data.blogPostsData}
+        />
       )}
     </div>
   )

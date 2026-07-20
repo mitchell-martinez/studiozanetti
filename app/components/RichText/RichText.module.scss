@@ -1,3 +1,5 @@
+@use '~/styles/button' as button;
+
 // ─── Rich text (WP WYSIWYG / Gutenberg content) ───────────────────────────────
 .richText {
   color: #555;
@@ -31,6 +33,26 @@
   a {
     color: var(--color-gold);
     text-decoration: underline;
+  }
+
+  :global(.sz-post-button) {
+    display: flex;
+    width: 100%;
+    margin: 1.5rem 0;
+
+    &:global(.sz-post-button--left) {
+      justify-content: flex-start;
+    }
+
+    &:global(.sz-post-button--center) {
+      justify-content: center;
+    }
+  }
+
+  :global(.sz-post-button__link) {
+    @include button.base;
+    @include button.medium;
+    @include button.primary;
   }
 
   ul,

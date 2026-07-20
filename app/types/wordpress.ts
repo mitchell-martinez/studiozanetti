@@ -567,6 +567,10 @@ export interface WPPage {
   featured_image?: WPImage
 }
 
+export type WPPreviewContent =
+  | { type: 'page'; content: WPPage }
+  | { type: 'post'; content: WPPost }
+
 // ─── Gallery Custom Post Type ──────────────────────────────────────────────────
 //
 // WORDPRESS SETUP — Custom Post Type slug: gallery_photo

@@ -12,7 +12,7 @@ import {
     getNavMenu,
     getPageByPath,
     getPageBySlug,
-    getPreviewPage,
+    getPreviewContent,
     getSiteSettings,
 } from '../wordpress'
 
@@ -201,25 +201,55 @@ describe('getNavMenu', () => {
   })
 })
 
-describe('getPreviewPage', () => {
-  it('fetches a page preview with the secret', async () => {
-    mockFetch.mockReturnValueOnce(ok(mockPage))
-    const result = await getPreviewPage(1, 'test-secret')
-    expect(result).toEqual(mockPage)
+describe('getPreviewContent', () => {
+  it('fetches and normalizes a page preview with the secret', async () => {
+    mockFetch.mockReturnValueOnce(ok({ type: 'page', content: mockPage }))
+    const result = await getPreviewContent(1, 'test-secret')
+    expect(result).toEqual({ type: 'page', content: mockPage })
     expect(mockFetch).toHaveBeenCalledWith(
       `${WP_URL}/wp-json/sz/v1/preview/1?secret=test-secret`,
       expect.objectContaining({ headers: { Accept: 'application/json' } }),
     )
   })
 
+  it('preserves a private post preview contract', async () => {
+    const privatePost = {
+      id: 2,
+      slug: 'private-post',
+      status: 'private',
+      title: { rendered: 'Private post' },
+      content: { rendered: '<p>Private content</p>' },
+      excerpt: { rendered: '' },
+      date: '2026-07-20T10:00:00+00:00',
+      modified: '2026-07-20T10:00:00+00:00',
+      categories: [],
+    }
+    mockFetch.mockReturnValueOnce(ok({ type: 'post', content: privatePost }))
+
+    expect(await getPreviewContent(2, 'test-secret')).toEqual({
+      type: 'post',
+      content: privatePost,
+    })
+  })
+
+  it('never caches preview responses', async () => {
+    vi.stubEnv('WORDPRESS_CACHE_TTL_SECONDS', '60')
+    mockFetch.mockReturnValue(ok({ type: 'page', content: mockPage }))
+
+    await getPreviewContent(1, 'test-secret')
+    await getPreviewContent(1, 'test-secret')
+
+    expect(mockFetch).toHaveBeenCalledTimes(2)
+  })
+
   it('returns null when the preview is not found', async () => {
     mockFetch.mockReturnValueOnce(fail(404))
-    expect(await getPreviewPage(999, 'test-secret')).toBeNull()
+    expect(await getPreviewContent(999, 'test-secret')).toBeNull()
   })
 
   it('returns null when the secret is invalid', async () => {
     mockFetch.mockReturnValueOnce(fail(403))
-    expect(await getPreviewPage(1, 'wrong-secret')).toBeNull()
+    expect(await getPreviewContent(1, 'wrong-secret')).toBeNull()
   })
 })
 

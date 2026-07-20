@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import RichText from '../index'
 
 describe('RichText', () => {
@@ -44,6 +44,16 @@ describe('RichText', () => {
     expect(image).toHaveAttribute(
       'src',
       'https://studiozanetti.com.au/uploads/pricing.webp',
+    )
+  })
+
+  it.each(['left', 'center'])('renders a %s-aligned post button link', (alignment) => {
+    const html = `<p class="sz-post-button sz-post-button--${alignment}"><a class="sz-post-button__link" href="/contact">Enquire now</a></p>`
+    const { container } = render(<RichText html={html} />)
+
+    expect(screen.getByRole('link', { name: 'Enquire now' })).toHaveAttribute('href', '/contact')
+    expect(container.querySelector('.sz-post-button')).toHaveClass(
+      `sz-post-button--${alignment}`,
     )
   })
 })

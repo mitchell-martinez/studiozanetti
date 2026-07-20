@@ -45,3 +45,10 @@ export const PlainTextLineBreaks: Story = {
     html: 'Line one of the address\nLine two of the address\nLine three of the address',
   },
 }
+
+/** Semantic CTA markup inserted by the post-only Classic Editor control. */
+export const PostButtons: Story = {
+  args: {
+    html: '<p class="sz-post-button sz-post-button--center"><a class="sz-post-button__link" href="/contact">Enquire now</a></p><p class="sz-post-button sz-post-button--left"><a class="sz-post-button__link" href="/blog">Read more</a></p>',
+  },
+}

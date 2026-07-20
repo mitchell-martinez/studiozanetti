@@ -20,6 +20,16 @@ No special configuration needed. Any content written in:
 
 ...is rendered by this component with consistent styling.
 
+Blog post authors can select **Add Button** beside **Add Media** in the main Classic Editor. WordPress inserts a semantic link using this stable markup contract:
+
+```html
+<p class="sz-post-button sz-post-button--center">
+  <a class="sz-post-button__link" href="/contact">Enquire now</a>
+</p>
+```
+
+The wrapper also accepts `sz-post-button--left`. These links share the primary medium button style used by the React Button component. This authoring control is intentionally limited to blog posts; pages use the ACF Button Group block.
+
 ---
 
 ## Props
