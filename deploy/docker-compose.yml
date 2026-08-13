@@ -1,0 +1,88 @@
+name: studiozanetti
+
+services:
+  studiozanetti-db:
+    image: ${MYSQL_IMAGE:-mysql:8}
+    command: --innodb-buffer-pool-size=128M --performance-schema=OFF
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - wordpress-db-data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h localhost -u "$$MYSQL_USER" -p"$$MYSQL_PASSWORD" --silent || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - studiozanetti
+    restart: unless-stopped
+
+  studiozanetti-wordpress:
+    image: ${WORDPRESS_IMAGE:-wordpress:latest}
+    depends_on:
+      studiozanetti-db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: studiozanetti-db
+      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME', 'https://studiozanetti.com.au');
+        define('WP_SITEURL', 'https://studiozanetti.com.au');
+        define('FORCE_SSL_ADMIN', true);
+        if (isset($$_SERVER['HTTP_X_FORWARDED_PROTO']) && $$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+          $$_SERVER['HTTPS'] = 'on';
+        }
+    volumes:
+      - wordpress-data:/var/www/html
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+    networks:
+      - edge
+      - studiozanetti
+    restart: unless-stopped
+
+  studiozanetti:
+    image: ${STUDIOZANETTI_IMAGE:-ghcr.io/mitchell-martinez/studiozanetti:main}
+    expose:
+      - '3000'
+    depends_on:
+      studiozanetti-wordpress:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: ${PORT}
+      WORDPRESS_URL: http://studiozanetti-wordpress
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+      SMTP_FROM_HEADER_EMAIL: ${SMTP_FROM_HEADER_EMAIL}
+      SMTP_HELO_NAME: ${SMTP_HELO_NAME}
+      FORM_RATE_LIMIT_WINDOW_MS: ${FORM_RATE_LIMIT_WINDOW_MS}
+      FORM_RATE_LIMIT_MAX_REQUESTS: ${FORM_RATE_LIMIT_MAX_REQUESTS}
+      VSCO_WORKSPACE_SECRET_KEY: ${VSCO_WORKSPACE_SECRET_KEY}
+      VSCO_WORKSPACE_STUDIO_ID: ${VSCO_WORKSPACE_STUDIO_ID}
+      VSCO_WORKSPACE_TIMEOUT_MS: ${VSCO_WORKSPACE_TIMEOUT_MS}
+    networks:
+      - edge
+      - studiozanetti
+    restart: unless-stopped
+
+volumes:
+  wordpress-data:
+    external: true
+    name: ${WORDPRESS_DATA_VOLUME}
+  wordpress-db-data:
+    external: true
+    name: ${WORDPRESS_DB_DATA_VOLUME}
+
+networks:
+  edge:
+    external: true
+    name: ${EDGE_NETWORK}
+  studiozanetti:

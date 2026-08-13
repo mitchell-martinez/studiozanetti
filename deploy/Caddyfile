@@ -1,0 +1,19 @@
+www.studiozanetti.com.au {
+	redir https://studiozanetti.com.au{uri} 308
+}
+
+studiozanetti.com.au {
+	redir /wp-admin /wp-admin/ 308
+
+	@wordpress {
+		path /wp-admin* /wp-login.php* /wp-json* /wp-content* /wp-includes* /wp-cron.php* /xmlrpc.php*
+	}
+
+	handle @wordpress {
+		reverse_proxy studiozanetti-wordpress:80
+	}
+
+	handle {
+		reverse_proxy studiozanetti:3000
+	}
+}

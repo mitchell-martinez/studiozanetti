@@ -8,9 +8,8 @@
 #
 # Deployment model
 # ────────────────
-#   All services on the VPS are managed by a single master docker-compose.yml.
-#   CI simply SSHs in, pulls the new image, and
-#   restarts the appropriate service.
+#   Studio's services run as an independent Compose project at
+#   /home/deploy/studiozanetti on the VPS.
 #
 # Pipeline stages
 # ───────────────
@@ -26,11 +25,6 @@
 #                        must be in ~/.ssh/authorized_keys on the VPS
 #   GHCR_TOKEN           GitHub Personal Access Token with read:packages scope
 #                        Used by the VPS to pull Docker images from ghcr.io
-#   WP_MUPLUGINS_PATH    Absolute path on VPS to the WordPress mu-plugins directory
-#                        e.g. /var/lib/docker/volumes/<vol>/_data/wp-content/mu-plugins/
-#   COMPOSE_DIR          Absolute path on VPS to the docker compose project directory
-#                        e.g. /home/deploy/myproject
-#
 # Required GitHub Variables (Settings → Secrets and variables → Actions → Variables)
 # ─────────────────────────────────────────────────────────────────────────────
 #   PRODUCTION_URL       Full URL of the production environment (used for environment link)
@@ -93,12 +87,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve image tag
-        id: tag
-        run: |
-          BRANCH="${GITHUB_REF#refs/heads/}"
-          echo "value=ghcr.io/${{ github.repository }}:${BRANCH}" >> "$GITHUB_OUTPUT"
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -107,7 +95,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.tag.outputs.value }}
+          tags: |
+            ghcr.io/${{ github.repository }}:main
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -141,22 +131,28 @@ jobs:
 
           ssh -i ~/.ssh/deploy_key \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            'docker exec wordpress mkdir -p /var/www/html/wp-content/mu-plugins && \
-             docker cp /tmp/sz-mu-plugins/. wordpress:/var/www/html/wp-content/mu-plugins/ && \
+            'cd ~/studiozanetti && \
+             wordpress_id="$(docker compose ps -q studiozanetti-wordpress)" && \
+             test -n "$wordpress_id" && \
+             docker exec "$wordpress_id" mkdir -p /var/www/html/wp-content/mu-plugins && \
+             docker cp /tmp/sz-mu-plugins/. "$wordpress_id:/var/www/html/wp-content/mu-plugins/" && \
              rm -rf /tmp/sz-mu-plugins'
 
       - name: Pull image and restart production service
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           GHCR_USER: ${{ github.repository_owner }}
+          STUDIOZANETTI_IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
         run: |
           ssh -i ~/.ssh/deploy_key \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            "GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' bash -s" << 'ENDSSH'
+            "GHCR_TOKEN='${GHCR_TOKEN}' GHCR_USER='${GHCR_USER}' STUDIOZANETTI_IMAGE='${STUDIOZANETTI_IMAGE}' bash -s" << 'ENDSSH'
               echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
-              cd ${{ secrets.COMPOSE_DIR }}
+              cd ~/studiozanetti
+              sed -i "s|^STUDIOZANETTI_IMAGE=.*|STUDIOZANETTI_IMAGE=${STUDIOZANETTI_IMAGE}|" .env
               docker compose pull studiozanetti
-              docker compose up -d --no-deps studiozanetti
+              docker compose up -d --no-deps --force-recreate studiozanetti
+              docker compose ps studiozanetti
               docker image prune -f
               docker logout ghcr.io
           ENDSSH
