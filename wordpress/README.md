@@ -235,9 +235,12 @@ The feature is disabled when `SZ_WEBSITE_HELP_ENABLED` is absent or false. Confi
 SZ_WEBSITE_HELP_ENABLED=false
 SZ_OPENAI_API_KEY=replace-with-a-dedicated-project-key
 SZ_OPENAI_MODEL=gpt-5-mini
+SZ_WEBSITE_HELP_REPORT_EMAIL=replace-with-the-private-support-mailbox
 ```
 
 Use a dedicated Studio Zanetti OpenAI project and project service account under the existing organization/billing account. Disable provider input/output sharing for the production project. The server sends Responses API requests with `store: false`; the API key remains in PHP and is never localized to the browser.
+
+Answer reporting also requires the existing `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME`, `SMTP_FROM_HEADER_EMAIL`, and `SMTP_HELO_NAME` settings. The flag appears beside assistant answers only when both the private report mailbox and SMTP relay are configured. After confirmation, the server re-reads the owned conversation and emails the stored prompt and response; it never accepts transcript text from the browser. Each answer can be reported once.
 
 #### Privacy and history
 
@@ -247,6 +250,7 @@ Use a dedicated Studio Zanetti OpenAI project and project service account under 
 - On recognized editors, the initial request sends only screen metadata. The model may request one narrow, read-only scope at a time, for at most two rounds.
 - The browser extracts only the server-approved scope; PHP verifies and sanitizes it again. Raw editor snapshots are never retained in history.
 - Recipient addresses, personal default values, VSCO mapping/configuration, credentials, nonces, cookies, file data, and raw URLs are excluded.
+- Reporting an inaccurate answer sends its stored question and response to the configured private support mailbox. It does not send raw editor context.
 
 #### Handbook maintenance
 
@@ -266,7 +270,7 @@ If the assistant is unavailable, confirm the enable flag, key, model, outbound H
 
 1. Deploy the additive MU-plugin files with `SZ_WEBSITE_HELP_ENABLED=false`.
 2. Confirm normal page, gallery, menu, preview, Site Settings, and SEO behavior.
-3. Add the dedicated key/model to the VPS environment. The production workflow stages the versioned Compose file, verifies that the live file still matches the last deployed checksum, and only then applies WordPress configuration changes. Unexpected VPS edits stop deployment instead of being overwritten. The secret-bearing VPS `.env` remains server-managed and is never copied from the repository.
+3. Add the dedicated key/model and private report mailbox to the VPS environment. The production workflow stages the versioned Compose file, verifies that the live file still matches the last deployed checksum, and only then applies WordPress configuration changes. Unexpected VPS edits stop deployment instead of being overwritten. The secret-bearing VPS `.env` remains server-managed and is never copied from the repository.
 4. Recreate only the WordPress service and validate as an Administrator.
 5. Set `SZ_WEBSITE_HELP_ENABLED=true`, recreate only WordPress, then validate as an Editor.
 6. Roll back immediately by setting the flag to false. Stored help history remains available for a later re-enable or user deletion.

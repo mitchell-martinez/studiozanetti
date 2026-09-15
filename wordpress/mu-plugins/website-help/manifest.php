@@ -1,7 +1,7 @@
 <?php
 
 return [
-	'knowledge_version' => '1.1.0',
+	'knowledge_version' => '1.2.0',
 	'updated_at'        => '2026-09-15',
 	'topics'            => [
 		[

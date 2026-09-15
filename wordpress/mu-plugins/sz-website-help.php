@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Studio Zanetti - Website Help
  * Description: Private, read-only WordPress guidance for Studio Zanetti editors.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Studio Zanetti
  */
 
@@ -151,13 +151,17 @@ function sz_website_help_thread_payload( WP_Post $thread, bool $with_messages = 
 		'modified' => get_post_modified_time( DATE_ATOM, true, $thread ),
 	];
 	if ( $with_messages ) {
-		$payload['messages'] = array_map( static function ( array $message ): array {
+		$payload['messages'] = [];
+		foreach ( sz_website_help_thread_messages( $thread->ID ) as $message_index => $message ) {
 			if ( 'assistant' === ( $message['role'] ?? '' ) ) {
 				$message['sources'] = sz_website_help_source_links( is_array( $message['source_topic_ids'] ?? null ) ? $message['source_topic_ids'] : [] );
+				$message['message_index'] = (int) $message_index;
+				$report = get_post_meta( $thread->ID, '_sz_help_report_' . (int) $message_index, true );
+				$message['report_state'] = sz_website_help_report_claim_state( $report, time() );
 			}
 
-			return $message;
-		}, sz_website_help_thread_messages( $thread->ID ) );
+			$payload['messages'][] = $message;
+		}
 	}
 
 	$payload['context_labels'] = array_values( array_filter( array_map( static function ( array $message ) {
@@ -464,6 +468,175 @@ function sz_website_help_ajax_get_thread(): void {
 }
 add_action( 'wp_ajax_sz_website_help_get_thread', 'sz_website_help_ajax_get_thread' );
 
+function sz_website_help_report_recipient(): string {
+	$raw_recipient = getenv( 'SZ_WEBSITE_HELP_REPORT_EMAIL' );
+	$recipient = sz_website_help_report_recipient_value( false === $raw_recipient ? '' : $raw_recipient );
+
+	return '' !== $recipient && is_email( $recipient ) && sanitize_email( $recipient ) === $recipient ? $recipient : '';
+}
+
+function sz_website_help_reporting_enabled(): bool {
+	return '' !== sz_website_help_report_recipient()
+		&& false !== getenv( 'SMTP_HOST' )
+		&& '' !== trim( (string) getenv( 'SMTP_HOST' ) )
+		&& false !== getenv( 'SMTP_FROM_EMAIL' )
+		&& '' !== sanitize_email( (string) getenv( 'SMTP_FROM_EMAIL' ) );
+}
+
+function sz_website_help_configure_report_mailer( $phpmailer ): void {
+	$phpmailer->isSMTP();
+	$phpmailer->Host = trim( (string) getenv( 'SMTP_HOST' ) );
+	$phpmailer->Port = max( 1, (int) ( getenv( 'SMTP_PORT' ) ?: 587 ) );
+	$phpmailer->Timeout = 30;
+	$phpmailer->SMTPAuth = false;
+	$phpmailer->SMTPAutoTLS = true;
+	if ( 'true' === strtolower( trim( (string) getenv( 'SMTP_SECURE' ) ) ) ) {
+		$phpmailer->SMTPSecure = 465 === $phpmailer->Port ? 'ssl' : 'tls';
+	}
+	$helo_name = trim( (string) getenv( 'SMTP_HELO_NAME' ) );
+	if ( '' !== $helo_name ) {
+		$phpmailer->Hostname = $helo_name;
+	}
+	$envelope_from = sanitize_email( (string) getenv( 'SMTP_FROM_EMAIL' ) );
+	if ( '' !== $envelope_from ) {
+		$phpmailer->Sender = $envelope_from;
+	}
+}
+
+function sz_website_help_report_from_email( string $default ): string {
+	$header_from = sanitize_email( (string) getenv( 'SMTP_FROM_HEADER_EMAIL' ) );
+	if ( '' === $header_from ) {
+		$header_from = sanitize_email( (string) getenv( 'SMTP_FROM_EMAIL' ) );
+	}
+
+	return '' !== $header_from ? $header_from : $default;
+}
+
+function sz_website_help_report_from_name( string $default ): string {
+	$from_name = sanitize_text_field( (string) getenv( 'SMTP_FROM_NAME' ) );
+
+	return '' !== $from_name ? $from_name : $default;
+}
+
+function sz_website_help_send_report_email( array $exchange, int $thread_id ): bool {
+	if ( ! sz_website_help_reporting_enabled() ) {
+		return false;
+	}
+
+	add_action( 'phpmailer_init', 'sz_website_help_configure_report_mailer' );
+	add_filter( 'wp_mail_from', 'sz_website_help_report_from_email' );
+	add_filter( 'wp_mail_from_name', 'sz_website_help_report_from_name' );
+	try {
+		return wp_mail(
+			sz_website_help_report_recipient(),
+			__( 'Studio Zanetti Website Help answer report', 'studio-zanetti' ),
+			sz_website_help_report_email_body( $exchange, $thread_id ),
+			[ 'Content-Type: text/plain; charset=UTF-8' ]
+		);
+	} finally {
+		remove_action( 'phpmailer_init', 'sz_website_help_configure_report_mailer' );
+		remove_filter( 'wp_mail_from', 'sz_website_help_report_from_email' );
+		remove_filter( 'wp_mail_from_name', 'sz_website_help_report_from_name' );
+	}
+}
+
+function sz_website_help_report_meta_key( int $answer_index ): string {
+	return '_sz_help_report_' . $answer_index;
+}
+
+function sz_website_help_claim_report( int $thread_id, int $answer_index ) {
+	global $wpdb;
+
+	$lock_name = 'sz_help_report_' . $thread_id . '_' . $answer_index;
+	$lock_acquired = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, %d)', $lock_name, 5 ) );
+	if ( 1 !== $lock_acquired ) {
+		return new WP_Error( 'sz_help_report_busy', __( 'Website Help is busy. Please try again.', 'studio-zanetti' ) );
+	}
+
+	try {
+		$meta_key = sz_website_help_report_meta_key( $answer_index );
+		$current = get_post_meta( $thread_id, $meta_key, true );
+		$current_state = sz_website_help_report_claim_state( $current, time() );
+		if ( 'claimable' !== $current_state ) {
+			return [ 'claimed' => false, 'state' => $current_state ];
+		}
+
+		$claim = [
+			'state'      => 'pending',
+			'claimed_at' => time(),
+			'claim_id'   => bin2hex( random_bytes( 16 ) ),
+		];
+		$stored = $current
+			? update_post_meta( $thread_id, $meta_key, $claim, $current )
+			: add_post_meta( $thread_id, $meta_key, $claim, true );
+		if ( ! $stored || get_post_meta( $thread_id, $meta_key, true ) !== $claim ) {
+			return new WP_Error( 'sz_help_report_claim_failed', __( 'The report could not be prepared. Please try again.', 'studio-zanetti' ) );
+		}
+
+		return [ 'claimed' => true, 'state' => 'pending', 'claim' => $claim ];
+	} finally {
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock_name ) );
+	}
+}
+
+function sz_website_help_finish_report( int $thread_id, int $answer_index, array $claim, bool $sent ): void {
+	$meta_key = sz_website_help_report_meta_key( $answer_index );
+	if ( ! $sent ) {
+		update_post_meta( $thread_id, $meta_key, [
+			'state'      => 'failed',
+			'claimed_at' => (int) ( $claim['claimed_at'] ?? time() ),
+			'failed_at'  => time(),
+		], $claim );
+		return;
+	}
+
+	update_post_meta( $thread_id, $meta_key, [
+		'state'      => 'sent',
+		'claimed_at' => (int) ( $claim['claimed_at'] ?? time() ),
+		'sent_at'    => time(),
+	], $claim );
+}
+
+function sz_website_help_ajax_report_answer(): void {
+	sz_website_help_require_ajax();
+	if ( ! sz_website_help_reporting_enabled() ) {
+		wp_send_json_error( [ 'message' => __( 'Answer reporting is not configured yet.', 'studio-zanetti' ) ], 503 );
+	}
+
+	$thread = sz_website_help_get_owned_thread( isset( $_POST['thread_id'] ) ? absint( $_POST['thread_id'] ) : 0 );
+	if ( ! $thread ) {
+		wp_send_json_error( [ 'message' => __( 'That help conversation is unavailable.', 'studio-zanetti' ) ], 404 );
+	}
+	$answer_index = isset( $_POST['answer_index'] ) ? absint( $_POST['answer_index'] ) : 0;
+	$exchange = sz_website_help_report_exchange( sz_website_help_thread_messages( $thread->ID ), $answer_index );
+	if ( ! $exchange['valid'] ) {
+		wp_send_json_error( [ 'message' => __( 'That answer is unavailable.', 'studio-zanetti' ) ], 404 );
+	}
+
+	$claim = sz_website_help_claim_report( $thread->ID, $answer_index );
+	if ( is_wp_error( $claim ) ) {
+		wp_send_json_error( [ 'message' => $claim->get_error_message() ], 503 );
+	}
+	if ( ! $claim['claimed'] ) {
+		if ( 'sent' === $claim['state'] ) {
+			wp_send_json_success( [ 'report_state' => 'sent', 'already_reported' => true ] );
+		}
+		wp_send_json_error( [
+			'message'      => __( 'This answer report is still being sent.', 'studio-zanetti' ),
+			'report_state' => 'pending',
+		], 409 );
+	}
+
+	$sent = sz_website_help_send_report_email( $exchange, $thread->ID );
+	sz_website_help_finish_report( $thread->ID, $answer_index, $claim['claim'], $sent );
+	if ( ! $sent ) {
+		wp_send_json_error( [ 'message' => __( 'The report could not be sent. Please try again.', 'studio-zanetti' ) ], 502 );
+	}
+
+	wp_send_json_success( [ 'report_state' => 'sent', 'already_reported' => false ] );
+}
+add_action( 'wp_ajax_sz_website_help_report_answer', 'sz_website_help_ajax_report_answer' );
+
 function sz_website_help_ajax_create_thread(): void {
 	sz_website_help_require_ajax();
 	$thread_id = sz_website_help_create_thread();
@@ -614,12 +787,18 @@ add_action( 'admin_enqueue_scripts', function () {
 		'screenLabel'          => $screen ? (string) $screen->base : '',
 		'objectType'           => $post_type,
 		'liveContextAvailable' => $screen && 'post' === $screen->base && in_array( $post_type, [ 'page', 'post', 'sz_gallery' ], true ),
+		'reportingEnabled'     => sz_website_help_reporting_enabled(),
 		'strings'              => [
 			'loading'       => __( 'Checking the website handbook...', 'studio-zanetti' ),
 			'context'       => __( 'Checking the requested editor details...', 'studio-zanetti' ),
 			'error'         => __( 'Website Help could not complete that request.', 'studio-zanetti' ),
 			'confirmDelete' => __( 'Delete this conversation permanently?', 'studio-zanetti' ),
 			'confirmAll'    => __( 'Delete all of your Website Help history permanently?', 'studio-zanetti' ),
+			'confirmReport' => __( 'Send this question and answer to the webmaster for review?', 'studio-zanetti' ),
+			'reportAnswer'  => __( 'Report this answer as inaccurate', 'studio-zanetti' ),
+			'reportSending' => __( 'Sending...', 'studio-zanetti' ),
+			'reportPending' => __( 'Report is still sending. Refresh shortly to check its status.', 'studio-zanetti' ),
+			'reported'      => __( 'Reported', 'studio-zanetti' ),
 		],
 	] );
 } );

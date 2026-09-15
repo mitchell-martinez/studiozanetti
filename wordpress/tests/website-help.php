@@ -83,6 +83,52 @@ $follow_up_topics = sz_website_help_retrieve_topics( $manifest, $topics_director
 sz_website_help_test_assert( 'follow-up retrieval preserves the preceding user topic', true, in_array( 'galleries', array_column( $follow_up_topics, 'id' ), true ), $failures );
 sz_website_help_test_assert( 'assistant wording does not enter the retrieval query', false, strpos( $follow_up_query, 'managed in Gallery Library' ) !== false, $failures );
 
+$report_exchange = sz_website_help_report_exchange(
+	[
+		[ 'role' => 'user', 'content' => 'How do I update this gallery?' ],
+		[ 'role' => 'assistant', 'content' => 'Open Gallery Library.', 'timestamp' => 1234 ],
+	],
+	1
+);
+sz_website_help_test_assert( 'answer reports use the stored prompt', 'How do I update this gallery?', $report_exchange['prompt'], $failures );
+sz_website_help_test_assert( 'answer reports use the stored response', 'Open Gallery Library.', $report_exchange['response'], $failures );
+sz_website_help_test_assert( 'answer reports retain the assistant timestamp', 1234, $report_exchange['answer_time'], $failures );
+$report_body = sz_website_help_report_email_body( $report_exchange, 42 );
+sz_website_help_test_assert( 'report email includes the stored prompt', true, strpos( $report_body, "Prompt:\nHow do I update this gallery?" ) !== false, $failures );
+sz_website_help_test_assert( 'report email includes the stored response', true, strpos( $report_body, "Response:\nOpen Gallery Library." ) !== false, $failures );
+sz_website_help_test_assert( 'report recipient accepts one valid mailbox', 'reports@example.test', sz_website_help_report_recipient_value( 'reports@example.test' ), $failures );
+sz_website_help_test_assert( 'report recipient rejects surrounding whitespace', '', sz_website_help_report_recipient_value( ' reports@example.test' ), $failures );
+sz_website_help_test_assert( 'report recipient rejects multiple mailboxes', '', sz_website_help_report_recipient_value( 'one@example.test,two@example.test' ), $failures );
+sz_website_help_test_assert( 'report recipient rejects header injection', '', sz_website_help_report_recipient_value( "reports@example.test\nBcc: other@example.test" ), $failures );
+sz_website_help_test_assert( 'sent report claims cannot be repeated', 'sent', sz_website_help_report_claim_state( [ 'state' => 'sent', 'claimed_at' => 900 ], 1000 ), $failures );
+sz_website_help_test_assert( 'active report claims remain pending', 'pending', sz_website_help_report_claim_state( [ 'state' => 'pending', 'claimed_at' => 950 ], 1000 ), $failures );
+sz_website_help_test_assert( 'expired report claims can be recovered', 'claimable', sz_website_help_report_claim_state( [ 'state' => 'pending', 'claimed_at' => 800 ], 1000 ), $failures );
+sz_website_help_test_assert( 'failed report claims can be retried', 'claimable', sz_website_help_report_claim_state( [ 'state' => 'failed', 'claimed_at' => 950 ], 1000 ), $failures );
+sz_website_help_test_assert(
+	'answer reports reject user message indexes',
+	false,
+	sz_website_help_report_exchange(
+		[
+			[ 'role' => 'user', 'content' => 'Question' ],
+			[ 'role' => 'assistant', 'content' => 'Answer' ],
+		],
+		0
+	)['valid'],
+	$failures
+);
+sz_website_help_test_assert(
+	'answer reports reject assistant messages without a paired prompt',
+	false,
+	sz_website_help_report_exchange(
+		[
+			[ 'role' => 'assistant', 'content' => 'Unpaired answer' ],
+			[ 'role' => 'assistant', 'content' => 'Another answer' ],
+		],
+		1
+	)['valid'],
+	$failures
+);
+
 $tier_zero = sz_website_help_tier_zero_context([
 	'screen_id'              => 'page',
 	'screen_label'           => 'Edit Page',
@@ -283,4 +329,4 @@ if ( ! empty( $failures ) ) {
 	exit( 1 );
 }
 
-fwrite( STDOUT, "Passed 50 PHP website help tests.\n" );
+fwrite( STDOUT, "Passed 65 PHP website help tests.\n" );

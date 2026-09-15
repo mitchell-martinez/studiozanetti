@@ -30,6 +30,7 @@
 				if (!payload.success) {
 					var error = new Error(payload.data && payload.data.message ? payload.data.message : config.strings.error);
 					error.threadId = Number(payload.data && payload.data.thread_id ? payload.data.thread_id : 0);
+					error.reportState = payload.data && payload.data.report_state ? payload.data.report_state : '';
 					throw error;
 				}
 				return payload.data;
@@ -219,6 +220,50 @@
 		return details;
 	}
 
+	function reportButton(message) {
+		if (!config.reportingEnabled || !message.message_index) return null;
+		var reportState = message.report_state || 'claimable';
+		var wrapper = document.createElement('span');
+		wrapper.className = 'sz-website-help-report';
+		var status = document.createElement('span');
+		status.className = 'sz-website-help-report__status';
+		status.setAttribute('aria-live', 'polite');
+		var button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'sz-website-help-report__button';
+		button.title = reportState === 'sent' ? config.strings.reported : config.strings.reportAnswer;
+		button.setAttribute('aria-label', button.title);
+		button.disabled = reportState === 'sent' || reportState === 'pending';
+		if (reportState === 'sent') button.classList.add('is-reported');
+		var icon = document.createElement('span');
+		icon.className = 'dashicons dashicons-flag';
+		icon.setAttribute('aria-hidden', 'true');
+		button.appendChild(icon);
+		if (reportState === 'sent') status.textContent = config.strings.reported;
+		if (reportState === 'pending') status.textContent = config.strings.reportSending;
+		button.addEventListener('click', function () {
+			if (!window.confirm(config.strings.confirmReport)) return;
+			var threadId = activeThreadId;
+			button.disabled = true;
+			status.textContent = config.strings.reportSending;
+			request('sz_website_help_report_answer', {
+				thread_id: threadId,
+				answer_index: message.message_index
+			}).then(function () {
+				message.report_state = 'sent';
+				button.classList.add('is-reported');
+				button.title = config.strings.reported;
+				button.setAttribute('aria-label', config.strings.reported);
+				status.textContent = config.strings.reported;
+			}).catch(function (error) {
+				button.disabled = error.reportState === 'pending';
+				status.textContent = error.reportState === 'pending' ? config.strings.reportPending : (error.message || config.strings.error);
+			});
+		});
+		wrapper.append(status, button);
+		return wrapper;
+	}
+
 	function renderMessages(app, messages, sources) {
 		var container = app.querySelector('[data-help-messages]');
 		var empty = app.querySelector('[data-help-empty]');
@@ -226,12 +271,19 @@
 		(messages || []).forEach(function (message) {
 			var article = document.createElement('article');
 			article.className = 'sz-website-help-message sz-website-help-message--' + message.role;
+			var header = document.createElement('header');
+			header.className = 'sz-website-help-message__header';
 			var label = document.createElement('strong');
 			label.textContent = message.role === 'assistant' ? 'Website Help' : 'You';
+			header.appendChild(label);
+			if (message.role === 'assistant') {
+				var report = reportButton(message);
+				if (report) header.appendChild(report);
+			}
 			var content = document.createElement('div');
 			content.className = 'sz-website-help-message__content';
 			content.textContent = message.content || '';
-			article.append(label, content);
+			article.append(header, content);
 			if (message.developer_request) {
 				var requestBox = document.createElement('pre');
 				requestBox.textContent = message.developer_request;

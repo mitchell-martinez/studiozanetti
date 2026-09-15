@@ -21,6 +21,8 @@ The answer's **Context used** disclosure lists the screen, item, block names, an
 
 Local conversation history keeps questions, answers, source topic IDs, status, optional webmaster requests, and a minimal context summary. It remains until the user deletes it. Provider requests disable provider-side response storage, but the selected handbook excerpts, bounded conversation context, and explicitly approved editor context are sent to the configured AI provider to produce the answer.
 
+Use the flag beside an answer when its guidance appears inaccurate. After confirmation, Website Help emails the stored question and answer to the webmaster for review. It does not send raw editor context. An answer can be reported once, and its reported status remains visible in that conversation.
+
 ## What not to share
 
 Do not type passwords, API keys, customer messages, unpublished personal information, private recipient addresses, or server credentials into a question. If a support request needs confidential information, contact the webmaster through the established private channel rather than placing it in Website Help.

@@ -180,6 +180,50 @@
 	border-color: #9ec2e6;
 }
 
+.sz-website-help-message__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 30px;
+}
+
+.sz-website-help-report {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-left: auto;
+}
+
+.sz-website-help-report__status {
+	color: #50575e;
+	font-size: 12px;
+}
+
+.sz-website-help-report__button {
+	display: inline-grid;
+	place-items: center;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border: 1px solid transparent;
+	border-radius: 3px;
+	background: transparent;
+	color: #646970;
+	cursor: pointer;
+}
+
+.sz-website-help-report__button:hover,
+.sz-website-help-report__button:focus-visible {
+	border-color: #8c8f94;
+	background: #f6f7f7;
+	color: #b32d2e;
+}
+
+.sz-website-help-report__button.is-reported {
+	color: #008a20;
+	cursor: default;
+}
+
 .sz-website-help-message__content {
 	margin-top: 5px;
 	white-space: pre-wrap;

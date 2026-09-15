@@ -203,6 +203,78 @@ if ( ! function_exists( 'sz_website_help_retrieval_query' ) ) {
 	}
 }
 
+if ( ! function_exists( 'sz_website_help_report_exchange' ) ) {
+	function sz_website_help_report_exchange( array $messages, int $assistant_index ): array {
+		if ( $assistant_index < 1 || ! isset( $messages[ $assistant_index ], $messages[ $assistant_index - 1 ] ) ) {
+			return [ 'valid' => false, 'error' => 'That answer is unavailable.' ];
+		}
+
+		$question = $messages[ $assistant_index - 1 ];
+		$answer = $messages[ $assistant_index ];
+		$prompt = is_scalar( $question['content'] ?? null ) ? (string) $question['content'] : '';
+		$response = is_scalar( $answer['content'] ?? null ) ? (string) $answer['content'] : '';
+		if (
+			'user' !== ( $question['role'] ?? '' )
+			|| 'assistant' !== ( $answer['role'] ?? '' )
+			|| '' === trim( $prompt )
+			|| '' === trim( $response )
+		) {
+			return [ 'valid' => false, 'error' => 'That answer is unavailable.' ];
+		}
+
+		return [
+			'valid'        => true,
+			'prompt'       => $prompt,
+			'response'     => $response,
+			'answer_index' => $assistant_index,
+			'answer_time'  => (int) ( $answer['timestamp'] ?? 0 ),
+		];
+	}
+}
+
+if ( ! function_exists( 'sz_website_help_report_email_body' ) ) {
+	function sz_website_help_report_email_body( array $exchange, int $thread_id ): string {
+		$reported_at = gmdate( 'c' );
+		$answered_at = ! empty( $exchange['answer_time'] ) ? gmdate( 'c', (int) $exchange['answer_time'] ) : 'Unknown';
+
+		return "Website Help answer report\n\n"
+			. "Thread ID: {$thread_id}\n"
+			. 'Answer index: ' . (int) ( $exchange['answer_index'] ?? 0 ) . "\n"
+			. "Answered at: {$answered_at}\n"
+			. "Reported at: {$reported_at}\n\n"
+			. "Prompt:\n" . (string) ( $exchange['prompt'] ?? '' ) . "\n\n"
+			. "Response:\n" . (string) ( $exchange['response'] ?? '' ) . "\n";
+	}
+}
+
+if ( ! function_exists( 'sz_website_help_report_recipient_value' ) ) {
+	function sz_website_help_report_recipient_value( $value ): string {
+		if ( ! is_string( $value ) || '' === $value || trim( $value ) !== $value || preg_match( '/[\r\n]/', $value ) ) {
+			return '';
+		}
+
+		return false !== filter_var( $value, FILTER_VALIDATE_EMAIL ) ? $value : '';
+	}
+}
+
+if ( ! function_exists( 'sz_website_help_report_claim_state' ) ) {
+	function sz_website_help_report_claim_state( $claim, int $now, int $lease_seconds = 120 ): string {
+		if ( ! is_array( $claim ) ) {
+			return 'claimable';
+		}
+
+		$state = (string) ( $claim['state'] ?? '' );
+		if ( 'sent' === $state ) {
+			return 'sent';
+		}
+		if ( 'pending' === $state && (int) ( $claim['claimed_at'] ?? 0 ) > $now - $lease_seconds ) {
+			return 'pending';
+		}
+
+		return 'claimable';
+	}
+}
+
 if ( ! function_exists( 'sz_website_help_tier_zero_context' ) ) {
 	function sz_website_help_tier_zero_context( array $context ): array {
 		return [

@@ -33,6 +33,14 @@ services:
       SZ_WEBSITE_HELP_ENABLED: ${SZ_WEBSITE_HELP_ENABLED:-false}
       SZ_OPENAI_API_KEY: ${SZ_OPENAI_API_KEY:-}
       SZ_OPENAI_MODEL: ${SZ_OPENAI_MODEL:-gpt-5-mini}
+      SZ_WEBSITE_HELP_REPORT_EMAIL: ${SZ_WEBSITE_HELP_REPORT_EMAIL:-}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_SECURE: ${SMTP_SECURE}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+      SMTP_FROM_HEADER_EMAIL: ${SMTP_FROM_HEADER_EMAIL}
+      SMTP_HELO_NAME: ${SMTP_HELO_NAME}
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_HOME', 'https://studiozanetti.com.au');
         define('WP_SITEURL', 'https://studiozanetti.com.au');
