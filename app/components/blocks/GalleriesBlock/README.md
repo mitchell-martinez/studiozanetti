@@ -4,7 +4,7 @@ A Flothemes-style, click-to-expand image gallery block for full-page portfolio s
 
 ## What It Does
 
-- Lets the admin add all photos in one place under **Insert Images**.
+- Displays the images from one reusable **Gallery Library** entry.
 - Auto-structures photos into equal-width columns.
 - Uses **3 columns on desktop** and **2 columns on mobile**.
 - Keeps **0.5rem spacing** between columns and items.
@@ -16,13 +16,11 @@ A Flothemes-style, click-to-expand image gallery block for full-page portfolio s
 ## WordPress Admin Setup
 
 1. Edit any page in WordPress.
-2. In **Page Blocks**, add layout **galleries**.
-3. Fill in:
+2. Create or update the reusable gallery under **Gallery Library**.
+3. In **Page Blocks**, add layout **Gallery Reference** (`gallery_reference`).
+4. Fill in:
+   - **Gallery** (required reusable gallery)
    - **Heading** (optional)
-  - **Description** (optional)
-   - **Insert Images** (required repeater)
-     - **Image** (required)
-     - **Caption** (optional)
    - **Desktop Columns** (optional, defaults to 3)
    - **Mobile Columns** (optional, defaults to 2)
 
@@ -58,7 +56,7 @@ To get clean URLs like `/gallery/stylish-brides/`, use WordPress page hierarchy:
    - This page acts as a container. Add a `GalleryCategoriesBlock` to it so visitors can browse all galleries, or leave it empty and set it to **noindex** via Yoast.
 2. Create **child pages** for each gallery (e.g. "Stylish Brides").
    - In the page editor, under **Page Attributes → Parent**, select "Gallery".
-   - Add a `GalleriesBlock` with the gallery images.
+   - Add a **Gallery Reference** block and select the reusable gallery.
 3. The frontend automatically resolves hierarchical paths — no code changes needed.
 
 This approach means:

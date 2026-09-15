@@ -31,14 +31,14 @@ Built with **React Router 7** (SSR) + **WordPress** as a headless CMS.
 │  the admin logs in here and manages ALL content           │
 │  ┌─────────────────────────────────────────────────┐    │
 │  │  Pages  →  ACF Flexible Content block builder   │    │
-│  │  Gallery Photos  →  CPT with image upload       │    │
+│  │  Gallery Library  →  reusable gallery entries    │    │
 │  └─────────────────────────────────────────────────┘    │
 │                          │                              │
 │              WordPress REST API (JSON)                  │
 │                          │                              │
 └──────────────────────────┼──────────────────────────────┘
                            │  GET /wp-json/wp/v2/pages
-                           │  GET /wp-json/wp/v2/gallery_photo
+                           │  GET /wp-json/wp/v2/sz_gallery
                            ▼
 ┌─────────────────────────────────────────────────────────┐
 │  React Router 7 SSR (Node.js — this repo)               │
@@ -342,36 +342,13 @@ To release to production: `git push origin main:production`
 
 Enable **Show in REST API** in each field group's settings.
 
-Field: `blocks` (Flexible Content)
+Field: `blocks` (Flexible Content). The code-registered schema currently provides 15 layouts:
 
-| Layout key      | Fields                                                                                                        |
-| --------------- | ------------------------------------------------------------------------------------------------------------- |
-| `hero`          | `background_image` (Image), `title` (Text), `tagline` (Text), `cta_text` (Text), `cta_url` (URL)              |
-| `text_block`    | `heading` (Text), `body` (WYSIWYG), `align` (Select: left/center), `cta_text` (Text), `cta_url` (URL)         |
-| `image_text`    | `image` (Image), `heading` (Text), `body` (WYSIWYG), `image_position` (Select: left/right)                    |
-| `services_grid` | `heading` (Text), `cta_text` (Text), `cta_url` (URL), `services` (Repeater → `title`, `description`, `image`) |
-| `pillar_grid`   | `heading` (Text), `pillars` (Repeater → `title`, `description`)                                               |
+`hero`, `text_block`, `image_text`, `services_grid`, `pillar_grid`, `faq_accordion`, `form_block`, `pricing_packages`, `gallery_categories`, `gallery_reference`, `image_block`, `button_group`, `text_grid`, `instagram_feed`, and `blog_posts`.
 
-#### "Contact Details" — Applied to: Page slug = `contact`
+#### Gallery Library
 
-| Field key         | Type  |
-| ----------------- | ----- |
-| `contact_email`   | Email |
-| `contact_phone`   | Text  |
-| `contact_address` | Text  |
-| `contact_hours`   | Text  |
-
-#### Gallery Custom Post Type
-
-Register CPT slug `gallery_photo` with REST API support enabled (e.g. via [Custom Post Type UI](https://wordpress.org/plugins/custom-post-type-ui/)).
-
-Field Group "Gallery Photo" — Applied to: Post Type = `gallery_photo`
-
-| Field key         | Type                                   |
-| ----------------- | -------------------------------------- |
-| `category`        | Select (Weddings / Portraits / Events) |
-| `full_image`      | Image (returns: array)                 |
-| `thumbnail_image` | Image (returns: array)                 |
+The `sz_gallery` post type is registered by `sz-headless.php`. Each Gallery Library entry stores a reusable description and ordered image rows. Pages display one of these entries through the `gallery_reference` block. No Custom Post Type UI setup or `gallery_photo` post type is required.
 
 ---
 
@@ -388,7 +365,7 @@ Configures WordPress as a headless CMS for the React Router front-end.
 - **Navigation menu endpoint** — `GET /wp-json/sz/v1/nav-menu/<location>` returns a nested JSON tree of menu items (with children for dropdowns). Registers the "Primary Navigation" menu location under Appearance → Menus.
 - **Preview endpoint** — `GET /wp-json/sz/v1/preview/<id>?secret=<secret>` returns the latest autosave/revision of a page so the React front-end can render a live preview.
 - **Front-end redirects** — Redirects all public page views on the WordPress domain to the React front-end. Also rewrites the "Preview" button and "View Page" permalinks in the admin to point at the React site.
-- **Admin cleanup** — Hides the Posts and Comments menus (not used), disables Gutenberg for pages (content lives in ACF blocks), removes dashboard clutter, and redirects the admin landing page to the Pages list.
+- **Admin cleanup** — Hides Comments, keeps Posts available for the blog, disables Gutenberg for pages and posts, removes dashboard clutter, and redirects the admin landing page to the Pages list.
 - **Editor layout CSS** — Adds minimal scoped CSS to keep the classic Page editor clean and predictable.
 
 **Required `wp-config.php` constants:**
@@ -404,10 +381,10 @@ Registers all ACF field groups for headless flexible content blocks **via code**
 
 **What it does:**
 
-- Defines the "Page Blocks" flexible content field group with all block layouts (hero, text, image_text, services_grid, pillar_grid, testimonial_carousel, FAQ accordion, pricing packages, process timeline, galleries, gallery categories, image, button group, and text grid).
+- Defines the "Page Blocks" flexible content field group with the 15 layout keys listed in the production setup section.
 - Each layout includes shared style fields (section theme, top/bottom spacing) for a consistent admin experience.
-- Defines the "Gallery Photo" field group for the `gallery_photo` custom post type.
-- Defines the "Contact Details" field group for pages with the `contact` slug.
+- Defines reusable gallery fields for the `sz_gallery` Gallery Library post type.
+- Defines Page Settings, category settings, form configuration, Site Settings, public entity, and image-search metadata fields.
 
 **Why this matters:**
 
@@ -419,15 +396,7 @@ Whenever a new block component is added or significantly updated on the React si
 
 All block components live in `app/components/blocks/`.
 
-| File                    | Block layout key | What it renders                                                                       |
-| ----------------------- | ---------------- | ------------------------------------------------------------------------------------- |
-| `HeroBlock.tsx`         | `hero`           | Full-viewport hero with background image, title, tagline, CTA                         |
-| `TextBlock.tsx`         | `text_block`     | Heading + WYSIWYG body + optional CTA; left or center aligned                         |
-| `ImageTextBlock.tsx`    | `image_text`     | Side-by-side image and text; image position configurable                              |
-| `ServicesGridBlock.tsx` | `services_grid`  | Responsive grid of service cards with image, title, description                       |
-| `PillarGridBlock.tsx`   | `pillar_grid`    | Grid of value/approach cards                                                          |
-| `RichText.tsx`          | _(shared)_       | Renders trusted WP WYSIWYG HTML                                                       |
-| `BlockRenderer.tsx`     | _(dispatcher)_   | Reads `acf_fc_layout` → calls the correct component; unknown layouts silently skipped |
+The component folders mirror the 15 ACF layout keys: Hero, Text, Image + Text, Services Grid, Pillar Grid, FAQ Accordion, Form, Pricing Packages, Gallery Categories, Gallery Reference, Image, Button Group, Text Grid, Instagram Feed, and Blog Posts. `BlockRenderer` dispatches `acf_fc_layout` values to these components and silently skips unknown layouts.
 
 ---
 

@@ -13,13 +13,23 @@ BlockRenderer is the bridge between WordPress ACF Flexible Content fields and th
 ## WordPress Admin Setup
 
 1. Edit a page in the WordPress admin
-2. Scroll down to the **Content Blocks** section (ACF Flexible Content field)
+2. Scroll down to the **Page Blocks** section (ACF Flexible Content field)
 3. Click **"Add Row"** and select a block type:
    - **Hero** — fullscreen hero banner
    - **Text Block** — heading + rich text + optional CTA
    - **Image + Text** — side-by-side image and text
    - **Services Grid** — card grid of services
    - **Pillar Grid** — feature/value cards
+    - **FAQ Accordion** — expandable questions and answers
+    - **Form** — configurable enquiry form
+    - **Pricing Packages** — package and feature comparisons
+    - **Gallery Categories** — image-led gallery navigation
+    - **Gallery Reference** — one reusable Gallery Library entry
+    - **Image** — full-width image treatment
+    - **Button Group** — one or more calls to action
+    - **Text Grid** — repeated compact text items
+    - **Instagram Feed** — curated Instagram-style images
+    - **Blog Posts** — published article listing
 4. Fill in each block's fields
 5. Drag blocks to reorder them
 6. Save/Publish

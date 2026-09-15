@@ -8,17 +8,7 @@ Interactive photo gallery grid with lazy-loaded images, lightbox viewer, and key
 
 The GalleryGrid displays a responsive grid of photos. Each photo can be clicked to open a fullscreen lightbox with navigation arrows. Images are lazy-loaded with intersection observer for optimal performance.
 
-This component is used by the Gallery route to display photos from the WordPress `gallery_photo` custom post type. The WordPress admin populates the gallery by:
-
-1. Going to **Gallery Photos** in the WordPress admin sidebar
-2. Clicking **Add New**
-3. Filling in the ACF fields:
-   - **Category** (text): e.g. "Weddings", "Portraits", "Events"
-   - **Full Image** (image field): The high-resolution photo
-   - **Thumbnail Image** (image field, optional): Smaller version for the grid. Falls back to full image if not set.
-4. Publishing the photo
-
-Photos appear automatically on the frontend gallery.
+This is a reusable presentation component. Current WordPress-managed galleries use `sz_gallery` Gallery Library entries rendered through the `gallery_reference` page block and `GalleriesBlock`. `GalleryGrid` is used by local demonstrations and any caller that already has a `GalleryImage[]`; it does not fetch WordPress or define an editor workflow.
 
 ---
 

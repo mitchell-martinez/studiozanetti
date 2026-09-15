@@ -14,8 +14,14 @@ Copy the required files into your WordPress installation:
 wp-content/
   mu-plugins/
     sz-headless.php        ← headless config + APIs
+    sz-acf-schema.php      ← code-registered ACF fields
     sz-media-folders.php   ← media folder organization
     sz-attachment-permalinks.php ← collision-proof media permalinks
+    sz-website-help.php    ← private editor guidance (default off)
+    includes/website-help.php
+    website-help/          ← versioned manifest and handbook topics
+    assets/website-help.js
+    assets/website-help.css
 ```
 
 > **mu-plugins** are "must-use" plugins that are always active and cannot be deactivated from the admin. This is ideal for headless infrastructure code.
@@ -151,7 +157,7 @@ Use a full web address or a site-relative link beginning with `/`. Page editors 
 
 The mu-plugin automatically:
 
-- **Hides the Posts menu** (not needed for a photography site that uses Pages and Gallery CPT)
+- **Keeps Posts available** for blog articles and hides Comments
 - **Redirects the admin landing page** to the Pages list instead of the Dashboard
 - **Removes unnecessary dashboard widgets** (Quick Draft, At a Glance, etc.)
 - **Adds CSS fixes** to prevent the pages list from appearing "squished"
@@ -219,6 +225,52 @@ A page passing the audit does not guarantee rankings, rich results, or inclusion
 
 The frontend emits one server-rendered Schema.org graph linking the business, website, optional primary photographer, services, pages, breadcrumbs, explicit venues, and selected images through stable IDs. It intentionally excludes self-serving Review/AggregateRating data, the deprecated ProfessionalService type, and a standalone Award type. FAQ data remains machine-readable only when complete visible FAQ rows exist; it should not be treated as a guaranteed Google rich-result feature.
 
+### Website Help assistant
+
+`sz-website-help.php` adds a global admin help drawer and a full **Website Help** page for Editors and Administrators. It is guidance-only: it has no tools or endpoints that modify pages, posts, galleries, media, menus, settings, or plugins.
+
+The feature is disabled when `SZ_WEBSITE_HELP_ENABLED` is absent or false. Configure it through the WordPress container environment, never in source code:
+
+```env
+SZ_WEBSITE_HELP_ENABLED=false
+SZ_OPENAI_API_KEY=replace-with-a-dedicated-project-key
+SZ_OPENAI_MODEL=gpt-5-mini
+```
+
+Use a dedicated Studio Zanetti OpenAI project and project service account under the existing organization/billing account. Disable provider input/output sharing for the production project. The server sends Responses API requests with `store: false`; the API key remains in PHP and is never localized to the browser.
+
+#### Privacy and history
+
+- Each conversation is a private `sz_help_thread` owned by one WordPress user. Administrator capability does not bypass that ownership check.
+- Local transcripts remain until that user deletes one conversation or all of their history.
+- Provider context is bounded to recent turns plus question-relevant older turns.
+- On recognized editors, the initial request sends only screen metadata. The model may request one narrow, read-only scope at a time, for at most two rounds.
+- The browser extracts only the server-approved scope; PHP verifies and sanitizes it again. Raw editor snapshots are never retained in history.
+- Recipient addresses, personal default values, VSCO mapping/configuration, credentials, nonces, cookies, file data, and raw URLs are excluded.
+
+#### Handbook maintenance
+
+The source of truth is `mu-plugins/website-help/manifest.php` plus the Markdown files under `mu-plugins/website-help/topics/`. Topics are deliberately granular for predictable retrieval, but each topic must still be a complete operational playbook rather than a one-step summary. Cover the workflow's scope, prerequisites, exact steps, local-versus-shared consequences, checks, common mistakes, recovery or escalation, and the next questions an editor may not know to ask.
+
+Create a separate topic when a subject has a distinct user intent, risk boundary, or destination screen. Do not split one workflow into fragments that only make sense together. Retrieval uses the current question plus a bounded set of recent user questions so short follow-ups retain their subject; it sends only complete topics that fit the context budget.
+
+Update the handbook whenever an editor capability, field, consequence, or recovery path changes. Keep IDs stable, increment `knowledge_version`, update `updated_at`, add a natural-language retrieval case for new intents, and run `npm run test:wordpress` after every change.
+
+#### Rotation and troubleshooting
+
+Rotate the key by creating a replacement in the same dedicated OpenAI project, updating `SZ_OPENAI_API_KEY` on the VPS, recreating only the WordPress service, verifying one answer, and then revoking the old key. Never print either key during validation.
+
+If the assistant is unavailable, confirm the enable flag, key, model, outbound HTTPS access, and OpenAI project limits. Disabling the flag removes the UI and blocks all assistant AJAX/provider calls without deleting history or changing public website behavior.
+
+#### Production rollout
+
+1. Deploy the additive MU-plugin files with `SZ_WEBSITE_HELP_ENABLED=false`.
+2. Confirm normal page, gallery, menu, preview, Site Settings, and SEO behavior.
+3. Add the dedicated key/model to the VPS environment. The Compose file is managed through the established VPS configuration process and is not copied by the MU-plugin deployment step.
+4. Recreate only the WordPress service and validate as an Administrator.
+5. Set `SZ_WEBSITE_HELP_ENABLED=true`, recreate only WordPress, then validate as an Editor.
+6. Roll back immediately by setting the flag to false. Stored help history remains available for a later re-enable or user deletion.
+
 ### Lightweight WordPress tests
 
 Run all pure-PHP validation and audit fixtures with:
@@ -255,4 +307,6 @@ The mock server simulates all the endpoints including the nav menu and preview.
 | Preview shows "404 Not Found" | Verify `SZ_PREVIEW_SECRET` matches in both `wp-config.php` and the frontend `.env`                    |
 | ACF fields not in REST API    | Ensure "Show in REST API" is enabled on each ACF field group, or install the "ACF to REST API" plugin |
 | Pages list looks squished     | The mu-plugin adds CSS fixes. Make sure `sz-headless.php` is in `wp-content/mu-plugins/`              |
-| Posts menu still visible      | The `mu-plugins/` folder must be directly inside `wp-content/`, not a subfolder                       |
+| Posts menu is missing         | Confirm the current `sz-headless.php` is deployed; Posts are supported for the blog                  |
+| Website Help is missing       | Confirm `SZ_WEBSITE_HELP_ENABLED=true`, then recreate only the WordPress service                      |
+| Website Help cannot answer    | Confirm the dedicated key/model and OpenAI project limits without printing the key                    |

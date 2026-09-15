@@ -30,10 +30,16 @@ services:
       WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
       WORDPRESS_DB_USER: ${MYSQL_USER}
       WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      SZ_WEBSITE_HELP_ENABLED: ${SZ_WEBSITE_HELP_ENABLED:-false}
+      SZ_OPENAI_API_KEY: ${SZ_OPENAI_API_KEY:-}
+      SZ_OPENAI_MODEL: ${SZ_OPENAI_MODEL:-gpt-5-mini}
       WORDPRESS_CONFIG_EXTRA: |
         define('WP_HOME', 'https://studiozanetti.com.au');
         define('WP_SITEURL', 'https://studiozanetti.com.au');
         define('FORCE_SSL_ADMIN', true);
+        define('SZ_WEBSITE_HELP_ENABLED', filter_var(getenv('SZ_WEBSITE_HELP_ENABLED'), FILTER_VALIDATE_BOOLEAN));
+        define('SZ_OPENAI_API_KEY', (string) getenv('SZ_OPENAI_API_KEY'));
+        define('SZ_OPENAI_MODEL', getenv('SZ_OPENAI_MODEL') ?: 'gpt-5-mini');
         if (isset($$_SERVER['HTTP_X_FORWARDED_PROTO']) && $$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
           $$_SERVER['HTTPS'] = 'on';
         }
