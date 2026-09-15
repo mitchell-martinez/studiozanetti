@@ -107,6 +107,9 @@ jobs:
     needs: build
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    concurrency:
+      group: studiozanetti-production
+      cancel-in-progress: false
     permissions:
       contents: read
     environment:
@@ -123,19 +126,65 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Sync and apply Compose configuration
+      - name: Safely apply Compose configuration
         run: |
+          compose_sha="$(shasum -a 256 deploy/docker-compose.yml | awk '{print $1}')"
+
           rsync -az -e "ssh -i ~/.ssh/deploy_key" \
             deploy/docker-compose.yml \
-            deploy/uploads.ini \
-            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/studiozanetti/"
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/studiozanetti-docker-compose.yml"
 
           ssh -i ~/.ssh/deploy_key \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            'cd ~/studiozanetti && \
-             docker compose config --quiet && \
-             docker compose up -d --no-deps studiozanetti-wordpress && \
-             docker compose ps studiozanetti-wordpress'
+            "INCOMING_COMPOSE_SHA='${compose_sha}' bash -s" << 'ENDSSH'
+              set -eu
+              cd ~/studiozanetti
+
+              candidate=/tmp/studiozanetti-docker-compose.yml
+              live=docker-compose.yml
+              marker=.docker-compose.sha256
+              legacy_sha=41f970441006748e813e3736ecaa0d92fe61f746ae7ccc1fb966da81aa25c328
+
+              test -f "${live}"
+              test "$(sha256sum "${candidate}" | awk '{print $1}')" = "${INCOMING_COMPOSE_SHA}"
+              current_sha="$(sha256sum "${live}" | awk '{print $1}')"
+
+              if [ "${current_sha}" != "${INCOMING_COMPOSE_SHA}" ]; then
+                expected_sha="${legacy_sha}"
+                if [ -f "${marker}" ]; then
+                  expected_sha="$(tr -d '[:space:]' < "${marker}")"
+                fi
+
+                if [ "${current_sha}" != "${expected_sha}" ]; then
+                  echo "Live docker-compose.yml differs from the last deployed version; refusing to overwrite it." >&2
+                  echo "Reconcile the VPS file with deploy/docker-compose.yml, then update ${marker}." >&2
+                  rm -f "${candidate}"
+                  exit 1
+                fi
+              fi
+
+              backup="$(mktemp ./docker-compose.yml.backup.XXXXXX)"
+              cp "${live}" "${backup}"
+              cp "${candidate}" "${live}"
+
+              if ! docker compose config --quiet; then
+                cp "${backup}" "${live}"
+                rm -f "${backup}" "${candidate}"
+                exit 1
+              fi
+
+              if ! docker compose up -d --no-deps studiozanetti-wordpress; then
+                cp "${backup}" "${live}"
+                docker compose up -d --no-deps studiozanetti-wordpress || true
+                rm -f "${backup}" "${candidate}"
+                exit 1
+              fi
+
+              printf '%s\n' "${INCOMING_COMPOSE_SHA}" > "${marker}.tmp"
+              mv "${marker}.tmp" "${marker}"
+              rm -f "${backup}" "${candidate}"
+              docker compose ps studiozanetti-wordpress
+          ENDSSH
 
       - name: Sync mu-plugins to WordPress volume
         run: |
