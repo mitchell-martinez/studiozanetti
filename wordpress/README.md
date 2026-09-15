@@ -266,7 +266,7 @@ If the assistant is unavailable, confirm the enable flag, key, model, outbound H
 
 1. Deploy the additive MU-plugin files with `SZ_WEBSITE_HELP_ENABLED=false`.
 2. Confirm normal page, gallery, menu, preview, Site Settings, and SEO behavior.
-3. Add the dedicated key/model to the VPS environment. The Compose file is managed through the established VPS configuration process and is not copied by the MU-plugin deployment step.
+3. Add the dedicated key/model to the VPS environment. The production workflow synchronizes the versioned Compose file and applies WordPress configuration changes; the secret-bearing VPS `.env` remains server-managed and is never copied from the repository.
 4. Recreate only the WordPress service and validate as an Administrator.
 5. Set `SZ_WEBSITE_HELP_ENABLED=true`, recreate only WordPress, then validate as an Editor.
 6. Roll back immediately by setting the flag to false. Stored help history remains available for a later re-enable or user deletion.

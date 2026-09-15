@@ -123,6 +123,20 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
 
+      - name: Sync and apply Compose configuration
+        run: |
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            deploy/docker-compose.yml \
+            deploy/uploads.ini \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/studiozanetti/"
+
+          ssh -i ~/.ssh/deploy_key \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            'cd ~/studiozanetti && \
+             docker compose config --quiet && \
+             docker compose up -d --no-deps studiozanetti-wordpress && \
+             docker compose ps studiozanetti-wordpress'
+
       - name: Sync mu-plugins to WordPress volume
         run: |
           rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" \
