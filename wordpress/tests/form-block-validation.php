@@ -19,6 +19,18 @@ function sz_test_assert_same_errors( string $name, array $expected, array $actua
 	];
 }
 
+function sz_test_assert_same( string $name, $expected, $actual, array &$failures ): void {
+	if ( $expected === $actual ) {
+		return;
+	}
+
+	$failures[] = [
+		'name'     => $name,
+		'expected' => $expected,
+		'actual'   => $actual,
+	];
+}
+
 sz_test_assert_same_errors(
 	'accepts canonical reserved name row',
 	[],
@@ -83,6 +95,7 @@ sz_test_assert_same_errors(
 	[
 		'Field ID name is duplicated. Field IDs must be unique.',
 		'Only one reserved Name field is allowed in a form.',
+		'VSCO Field Key FirstName can only be used once in a form.',
 	],
 	sz_validate_form_field_rows([
 		[
@@ -146,6 +159,66 @@ sz_test_assert_same_errors(
 	$failures,
 );
 
+sz_test_assert_same_errors(
+	'rejects submitter copy without an email field',
+	[
+		'At least one email field required to send customer copy of their form to',
+	],
+	sz_validate_form_submitter_copy_configuration(
+		true,
+		[
+			[
+				'field_sz_form_field_id'   => 'email',
+				'field_sz_form_field_type' => 'text',
+			],
+		],
+	),
+	$failures,
+);
+
+sz_test_assert_same_errors(
+	'accepts submitter copy with an email field',
+	[],
+	sz_validate_form_submitter_copy_configuration(
+		true,
+		[
+			[
+				'field_sz_form_field_id'   => 'email',
+				'field_sz_form_field_type' => 'email',
+			],
+		],
+	),
+	$failures,
+);
+
+$_POST['acf'] = [
+	'field_sz_blocks' => [
+		'row-0' => [
+			'field_sz_form_offer_submitter_email_copy' => '1',
+			'field_sz_form_fields' => [
+				[
+					'field_sz_form_field_id'   => 'email',
+					'field_sz_form_field_type' => 'text',
+				],
+			],
+		],
+	],
+];
+
+sz_test_assert_same(
+	'returns an ACF save error when submitter copy has no email field',
+	'At least one email field required to send customer copy of their form to',
+	sz_form_validate_submitter_copy_field(
+		true,
+		'1',
+		null,
+		'acf[field_sz_blocks][row-0][field_sz_form_offer_submitter_email_copy]',
+	),
+	$failures,
+);
+
+unset( $_POST['acf'] );
+
 if ( ! empty( $failures ) ) {
 	foreach ( $failures as $failure ) {
 		fwrite( STDERR, "FAILED: {$failure['name']}\n" );
@@ -156,4 +229,4 @@ if ( ! empty( $failures ) ) {
 	exit( 1 );
 }
 
-fwrite( STDOUT, "Passed 7 PHP form validation tests.\n" );
+fwrite( STDOUT, "Passed 10 PHP form validation tests.\n" );

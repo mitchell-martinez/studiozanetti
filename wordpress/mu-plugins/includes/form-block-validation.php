@@ -73,6 +73,10 @@ if ( ! function_exists( 'sz_form_get_posted_sibling_field_value' ) ) {
 			return null;
 		}
 
+		if ( 'acf' === $tokens[0] ) {
+			array_shift( $tokens );
+		}
+
 		$tokens[ count( $tokens ) - 1 ] = $sibling_field_key;
 		$current_value = isset( $_POST['acf'] ) && is_array( $_POST['acf'] ) ? $_POST['acf'] : null;
 
@@ -231,5 +235,18 @@ if ( ! function_exists( 'sz_validate_form_submitter_copy_configuration' ) ) {
 		}
 
 		return [];
+	}
+}
+
+if ( ! function_exists( 'sz_form_validate_submitter_copy_field' ) ) {
+	function sz_form_validate_submitter_copy_field( $valid, $value, $field = null, $input = '' ) {
+		if ( true !== $valid ) {
+			return $valid;
+		}
+
+		$rows = sz_form_get_posted_sibling_field_value( $input, 'field_sz_form_fields' );
+		$errors = sz_validate_form_submitter_copy_configuration( $value, $rows );
+
+		return empty( $errors ) ? $valid : implode( ' ', $errors );
 	}
 }

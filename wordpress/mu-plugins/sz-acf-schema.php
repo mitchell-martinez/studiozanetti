@@ -1163,6 +1163,8 @@ function sz_form_validate_required_name_or_firstname( $valid, $value, $field = n
 	return implode( ' ', array_values( array_unique( $errors ) ) );
 }
 
+add_filter( 'acf/validate_value/key=field_sz_form_offer_submitter_email_copy', 'sz_form_validate_submitter_copy_field', 20, 4 );
+
 /*
  * Page heading publication guard: flexible-content pages need exactly one
  * rendered H1. Heading-order skips are advisory and belong in the audit UI.
