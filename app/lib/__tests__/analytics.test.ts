@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { classifyReferrer, getRegionBucket } from '../analytics'
+import { classifyReferrer, classifyVisitSource, getRegionBucket } from '../analytics'
 
 describe('classifyReferrer', () => {
   const origin = 'https://studiozanetti.com.au'
@@ -41,6 +41,40 @@ describe('classifyReferrer', () => {
     ]) {
       expect(classifyReferrer(referrer, origin)).toEqual({ category: 'unknown' })
     }
+  })
+})
+
+describe('classifyVisitSource', () => {
+  const origin = 'https://studiozanetti.com.au'
+
+  it.each(['chatgpt.com', 'chatgpt'])('recognizes the exact ChatGPT source marker %s', (source) => {
+    expect(classifyVisitSource('', origin, `${origin}/?utm_source=${source}`)).toEqual({
+      category: 'ai_assistant',
+      domain: 'chatgpt.com',
+    })
+  })
+
+  it('does not retain arbitrary or lookalike source markers', () => {
+    expect(classifyVisitSource('', origin, `${origin}/?utm_source=private-value`)).toEqual({
+      category: 'direct',
+    })
+    expect(classifyVisitSource('', origin, `${origin}/?utm_source=chatgpt.com.example.test`)).toEqual({
+      category: 'direct',
+    })
+  })
+
+  it('prefers an observed external referrer over a conflicting marker', () => {
+    expect(classifyVisitSource(
+      'https://www.google.com/search?q=photographer',
+      origin,
+      `${origin}/?utm_source=chatgpt.com`,
+    )).toEqual({ category: 'search', domain: 'google.com' })
+  })
+
+  it('ignores source markers on URLs outside the current origin', () => {
+    expect(classifyVisitSource('', origin, 'https://example.test/?utm_source=chatgpt.com')).toEqual({
+      category: 'direct',
+    })
   })
 })
 

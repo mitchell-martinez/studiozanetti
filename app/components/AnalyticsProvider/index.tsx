@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useRef } from 'react'
 import { useLocation } from 'react-router'
 import {
-  classifyReferrer,
+  classifyVisitSource,
   getRegionBucket,
   type AnalyticsClientEvent,
   type AnalyticsEventDetails,
@@ -207,7 +207,7 @@ const AnalyticsProvider = ({ children, page }: AnalyticsProviderProps) => {
     if (!page) return
     const referrer = hasTrackedInitialPage.current
       ? { category: 'internal' as const }
-      : classifyReferrer(document.referrer, window.location.origin)
+      : classifyVisitSource(document.referrer, window.location.origin, window.location.href)
     hasTrackedInitialPage.current = true
     recordVisitPageView(page.pagePath, referrer)
     const event = buildEvent('page_view')

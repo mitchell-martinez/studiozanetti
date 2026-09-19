@@ -50,6 +50,7 @@ const NavigationExample = () => {
 
 afterEach(() => {
   window.sessionStorage.clear()
+  window.history.replaceState({}, '', '/')
   Object.defineProperty(document, 'referrer', { configurable: true, value: '' })
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
@@ -88,6 +89,39 @@ describe('AnalyticsProvider', () => {
     })
     expect(payload).not.toHaveProperty('timeZone')
     expect(payload).not.toHaveProperty('referrer')
+    expect(payload).not.toHaveProperty('utmSource')
+  })
+
+  it('attributes an allowlisted ChatGPT marker without sending URL parameters', async () => {
+    vi.stubGlobal('navigator', { ...navigator, sendBeacon })
+    window.history.replaceState({}, '', '/?utm_source=chatgpt.com&private=value')
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <AnalyticsProvider
+          page={{
+            pagePath: '/',
+            pageId: 42,
+            siteGroup: 'landing',
+            hasPricingBlock: false,
+            hasFormBlock: false,
+            contextToken: 'a'.repeat(64),
+          }}
+        >
+          <div>Home</div>
+        </AnalyticsProvider>
+      </MemoryRouter>,
+    )
+
+    await waitFor(() => expect(sendBeacon).toHaveBeenCalledOnce())
+    const payload = JSON.parse(sendBeacon.mock.calls[0]?.[1] as string)
+
+    expect(payload).toMatchObject({
+      pagePath: '/',
+      referrerCategory: 'ai_assistant',
+      referrerDomain: 'chatgpt.com',
+    })
+    expect(JSON.stringify(payload)).not.toContain('private')
     expect(payload).not.toHaveProperty('utmSource')
   })
 

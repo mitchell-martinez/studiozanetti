@@ -186,6 +186,29 @@ export const classifyReferrer = (
   }
 }
 
+export const classifyVisitSource = (
+  referrer: string,
+  currentOrigin: string,
+  landingUrl: string,
+): AnalyticsReferrer => {
+  const referrerSource = classifyReferrer(referrer, currentOrigin)
+  if (referrerSource.category !== 'direct') return referrerSource
+
+  try {
+    const url = new URL(landingUrl)
+    if (url.origin !== new URL(currentOrigin).origin) return referrerSource
+
+    const sourceMarker = url.searchParams.get('utm_source')?.trim().toLowerCase()
+    if (sourceMarker === 'chatgpt.com' || sourceMarker === 'chatgpt') {
+      return { category: 'ai_assistant', domain: 'chatgpt.com' }
+    }
+  } catch {
+    return referrerSource
+  }
+
+  return referrerSource
+}
+
 export const getRegionBucket = (timeZone: string | undefined): AnalyticsRegionBucket => {
   if (!timeZone) return 'unknown'
 
