@@ -120,6 +120,27 @@ describe('api.analytics.event action', () => {
     expect(forwardAnalyticsEvent).not.toHaveBeenCalled()
   })
 
+  it('accepts the public origin supplied by a trusted reverse proxy', async () => {
+    const request = new Request('http://studiozanetti:3000/api/analytics/event', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 Test Browser',
+        'X-Forwarded-For': '203.0.113.9',
+        'X-Forwarded-Host': 'studiozanetti.com.au',
+        'X-Forwarded-Proto': 'https',
+        Origin: 'https://studiozanetti.com.au',
+        'Sec-Fetch-Site': 'same-origin',
+      },
+      body: JSON.stringify(validEvent),
+    })
+
+    const response = await action({ request, params: {}, context: {} } as never)
+
+    expect(response.status).toBe(204)
+    expect(forwardAnalyticsEvent).toHaveBeenCalledOnce()
+  })
+
   it('drops identified bots without forwarding data', async () => {
     isBotMock.mockReturnValueOnce(true)
 

@@ -12,12 +12,29 @@ import { consumeRateLimitWithSettings } from '~/lib/rateLimit'
 const ANALYTICS_RATE_LIMIT = { maxRequests: 180, windowMs: 60_000 }
 const MAX_ANALYTICS_BODY_BYTES = 8_192
 
+const getLastForwardedValue = (value: string | null): string | undefined =>
+  value?.split(',').at(-1)?.trim() || undefined
+
+const getPublicRequestOrigin = (request: Request): string => {
+  const requestUrl = new URL(request.url)
+  const forwardedProtocol = getLastForwardedValue(request.headers.get('x-forwarded-proto'))
+  const protocol = forwardedProtocol === 'http' || forwardedProtocol === 'https'
+    ? forwardedProtocol
+    : requestUrl.protocol.replace(':', '')
+  const host =
+    getLastForwardedValue(request.headers.get('x-forwarded-host')) ||
+    request.headers.get('host')?.trim() ||
+    requestUrl.host
+
+  return `${protocol}://${host}`
+}
+
 export async function action({ request }: ActionFunctionArgs): Promise<Response> {
   if (request.method !== 'POST') {
     return Response.json({ error: 'Method not allowed.' }, { status: 405 })
   }
 
-  const requestOrigin = new URL(request.url).origin
+  const requestOrigin = getPublicRequestOrigin(request)
   const origin = request.headers.get('origin')
   const fetchSite = request.headers.get('sec-fetch-site')
   if ((origin && origin !== requestOrigin) || (fetchSite && fetchSite !== 'same-origin')) {
