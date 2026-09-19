@@ -90,6 +90,15 @@ describe('api.forms.submit action', () => {
         values: { name: 'Mitchell' },
         emailTo: 'attacker@example.com',
         emailSubject: 'Tampered subject',
+        visitContext: {
+          sourceCategory: 'referral',
+          sourceDomain: '203.0.113.10',
+          landingPage: '/private?email=person@example.com',
+          regionBucket: 'AU-NSW',
+          pagesViewed: 3,
+          siteDurationSeconds: 180,
+          pageDurationSeconds: 60,
+        },
       }),
       params: {},
       context: {},
@@ -104,6 +113,9 @@ describe('api.forms.submit action', () => {
         to: 'hello@studiozanetti.com.au',
         subject: 'Website enquiry',
       }),
+    )
+    expect(vi.mocked(sendFormSubmissionEmail).mock.calls[0]?.[0].text).not.toContain(
+      'Visit context',
     )
     expect(sendVscoLead).not.toHaveBeenCalled()
     expect(response.status).toBe(200)
@@ -156,6 +168,15 @@ describe('api.forms.submit action', () => {
         pagePath: '/get-in-touch/',
         formId: 'contact-enquiry',
         requestSubmitterCopy: true,
+        visitContext: {
+          sourceCategory: 'ai_assistant',
+          sourceDomain: 'chatgpt.com',
+          landingPage: '/weddings',
+          regionBucket: 'AU-NSW',
+          pagesViewed: 3,
+          siteDurationSeconds: 180,
+          pageDurationSeconds: 60,
+        },
         values: {
           name: 'Mitchell',
           email: 'mitchell@example.com',
@@ -184,8 +205,13 @@ describe('api.forms.submit action', () => {
     )
 
     const submitterCopyArgs = vi.mocked(sendFormSubmissionEmail).mock.calls[1]?.[0]
+    const internalNotificationArgs = vi.mocked(sendFormSubmissionEmail).mock.calls[0]?.[0]
+    expect(internalNotificationArgs?.text).toContain('Original source: ChatGPT (chatgpt.com)')
+    expect(internalNotificationArgs?.text).toContain('Starting page: /weddings')
     expect(submitterCopyArgs?.text).toContain('Here is a copy of the information you sent:')
     expect(submitterCopyArgs?.text).not.toContain('Page:')
+    expect(submitterCopyArgs?.text).not.toContain('Visit context')
+    expect(submitterCopyArgs?.text).not.toContain('Original source')
   })
 
   it('returns 400 for malformed payloads', async () => {
@@ -269,6 +295,15 @@ describe('api.forms.submit action', () => {
       request: makeRequest({
         pagePath: '/get-in-touch/',
         formId: 'contact-enquiry',
+        visitContext: {
+          sourceCategory: 'search',
+          sourceDomain: 'google.com.au',
+          landingPage: '/weddings',
+          regionBucket: 'AU-VIC',
+          pagesViewed: 3,
+          siteDurationSeconds: 180,
+          pageDurationSeconds: 60,
+        },
         values: { name: 'Mitchell' },
       }),
       params: {},
@@ -634,6 +669,14 @@ describe('api.forms.submit action', () => {
         }),
       }),
     )
+    const vscoFields = vi.mocked(sendVscoLead).mock.calls[0]?.[0].fields
+    expect(vscoFields).not.toHaveProperty('sourceCategory')
+    expect(vscoFields).not.toHaveProperty('sourceDomain')
+    expect(vscoFields).not.toHaveProperty('landingPage')
+    expect(vscoFields).not.toHaveProperty('regionBucket')
+    expect(vscoFields).not.toHaveProperty('pagesViewed')
+    expect(vscoFields).not.toHaveProperty('siteDurationSeconds')
+    expect(vscoFields).not.toHaveProperty('pageDurationSeconds')
   })
 
   it('sends to both email and VSCO when delivery target is both', async () => {
@@ -654,6 +697,7 @@ describe('api.forms.submit action', () => {
         delivery_target: 'both',
         email_to: 'hello@studiozanetti.com.au',
         email_subject: 'Website enquiry',
+        offer_submitter_email_copy: true,
         vsco_job_type: 'Wedding',
         fields: [
           {
@@ -663,11 +707,20 @@ describe('api.forms.submit action', () => {
             required: true,
             vsco_field_key: 'FirstName',
           },
+          {
+            field_id: 'email',
+            label: 'Email',
+            type: 'email',
+            use_for_submitter_copy: true,
+            vsco_field_key: 'Email',
+          },
         ],
       },
       emailTo: 'hello@studiozanetti.com.au',
       emailSubject: 'Website enquiry',
       deliveryTarget: 'both',
+      offerSubmitterEmailCopy: true,
+      submitterCopyFieldId: 'email',
       vscoSendEmailNotification: true,
     } as never)
 
@@ -675,15 +728,43 @@ describe('api.forms.submit action', () => {
       request: makeRequest({
         pagePath: '/get-in-touch/',
         formId: 'contact-enquiry',
-        values: { name: 'Mitchell' },
+        requestSubmitterCopy: true,
+        visitContext: {
+          sourceCategory: 'referral',
+          sourceDomain: '2130706433',
+          landingPage: '/private?email=person@example.com',
+          regionBucket: 'AU-NSW',
+          pagesViewed: 3,
+          siteDurationSeconds: 180,
+          pageDurationSeconds: 60,
+        },
+        values: { name: 'Mitchell', email: 'mitchell@example.com' },
       }),
       params: {},
       context: {},
     } as never)
 
     expect(response.status).toBe(200)
-    expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(1)
+    expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(2)
     expect(sendVscoLead).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(sendFormSubmissionEmail).mock.calls[0]?.[0].text).not.toContain(
+      'Visit context',
+    )
+    expect(vi.mocked(sendFormSubmissionEmail).mock.calls[1]?.[0].text).not.toContain(
+      'Visit context',
+    )
+    const vscoFields = vi.mocked(sendVscoLead).mock.calls[0]?.[0].fields
+    for (const analyticsField of [
+      'sourceCategory',
+      'sourceDomain',
+      'landingPage',
+      'regionBucket',
+      'pagesViewed',
+      'siteDurationSeconds',
+      'pageDurationSeconds',
+    ]) {
+      expect(vscoFields).not.toHaveProperty(analyticsField)
+    }
   })
 
   it('returns success for delivery target both when email fails but VSCO succeeds', async () => {

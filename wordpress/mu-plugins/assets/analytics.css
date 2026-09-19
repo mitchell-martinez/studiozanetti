@@ -1,0 +1,80 @@
+.sz-analytics {
+	max-width: 1280px;
+}
+
+.sz-analytics-range {
+	display: flex;
+	align-items: end;
+	gap: 12px;
+	margin: 24px 0;
+}
+
+.sz-analytics-range label {
+	display: grid;
+	gap: 5px;
+	font-weight: 600;
+}
+
+.sz-analytics-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 12px;
+	margin: 20px 0 28px;
+}
+
+.sz-analytics-card {
+	display: grid;
+	gap: 6px;
+	padding: 18px;
+	border: 1px solid #dcdcde;
+	border-left: 4px solid #2271b1;
+	background: #fff;
+}
+
+.sz-analytics-card strong {
+	font-size: 28px;
+	line-height: 1;
+}
+
+.sz-analytics-card span,
+.sz-analytics-footnote {
+	color: #50575e;
+}
+
+.sz-analytics-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 18px;
+	padding: 12px 0;
+	border-block: 1px solid #dcdcde;
+}
+
+.sz-analytics section {
+	padding-top: 18px;
+	scroll-margin-top: 40px;
+}
+
+.sz-analytics-table-wrap {
+	overflow-x: auto;
+}
+
+.sz-analytics table {
+	min-width: 620px;
+}
+
+.sz-analytics-empty {
+	padding: 18px;
+	border: 1px dashed #c3c4c7;
+	background: #fff;
+}
+
+.sz-analytics-footnote {
+	margin-top: 30px;
+}
+
+@media (max-width: 782px) {
+	.sz-analytics-range {
+		align-items: stretch;
+		flex-direction: column;
+	}
+}

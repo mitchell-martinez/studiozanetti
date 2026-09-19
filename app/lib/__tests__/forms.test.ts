@@ -12,6 +12,7 @@ import {
   buildSubmitterCopyEmailText,
   getTrustedFormSubmissionConfig,
   normalizeFormPagePath,
+  parseFormSubmissionPayload,
   stripSensitiveFormBlockData,
   validateFormConfiguration,
   validateFormSubmission,
@@ -72,6 +73,39 @@ describe('normalizeFormPagePath', () => {
     expect(
       normalizeFormPagePath('https://www.studiozanetti.com.au/gallery/pre-wedding-sessions/?a=1#hero'),
     ).toBe('gallery/pre-wedding-sessions')
+  })
+})
+
+describe('parseFormSubmissionPayload visit context', () => {
+  it('keeps a constrained analytics snapshot and drops malformed context', () => {
+    const basePayload = {
+      pagePath: '/get-in-touch',
+      formId: 'contact-enquiry',
+      values: { name: 'Mitchell' },
+    }
+    const visitContext = {
+      sourceCategory: 'ai_assistant',
+      sourceDomain: 'chatgpt.com',
+      landingPage: '/weddings',
+      regionBucket: 'AU-VIC',
+      pagesViewed: 4,
+      siteDurationSeconds: 372,
+      pageDurationSeconds: 125,
+    }
+
+    expect(parseFormSubmissionPayload({ ...basePayload, visitContext })).toMatchObject({
+      visitContext,
+    })
+    expect(parseFormSubmissionPayload({
+      ...basePayload,
+      visitContext: { ...visitContext, landingPage: '/weddings?email=private@example.com' },
+    })).not.toHaveProperty('visitContext')
+    for (const sourceDomain of ['203.0.113.10', '203.0.113.10.', '2130706433', '0x7f000001', '127.1']) {
+      expect(parseFormSubmissionPayload({
+        ...basePayload,
+        visitContext: { ...visitContext, sourceDomain },
+      })).not.toHaveProperty('visitContext')
+    }
   })
 })
 
@@ -798,11 +832,26 @@ describe('checkbox group validation and email output', () => {
         vscoSendEmailNotification: true,
       },
       validated,
+      {
+        sourceCategory: 'search',
+        sourceDomain: 'google.com.au',
+        landingPage: '/weddings',
+        regionBucket: 'AU-VIC',
+        pagesViewed: 4,
+        siteDurationSeconds: 372,
+        pageDurationSeconds: 125,
+      },
     )
 
     expect(text).toContain('- Interests:')
     expect(text).toContain('  - Weddings: True')
     expect(text).toContain('  - Corporate: False')
+    expect(text).toContain('Visit context (approximate):')
+    expect(text).toContain('- Original source: Google Search (google.com.au)')
+    expect(text).toContain('- Starting page: /weddings')
+    expect(text).toContain('- Page views this visit: 4')
+    expect(text).toContain('- Time on site before enquiry: 6m 12s')
+    expect(text).toContain('- Time on this page before enquiry: 2m 5s')
   })
 
   it('decodes HTML entities in the page title line of plain-text emails', () => {

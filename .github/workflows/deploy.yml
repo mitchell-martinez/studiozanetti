@@ -149,6 +149,15 @@ jobs:
               test "$(sha256sum "${candidate}" | awk '{print $1}')" = "${INCOMING_COMPOSE_SHA}"
               current_sha="$(sha256sum "${live}" | awk '{print $1}')"
 
+              if ! grep -Eq '^SZ_ANALYTICS_INGEST_SECRET=.+$' .env; then
+                analytics_secret="$(openssl rand -hex 32)"
+                if grep -q '^SZ_ANALYTICS_INGEST_SECRET=' .env; then
+                  sed -i "s|^SZ_ANALYTICS_INGEST_SECRET=.*|SZ_ANALYTICS_INGEST_SECRET=${analytics_secret}|" .env
+                else
+                  printf '\nSZ_ANALYTICS_INGEST_SECRET=%s\n' "${analytics_secret}" >> .env
+                fi
+              fi
+
               if [ "${current_sha}" != "${INCOMING_COMPOSE_SHA}" ]; then
                 expected_sha="${legacy_sha}"
                 if [ -f "${marker}" ]; then

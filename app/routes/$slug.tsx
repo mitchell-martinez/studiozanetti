@@ -4,6 +4,7 @@ import BlockRenderer from '~/components/blocks/BlockRenderer'
 import BlogPostPage from '~/components/BlogPostPage'
 import ErrorPage from '~/components/ErrorPage'
 import RichText from '~/components/RichText'
+import { createAnalyticsContextToken } from '~/lib/analytics.server'
 import { stripSensitiveFormBlockData } from '~/lib/forms'
 import { stripHtml } from '~/lib/html'
 import { getSiteUrlFromEnv, toCanonicalUrl } from '~/lib/seo'
@@ -15,6 +16,7 @@ import
     getPostsByCategories,
     getRelatedPosts,
   } from '~/lib/wordpress'
+import type { AnalyticsPageContext } from '~/lib/analytics'
 import type { BlogPostsData, WPPage, WPPost } from '~/types/wordpress'
 import styles from './$slug.module.scss'
 import NotFoundRoute from './404'
@@ -25,6 +27,7 @@ interface PageLoaderData {
   page: WPPage
   canonicalUrl: string
   blogPostsData?: BlogPostsData
+  analyticsPage: AnalyticsPageContext
 }
 
 interface PostLoaderData {
@@ -32,6 +35,7 @@ interface PostLoaderData {
   post: WPPost
   relatedPosts: WPPost[]
   canonicalUrl: string
+  analyticsPage: AnalyticsPageContext
 }
 
 type LoaderData = PageLoaderData | PostLoaderData
@@ -39,6 +43,24 @@ type LoaderData = PageLoaderData | PostLoaderData
 const toAbsoluteSocialImageUrl = (url: string): string => {
   if (/^https?:\/\//i.test(url)) return url
   return `${getSiteUrlFromEnv()}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
+const buildAnalyticsPage = (
+  pagePath: string,
+  pageId: number,
+  siteGroup: string,
+  hasPricingBlock: boolean,
+  hasFormBlock: boolean,
+): AnalyticsPageContext => {
+  const context = { pagePath, pageId, siteGroup, hasPricingBlock, hasFormBlock }
+  return {
+    pagePath,
+    pageId,
+    siteGroup,
+    hasPricingBlock,
+    hasFormBlock,
+    contextToken: createAnalyticsContextToken(context),
+  }
 }
 
 // ─── Loader (SSR — called on every request) ───────────────────────────────────
@@ -60,6 +82,16 @@ export async function loader({ params, request }: LoaderFunctionArgs): Promise<L
     const publicPage = stripSensitiveFormBlockData(page)
     const pagePath = lookupSlug === 'home' ? '/' : `/${lookupSlug}`
     const canonicalUrl = toCanonicalUrl(pagePath)
+    const blocks = publicPage.acf?.blocks ?? []
+    const analyticsPage = buildAnalyticsPage(
+      pagePath,
+      publicPage.id,
+      publicPage.acf?.menu_override?.trim() ||
+        publicPage.acf?.service_reference?.trim() ||
+        'landing',
+      blocks.some((block) => block.acf_fc_layout === 'pricing_packages'),
+      blocks.some((block) => block.acf_fc_layout === 'form_block'),
+    )
 
     // If the page has a blog_posts block, pre-fetch posts for SSR
     const blogBlock = publicPage.acf?.blocks?.find((b) => b.acf_fc_layout === 'blog_posts')
@@ -80,6 +112,7 @@ export async function loader({ params, request }: LoaderFunctionArgs): Promise<L
       type: 'page',
       page: publicPage,
       canonicalUrl,
+      analyticsPage,
       ...(blogPostsData ? { blogPostsData } : {}),
     }
   }
@@ -88,10 +121,20 @@ export async function loader({ params, request }: LoaderFunctionArgs): Promise<L
   if (!lookupSlug.includes('/')) {
     const post = await getPostBySlug(lookupSlug)
     if (post) {
-      const canonicalUrl = toCanonicalUrl(`/${lookupSlug}`)
+      const pagePath = `/${lookupSlug}`
+      const canonicalUrl = toCanonicalUrl(pagePath)
       const categoryIds = post.categories.map((c) => c.id)
       const relatedPosts = await getRelatedPosts(post.id, categoryIds, 3)
-      return { type: 'post', post, relatedPosts, canonicalUrl }
+      const siteGroup =
+        post.categories.find((category) => category.menu_override?.trim())?.menu_override ??
+        'blog'
+      return {
+        type: 'post',
+        post,
+        relatedPosts,
+        canonicalUrl,
+        analyticsPage: buildAnalyticsPage(pagePath, post.id, siteGroup, false, false),
+      }
     }
   }
 
@@ -195,6 +238,7 @@ const CmsPage = () => {
   if (blocks?.length) {
     return (
       <BlockRenderer
+        key={page.id}
         blocks={blocks}
         featuredImage={page.featured_image}
         blogPostsData={blogPostsData}

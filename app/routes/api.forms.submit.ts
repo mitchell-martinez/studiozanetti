@@ -168,7 +168,11 @@ export async function action({ request }: ActionFunctionArgs) {
     )
   }
 
-  const submissionText = buildFormSubmissionEmailText(trustedConfig, validatedSubmission)
+  const submissionText = buildFormSubmissionEmailText(
+    trustedConfig,
+    validatedSubmission,
+    payload.visitContext,
+  )
 
   let vscoLeadData: Record<string, string> | null = null
   if (shouldSendVsco) {

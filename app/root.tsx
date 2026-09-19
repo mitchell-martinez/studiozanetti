@@ -15,6 +15,7 @@ import ErrorPage from '~/components/ErrorPage'
 import Footer from '~/components/Footer'
 import Navbar from '~/components/Navbar'
 import OfflineBanner from '~/components/OfflineBanner'
+import AnalyticsProvider from '~/components/AnalyticsProvider'
 import {
   buildPageSchemas,
   buildPostSchemas,
@@ -23,6 +24,7 @@ import {
 } from '~/lib/seo'
 import { getNavMenu, getPageBySlug, getPostBySlug, getSiteSettings } from '~/lib/wordpress'
 import globalStyles from '~/styles/global.scss?url'
+import type { AnalyticsPageContext } from '~/lib/analytics'
 import type { WPMenuItem, WPPage, WPPost, WPSiteSettings } from '~/types/wordpress'
 
 export const links: LinksFunction = () => [
@@ -99,8 +101,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
       if (!matchData || typeof matchData !== 'object' || !('type' in matchData)) return false
       return matchData.type === 'page' || matchData.type === 'post'
     }) as
-    | { type: 'page'; page: WPPage; canonicalUrl: string }
-    | { type: 'post'; post: WPPost; canonicalUrl: string }
+    | { type: 'page'; page: WPPage; canonicalUrl: string; analyticsPage: AnalyticsPageContext }
+    | { type: 'post'; post: WPPost; canonicalUrl: string; analyticsPage: AnalyticsPageContext }
     | undefined
   const contentSchemas = activeContentData
     ? (() => {
@@ -129,6 +131,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const structuredData = siteSettings
     ? buildStructuredDataGraph(siteSettings, contentSchemas)
     : null
+  const analyticsPage = activeContentData?.analyticsPage
 
   return (
     <html lang="en">
@@ -152,9 +155,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {siteSettings && navMenu.length > 0 && (
             <Navbar items={navMenu} siteName={siteSettings.site_name} />
           )}
-          <main id="main-content" className="main-content" tabIndex={-1}>
-            {children}
-          </main>
+          <AnalyticsProvider page={analyticsPage}>
+            <main id="main-content" className="main-content" tabIndex={-1}>
+              {children}
+            </main>
+          </AnalyticsProvider>
           {siteSettings && navMenu.length > 0 && (
             <Footer items={navMenu} siteSettings={siteSettings} />
           )}

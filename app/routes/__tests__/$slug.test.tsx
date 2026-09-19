@@ -81,6 +81,14 @@ describe('CmsPage route', () => {
         type: 'page',
         page: mockPage,
         canonicalUrl: 'https://studiozanetti.com.au',
+        analyticsPage: {
+          pagePath: '/',
+          pageId: mockPage.id,
+          siteGroup: 'landing',
+          hasPricingBlock: false,
+          hasFormBlock: false,
+          contextToken: undefined,
+        },
       })
       expect(getPageBySlug).toHaveBeenCalledWith('home')
     })
@@ -92,6 +100,14 @@ describe('CmsPage route', () => {
         type: 'page',
         page: mockPage,
         canonicalUrl: 'https://studiozanetti.com.au/pricing',
+        analyticsPage: {
+          pagePath: '/pricing',
+          pageId: mockPage.id,
+          siteGroup: 'landing',
+          hasPricingBlock: false,
+          hasFormBlock: false,
+          contextToken: undefined,
+        },
       })
     })
 
@@ -163,6 +179,14 @@ describe('CmsPage route', () => {
         type: 'page',
         page: galleryChild,
         canonicalUrl: 'https://studiozanetti.com.au/gallery/stylish-brides',
+        analyticsPage: {
+          pagePath: '/gallery/stylish-brides',
+          pageId: galleryChild.id,
+          siteGroup: 'landing',
+          hasPricingBlock: false,
+          hasFormBlock: false,
+          contextToken: undefined,
+        },
       })
       expect(getPageByPath).toHaveBeenCalledWith('gallery/stylish-brides')
     })

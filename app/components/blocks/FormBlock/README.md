@@ -76,6 +76,9 @@ Publishing is also blocked if the form data becomes invalid behind the editor UI
 - If the form includes more than one Email field, one of them must enable `Use For Submitter Copy`.
 - When a submitter ticks the checkbox, that designated Email field becomes required for that submission even if it is otherwise optional.
 - The submitter copy email includes only the submitted labels and values. It does not include internal routing details such as page path, page title, or form ID.
+- The studio notification email includes approximate first-party visit context: original source, starting page, coarse timezone-derived region, page views, time on site, and time on the enquiry page.
+- A visit continues across ordinary same-tab navigation and reloads, then resets after 30 minutes of inactivity or a fresh arrival from an external source.
+- Visit context is never included in the submitter copy or sent to VSCO. It excludes query parameters, raw referrer URLs, raw timezones, IP addresses, and visitor/session identifiers.
 - `Form ID` must stay stable after publishing, or submissions will stop resolving to the correct server-side form config.
 - Choice fields should use short machine-safe values such as `email`, `phone`, or `wedding`.
 - Number fields use a minimum of `0` by default and should only be used for non-negative values such as attendees, quantities, or durations.

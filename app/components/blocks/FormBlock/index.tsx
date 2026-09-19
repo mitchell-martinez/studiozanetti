@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLocation } from 'react-router'
+import { useAnalytics } from '~/components/AnalyticsProvider/context'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
 import {
@@ -105,6 +106,8 @@ const createInitialValues = (fields: FormBlockProps['block']['fields'], search: 
 
 const FormBlock = ({ block }: FormBlockProps) => {
   const location = useLocation()
+  const { getVisitContext, trackEvent } = useAnalytics()
+  const trackedFormKey = useRef<string | null>(null)
   const prefillKey = `${block.form_id}|${location.search}`
   const [values, setValues] = useState<ClientFormValues>(() =>
     createInitialValues(block.fields, location.search, block.form_id),
@@ -175,6 +178,11 @@ const FormBlock = ({ block }: FormBlockProps) => {
   }
 
   const handleValueChange = (fieldId: string, value: ClientFormValue) => {
+    const formTrackingKey = `${location.pathname}:${block.form_id}`
+    if (trackedFormKey.current !== formTrackingKey) {
+      trackedFormKey.current = formTrackingKey
+      trackEvent('form_start', { formId: block.form_id })
+    }
     setValues((currentValues) => ({ ...currentValues, [fieldId]: value }))
     setFieldErrors((currentErrors) => {
       if (!currentErrors[fieldId]) return currentErrors
@@ -221,6 +229,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
           requestSubmitterCopy: shouldOfferSubmitterCopy && requestSubmitterCopy,
           formStartedAtMs,
           submittedAtMs,
+          visitContext: getVisitContext(),
           values,
         }),
       })
@@ -241,6 +250,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
       setFieldErrors({})
       setSubmitState('success')
       setSuccessMessage(payload.message ?? 'Thanks. Your message has been sent.')
+      trackEvent('form_submit', { formId: block.form_id })
     } catch (error) {
       console.error('[FormBlock] submit failed', error)
       setSubmitState('error')

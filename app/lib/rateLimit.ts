@@ -11,8 +11,14 @@ export interface RateLimitResult {
   limit: number
 }
 
+export interface RateLimitSettings {
+  windowMs: number
+  maxRequests: number
+}
+
 const DEFAULT_WINDOW_MS = 15 * 60 * 1000
 const DEFAULT_MAX_REQUESTS = 5
+const MAX_RATE_LIMIT_ENTRIES = 10_000
 const rateLimitStore = new Map<string, RateLimitEntry>()
 
 export function getRateLimitSettings() {
@@ -29,7 +35,27 @@ export function getRateLimitSettings() {
 }
 
 export function consumeRateLimit(key: string, now = Date.now()): RateLimitResult {
-  const { maxRequests, windowMs } = getRateLimitSettings()
+  return consumeRateLimitWithSettings(key, getRateLimitSettings(), now)
+}
+
+export function consumeRateLimitWithSettings(
+  key: string,
+  settings: RateLimitSettings,
+  now = Date.now(),
+): RateLimitResult {
+  const { maxRequests, windowMs } = settings
+
+  if (rateLimitStore.size >= MAX_RATE_LIMIT_ENTRIES) {
+    for (const [storedKey, storedEntry] of rateLimitStore) {
+      if (storedEntry.resetAt <= now) rateLimitStore.delete(storedKey)
+    }
+    while (rateLimitStore.size >= MAX_RATE_LIMIT_ENTRIES) {
+      const oldestKey = rateLimitStore.keys().next().value
+      if (oldestKey === undefined) break
+      rateLimitStore.delete(oldestKey)
+    }
+  }
+
   const existing = rateLimitStore.get(key)
   const hasExpired = !existing || existing.resetAt <= now
 

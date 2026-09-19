@@ -2,11 +2,13 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import AnalyticsProvider from '~/components/AnalyticsProvider'
 import type { FormBlock as FormBlockType } from '~/types/wordpress'
 import formBlockData from '../__mocks__/formBlock.json'
 import FormBlock from '../index'
 
 const mockFetch = vi.fn()
+const mockSendBeacon = vi.fn<(url: string, data?: BodyInit | null) => boolean>(() => true)
 const baseBlock = formBlockData as unknown as FormBlockType
 
 afterEach(() => {
@@ -22,6 +24,24 @@ const renderBlock = (
   render(
     <MemoryRouter initialEntries={initialEntries}>
       <FormBlock block={{ ...baseBlock, ...overrides }} />
+    </MemoryRouter>,
+  )
+
+const renderTrackedBlock = () =>
+  render(
+    <MemoryRouter initialEntries={['/get-in-touch']}>
+      <AnalyticsProvider
+        page={{
+          pagePath: '/get-in-touch',
+          pageId: 12,
+          siteGroup: 'weddings',
+          hasPricingBlock: false,
+          hasFormBlock: true,
+          contextToken: 'a'.repeat(64),
+        }}
+      >
+        <FormBlock block={baseBlock} />
+      </AnalyticsProvider>
     </MemoryRouter>,
   )
 
@@ -129,6 +149,81 @@ describe('FormBlock', () => {
     expect(await screen.findByText('Thanks for getting in touch.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /send message/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('textbox', { name: /^Email/i })).not.toBeInTheDocument()
+  })
+
+  it('tracks one form start and a confirmed successful submission', async () => {
+    vi.stubGlobal('navigator', { ...navigator, sendBeacon: mockSendBeacon })
+    vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true }),
+    }))
+    const user = userEvent.setup()
+
+    renderTrackedBlock()
+    await waitFor(() => expect(mockSendBeacon).toHaveBeenCalledTimes(1))
+
+    await user.type(screen.getByLabelText(/^Name/i), 'Mitchell')
+    await user.type(screen.getByRole('textbox', { name: /^Email/i }), 'mitchell@example.com')
+
+    const startedEvents = mockSendBeacon.mock.calls
+      .map(([, body]) => JSON.parse(body as string))
+      .filter((event) => event.eventType === 'form_start')
+    expect(startedEvents).toHaveLength(1)
+
+    await user.click(screen.getByRole('radio', { name: /^Email$/i }))
+    await user.click(screen.getByLabelText(/I agree to be contacted/i))
+    await user.click(screen.getByRole('button', { name: /send message/i }))
+
+    await waitFor(() => {
+      const eventTypes = mockSendBeacon.mock.calls.map(([, body]) => JSON.parse(body as string).eventType)
+      expect(eventTypes).toContain('form_submit')
+    })
+    const submissionBody = JSON.parse(mockFetch.mock.calls[0]?.[1]?.body as string)
+    expect(submissionBody.visitContext).toMatchObject({
+      sourceCategory: 'direct',
+      landingPage: '/get-in-touch',
+      pagesViewed: 1,
+    })
+    expect(submissionBody.visitContext.siteDurationSeconds).toBeGreaterThanOrEqual(0)
+    expect(submissionBody.visitContext.pageDurationSeconds).toBeGreaterThanOrEqual(0)
+  })
+
+  it('tracks a new start when a reused block renders a different form', async () => {
+    vi.stubGlobal('navigator', { ...navigator, sendBeacon: mockSendBeacon })
+    const user = userEvent.setup()
+    const trackedPage = {
+      pagePath: '/get-in-touch',
+      pageId: 12,
+      siteGroup: 'weddings',
+      hasPricingBlock: false,
+      hasFormBlock: true,
+      contextToken: 'a'.repeat(64),
+    }
+    const { rerender } = render(
+      <MemoryRouter initialEntries={['/get-in-touch']}>
+        <AnalyticsProvider page={trackedPage}>
+          <FormBlock block={baseBlock} />
+        </AnalyticsProvider>
+      </MemoryRouter>,
+    )
+
+    await user.type(screen.getByLabelText(/^Name/i), 'First')
+    rerender(
+      <MemoryRouter initialEntries={['/get-in-touch']}>
+        <AnalyticsProvider page={trackedPage}>
+          <FormBlock block={{ ...baseBlock, form_id: 'second-enquiry' }} />
+        </AnalyticsProvider>
+      </MemoryRouter>,
+    )
+    await user.type(screen.getByLabelText(/^Name/i), ' Second')
+
+    const startedEvents = mockSendBeacon.mock.calls
+      .map(([, body]) => JSON.parse(body as string))
+      .filter((event) => event.eventType === 'form_start')
+    expect(startedEvents.map((event) => event.formId)).toEqual([
+      baseBlock.form_id,
+      'second-enquiry',
+    ])
   })
 
   it('submits requestSubmitterCopy when the generated checkbox is selected', async () => {

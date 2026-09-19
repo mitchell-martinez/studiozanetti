@@ -6,6 +6,12 @@ import type {
   WPFormFieldOption,
   WPPage,
 } from '~/types/wordpress'
+import type {
+  AnalyticsReferrerCategory,
+  AnalyticsRegionBucket,
+  AnalyticsVisitContext,
+} from './analytics'
+import { isIpAddressHostname } from './analytics'
 import
   {
     getEffectiveNumberFieldMin,
@@ -27,6 +33,7 @@ export interface FormSubmissionPayload {
   requestSubmitterCopy?: boolean
   formStartedAtMs?: number
   submittedAtMs?: number
+  visitContext?: AnalyticsVisitContext
 }
 
 export interface TrustedFormSubmissionConfig {
@@ -55,11 +62,90 @@ interface ValidateFormSubmissionOptions {
 
 const HOME_SLUG = 'home'
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const MAX_VISIT_DURATION_SECONDS = 7 * 24 * 60 * 60
+const ANALYTICS_SOURCE_CATEGORIES = new Set<AnalyticsReferrerCategory>([
+  'direct',
+  'internal',
+  'search',
+  'ai_assistant',
+  'social',
+  'referral',
+  'unknown',
+])
+const ANALYTICS_REGION_BUCKETS = new Set<AnalyticsRegionBucket>([
+  'AU-NSW',
+  'AU-VIC',
+  'AU-QLD',
+  'AU-WA',
+  'AU-SA',
+  'AU-TAS',
+  'AU-NT',
+  'international',
+  'unknown',
+])
 
 const isFormBlock = (block: ContentBlock): block is FormBlock => block.acf_fc_layout === 'form_block'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
+
+const parseVisitContext = (value: unknown): AnalyticsVisitContext | undefined => {
+  if (!isRecord(value)) return undefined
+
+  const {
+    sourceCategory,
+    sourceDomain,
+    landingPage,
+    regionBucket,
+    pagesViewed,
+    siteDurationSeconds,
+    pageDurationSeconds,
+  } = value
+  const hasValidSourceDomain =
+    sourceDomain === undefined ||
+    (typeof sourceDomain === 'string' &&
+      sourceDomain.length <= 190 &&
+      /^[a-z0-9.-]+$/i.test(sourceDomain) &&
+      !isIpAddressHostname(sourceDomain))
+
+  if (
+    typeof sourceCategory !== 'string' ||
+    !ANALYTICS_SOURCE_CATEGORIES.has(sourceCategory as AnalyticsReferrerCategory) ||
+    !hasValidSourceDomain ||
+    typeof landingPage !== 'string' ||
+    landingPage.length > 512 ||
+    !landingPage.startsWith('/') ||
+    landingPage.includes('?') ||
+    landingPage.includes('#') ||
+    Array.from(landingPage).some((character) => {
+      const characterCode = character.charCodeAt(0)
+      return characterCode < 32 || characterCode === 127
+    }) ||
+    typeof regionBucket !== 'string' ||
+    !ANALYTICS_REGION_BUCKETS.has(regionBucket as AnalyticsRegionBucket) ||
+    !Number.isSafeInteger(pagesViewed) ||
+    (pagesViewed as number) < 1 ||
+    (pagesViewed as number) > 1000 ||
+    !Number.isSafeInteger(siteDurationSeconds) ||
+    (siteDurationSeconds as number) < 0 ||
+    (siteDurationSeconds as number) > MAX_VISIT_DURATION_SECONDS ||
+    !Number.isSafeInteger(pageDurationSeconds) ||
+    (pageDurationSeconds as number) < 0 ||
+    (pageDurationSeconds as number) > MAX_VISIT_DURATION_SECONDS
+  ) {
+    return undefined
+  }
+
+  return {
+    sourceCategory: sourceCategory as AnalyticsReferrerCategory,
+    ...(sourceDomain ? { sourceDomain } : {}),
+    landingPage,
+    regionBucket: regionBucket as AnalyticsRegionBucket,
+    pagesViewed: pagesViewed as number,
+    siteDurationSeconds: siteDurationSeconds as number,
+    pageDurationSeconds: pageDurationSeconds as number,
+  }
+}
 
 const isFormSubmissionValue = (value: unknown): value is FormSubmissionValue => {
   if (value === null) return true
@@ -382,6 +468,7 @@ const buildSubmittedFieldLines = (
 export function buildFormSubmissionEmailText(
   config: TrustedFormSubmissionConfig,
   validated: ValidatedFormSubmission,
+  visitContext?: AnalyticsVisitContext,
 ): string {
   const heading = config.form.heading?.trim() || 'Website form submission'
   const pagePath = config.normalizedPagePath === HOME_SLUG ? '/' : `/${config.normalizedPagePath}`
@@ -397,6 +484,43 @@ export function buildFormSubmissionEmailText(
     'Submitted fields:',
     ...submittedFieldLines,
   ]
+
+  if (visitContext) {
+    const sourceNames: Partial<Record<AnalyticsReferrerCategory, string>> = {
+      direct: 'Direct',
+      internal: 'Internal link',
+      search: visitContext.sourceDomain?.includes('google.') ? 'Google Search' : 'Search',
+      ai_assistant: visitContext.sourceDomain?.includes('chatgpt.com') || visitContext.sourceDomain === 'chat.openai.com'
+        ? 'ChatGPT'
+        : 'AI assistant',
+      social: 'Social',
+      referral: 'Other website',
+      unknown: 'Unknown',
+    }
+    const sourceName = sourceNames[visitContext.sourceCategory] ?? 'Unknown'
+    const source = visitContext.sourceDomain && !sourceName.includes(visitContext.sourceDomain)
+      ? `${sourceName} (${visitContext.sourceDomain})`
+      : sourceName
+    const formatDuration = (totalSeconds: number): string => {
+      const hours = Math.floor(totalSeconds / 3600)
+      const minutes = Math.floor((totalSeconds % 3600) / 60)
+      const seconds = totalSeconds % 60
+      return [hours ? `${hours}h` : '', minutes ? `${minutes}m` : '', `${seconds}s`]
+        .filter(Boolean)
+        .join(' ')
+    }
+
+    lines.push(
+      '',
+      'Visit context (approximate):',
+      `- Original source: ${source}`,
+      `- Starting page: ${visitContext.landingPage}`,
+      `- Region: ${visitContext.regionBucket} (browser timezone-derived)`,
+      `- Page views this visit: ${visitContext.pagesViewed}`,
+      `- Time on site before enquiry: ${formatDuration(visitContext.siteDurationSeconds)}`,
+      `- Time on this page before enquiry: ${formatDuration(visitContext.pageDurationSeconds)}`,
+    )
+  }
 
   return lines.join('\n')
 }
@@ -543,6 +667,7 @@ export function parseFormSubmissionPayload(input: unknown): FormSubmissionPayloa
     requestSubmitterCopy,
     formStartedAtMs,
     submittedAtMs,
+    visitContext,
     values,
   } = input
 
@@ -563,6 +688,7 @@ export function parseFormSubmissionPayload(input: unknown): FormSubmissionPayloa
   }
 
   const normalizedValues: Record<string, FormSubmissionValue> = {}
+  const normalizedVisitContext = parseVisitContext(visitContext)
 
   for (const [key, value] of Object.entries(values)) {
     if (!isFormSubmissionValue(value)) return null
@@ -578,6 +704,7 @@ export function parseFormSubmissionPayload(input: unknown): FormSubmissionPayloa
     requestSubmitterCopy,
     formStartedAtMs: typeof formStartedAtMs === 'number' ? formStartedAtMs : undefined,
     submittedAtMs: typeof submittedAtMs === 'number' ? submittedAtMs : undefined,
+    ...(normalizedVisitContext ? { visitContext: normalizedVisitContext } : {}),
   }
 }
 
