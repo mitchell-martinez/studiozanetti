@@ -11,6 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 require_once __DIR__ . '/includes/analytics-validation.php';
+require_once __DIR__ . '/includes/analytics-reporting.php';
 
 const SZ_ANALYTICS_SCHEMA_VERSION = '1.1.0';
 const SZ_ANALYTICS_RETENTION_DAYS = 90;
@@ -336,6 +337,207 @@ function sz_analytics_render_table( array $headers, array $rows, array $keys ): 
 	<?php
 }
 
+function sz_analytics_admin_url( string $view, DateTimeImmutable $start, DateTimeImmutable $end, array $extra = [] ): string {
+	$args = array_merge(
+		[
+			'page'           => 'sz-analytics',
+			'analytics_view' => $view,
+			'start'          => $start->format( 'Y-m-d' ),
+			'end'            => $end->format( 'Y-m-d' ),
+		],
+		$extra
+	);
+
+	return add_query_arg( $args, admin_url( 'admin.php' ) );
+}
+
+function sz_analytics_render_date_range( DateTimeImmutable $start, DateTimeImmutable $end, string $view ): void {
+	?>
+	<form class="sz-analytics-range" method="get">
+		<input type="hidden" name="page" value="sz-analytics">
+		<?php if ( 'overview' !== $view ) : ?>
+			<input type="hidden" name="analytics_view" value="<?php echo esc_attr( $view ); ?>">
+		<?php endif; ?>
+		<label>From <input type="date" name="start" value="<?php echo esc_attr( $start->format( 'Y-m-d' ) ); ?>"></label>
+		<label>To <input type="date" name="end" value="<?php echo esc_attr( $end->format( 'Y-m-d' ) ); ?>"></label>
+		<button class="button button-primary" type="submit">Apply</button>
+	</form>
+	<?php
+}
+
+function sz_analytics_format_datetime( string $datetime ): string {
+	return '' === $datetime ? 'Unknown' : get_date_from_gmt( $datetime, 'j M Y, g:i a' );
+}
+
+function sz_analytics_format_duration( int $seconds ): string {
+	$hours = intdiv( $seconds, HOUR_IN_SECONDS );
+	$minutes = intdiv( $seconds % HOUR_IN_SECONDS, MINUTE_IN_SECONDS );
+	$remaining_seconds = $seconds % MINUTE_IN_SECONDS;
+
+	if ( $hours > 0 ) {
+		return sprintf( '%dh %dm', $hours, $minutes );
+	}
+	if ( $minutes > 0 ) {
+		return sprintf( '%dm %ds', $minutes, $remaining_seconds );
+	}
+
+	return sprintf( '%ds', $remaining_seconds );
+}
+
+function sz_analytics_render_sessions_view(
+	string $table,
+	DateTimeImmutable $start,
+	DateTimeImmutable $end,
+	string $from,
+	string $until
+): void {
+	$per_page = 25;
+	$current_page = max( 1, isset( $_GET['paged'] ) ? absint( $_GET['paged'] ) : 1 );
+	$count_rows = sz_analytics_query_rows(
+		"SELECT COUNT(DISTINCT NULLIF(session_hash, '')) AS total
+		FROM {$table} WHERE occurred_at >= %s AND occurred_at < %s",
+		[ $from, $until ]
+	);
+	$total = (int) ( $count_rows[0]['total'] ?? 0 );
+	$total_pages = max( 1, (int) ceil( $total / $per_page ) );
+	$current_page = min( $current_page, $total_pages );
+	$offset = ( $current_page - 1 ) * $per_page;
+	$session_rows = sz_analytics_query_rows(
+		"SELECT session_hash, MIN(id) AS selector_id, MIN(occurred_at) AS started_at,
+			MAX(occurred_at) AS ended_at,
+			COALESCE(NULLIF(MAX(region_bucket), ''), 'unknown') AS region_bucket,
+			SUM(event_type = 'page_view') AS page_views,
+			MAX(event_type = 'form_submit') AS converted
+		FROM {$table}
+		WHERE occurred_at >= %s AND occurred_at < %s AND session_hash <> ''
+		GROUP BY session_hash ORDER BY started_at DESC, selector_id DESC LIMIT %d OFFSET %d",
+		[ $from, $until, $per_page, $offset ]
+	);
+	$hashes = array_values( array_filter( array_column( $session_rows, 'session_hash' ) ) );
+	$page_view_rows = [];
+	if ( ! empty( $hashes ) ) {
+		$placeholders = implode( ', ', array_fill( 0, count( $hashes ), '%s' ) );
+		$page_view_rows = sz_analytics_query_rows(
+			"SELECT id, session_hash, event_sequence, page_path, referrer_category, referrer_domain
+			FROM {$table}
+			WHERE session_hash IN ({$placeholders}) AND event_type = 'page_view'
+			ORDER BY session_hash, event_sequence, id",
+			$hashes
+		);
+	}
+	$sessions = sz_analytics_build_session_summaries( $session_rows, $page_view_rows );
+	?>
+	<div class="wrap sz-analytics sz-analytics-sessions">
+		<a class="sz-analytics-back" href="<?php echo esc_url( sz_analytics_admin_url( 'overview', $start, $end ) ); ?>"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>Overview</a>
+		<div class="sz-analytics-heading-row">
+			<div><h1>Sessions</h1><p class="description"><?php echo esc_html( number_format_i18n( $total ) ); ?> anonymous daily sessions</p></div>
+		</div>
+		<?php sz_analytics_render_date_range( $start, $end, 'sessions' ); ?>
+
+		<?php if ( empty( $sessions ) ) : ?>
+			<p class="sz-analytics-empty">No sessions in this period.</p>
+		<?php else : ?>
+			<div class="sz-session-list-heading" aria-hidden="true">
+				<span>Started</span><span>Source</span><span>Starting page</span><span>Views</span><span>Outcome</span><span></span>
+			</div>
+			<ul class="sz-session-list">
+				<?php foreach ( $sessions as $session ) : ?>
+					<?php
+					$detail_url = sz_analytics_admin_url(
+						'session',
+						$start,
+						$end,
+						[ 'session_event' => $session['selector_id'], 'list_page' => $current_page ]
+					);
+					?>
+					<li>
+						<a class="sz-session-row" href="<?php echo esc_url( $detail_url ); ?>">
+							<span class="sz-session-value"><small>Started</small><strong><?php echo esc_html( sz_analytics_format_datetime( $session['started_at'] ) ); ?></strong></span>
+							<span class="sz-session-value"><small>Source</small><span class="sz-source-chip sz-source-<?php echo esc_attr( $session['source_type'] ); ?>"><?php echo esc_html( $session['source'] ); ?></span></span>
+							<span class="sz-session-value sz-session-path"><small>Starting page</small><span><?php echo esc_html( $session['landing_page'] ); ?></span></span>
+							<span class="sz-session-value"><small>Views</small><span><?php echo esc_html( number_format_i18n( $session['page_views'] ) ); ?></span></span>
+							<span class="sz-session-value"><small>Outcome</small><span class="sz-outcome-chip <?php echo $session['converted'] ? 'is-converted' : ''; ?>"><?php echo esc_html( $session['converted'] ? 'Enquiry' : 'No enquiry' ); ?></span></span>
+							<span class="dashicons dashicons-arrow-right-alt2 sz-session-arrow" aria-hidden="true"></span>
+						</a>
+					</li>
+				<?php endforeach; ?>
+			</ul>
+
+			<?php if ( $total_pages > 1 ) : ?>
+				<nav class="sz-session-pagination" aria-label="Sessions pagination">
+					<?php if ( $current_page > 1 ) : ?><a class="button" href="<?php echo esc_url( sz_analytics_admin_url( 'sessions', $start, $end, [ 'paged' => $current_page - 1 ] ) ); ?>">Previous</a><?php endif; ?>
+					<span>Page <?php echo esc_html( number_format_i18n( $current_page ) ); ?> of <?php echo esc_html( number_format_i18n( $total_pages ) ); ?></span>
+					<?php if ( $current_page < $total_pages ) : ?><a class="button" href="<?php echo esc_url( sz_analytics_admin_url( 'sessions', $start, $end, [ 'paged' => $current_page + 1 ] ) ); ?>">Next</a><?php endif; ?>
+				</nav>
+			<?php endif; ?>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+
+function sz_analytics_render_session_view(
+	string $table,
+	DateTimeImmutable $start,
+	DateTimeImmutable $end,
+	string $from,
+	string $until
+): void {
+	$selector_id = isset( $_GET['session_event'] ) ? absint( $_GET['session_event'] ) : 0;
+	$list_page = max( 1, isset( $_GET['list_page'] ) ? absint( $_GET['list_page'] ) : 1 );
+	$back_url = sz_analytics_admin_url( 'sessions', $start, $end, [ 'paged' => $list_page ] );
+	$selector_rows = 0 === $selector_id ? [] : sz_analytics_query_rows(
+		"SELECT session_hash FROM {$table}
+		WHERE id = %d AND occurred_at >= %s AND occurred_at < %s AND session_hash <> '' LIMIT 1",
+		[ $selector_id, $from, $until ]
+	);
+	$session_hash = (string) ( $selector_rows[0]['session_hash'] ?? '' );
+	$events = [];
+	if ( '' !== $session_hash ) {
+		$events = sz_analytics_query_rows(
+			"SELECT id, occurred_at, event_type, page_path, referrer_category, referrer_domain,
+				region_bucket, event_sequence, scroll_depth, form_id
+			FROM {$table}
+			WHERE session_hash = %s AND occurred_at >= %s AND occurred_at < %s
+				AND event_type IN ('page_view', 'scroll_depth', 'form_start', 'form_submit')
+			ORDER BY event_sequence, id",
+			[ $session_hash, $from, $until ]
+		);
+	}
+	$session = sz_analytics_build_session_detail( $events );
+	?>
+	<div class="wrap sz-analytics sz-analytics-session-detail">
+		<a class="sz-analytics-back" href="<?php echo esc_url( $back_url ); ?>"><span class="dashicons dashicons-arrow-left-alt2" aria-hidden="true"></span>Sessions</a>
+		<?php if ( null === $session ) : ?>
+			<h1>Session unavailable</h1>
+			<p class="sz-analytics-empty">This session is invalid or no longer retained.</p>
+		<?php else : ?>
+			<div class="sz-analytics-heading-row">
+				<div><h1>Session journey</h1><p class="description"><?php echo esc_html( sz_analytics_format_datetime( $session['started_at'] ) ); ?></p></div>
+				<span class="sz-outcome-chip <?php echo $session['converted'] ? 'is-converted' : ''; ?>"><?php echo esc_html( $session['converted'] ? 'Enquiry' : 'No enquiry' ); ?></span>
+			</div>
+
+			<dl class="sz-session-meta">
+				<div><dt>Source</dt><dd><span class="sz-source-chip sz-source-<?php echo esc_attr( $session['source_type'] ); ?>"><?php echo esc_html( $session['source'] ); ?></span></dd></div>
+				<div><dt>Starting page</dt><dd><?php echo esc_html( $session['landing_page'] ); ?></dd></div>
+				<div><dt>Region</dt><dd><?php echo esc_html( $session['region_bucket'] ); ?></dd></div>
+				<div><dt>Page views</dt><dd><?php echo esc_html( number_format_i18n( $session['page_views'] ) ); ?></dd></div>
+				<div><dt>Duration</dt><dd><?php echo esc_html( sz_analytics_format_duration( $session['duration_seconds'] ) ); ?></dd></div>
+			</dl>
+
+			<h2>Timeline</h2>
+			<ol class="sz-session-timeline">
+				<?php foreach ( $session['timeline'] as $event ) : ?>
+					<li class="sz-timeline-<?php echo esc_attr( sanitize_html_class( $event['type'] ) ); ?>">
+						<time datetime="<?php echo esc_attr( mysql_to_rfc3339( $event['occurred_at'] ) ); ?>"><?php echo esc_html( get_date_from_gmt( $event['occurred_at'], 'j M, g:i:s a' ) ); ?></time>
+						<div><strong><?php echo esc_html( $event['label'] ); ?></strong><span><?php echo esc_html( $event['page_path'] ); ?></span><?php if ( '' !== $event['form_id'] ) : ?><small>Form: <?php echo esc_html( $event['form_id'] ); ?></small><?php endif; ?></div>
+					</li>
+				<?php endforeach; ?>
+			</ol>
+		<?php endif; ?>
+	</div>
+	<?php
+}
+
 function sz_analytics_render_dashboard(): void {
 	if ( ! current_user_can( 'manage_options' ) ) {
 		wp_die( esc_html__( 'You do not have permission to view analytics.', 'studio-zanetti' ) );
@@ -348,6 +550,16 @@ function sz_analytics_render_dashboard(): void {
 	$until = $end->modify( '+1 day' )->format( 'Y-m-d 00:00:00' );
 	$where = 'occurred_at >= %s AND occurred_at < %s';
 	$params = [ $from, $until ];
+	$requested_view = isset( $_GET['analytics_view'] ) ? sanitize_key( wp_unslash( $_GET['analytics_view'] ) ) : 'overview';
+	$view = in_array( $requested_view, [ 'overview', 'sessions', 'session' ], true ) ? $requested_view : 'overview';
+	if ( 'sessions' === $view ) {
+		sz_analytics_render_sessions_view( $table, $start, $end, $from, $until );
+		return;
+	}
+	if ( 'session' === $view ) {
+		sz_analytics_render_session_view( $table, $start, $end, $from, $until );
+		return;
+	}
 
 	$summary_rows = sz_analytics_query_rows(
 		"SELECT
@@ -500,12 +712,7 @@ function sz_analytics_render_dashboard(): void {
 			<div class="notice notice-error inline"><p>Analytics collection is disabled because the ingest secret is not configured.</p></div>
 		<?php endif; ?>
 
-		<form class="sz-analytics-range" method="get">
-			<input type="hidden" name="page" value="sz-analytics">
-			<label>From <input type="date" name="start" value="<?php echo esc_attr( $start->format( 'Y-m-d' ) ); ?>"></label>
-			<label>To <input type="date" name="end" value="<?php echo esc_attr( $end->format( 'Y-m-d' ) ); ?>"></label>
-			<button class="button button-primary" type="submit">Apply</button>
-		</form>
+		<?php sz_analytics_render_date_range( $start, $end, 'overview' ); ?>
 
 		<div class="sz-analytics-cards">
 			<?php
@@ -519,7 +726,13 @@ function sz_analytics_render_dashboard(): void {
 			];
 			foreach ( $cards as $label => $value ) :
 			?>
-				<div class="sz-analytics-card"><strong><?php echo esc_html( number_format_i18n( (int) $value ) ); ?></strong><span><?php echo esc_html( $label ); ?></span></div>
+				<?php if ( 'Sessions' === $label ) : ?>
+					<a class="sz-analytics-card sz-analytics-card-link" href="<?php echo esc_url( sz_analytics_admin_url( 'sessions', $start, $end ) ); ?>">
+						<strong><?php echo esc_html( number_format_i18n( (int) $value ) ); ?></strong><span><?php echo esc_html( $label ); ?></span><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
+					</a>
+				<?php else : ?>
+					<div class="sz-analytics-card"><strong><?php echo esc_html( number_format_i18n( (int) $value ) ); ?></strong><span><?php echo esc_html( $label ); ?></span></div>
+				<?php endif; ?>
 			<?php endforeach; ?>
 		</div>
 
