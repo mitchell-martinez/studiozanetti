@@ -8,6 +8,7 @@ import {
     buildPagePaths,
     clearCache,
     getAllPages,
+    getAllPostSitemapEntries,
     getGalleryPhotos,
     getNavMenu,
     getPageByPath,
@@ -125,6 +126,18 @@ describe('getAllPages', () => {
   it('returns an empty array when WordPress is unavailable', async () => {
     mockFetch.mockRejectedValueOnce(new Error('timeout'))
     expect(await getAllPages()).toEqual([])
+  })
+})
+
+describe('getAllPostSitemapEntries', () => {
+  it('returns post slugs with their modification dates', async () => {
+    mockFetch.mockReturnValueOnce(
+      ok([{ slug: 'recent-story', modified: '2026-08-20T03:04:05+00:00' }]),
+    )
+
+    await expect(getAllPostSitemapEntries()).resolves.toEqual([
+      { slug: 'recent-story', modified: '2026-08-20T03:04:05+00:00' },
+    ])
   })
 })
 

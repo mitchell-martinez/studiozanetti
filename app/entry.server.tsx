@@ -49,6 +49,7 @@ export default function handleRequest(
 ) {
   const isBot = isbot(request.headers.get('user-agent') ?? '')
   applyFrameHeaders(request, responseHeaders)
+  responseHeaders.append('Link', '</llms.txt>; rel="describedby"; type="text/plain"')
 
   return new Promise<Response>((resolve, reject) => {
     let shellRendered = false

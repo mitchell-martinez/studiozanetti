@@ -42,6 +42,75 @@ function plainText(html: string | undefined): string {
     .trim()
 }
 
+function blockDescription(block: ContentBlock): string {
+  switch (block.acf_fc_layout) {
+    case 'hero':
+      return block.description ?? block.tagline ?? block.caption ?? ''
+    case 'text_block':
+    case 'image_text':
+      return block.body
+    case 'services_grid':
+      return block.subheading ?? block.services.find((service) => service.description)?.description ?? ''
+    case 'pillar_grid':
+      return block.subheading ?? block.pillars.find((pillar) => pillar.description)?.description ?? ''
+    case 'faq_accordion':
+      return block.intro ?? block.faq_items.find((item) => item.answer)?.answer ?? ''
+    case 'pricing_packages':
+      return (
+        block.subheading ??
+        block.packages.find((item) => item.summary || item.description)?.summary ??
+        block.packages.find((item) => item.description)?.description ??
+        ''
+      )
+    case 'gallery_categories':
+      return block.categories.length > 0
+        ? `Photography galleries featuring ${block.categories.map((item) => item.title).join(', ')}.`
+        : ''
+    case 'gallery_reference':
+      return block.description ?? ''
+    case 'image_block':
+      return block.subtitle ?? block.overlay_text ?? ''
+    case 'form_block':
+      return block.intro ?? ''
+    case 'text_grid':
+      return block.subheading ?? block.items.find((item) => item.body)?.body ?? ''
+    case 'instagram_feed':
+    case 'blog_posts':
+      return block.subheading ?? ''
+    case 'button_group':
+      return ''
+  }
+}
+
+function truncateText(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value
+  const excerpt = value.slice(0, maxLength + 1)
+  const wordEnd = excerpt.lastIndexOf(' ')
+  return `${excerpt.slice(0, wordEnd > 0 ? wordEnd : maxLength)}...`
+}
+
+export function getPageDescription(page: WPPage, maxLength = 300): string {
+  const explicitDescription = [
+    page.acf?.page_description,
+    page.yoast_head_json?.description,
+    page.excerpt.rendered,
+    page.content.rendered,
+  ]
+    .map(plainText)
+    .find(Boolean)
+
+  if (explicitDescription) return truncateText(explicitDescription, maxLength)
+
+  for (const block of page.acf?.blocks ?? []) {
+    const description = plainText(blockDescription(block))
+    if (description && description !== plainText(page.title.rendered)) {
+      return truncateText(description, maxLength)
+    }
+  }
+
+  return ''
+}
+
 function toAbsoluteImageUrl(url: string): string {
   if (/^https?:\/\//i.test(url)) return url
   return `${getSiteUrlFromEnv()}${url.startsWith('/') ? '' : '/'}${url}`
@@ -604,10 +673,7 @@ export function buildPageSchemas(
   pathname = '/',
   siteSettings?: WPSiteSettings,
 ): Record<string, unknown>[] {
-  const description =
-    plainText(page.yoast_head_json?.description) ||
-    plainText(page.excerpt.rendered) ||
-    plainText(page.content.rendered)
+  const description = getPageDescription(page)
   const pageTitle = plainText(page.title.rendered)
   const serviceId = resolveServiceId(page.acf?.service_reference, siteSettings)
   const serviceReference = serviceId ? { '@id': serviceId } : undefined

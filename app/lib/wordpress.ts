@@ -565,10 +565,17 @@ export async function getRelatedPosts(
 }
 
 /**
- * Fetch all post slugs — used for prerendering and sitemap generation.
- * Uses the lightweight custom endpoint that returns only slugs.
+ * Fetch lightweight post data used by sitemap generation.
  */
+export async function getAllPostSitemapEntries(): Promise<
+  Array<{ slug: string; modified?: string }>
+> {
+  return (
+    (await wpFetch<Array<{ slug: string; modified?: string }>>('/sz/v1/all-posts')) ?? []
+  )
+}
+
+/** Fetch all post slugs for dynamic prerendering. */
 export async function getAllPostSlugs(): Promise<string[]> {
-  const data = await wpFetch<Array<{ slug: string }>>('/sz/v1/all-posts')
-  return (data ?? []).map((p) => p.slug)
+  return (await getAllPostSitemapEntries()).map((post) => post.slug)
 }

@@ -216,6 +216,52 @@ describe('seo helpers', () => {
     expect(list[1].name).toBe('Pricing')
   })
 
+  it('uses the ACF page description in WebPage schema', () => {
+    const schemas = buildPageSchemas(
+      {
+        ...mockPage,
+        excerpt: { rendered: '' },
+        content: { rendered: '' },
+        acf: {
+          ...mockPage.acf,
+          page_description: '<p>Natural photography with transparent pricing.</p>',
+        },
+      },
+      'https://test.example.com/pricing',
+      '/pricing',
+    )
+    const webpage = schemas.find((schema) => schema['@type'] === 'WebPage')
+
+    expect(webpage).toMatchObject({
+      description: 'Natural photography with transparent pricing.',
+    })
+  })
+
+  it('uses visible ACF block content when explicit descriptions are empty', () => {
+    const schemas = buildPageSchemas(
+      {
+        ...mockPage,
+        excerpt: { rendered: '' },
+        content: { rendered: '' },
+        acf: {
+          blocks: [
+            {
+              acf_fc_layout: 'text_block',
+              body: '<p>Documentary photography for relaxed Sydney celebrations.</p>',
+            },
+          ],
+        },
+      },
+      'https://test.example.com/weddings',
+      '/weddings',
+    )
+    const webpage = schemas.find((schema) => schema['@type'] === 'WebPage')
+
+    expect(webpage).toMatchObject({
+      description: 'Documentary photography for relaxed Sydney celebrations.',
+    })
+  })
+
   it('builds root breadcrumb with Home only', () => {
     const schemas = buildPageSchemas(mockPage, 'https://test.example.com', '/')
     const breadcrumb = schemas.find((schema) => schema['@type'] === 'BreadcrumbList')

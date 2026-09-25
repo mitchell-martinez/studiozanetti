@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs, MetaFunction } from 'react-router'
-import { isRouteErrorResponse, useLoaderData, useRouteError } from 'react-router'
+import { isRouteErrorResponse, redirect, useLoaderData, useRouteError } from 'react-router'
 import BlockRenderer from '~/components/blocks/BlockRenderer'
 import BlogPostPage from '~/components/BlogPostPage'
 import ErrorPage from '~/components/ErrorPage'
@@ -7,9 +7,11 @@ import RichText from '~/components/RichText'
 import { createAnalyticsContextToken } from '~/lib/analytics.server'
 import { stripSensitiveFormBlockData } from '~/lib/forms'
 import { stripHtml } from '~/lib/html'
-import { getSiteUrlFromEnv, toCanonicalUrl } from '~/lib/seo'
+import { getPageDescription, getSiteUrlFromEnv, toCanonicalUrl } from '~/lib/seo'
 import
   {
+    buildPagePaths,
+    getAllPages,
     getPageByPath,
     getPageBySlug,
     getPostBySlug,
@@ -43,6 +45,22 @@ type LoaderData = PageLoaderData | PostLoaderData
 const toAbsoluteSocialImageUrl = (url: string): string => {
   if (/^https?:\/\//i.test(url)) return url
   return `${getSiteUrlFromEnv()}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
+const withSiteName = (title: string): string =>
+  /(?:^|\|\s*)Studio Zanetti$/i.test(title.trim())
+    ? title
+    : `${title} | Studio Zanetti`
+
+const getCanonicalPagePath = async (
+  page: WPPage,
+  requestedPath: string,
+): Promise<string> => {
+  if (page.slug === 'home') return ''
+  if (!page.parent) return page.slug
+
+  const pagePath = buildPagePaths(await getAllPages()).get(page.id)
+  return pagePath ?? requestedPath
 }
 
 const buildAnalyticsPage = (
@@ -79,8 +97,13 @@ export async function loader({ params, request }: LoaderFunctionArgs): Promise<L
     (lookupSlug.includes('/') ? await getPageByPath(lookupSlug) : null)
 
   if (page && !page.acf?.container_only) {
+    const canonicalPath = await getCanonicalPagePath(page, slug)
+    if (canonicalPath !== slug) {
+      throw redirect(canonicalPath ? `/${canonicalPath}` : '/', 301)
+    }
+
     const publicPage = stripSensitiveFormBlockData(page)
-    const pagePath = lookupSlug === 'home' ? '/' : `/${lookupSlug}`
+    const pagePath = canonicalPath ? `/${canonicalPath}` : '/'
     const canonicalUrl = toCanonicalUrl(pagePath)
     const blocks = publicPage.acf?.blocks ?? []
     const analyticsPage = buildAnalyticsPage(
@@ -154,7 +177,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
       stripHtml(post.excerpt.rendered).slice(0, 160)
     const socialImage = post.featured_image?.url || yoast?.og_image?.[0]?.url
     return [
-      { title: yoastTitle || `${title} | Studio Zanetti` },
+      { title: yoastTitle || withSiteName(title) },
       { name: 'description', content: metaDescription },
       { name: 'robots', content: 'index, follow, max-image-preview:large' },
       { property: 'og:type', content: 'article' },
@@ -187,15 +210,12 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
     ? stripHtml(page.acf.page_keywords)
     : ''
   const metaDescription =
-    pageDescription ||
-    (yoast?.description ? stripHtml(yoast.description) : '') ||
-    stripHtml(page.excerpt.rendered).slice(0, 160) ||
-    stripHtml(page.content.rendered).slice(0, 160) ||
+    pageDescription || getPageDescription(page, 160) ||
     `${pageTitle} | Studio Zanetti`
   const resolvedTitle = yoastTitle || pageTitle
   const socialImage = page.featured_image?.url || yoast?.og_image?.[0]?.url
   return [
-    { title: yoastTitle || `${pageTitle} | Studio Zanetti` },
+    { title: yoastTitle || withSiteName(pageTitle) },
     { name: 'description', content: metaDescription },
     ...(pageKeywords ? [{ name: 'keywords', content: pageKeywords }] : []),
     { name: 'robots', content: 'index, follow, max-image-preview:large' },

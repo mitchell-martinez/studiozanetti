@@ -3,15 +3,20 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import CmsPage, { loader, meta } from '../$slug'
 
-vi.mock('~/lib/wordpress', () => ({
-  getPageBySlug: vi.fn(),
-  getPageByPath: vi.fn(),
-  getPostBySlug: vi.fn(),
-  getPostsByCategories: vi.fn(),
-  getRelatedPosts: vi.fn(),
-}))
+vi.mock('~/lib/wordpress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('~/lib/wordpress')>()
+  return {
+    ...actual,
+    getAllPages: vi.fn(),
+    getPageBySlug: vi.fn(),
+    getPageByPath: vi.fn(),
+    getPostBySlug: vi.fn(),
+    getPostsByCategories: vi.fn(),
+    getRelatedPosts: vi.fn(),
+  }
+})
 
-import { getPageByPath, getPageBySlug, getPostBySlug } from '~/lib/wordpress'
+import { getAllPages, getPageByPath, getPageBySlug, getPostBySlug } from '~/lib/wordpress'
 import mockPageData from '../__mocks__/mockPage.json'
 
 afterEach(() => {
@@ -75,11 +80,12 @@ describe('CmsPage route', () => {
     })
 
     it('maps root path to the home slug', async () => {
-      vi.mocked(getPageBySlug).mockResolvedValueOnce(mockPage as never)
+      const homePage = { ...mockPage, slug: 'home' }
+      vi.mocked(getPageBySlug).mockResolvedValueOnce(homePage as never)
       const result = await loader(makeArgs('') as never)
       expect(result).toEqual({
         type: 'page',
-        page: mockPage,
+        page: homePage,
         canonicalUrl: 'https://studiozanetti.com.au',
         analyticsPage: {
           pagePath: '/',
@@ -114,6 +120,7 @@ describe('CmsPage route', () => {
     it('strips sensitive form email settings from page blocks before returning loader data', async () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce({
         ...mockPage,
+        slug: 'get-in-touch',
         acf: {
           blocks: [
             {
@@ -162,6 +169,12 @@ describe('CmsPage route', () => {
     })
 
     it('falls back to getPageByPath for hierarchical slugs', async () => {
+      const galleryParent = {
+        ...mockPage,
+        id: 10,
+        slug: 'gallery',
+        parent: 0,
+      }
       const galleryChild = {
         ...mockPage,
         id: 20,
@@ -173,6 +186,10 @@ describe('CmsPage route', () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
       // getPageByPath resolves the hierarchical path
       vi.mocked(getPageByPath).mockResolvedValueOnce(galleryChild as never)
+      vi.mocked(getAllPages).mockResolvedValueOnce([
+        galleryParent,
+        galleryChild,
+      ] as never)
 
       const result = await loader(makeArgs('gallery/stylish-brides') as never)
       expect(result).toEqual({
@@ -189,6 +206,49 @@ describe('CmsPage route', () => {
         },
       })
       expect(getPageByPath).toHaveBeenCalledWith('gallery/stylish-brides')
+    })
+
+    it('redirects a flat child-page alias to its hierarchical path', async () => {
+      const galleryParent = {
+        ...mockPage,
+        id: 10,
+        slug: 'gallery',
+        parent: 0,
+      }
+      const galleryChild = {
+        ...mockPage,
+        id: 20,
+        slug: 'stylish-brides',
+        parent: 10,
+        title: { rendered: 'Stylish Brides' },
+      }
+      vi.mocked(getPageBySlug).mockResolvedValueOnce(galleryChild as never)
+      vi.mocked(getAllPages).mockResolvedValueOnce([
+        galleryParent,
+        galleryChild,
+      ] as never)
+
+      const response = (await loader(makeArgs('stylish-brides') as never).catch(
+        (error) => error as Response,
+      )) as Response
+
+      expect(response).toBeInstanceOf(Response)
+      expect(response.status).toBe(301)
+      expect(response.headers.get('Location')).toBe('/gallery/stylish-brides')
+    })
+
+    it('redirects the home slug alias to the site root', async () => {
+      vi.mocked(getPageBySlug).mockResolvedValueOnce({
+        ...mockPage,
+        slug: 'home',
+      } as never)
+
+      const response = (await loader(makeArgs('home') as never).catch(
+        (error) => error as Response,
+      )) as Response
+
+      expect(response.status).toBe(301)
+      expect(response.headers.get('Location')).toBe('/')
     })
 
     it('does not call getPageByPath for single-segment slugs', async () => {
@@ -237,6 +297,23 @@ describe('CmsPage route', () => {
       )
     })
 
+    it('does not duplicate the site name in a page title', () => {
+      const entries = meta({
+        data: {
+          type: 'page',
+          page: {
+            ...mockPage,
+            title: { rendered: 'Sydney Wedding Photographer | Studio Zanetti' },
+          },
+          canonicalUrl: 'https://studiozanetti.com.au',
+        },
+      } as never)
+
+      expect(entries).toContainEqual({
+        title: 'Sydney Wedding Photographer | Studio Zanetti',
+      })
+    })
+
     it('uses page content as description fallback and emits social image tags from featured image', () => {
       const pageWithMetaFallbacks = {
         ...mockPage,
@@ -271,6 +348,37 @@ describe('CmsPage route', () => {
           {
             name: 'twitter:image',
             content: 'https://studiozanetti.com.au/uploads/hero-share.jpg',
+          },
+        ]),
+      )
+    })
+
+    it('uses visible ACF content as the metadata description fallback', () => {
+      const entries = meta({
+        data: {
+          type: 'page',
+          page: {
+            ...mockPage,
+            excerpt: { rendered: '' },
+            content: { rendered: '' },
+            acf: {
+              blocks: [
+                {
+                  acf_fc_layout: 'text_block',
+                  body: '<p>Natural conference photography across Sydney.</p>',
+                },
+              ],
+            },
+          },
+          canonicalUrl: 'https://studiozanetti.com.au/conferences',
+        },
+      } as never)
+
+      expect(entries).toEqual(
+        expect.arrayContaining([
+          {
+            name: 'description',
+            content: 'Natural conference photography across Sydney.',
           },
         ]),
       )

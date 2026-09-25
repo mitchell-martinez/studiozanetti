@@ -559,6 +559,7 @@ export interface WPPage {
   slug: string
   parent: number
   status: string
+  modified?: string
   title: WPRendered
   content: WPRendered
   excerpt: WPRendered
