@@ -570,7 +570,11 @@ function handleBlogPosts(searchParams) {
 }
 
 function handleAllPosts() {
-  return MOCK_POSTS.map((p) => ({ slug: p.slug }))
+  return MOCK_POSTS.map((post) => ({
+    slug: post.slug,
+    modified: post.modified,
+    image_urls: post.featured_image?.url ? [post.featured_image.url] : [],
+  }))
 }
 
 function handleWpPosts(searchParams) {

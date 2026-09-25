@@ -130,13 +130,23 @@ describe('getAllPages', () => {
 })
 
 describe('getAllPostSitemapEntries', () => {
-  it('returns post slugs with their modification dates', async () => {
+  it('returns post slugs with their modification dates and images', async () => {
     mockFetch.mockReturnValueOnce(
-      ok([{ slug: 'recent-story', modified: '2026-08-20T03:04:05+00:00' }]),
+      ok([
+        {
+          slug: 'recent-story',
+          modified: '2026-08-20T03:04:05+00:00',
+          image_urls: ['https://images.example.com/recent-story.jpg'],
+        },
+      ]),
     )
 
     await expect(getAllPostSitemapEntries()).resolves.toEqual([
-      { slug: 'recent-story', modified: '2026-08-20T03:04:05+00:00' },
+      {
+        slug: 'recent-story',
+        modified: '2026-08-20T03:04:05+00:00',
+        image_urls: ['https://images.example.com/recent-story.jpg'],
+      },
     ])
   })
 })

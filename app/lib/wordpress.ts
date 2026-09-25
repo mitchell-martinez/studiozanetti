@@ -568,10 +568,12 @@ export async function getRelatedPosts(
  * Fetch lightweight post data used by sitemap generation.
  */
 export async function getAllPostSitemapEntries(): Promise<
-  Array<{ slug: string; modified?: string }>
+  Array<{ slug: string; modified?: string; image_urls?: string[] }>
 > {
   return (
-    (await wpFetch<Array<{ slug: string; modified?: string }>>('/sz/v1/all-posts')) ?? []
+    (await wpFetch<Array<{ slug: string; modified?: string; image_urls?: string[] }>>(
+      '/sz/v1/all-posts',
+    )) ?? []
   )
 }
 

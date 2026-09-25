@@ -34,7 +34,11 @@ describe('SEO route loaders', () => {
   it('returns sitemap.xml with canonical URLs for published pages', async () => {
     vi.stubEnv('SITE_URL', 'https://test.example.com')
     vi.mocked(getAllPostSitemapEntries).mockResolvedValueOnce([
-      { slug: 'recent-story', modified: '2026-08-20T03:04:05+00:00' },
+      {
+        slug: 'recent-story',
+        modified: '2026-08-20T03:04:05+00:00',
+        image_urls: ['https://images.example.com/recent-story.jpg'],
+      },
     ])
     vi.mocked(getAllPages).mockResolvedValueOnce([
       {
@@ -83,6 +87,9 @@ describe('SEO route loaders', () => {
     expect(xml).toContain('xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"')
     expect(xml).toContain(
       '<image:image><image:loc>https://images.example.com/pricing.jpg</image:loc></image:image>',
+    )
+    expect(xml).toContain(
+      '<image:image><image:loc>https://images.example.com/recent-story.jpg</image:loc></image:image>',
     )
     expect(xml).toContain('<changefreq>weekly</changefreq>')
   })

@@ -99,6 +99,7 @@ export async function loader() {
   const postEntries = posts.map((post) => ({
     path: `/${post.slug}`,
     modified: post.modified,
+    imageUrls: post.image_urls,
   }))
   const urlEntries = [...pageEntries, ...postEntries].map(renderUrlEntry).join('')
 

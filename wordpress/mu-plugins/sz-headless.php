@@ -2711,7 +2711,7 @@ function sz_get_image_entity_metadata( int $attachment_id, $fallback_caption = '
 //   When categories is empty/omitted, returns all published posts.
 //
 // GET /wp-json/sz/v1/all-posts
-//   Lightweight list of all published post slugs (for prerender / sitemap).
+//   Lightweight list of all published post slugs and images (for prerender / sitemap).
 
 add_action( 'rest_api_init', function () {
 	register_rest_route( 'sz/v1', '/blog-posts', [
@@ -2781,7 +2781,7 @@ function sz_get_blog_posts( WP_REST_Request $request ) {
 }
 
 /**
- * REST callback: return list of all published post slugs.
+ * REST callback: return lightweight sitemap data for all published posts.
  */
 function sz_get_all_post_slugs() {
 	$posts = get_posts( [
@@ -2792,9 +2792,31 @@ function sz_get_all_post_slugs() {
 	] );
 
 	$slugs = array_map( function ( $id ) {
+		$image_urls = [];
+		$thumb_id   = get_post_thumbnail_id( $id );
+
+		if ( $thumb_id ) {
+			$featured_image = sz_resolve_image( $thumb_id );
+			if ( is_array( $featured_image ) && ! empty( $featured_image['url'] ) ) {
+				$image_urls[] = $featured_image['url'];
+			}
+		}
+
+		$content = (string) get_post_field( 'post_content', $id );
+		if ( class_exists( 'WP_HTML_Tag_Processor' ) && '' !== $content ) {
+			$processor = new WP_HTML_Tag_Processor( $content );
+			while ( $processor->next_tag( 'IMG' ) ) {
+				$src = $processor->get_attribute( 'src' );
+				if ( is_string( $src ) && '' !== $src ) {
+					$image_urls[] = $src;
+				}
+			}
+		}
+
 		return [
-			'slug'     => get_post_field( 'post_name', $id ),
-			'modified' => get_post_modified_time( 'c', true, $id ),
+			'slug'       => get_post_field( 'post_name', $id ),
+			'modified'   => get_post_modified_time( 'c', true, $id ),
+			'image_urls' => array_values( array_unique( $image_urls ) ),
 		];
 	}, $posts );
 
