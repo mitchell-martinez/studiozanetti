@@ -25,13 +25,22 @@ type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 
 const SUBMIT_ERROR_RESHOW_DELAY_MS = 80
 const SUBMITTER_COPY_LABEL = 'Receive a copy of this form to my email'
+const FORM_FALLBACK_EMAIL = 'info@studiozanetti.com.au'
 
 interface SubmitResponse {
   success?: boolean
+  emailDelivered?: boolean
   message?: string
   error?: string
   fieldErrors?: Record<string, string>
 }
+
+const FormFallbackEmail = () => (
+  <>
+    {' '}If you are unable to submit the form, please email us at{' '}
+    <a href={`mailto:${FORM_FALLBACK_EMAIL}`}>{FORM_FALLBACK_EMAIL}</a>.
+  </>
+)
 
 const headingAlignClass: Record<string, string> = {
   left: styles.alignLeft,
@@ -250,7 +259,9 @@ const FormBlock = ({ block }: FormBlockProps) => {
       setFieldErrors({})
       setSubmitState('success')
       setSuccessMessage(payload.message ?? 'Thanks. Your message has been sent.')
-      trackEvent('form_submit', { formId: block.form_id })
+      if (payload.emailDelivered === true) {
+        trackEvent('form_submit', { formId: block.form_id })
+      }
     } catch (error) {
       console.error('[FormBlock] submit failed', error)
       setSubmitState('error')
@@ -283,7 +294,8 @@ const FormBlock = ({ block }: FormBlockProps) => {
         <div className={`${styles.panel} ${formAlignment}`.trim()}>
           {!isFormAvailable && (
             <div className={`${styles.notice} ${styles.noticeTop} ${styles.noticeError}`.trim()} role="alert">
-              This form is unavailable right now. Please contact us another way while the form settings are fixed.
+              This form is unavailable right now while its settings are fixed.
+              <FormFallbackEmail />
             </div>
           )}
 
@@ -519,6 +531,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
               {isSubmitErrorVisible && submitErrorMessage && (
                 <div className={`${styles.notice} ${styles.noticeBottom} ${styles.noticeError}`.trim()} role="alert">
                   {submitErrorMessage}
+                  <FormFallbackEmail />
                 </div>
               )}
             </form>

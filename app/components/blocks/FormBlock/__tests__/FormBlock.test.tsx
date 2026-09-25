@@ -10,6 +10,7 @@ import FormBlock from '../index'
 const mockFetch = vi.fn()
 const mockSendBeacon = vi.fn<(url: string, data?: BodyInit | null) => boolean>(() => true)
 const baseBlock = formBlockData as unknown as FormBlockType
+const fallbackEmail = 'info@studiozanetti.com.au'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -81,7 +82,8 @@ describe('FormBlock', () => {
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
     expect(await screen.findByText('Name is required.')).toBeInTheDocument()
-    const genericError = await screen.findByText('Please correct the highlighted fields and try again.')
+    const genericError = await screen.findByRole('alert')
+    expect(genericError).toHaveTextContent('Please correct the highlighted fields and try again.')
     expect(genericError.closest('form')).toBeInTheDocument()
     expect(mockFetch).not.toHaveBeenCalled()
   })
@@ -111,7 +113,11 @@ describe('FormBlock', () => {
   it('submits only pagePath, formId, honeypot, and values and hides fields on success', async () => {
     vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ success: true, message: 'Thanks for getting in touch.' }),
+      json: async () => ({
+        success: true,
+        emailDelivered: true,
+        message: 'Thanks for getting in touch.',
+      }),
     }))
     const user = userEvent.setup()
 
@@ -155,7 +161,7 @@ describe('FormBlock', () => {
     vi.stubGlobal('navigator', { ...navigator, sendBeacon: mockSendBeacon })
     vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ success: true }),
+      json: async () => ({ success: true, emailDelivered: true }),
     }))
     const user = userEvent.setup()
 
@@ -186,6 +192,28 @@ describe('FormBlock', () => {
     })
     expect(submissionBody.visitContext.siteDurationSeconds).toBeGreaterThanOrEqual(0)
     expect(submissionBody.visitContext.pageDurationSeconds).toBeGreaterThanOrEqual(0)
+  })
+
+  it('does not track a submission when the API did not deliver an email', async () => {
+    vi.stubGlobal('navigator', { ...navigator, sendBeacon: mockSendBeacon })
+    vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, emailDelivered: false }),
+    }))
+    const user = userEvent.setup()
+
+    renderTrackedBlock()
+    await waitFor(() => expect(mockSendBeacon).toHaveBeenCalledTimes(1))
+
+    await user.type(screen.getByLabelText(/^Name/i), 'Mitchell')
+    await user.type(screen.getByRole('textbox', { name: /^Email/i }), 'mitchell@example.com')
+    await user.click(screen.getByRole('radio', { name: /^Email$/i }))
+    await user.click(screen.getByLabelText(/I agree to be contacted/i))
+    await user.click(screen.getByRole('button', { name: /send message/i }))
+
+    expect(await screen.findByText('Thanks. Your message has been sent.')).toBeInTheDocument()
+    const eventTypes = mockSendBeacon.mock.calls.map(([, body]) => JSON.parse(body as string).eventType)
+    expect(eventTypes).not.toContain('form_submit')
   })
 
   it('tracks a new start when a reused block renders a different form', async () => {
@@ -270,6 +298,10 @@ describe('FormBlock', () => {
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
     expect(await screen.findByText('Email must be a valid email address.')).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: fallbackEmail })).toHaveAttribute(
+      'href',
+      `mailto:${fallbackEmail}`,
+    )
   })
 
   it('clears and re-shows the generic submit error on repeated invalid submits', async () => {
@@ -280,13 +312,17 @@ describe('FormBlock', () => {
 
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
-    expect(await screen.findByText('Please correct the highlighted fields and try again.')).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Please correct the highlighted fields and try again.',
+    )
 
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
-    expect(screen.queryByText('Please correct the highlighted fields and try again.')).not.toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
 
-    expect(await screen.findByText('Please correct the highlighted fields and try again.')).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Please correct the highlighted fields and try again.',
+    )
   })
 
   it('fails closed when the required reserved Name field is missing from the form config', () => {
@@ -296,9 +332,14 @@ describe('FormBlock', () => {
 
     expect(
       screen.getByText(
-        'This form is unavailable right now. Please contact us another way while the form settings are fixed.',
+        'This form is unavailable right now while its settings are fixed.',
+        { exact: false },
       ),
     ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: fallbackEmail })).toHaveAttribute(
+      'href',
+      `mailto:${fallbackEmail}`,
+    )
     expect(screen.queryByRole('button', { name: /send message/i })).not.toBeInTheDocument()
   })
 

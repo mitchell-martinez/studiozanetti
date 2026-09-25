@@ -119,6 +119,10 @@ describe('api.forms.submit action', () => {
     )
     expect(sendVscoLead).not.toHaveBeenCalled()
     expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      success: true,
+      emailDelivered: true,
+    })
   })
 
   it('sends a second email copy to the designated submitter email when requested', async () => {
@@ -502,6 +506,10 @@ describe('api.forms.submit action', () => {
     } as never)
 
     expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      success: true,
+      emailDelivered: false,
+    })
     expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
     expect(sendVscoLead).not.toHaveBeenCalled()
     expect(consumeRateLimit).not.toHaveBeenCalled()
@@ -610,6 +618,10 @@ describe('api.forms.submit action', () => {
     } as never)
 
     expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      success: true,
+      emailDelivered: false,
+    })
     expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
     expect(sendVscoLead).not.toHaveBeenCalled()
     expect(consumeRateLimit).not.toHaveBeenCalled()
@@ -815,6 +827,10 @@ describe('api.forms.submit action', () => {
     } as never)
 
     expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      success: true,
+      emailDelivered: false,
+    })
     expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(1)
     expect(sendVscoLead).toHaveBeenCalledTimes(1)
   })
@@ -867,6 +883,10 @@ describe('api.forms.submit action', () => {
     } as never)
 
     expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      success: true,
+      emailDelivered: true,
+    })
     expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(1)
     expect(sendVscoLead).toHaveBeenCalledTimes(1)
   })

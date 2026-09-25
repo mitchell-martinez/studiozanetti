@@ -87,8 +87,9 @@ Publishing is also blocked if the form data becomes invalid behind the editor UI
 - Use `Form Alignment` to center the entire form panel on the page when needed.
 - If `Send Enquiry To` includes VSCO, each submission is posted to VSCO Workspace New Lead API (`/webservice/create-lead/<studioId>`).
 - If `Send Enquiry To` is `Email + VSCO Workspace`, each delivery channel is attempted independently and the submission still succeeds when either channel delivers successfully.
+- Analytics records a submitted-form conversion only after the studio notification email is accepted by the configured SMTP server. Bot/honeypot responses and VSCO-only delivery do not count as submitted forms.
 - VSCO requires `FirstName` and `JobType`. Map these through `VSCO Field Key` or set `VSCO Job Type` as a fallback.
-- If the form configuration is invalid, the frontend fails closed and shows an unavailable message instead of rendering a broken form.
+- If submission fails or the form configuration is invalid, the frontend provides a direct `info@studiozanetti.com.au` email link so the visitor can still make contact.
 
 Fixed `VSCO Job Type` dropdown options:
 

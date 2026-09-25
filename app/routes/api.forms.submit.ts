@@ -31,7 +31,7 @@ const getFormTimingSettings = () => {
 }
 
 const getSafeSubmissionSuccessResponse = (message: string) =>
-  Response.json({ success: true, message })
+  Response.json({ success: true, message, emailDelivered: false })
 
 const isValidSubmissionTiming = (
   startedAtMs: number | undefined,
@@ -249,5 +249,9 @@ export async function action({ request }: ActionFunctionArgs) {
     console.warn('[forms.submit] submitter copy requested but was not delivered')
   }
 
-  return Response.json({ success: true, message: getFormSuccessMessage(trustedConfig.form) })
+  return Response.json({
+    success: true,
+    message: getFormSuccessMessage(trustedConfig.form),
+    emailDelivered,
+  })
 }
