@@ -82,7 +82,8 @@ const HeroBlock = ({ block, featuredImage }: HeroBlockProps) => {
         <img
           key={`${slide.url}-${index}`}
           src={slide.url}
-          alt={index === safeActiveSlide ? slide.alt || block.title : ''}
+          alt={slide.alt || block.title}
+          aria-hidden={index !== safeActiveSlide}
           className={`${styles.heroImage} ${index === safeActiveSlide ? styles.heroImageActive : ''}`}
           fetchPriority={index === 0 ? 'high' : 'low'}
           decoding={index === 0 ? 'sync' : 'async'}

@@ -65,6 +65,8 @@ describe('HeroBlock', () => {
     const images = Array.from(container.querySelectorAll('img'))
     expect(images).toHaveLength(3)
     expect(images.filter((img) => img.className.includes('heroImageActive'))).toHaveLength(1)
+    expect(images.map((img) => img.alt)).toEqual(baseSlides.map((slide) => slide.alt))
+    expect(images.map((img) => img.getAttribute('aria-hidden'))).toEqual(['false', 'true', 'true'])
   })
 
   it('keeps a visible active slide when slide count shrinks after navigation', () => {
