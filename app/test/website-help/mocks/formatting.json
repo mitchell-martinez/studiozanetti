@@ -1,0 +1,11 @@
+{
+  "answer": "## A clearer page\n\nStart with **a clear heading**, *short paragraphs*, and `page_title`.\n\n1. **Choose a gallery.**\n   - Use a descriptive title.\n   - Keep the order simple.\n2. Check the preview.\n\n### Before publishing\n\n- Save the draft.\n- Review the layout.\n\n> Check the mobile view too.\n\n```text\nfirst line\n  second line\n```\n\nA final paragraph.",
+  "userMessage": "**Keep this literal.**\n\n1. This is my question.",
+  "unsafeAnswer": "<img src=x onerror=alert(1)>\n\n<script>alert(1)</script>\n\n[Unsafe](javascript:alert(1))\n\n![Image](/private-image)\n\n**Visible text**",
+  "escapedAnswer": "Keep \\*literal\\* and **bold _emphasis_**. Use ``a `backtick` here``.\n\n4. Fourth item\n5. Fifth item",
+  "unfinishedAnswer": "## A heading\n\n**Unfinished emphasis\n\n```text\n<not-html>\n  unchanged",
+  "sanitizerInput": "## A clearer page\r\n\r\n1. **Choose a gallery.**\r\n   - Keep this indentation.\r\n\r\n```text\r\nfirst line\r\n  second line\r\n```\r\n\r\n<b>Visible text</b> //private/path",
+  "sanitizerExpected": "## A clearer page\n\n1. **Choose a gallery.**\n   - Keep this indentation.\n\n```text\nfirst line\n  second line\n```\n\nVisible text [link removed]",
+  "composerLines": "First line\nSecond line\nThird line\nFourth line\nFifth line\nSixth line\nSeventh line\nEighth line\nNinth line",
+  "wrappingMessage": "Please help me make this page easier to browse, with a clear introduction, a gallery, useful descriptions, and a simple next step for visitors."
+}

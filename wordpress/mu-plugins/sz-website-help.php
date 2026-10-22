@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Studio Zanetti - Website Help
  * Description: Private, read-only WordPress guidance for Studio Zanetti editors.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Studio Zanetti
  */
 
@@ -119,13 +119,13 @@ function sz_website_help_append_exchange( int $thread_id, string $question, arra
 		$timestamp = time();
 		$messages[] = [
 			'role'          => 'user',
-			'content'       => sz_website_help_sanitize_scalar( $question, 4000 ),
+			'content'       => sz_website_help_sanitize_scalar( $question, 4000, true ),
 			'timestamp'     => $timestamp,
 			'context_label' => $context_label,
 		];
 		$messages[] = [
 			'role'              => 'assistant',
-			'content'           => sz_website_help_sanitize_scalar( $answer['answer'] ?? '', 12000 ),
+			'content'           => sz_website_help_sanitize_scalar( $answer['answer'] ?? '', 12000, true ),
 			'status'            => $answer['status'] ?? 'uncertain',
 			'developer_request' => $answer['developer_request'] ?? null,
 			'source_topic_ids'  => $answer['source_topic_ids'] ?? [],
@@ -697,39 +697,59 @@ function sz_website_help_render_app( string $mode ): void {
 	?>
 	<div class="sz-website-help-app" data-mode="<?php echo esc_attr( $mode ); ?>">
 		<div class="sz-website-help-layout">
-			<aside class="sz-website-help-history" aria-label="<?php esc_attr_e( 'Help conversations', 'studio-zanetti' ); ?>">
+			<div class="sz-website-help-toolbar">
+				<button type="button" class="button sz-website-help-history-toggle" data-help-history-toggle aria-expanded="false" aria-controls="sz-help-history-<?php echo esc_attr( $mode ); ?>">
+					<svg class="sz-website-help-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+					<span data-help-history-label><?php esc_html_e( 'History', 'studio-zanetti' ); ?></span>
+				</button>
+				<button type="button" class="button" data-help-new>
+					<svg class="sz-website-help-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 5v14M5 12h14"/></svg>
+					<?php esc_html_e( 'New chat', 'studio-zanetti' ); ?>
+				</button>
+			</div>
+			<aside id="sz-help-history-<?php echo esc_attr( $mode ); ?>" class="sz-website-help-history" aria-label="<?php esc_attr_e( 'Help conversations', 'studio-zanetti' ); ?>" hidden>
+				<div class="sz-website-help-history__heading">
+					<h2><?php esc_html_e( 'Your conversations', 'studio-zanetti' ); ?></h2>
+					<details class="sz-website-help-history__options" data-help-options>
+						<summary aria-label="<?php esc_attr_e( 'History options', 'studio-zanetti' ); ?>"><svg class="sz-website-help-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></summary>
+						<div class="sz-website-help-history__actions">
+							<button type="button" class="button-link-delete" data-help-delete-all><?php esc_html_e( 'Delete all history', 'studio-zanetti' ); ?></button>
+						</div>
+					</details>
+				</div>
 				<div class="sz-website-help-history__toolbar">
-					<button type="button" class="button" data-help-new><?php esc_html_e( 'New conversation', 'studio-zanetti' ); ?></button>
 					<input type="search" data-help-search placeholder="<?php esc_attr_e( 'Search history', 'studio-zanetti' ); ?>" aria-label="<?php esc_attr_e( 'Search help history', 'studio-zanetti' ); ?>">
 					<select data-help-context-filter aria-label="<?php esc_attr_e( 'Filter help history by page or screen', 'studio-zanetti' ); ?>">
 						<option value=""><?php esc_html_e( 'All pages and screens', 'studio-zanetti' ); ?></option>
 					</select>
 				</div>
+				<p class="sz-website-help-history-status" data-help-history-status role="status" aria-live="polite"></p>
 				<div data-help-threads></div>
-				<button type="button" class="button-link-delete" data-help-delete-all><?php esc_html_e( 'Delete all my help history', 'studio-zanetti' ); ?></button>
 			</aside>
 			<section class="sz-website-help-conversation" aria-label="<?php esc_attr_e( 'Website Help conversation', 'studio-zanetti' ); ?>">
-				<div class="sz-website-help-empty" data-help-empty>
-					<h2><?php esc_html_e( 'What do you need help with?', 'studio-zanetti' ); ?></h2>
-					<div class="sz-website-help-starters">
-						<button type="button" class="button" data-help-starter="How do I add a gallery to a page?"><?php esc_html_e( 'Add a gallery', 'studio-zanetti' ); ?></button>
-						<button type="button" class="button" data-help-starter="How do I update the main menu?"><?php esc_html_e( 'Update a menu', 'studio-zanetti' ); ?></button>
-						<button type="button" class="button" data-help-starter="How do I improve a page for search engines?"><?php esc_html_e( 'Improve page SEO', 'studio-zanetti' ); ?></button>
+				<div class="sz-website-help-transcript">
+					<div class="sz-website-help-empty" data-help-empty>
+						<h2><?php esc_html_e( 'How can I help?', 'studio-zanetti' ); ?></h2>
+						<p><?php esc_html_e( 'Ask about pages, galleries, or site settings.', 'studio-zanetti' ); ?></p>
+						<div class="sz-website-help-starters">
+							<button type="button" class="button" data-help-starter="How do I add a gallery to a page?"><svg class="sz-website-help-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></svg><?php esc_html_e( 'Add a gallery', 'studio-zanetti' ); ?></button>
+							<button type="button" class="button" data-help-starter="How do I update the main menu?"><svg class="sz-website-help-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><?php esc_html_e( 'Update a menu', 'studio-zanetti' ); ?></button>
+							<button type="button" class="button" data-help-starter="How do I improve a page for search engines?"><svg class="sz-website-help-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg><?php esc_html_e( 'Improve page SEO', 'studio-zanetti' ); ?></button>
+						</div>
 					</div>
+					<div class="sz-website-help-messages" data-help-messages role="log" aria-label="<?php esc_attr_e( 'Messages', 'studio-zanetti' ); ?>" aria-live="polite" aria-relevant="additions" hidden></div>
 				</div>
-				<div class="sz-website-help-messages" data-help-messages aria-live="polite"></div>
 				<form class="sz-website-help-composer" data-help-form>
-					<label for="sz-help-question-<?php echo esc_attr( $mode ); ?>"><?php esc_html_e( 'Ask about this website', 'studio-zanetti' ); ?></label>
-					<textarea id="sz-help-question-<?php echo esc_attr( $mode ); ?>" data-help-question rows="3" maxlength="4000" required></textarea>
+					<div class="sz-website-help-composer__input">
+						<label class="sz-website-help-sr-only" for="sz-help-question-<?php echo esc_attr( $mode ); ?>"><?php esc_html_e( 'Message', 'studio-zanetti' ); ?></label>
+						<textarea id="sz-help-question-<?php echo esc_attr( $mode ); ?>" data-help-question rows="1" maxlength="4000" placeholder="<?php esc_attr_e( 'Type a message...', 'studio-zanetti' ); ?>" required></textarea>
+						<button type="submit" class="button button-primary sz-website-help-send" aria-label="<?php esc_attr_e( 'Send message', 'studio-zanetti' ); ?>" title="<?php esc_attr_e( 'Send message', 'studio-zanetti' ); ?>"><svg class="sz-website-help-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button>
+					</div>
 					<label class="sz-website-help-context" data-help-context-option>
 						<input type="checkbox" data-help-allow-context checked>
 						<span><?php esc_html_e( 'Use my current unsaved edits when needed', 'studio-zanetti' ); ?></span>
 					</label>
-					<p class="description" data-help-privacy><?php esc_html_e( 'Only the specific editor details needed for this answer are sent to OpenAI. Raw editor context is not stored in help history.', 'studio-zanetti' ); ?></p>
-					<div class="sz-website-help-composer__actions">
-						<span data-help-status aria-live="polite"></span>
-						<button type="submit" class="button button-primary"><?php esc_html_e( 'Ask', 'studio-zanetti' ); ?></button>
-					</div>
+					<span data-help-status role="status" aria-live="polite"></span>
 				</form>
 			</section>
 		</div>
@@ -799,6 +819,15 @@ add_action( 'admin_enqueue_scripts', function () {
 			'reportSending' => __( 'Sending...', 'studio-zanetti' ),
 			'reportPending' => __( 'Report is still sending. Refresh shortly to check its status.', 'studio-zanetti' ),
 			'reported'      => __( 'Reported', 'studio-zanetti' ),
+			'history'       => __( 'History', 'studio-zanetti' ),
+			'backToChat'    => __( 'Back to chat', 'studio-zanetti' ),
+			'hideHistory'   => __( 'Hide history', 'studio-zanetti' ),
+			'noHistory'     => __( 'No conversations found. Start a new chat or try another search.', 'studio-zanetti' ),
+			'options'       => __( 'Conversation options', 'studio-zanetti' ),
+			'latest'        => __( 'Latest messages', 'studio-zanetti' ),
+			'send'          => __( 'Send message', 'studio-zanetti' ),
+			'thinking'      => __( 'Thinking...', 'studio-zanetti' ),
+			'invalidThread' => __( 'That help conversation is unavailable.', 'studio-zanetti' ),
 		],
 	] );
 } );
@@ -813,16 +842,17 @@ add_action( 'admin_footer', function () {
 	}
 	?>
 	<button type="button" class="sz-website-help-launcher" aria-controls="sz-website-help-drawer" aria-expanded="false">
-		<span class="dashicons dashicons-editor-help" aria-hidden="true"></span>
+		<svg class="sz-website-help-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 11.5a8 8 0 0 1-8 8H4l1.8-4A8 8 0 1 1 20 11.5Z"/><path d="M8 10h8M8 14h5"/></svg>
 		<span><?php esc_html_e( 'Website Help', 'studio-zanetti' ); ?></span>
 	</button>
 	<div class="sz-website-help-backdrop" hidden></div>
 	<aside id="sz-website-help-drawer" class="sz-website-help-drawer" role="dialog" aria-modal="true" aria-labelledby="sz-website-help-drawer-title" hidden>
 		<header>
+			<span class="sz-website-help-header-icon" aria-hidden="true"><svg class="sz-website-help-icon" viewBox="0 0 24 24" focusable="false"><path d="M20 11.5a8 8 0 0 1-8 8H4l1.8-4A8 8 0 1 1 20 11.5Z"/><path d="M8 10h8M8 14h5"/></svg></span>
 			<h2 id="sz-website-help-drawer-title"><?php esc_html_e( 'Website Help', 'studio-zanetti' ); ?></h2>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=sz-website-help' ) ); ?>"><?php esc_html_e( 'Open full page', 'studio-zanetti' ); ?></a>
+			<a class="sz-website-help-expand" href="<?php echo esc_url( admin_url( 'admin.php?page=sz-website-help' ) ); ?>" aria-label="<?php esc_attr_e( 'Open Website Help in full page', 'studio-zanetti' ); ?>" title="<?php esc_attr_e( 'Open full page', 'studio-zanetti' ); ?>"><svg class="sz-website-help-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg><span><?php esc_html_e( 'Full page', 'studio-zanetti' ); ?></span></a>
 			<button type="button" class="sz-website-help-close" aria-label="<?php esc_attr_e( 'Close Website Help', 'studio-zanetti' ); ?>">
-				<span class="dashicons dashicons-no-alt" aria-hidden="true"></span>
+				<svg class="sz-website-help-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M6 18 18 6"/></svg>
 			</button>
 		</header>
 		<?php sz_website_help_render_app( 'drawer' ); ?>

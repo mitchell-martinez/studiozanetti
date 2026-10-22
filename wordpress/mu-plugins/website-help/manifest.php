@@ -1,8 +1,8 @@
 <?php
 
 return [
-	'knowledge_version' => '1.2.0',
-	'updated_at'        => '2026-09-15',
+	'knowledge_version' => '1.3.3',
+	'updated_at'        => '2026-10-23',
 	'topics'            => [
 		[
 			'id'          => 'capabilities',

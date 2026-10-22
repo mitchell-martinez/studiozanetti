@@ -229,6 +229,31 @@ The frontend emits one server-rendered Schema.org graph linking the business, we
 
 `sz-website-help.php` adds a global admin help drawer and a full **Website Help** page for Editors and Administrators. It is guidance-only: it has no tools or endpoints that modify pages, posts, galleries, media, menus, settings, or plugins.
 
+#### Using the help workspace
+
+- Open **Website Help** from the floating button, or use its WordPress menu entry for the full-page workspace.
+- The drawer starts with a conversation-first layout. Select **History** to find earlier chats, and **Back to chat** to return. On a wide full-page workspace, history sits beside the conversation and can be hidden.
+- Select a suggested question to fill the message box, then select the up-arrow **Send message** button inside the input. Suggestions never send questions automatically. The input uses the general prompt **Type a message...**.
+- The input starts at its single-line height and grows upward as text wraps or you add lines. The send arrow stays in the bottom-right corner. Long drafts scroll inside the input after it reaches its height limit.
+- Replies display paragraphs, headings, bold, emphasis, lists, quotes, and code. User messages stay literal. Reply formatting is rendered as text and semantic elements, never executable HTML; source links remain separate.
+- Use **New chat** for a fresh topic. Text you type while the new chat is starting is kept. Conversation options contain **Pin**, **Rename**, and **Delete**; search and page/screen filtering remain in history.
+- The header's **Full page** control reopens the current saved conversation. Unsent text and a first answer still being prepared are not transferred; wait for that answer before expanding. Conversations remain private to their owner.
+- Request errors remain visible whether you are viewing history or the conversation.
+- **Latest messages** appears when you scroll away from the latest answer. It returns to the end of the conversation and focuses the message box.
+- Open **History options** (the three dots beside **Your conversations**) to find **Delete all history**. Deletion still requires confirmation.
+- On supported editors, **Use my current unsaved edits when needed** controls whether the assistant may request editor details. Reading those details still requires your approval.
+- Escape closes conversation options first, then history, then the drawer. Keyboard focus stays inside the open drawer and returns to the launcher when closed.
+
+The interface remains PHP-rendered with scoped admin CSS and JavaScript; this refresh does not add ACF fields or change the public frontend. Deploy the plugin, its `includes/website-help.php` helper, both help assets, and the updated handbook together. New replies retain paragraphs and indentation when saved and reopened. Existing saved replies can show inline formatting, but paragraph breaks already removed by older versions cannot be recovered automatically. UI regression tests use the actual PHP markup with translation expressions replaced locally, synthetic JSON conversations, and mocked AJAX responses:
+
+```bash
+npm run test -- app/test/website-help/__tests__/website-help.test.ts
+npm run test:e2e -- e2e/website-help.spec.ts --reporter=line
+npm run test:wordpress
+```
+
+The browser tests also load the actual help CSS and check compact-screen layout, unchanged height on first typing, upward growth with fixed arrow coordinates, draft resizing when the available width changes, formatted replies, history-menu fit, saved-conversation expansion, and keyboard focus handling with and without editor context. Playwright checks dev-server readiness with a static asset because the CMS-driven home page can return 404 without WordPress content. The PHP tests check that formatting survives provider parsing and history sanitization while HTML and raw URLs are still removed. These synthetic tests do not replace a real WordPress smoke check. Check both drawer and full-page modes after deployment, including mobile, keyboard navigation, context approval, history operations, and answer reporting.
+
 The feature is disabled when `SZ_WEBSITE_HELP_ENABLED` is absent or false. Configure it through the WordPress container environment, never in source code:
 
 ```env

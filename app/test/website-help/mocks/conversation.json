@@ -1,0 +1,50 @@
+{
+  "config": {
+    "ajaxUrl": "/admin-ajax.php",
+    "nonce": "test-nonce",
+    "screenId": "page",
+    "screenLabel": "Page editor",
+    "objectType": "page",
+    "liveContextAvailable": true,
+    "reportingEnabled": true,
+    "strings": {
+      "loading": "Checking the website handbook...",
+      "context": "Checking the requested editor details...",
+      "error": "Website Help could not complete that request.",
+      "confirmDelete": "Delete this conversation permanently?",
+      "confirmAll": "Delete all your help history?",
+      "confirmReport": "Send this answer for review?",
+      "reportAnswer": "Report this answer as inaccurate",
+      "reportSending": "Sending...",
+      "reportPending": "Report is still sending.",
+      "reported": "Reported",
+      "history": "History",
+      "backToChat": "Back to chat",
+      "hideHistory": "Hide history",
+      "noHistory": "No conversations found. Start a new chat or try another search.",
+      "options": "Conversation options",
+      "latest": "Latest messages",
+      "send": "Send message",
+      "thinking": "Thinking...",
+      "invalidThread": "That help conversation is unavailable."
+    }
+  },
+  "thread": {
+    "id": 12,
+    "title": "How can I add a gallery to a page and make it easier for visitors to browse?",
+    "pinned": false,
+    "context_labels": [{ "screen": "Page editor", "object_title": "Gallery page" }],
+    "messages": [
+      {
+        "role": "user",
+        "content": "How do I add a gallery?"
+      },
+      {
+        "role": "assistant",
+        "content": "Open the page editor and add a Gallery Reference block. Choose an existing gallery, save your changes, and check the preview before publishing.",
+        "message_index": 1,
+        "sources": [{ "label": "Gallery Library", "url": "?post_type=sz_gallery" }]
+      }
+    ]
+  }
+}

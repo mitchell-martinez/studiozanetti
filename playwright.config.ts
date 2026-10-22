@@ -23,7 +23,8 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm run dev',
-    url: 'http://localhost:5173',
+    // The CMS-driven home page can return 404 without WordPress content.
+    url: 'http://localhost:5173/vite.svg',
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,
   },

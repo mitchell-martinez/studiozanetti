@@ -1,3 +1,103 @@
+.sz-website-help-app,
+.sz-website-help-drawer {
+	--sz-help-ink: #252632;
+	--sz-help-muted: #626473;
+	--sz-help-accent: #5143a5;
+	--sz-help-line: #e5e3eb;
+	--sz-help-surface: #faf9fc;
+	color: var(--sz-help-ink);
+	font-size: 14px;
+	line-height: 1.6;
+}
+
+.sz-website-help-app *,
+.sz-website-help-drawer > header,
+.sz-website-help-drawer > header * {
+	box-sizing: border-box;
+}
+
+.sz-website-help-app [hidden],
+.sz-website-help-drawer[hidden],
+.sz-website-help-backdrop[hidden] {
+	display: none !important;
+}
+
+.sz-website-help-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	border: 0;
+	clip-path: inset(50%);
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.sz-website-help-app :is(button, a, input, textarea, select, summary):focus-visible,
+.sz-website-help-drawer > header :is(button, a):focus-visible,
+.sz-website-help-launcher:focus-visible {
+	outline: 3px solid #5143a5;
+	outline-offset: 3px;
+	box-shadow: none;
+}
+
+.sz-website-help-app .button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	min-height: 40px;
+	padding: 8px 12px;
+	border: 1px solid var(--sz-help-line);
+	border-radius: 10px;
+	background: #fff;
+	color: var(--sz-help-ink);
+	font: inherit;
+	font-weight: 500;
+	line-height: 1.4;
+	white-space: normal;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.sz-website-help-app .button:hover {
+	border-color: #b9b1d6;
+	background: #f3f0fb;
+	color: var(--sz-help-accent);
+}
+
+.sz-website-help-app .button-primary {
+	border-color: var(--sz-help-accent);
+	background: var(--sz-help-accent);
+	color: #fff;
+}
+
+.sz-website-help-app .button-primary:hover {
+	border-color: #403384;
+	background: #403384;
+	color: #fff;
+}
+
+.sz-website-help-app .button:disabled {
+	border-color: #dedbe9 !important;
+	background: #eeebf5 !important;
+	color: #626075 !important;
+	cursor: wait;
+}
+
+.sz-website-help-icon {
+	display: inline-block;
+	flex: 0 0 20px;
+	width: 20px;
+	height: 20px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.7;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	vertical-align: middle;
+}
+
 .sz-website-help-launcher {
 	position: fixed;
 	right: 24px;
@@ -5,186 +105,512 @@
 	z-index: 99990;
 	display: inline-flex;
 	align-items: center;
-	gap: 7px;
-	min-height: 44px;
-	padding: 8px 14px;
-	border: 1px solid #135e96;
-	border-radius: 4px;
-	background: #2271b1;
+	gap: 9px;
+	min-height: 48px;
+	padding: 10px 18px;
+	border: 1px solid #5143a5;
+	border-radius: 24px;
+	background: #5143a5;
 	color: #fff;
 	font-weight: 600;
 	cursor: pointer;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+	box-shadow: 0 6px 24px rgba(44, 35, 84, 0.2);
 }
 
-.sz-website-help-launcher:hover,
-.sz-website-help-launcher:focus {
-	background: #135e96;
-	color: #fff;
+.sz-website-help-launcher:hover {
+	background: #403384;
 }
 
 .sz-website-help-backdrop {
 	position: fixed;
 	inset: 0;
 	z-index: 99991;
-	background: rgba(0, 0, 0, 0.38);
+	background: rgba(25, 23, 36, 0.32);
 }
 
 .sz-website-help-drawer {
 	position: fixed;
+	box-sizing: border-box;
 	top: 32px;
-	right: 0;
-	bottom: 0;
+	right: 12px;
+	bottom: 12px;
 	z-index: 99992;
-	width: min(680px, calc(100vw - 36px));
-	background: #f6f7f7;
-	box-shadow: -4px 0 18px rgba(0, 0, 0, 0.22);
+	display: flex;
+	flex-direction: column;
+	width: min(620px, calc(100vw - 24px));
+	border: 1px solid var(--sz-help-line);
+	border-radius: 18px;
+	background: #fff;
+	box-shadow: 0 18px 70px rgba(25, 23, 36, 0.22);
 	overflow: hidden;
-}
-
-.sz-website-help-drawer[hidden],
-.sz-website-help-backdrop[hidden] {
-	display: none;
 }
 
 .sz-website-help-drawer > header {
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	height: 56px;
-	padding: 0 16px;
-	border-bottom: 1px solid #c3c4c7;
+	flex-shrink: 0;
+	min-height: 80px;
+	padding: 16px 20px;
+	border-bottom: 1px solid var(--sz-help-line);
 	background: #fff;
+}
+
+.sz-website-help-header-icon {
+	display: grid;
+	place-items: center;
+	flex: 0 0 40px;
+	height: 40px;
+	border-radius: 12px;
+	background: #f0ecfb;
+	color: var(--sz-help-accent);
 }
 
 .sz-website-help-drawer > header h2 {
 	margin: 0 auto 0 0;
-	font-size: 18px;
+	color: var(--sz-help-ink);
+	font-size: 17px;
+	line-height: 1.4;
 }
 
-.sz-website-help-close {
-	display: inline-grid;
-	place-items: center;
-	width: 36px;
-	height: 36px;
-	padding: 0;
+.sz-website-help-close,
+.sz-website-help-expand {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	flex-shrink: 0;
+	min-width: 40px;
+	min-height: 40px;
+	padding: 8px;
 	border: 0;
+	border-radius: 10px;
 	background: transparent;
+	color: var(--sz-help-muted);
+	font-size: 12px;
+	text-decoration: none;
 	cursor: pointer;
 }
 
+.sz-website-help-close:hover,
+.sz-website-help-expand:hover {
+	background: #f0ecfb;
+	color: var(--sz-help-accent);
+}
+
 .sz-website-help-drawer .sz-website-help-app {
-	height: calc(100% - 57px);
+	flex: 1;
+	min-height: 0;
+}
+
+.sz-website-help-page .sz-website-help-app {
+	height: max(520px, calc(100dvh - 150px));
+	margin-top: 20px;
+	border: 1px solid var(--sz-help-line);
+	border-radius: 16px;
+	overflow: hidden;
 }
 
 .sz-website-help-layout {
 	display: grid;
-	grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-	min-height: 620px;
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: auto minmax(0, 1fr);
 	height: 100%;
-	border: 1px solid #c3c4c7;
 	background: #fff;
+}
+
+.sz-website-help-toolbar {
+	grid-column: 1 / -1;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 16px;
+	border-bottom: 1px solid var(--sz-help-line);
+}
+
+.sz-website-help-toolbar [data-help-new] {
+	margin-left: auto;
+}
+
+.sz-website-help-history,
+.sz-website-help-conversation {
+	grid-row: 2;
+	grid-column: 1;
+	min-width: 0;
+	min-height: 0;
 }
 
 .sz-website-help-history {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
-	padding: 14px;
-	border-right: 1px solid #dcdcde;
-	background: #f6f7f7;
+	gap: 16px;
+	padding: 20px;
+	background: var(--sz-help-surface);
 	overflow: auto;
+	overscroll-behavior: contain;
+}
+
+.sz-website-help-history h2 {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	color: var(--sz-help-ink);
+	font-size: 15px;
+}
+
+.sz-website-help-history__heading {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.sz-website-help-history__options {
+	position: relative;
+	flex-shrink: 0;
 }
 
 .sz-website-help-history__toolbar {
 	display: grid;
-	gap: 8px;
+	gap: 10px;
 }
 
-.sz-website-help-history__toolbar input,
-.sz-website-help-history__toolbar select {
+.sz-website-help-history__toolbar :is(input, select) {
 	width: 100%;
+	max-width: 100%;
+	min-height: 40px;
+	margin: 0;
+	padding: 6px 10px;
+	border: 1px solid #b8b5c4;
+	border-radius: 8px;
+	background-color: #fff;
+	color: var(--sz-help-ink);
+	font: inherit;
 }
 
 .sz-website-help-thread {
-	display: grid;
-	grid-template-columns: 1fr auto;
-	gap: 4px 8px;
-	padding: 8px;
-	border-bottom: 1px solid #dcdcde;
+	position: relative;
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	margin-bottom: 6px;
+	padding: 6px;
+	border: 1px solid transparent;
+	border-radius: 10px;
+}
+
+.sz-website-help-thread:hover,
+.sz-website-help-thread.is-active {
+	border-color: var(--sz-help-line);
+	background: #fff;
 }
 
 .sz-website-help-thread.is-active {
-	background: #fff;
-	box-shadow: inset 3px 0 #2271b1;
+	box-shadow: inset 3px 0 var(--sz-help-accent);
 }
 
 .sz-website-help-thread__open {
-	grid-column: 1 / -1;
-	padding: 0;
+	flex: 1;
+	min-width: 0;
+	min-height: 40px;
+	padding: 8px;
 	border: 0;
 	background: transparent;
+	color: var(--sz-help-ink);
+	font: inherit;
+	line-height: 1.5;
 	text-align: left;
-	font-weight: 600;
+	overflow-wrap: anywhere;
 	cursor: pointer;
 }
 
-.sz-website-help-conversation {
+.sz-website-help-thread__options > summary,
+.sz-website-help-history__options > summary {
 	display: grid;
-	grid-template-rows: minmax(0, 1fr) auto;
-	min-width: 0;
-	overflow: hidden;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 8px;
+	color: var(--sz-help-muted);
+	list-style: none;
+	cursor: pointer;
+}
+
+.sz-website-help-thread__options > summary::-webkit-details-marker,
+.sz-website-help-history__options > summary::-webkit-details-marker {
+	display: none;
+}
+
+.sz-website-help-thread__options > summary:hover,
+.sz-website-help-history__options > summary:hover {
+	background: #eeebf5;
+}
+
+.sz-website-help-thread__actions,
+.sz-website-help-history__actions {
+	position: absolute;
+	top: 46px;
+	right: 6px;
+	z-index: 2;
+	display: grid;
+	min-width: 150px;
+	padding: 6px;
+	border: 1px solid var(--sz-help-line);
+	border-radius: 10px;
+	background: #fff;
+	box-shadow: 0 8px 24px rgba(25, 23, 36, 0.12);
+}
+
+.sz-website-help-history__actions {
+	top: calc(100% + 6px);
+	right: 0;
+	width: 210px;
+	max-width: calc(100vw - 64px);
+}
+
+.sz-website-help-thread__actions button,
+.sz-website-help-history__actions button {
+	min-height: 40px;
+	padding: 8px 12px;
+	border: 0;
+	border-radius: 6px;
+	background: transparent;
+	color: var(--sz-help-ink);
+	font: inherit;
+	text-align: left;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	cursor: pointer;
+}
+
+.sz-website-help-thread__actions button:hover,
+.sz-website-help-history__actions button:hover {
+	background: #f3f0fb;
+}
+
+.sz-website-help-thread__actions .button-link-delete,
+.sz-website-help-history__actions .button-link-delete {
+	color: #a12626;
+}
+
+.sz-website-help-history-empty {
+	color: var(--sz-help-muted);
+}
+
+.sz-website-help-history-status {
+	margin: 0;
+	color: #a12626;
+}
+
+.sz-website-help-history-status:empty {
+	display: none;
+}
+
+.sz-website-help-conversation {
+	display: flex;
+	flex-direction: column;
+	overflow: auto;
+}
+
+.sz-website-help-transcript {
+	position: relative;
+	display: grid;
+	grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+	flex: 1;
+	min-height: 0;
+	background: linear-gradient(160deg, #faf9fc, #fff 65%);
 }
 
 .sz-website-help-empty,
 .sz-website-help-messages {
-	grid-row: 1;
-	padding: 20px;
+	grid-area: 1 / 1;
+	padding: 28px;
 	overflow: auto;
+	overscroll-behavior: contain;
+	scrollbar-gutter: stable;
+}
+
+.sz-website-help-empty {
+	display: flex;
+	flex-direction: column;
+	justify-content: safe center;
+	align-items: flex-start;
+}
+
+.sz-website-help-empty p {
+	max-width: 440px;
+	margin: 0 0 12px;
+	color: var(--sz-help-muted);
+	font-size: 14px;
+	line-height: 1.7;
 }
 
 .sz-website-help-empty h2 {
-	font-size: 20px;
+	margin: 0 0 12px;
+	color: var(--sz-help-ink);
+	font-size: clamp(23px, 3vw, 32px);
+	font-weight: 600;
+	letter-spacing: -0.7px;
+	line-height: 1.2;
 }
 
-.sz-website-help-starters,
-.sz-website-help-sources {
+.sz-website-help-starters {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
+	width: 100%;
 }
 
-.sz-website-help-source-label {
-	display: inline-flex;
-	align-items: center;
-	min-height: 28px;
-	padding: 0 9px;
-	border: 1px solid #c3c4c7;
-	border-radius: 3px;
-	background: #f6f7f7;
-	color: #50575e;
+.sz-website-help-starters .button {
+	padding: 10px 12px;
+	text-align: left;
+}
+
+.sz-website-help-starters .sz-website-help-icon {
+	color: var(--sz-help-accent);
 }
 
 .sz-website-help-message {
-	max-width: 90%;
-	margin: 0 0 16px;
-	padding: 12px 14px;
-	border: 1px solid #dcdcde;
-	border-radius: 6px;
-	background: #fff;
+	max-width: 100%;
+	margin: 0 0 32px;
+	padding: 0;
+	overflow-wrap: anywhere;
 }
 
 .sz-website-help-message--user {
+	width: fit-content;
+	max-width: 88%;
 	margin-left: auto;
-	background: #f0f6fc;
-	border-color: #9ec2e6;
+	padding: 14px 18px;
+	border: 1px solid #e5dff4;
+	border-radius: 16px 16px 4px 16px;
+	background: #f1edf9;
 }
 
 .sz-website-help-message__header {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	min-height: 30px;
+	min-height: 32px;
+	margin-bottom: 6px;
+	color: var(--sz-help-accent);
+	font-size: 12px;
+}
+
+.sz-website-help-message__content {
+	color: var(--sz-help-ink);
+	font-size: 16px;
+	line-height: 1.8;
+	white-space: pre-wrap;
+}
+
+.sz-website-help-message--assistant .sz-website-help-message__content {
+	white-space: normal;
+}
+
+.sz-website-help-message__content :is(p, ul, ol, blockquote, pre) {
+	margin: 0 0 16px;
+}
+
+.sz-website-help-message__content :is(p, ul, ol, li, blockquote) {
+	font-size: inherit;
+	line-height: inherit;
+}
+
+.sz-website-help-message__content :is(h3, h4, h5, h6) {
+	margin: 24px 0 10px;
+	color: var(--sz-help-ink);
+	font-size: 1.1em;
+	line-height: 1.5;
+}
+
+.sz-website-help-message__content > :first-child {
+	margin-top: 0;
+}
+
+.sz-website-help-message__content :last-child {
+	margin-bottom: 0;
+}
+
+.sz-website-help-message__content :is(ul, ol) {
+	padding-left: 26px;
+}
+
+.sz-website-help-message__content ul {
+	list-style: disc;
+}
+
+.sz-website-help-message__content ol {
+	list-style: decimal;
+}
+
+.sz-website-help-message__content li {
+	margin-bottom: 8px;
+}
+
+.sz-website-help-message__content li > :is(ul, ol) {
+	margin-top: 8px;
+}
+
+.sz-website-help-message__content blockquote {
+	padding-left: 16px;
+	border-left: 3px solid var(--sz-help-line);
+	color: var(--sz-help-muted);
+}
+
+.sz-website-help-message__content code {
+	padding: 2px 5px;
+	border-radius: 4px;
+	background: #f0edf6;
+	font-size: 0.9em;
+}
+
+.sz-website-help-message__content pre code {
+	padding: 0;
+	background: transparent;
+}
+
+.sz-website-help-message pre {
+	max-width: 100%;
+	padding: 12px;
+	border: 1px solid var(--sz-help-line);
+	border-radius: 10px;
+	background: var(--sz-help-surface);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.sz-website-help-message details {
+	margin-top: 12px;
+	padding-top: 10px;
+	border-top: 1px solid var(--sz-help-line);
+	color: var(--sz-help-muted);
+	font-size: 12px;
+}
+
+.sz-website-help-app summary {
+	cursor: pointer;
+}
+
+.sz-website-help-message details p {
+	margin-bottom: 0;
+}
+
+.sz-website-help-sources {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.sz-website-help-sources .button,
+.sz-website-help-source-label {
+	min-height: 32px;
+	padding: 6px 10px;
+	border: 1px solid var(--sz-help-line);
+	border-radius: 8px;
+	background: #fff;
+	color: var(--sz-help-muted);
+	font-size: 12px;
 }
 
 .sz-website-help-report {
@@ -195,115 +621,163 @@
 }
 
 .sz-website-help-report__status {
-	color: #50575e;
+	color: var(--sz-help-muted);
 	font-size: 12px;
 }
 
 .sz-website-help-report__button {
 	display: inline-grid;
 	place-items: center;
-	width: 30px;
-	height: 30px;
+	flex-shrink: 0;
+	width: 36px;
+	height: 36px;
 	padding: 0;
 	border: 1px solid transparent;
-	border-radius: 3px;
+	border-radius: 8px;
 	background: transparent;
-	color: #646970;
+	color: var(--sz-help-muted);
 	cursor: pointer;
 }
 
-.sz-website-help-report__button:hover,
-.sz-website-help-report__button:focus-visible {
-	border-color: #8c8f94;
-	background: #f6f7f7;
-	color: #b32d2e;
+.sz-website-help-report__button:hover {
+	border-color: var(--sz-help-line);
+	background: #fff;
+	color: #a12626;
 }
 
 .sz-website-help-report__button.is-reported {
-	color: #008a20;
+	color: #176735;
 	cursor: default;
 }
 
-.sz-website-help-message__content {
-	margin-top: 5px;
-	white-space: pre-wrap;
-	word-break: break-word;
-}
-
-.sz-website-help-message pre {
-	max-width: 100%;
-	padding: 10px;
-	background: #f6f7f7;
-	white-space: pre-wrap;
-	overflow-wrap: anywhere;
-}
-
-.sz-website-help-message details {
-	margin-top: 10px;
-	padding-top: 8px;
-	border-top: 1px solid #dcdcde;
-	color: #50575e;
-}
-
-.sz-website-help-message details summary {
-	color: #1d2327;
-	font-weight: 600;
-	cursor: pointer;
-}
-
-.sz-website-help-message details p {
-	margin-bottom: 0;
-}
-
-.sz-website-help-message .sz-website-help-sources {
-	margin-top: 10px;
-}
-
 .sz-website-help-scroll {
-	grid-row: 1;
+	grid-area: 1 / 1;
 	align-self: end;
-	justify-self: end;
+	justify-self: center;
 	z-index: 1;
-	margin: 0 18px 14px 0 !important;
-	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+	margin: 0 16px 12px !important;
+	box-shadow: 0 3px 12px rgba(25, 23, 36, 0.12);
 }
 
 .sz-website-help-composer {
 	display: grid;
 	gap: 8px;
-	padding: 14px;
-	border-top: 1px solid #dcdcde;
+	flex-shrink: 0;
+	padding: 12px 24px;
+	border-top: 1px solid var(--sz-help-line);
 	background: #fff;
 }
 
+.sz-website-help-composer__input {
+	position: relative;
+}
+
 .sz-website-help-composer textarea {
+	display: block;
 	width: 100%;
-	resize: vertical;
+	height: 64px;
+	min-height: 64px;
+	max-height: 160px;
+	margin: 0;
+	padding: 19px 64px 19px 16px;
+	border: 1px solid #aaa4bb;
+	border-radius: 12px;
+	background: var(--sz-help-surface);
+	color: var(--sz-help-ink);
+	font: inherit;
+	font-size: 16px;
+	line-height: 1.5;
+	resize: none;
+	overflow-y: hidden;
+}
+
+.sz-website-help-composer textarea::placeholder {
+	color: var(--sz-help-muted);
 }
 
 .sz-website-help-context {
 	display: flex;
 	align-items: flex-start;
-	gap: 7px;
+	gap: 8px;
+	color: var(--sz-help-muted);
+	font-size: 12px;
 }
 
-.sz-website-help-composer__actions {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	min-height: 32px;
+.sz-website-help-context input {
+	flex-shrink: 0;
+	margin: 2px 0 0;
 }
 
-.sz-website-help-composer__actions [data-help-status] {
-	color: #50575e;
+.sz-website-help-app .sz-website-help-send {
+	position: absolute;
+	right: 10px;
+	bottom: 10px;
+	width: 44px;
+	height: 44px;
+	min-height: 44px;
+	padding: 0;
+	border-radius: 50%;
+	line-height: 1;
+}
+
+.sz-website-help-send .sz-website-help-icon {
+	display: block;
+	margin: 0;
+}
+
+.sz-website-help-composer [data-help-status] {
+	color: var(--sz-help-muted);
+	font-size: 12px;
+	overflow-wrap: anywhere;
+}
+
+.sz-website-help-composer [data-help-status]:empty {
+	display: none;
+}
+
+.sz-website-help-app.is-busy .sz-website-help-send svg {
+	visibility: hidden;
+}
+
+.sz-website-help-app.is-busy .sz-website-help-send::after {
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	border: 2px solid currentColor;
+	border-right-color: transparent;
+	border-radius: 50%;
+	content: "";
+	animation: sz-help-spin 0.8s linear infinite;
 }
 
 body.sz-website-help-open {
 	overflow: hidden;
 }
 
-@media screen and (max-width: 782px) {
+@keyframes sz-help-spin {
+	to { transform: rotate(360deg); }
+}
+
+@media (min-width: 1000px) {
+	.sz-website-help-app[data-mode="page"] .sz-website-help-layout.is-history-open {
+		grid-template-columns: 300px minmax(0, 1fr);
+	}
+
+	.sz-website-help-app[data-mode="page"] .sz-website-help-history {
+		border-right: 1px solid var(--sz-help-line);
+	}
+
+	.sz-website-help-app[data-mode="page"] .is-history-open .sz-website-help-conversation {
+		grid-column: 2;
+	}
+
+	.sz-website-help-app[data-mode="page"] .sz-website-help-empty,
+	.sz-website-help-app[data-mode="page"] .sz-website-help-messages {
+		padding: 32px max(28px, calc((100% - 760px) / 2));
+	}
+}
+
+@media (max-width: 782px) {
 	.sz-website-help-launcher {
 		right: 12px;
 		bottom: 12px;
@@ -311,22 +785,77 @@ body.sz-website-help-open {
 
 	.sz-website-help-drawer {
 		top: 46px;
-		width: 100vw;
+		right: 0;
+		bottom: 0;
+		width: 100%;
+		border-radius: 16px 16px 0 0;
 	}
 
-	.sz-website-help-layout {
-		grid-template-columns: 1fr;
-		grid-template-rows: auto minmax(0, 1fr);
-		min-height: 0;
+	.sz-website-help-drawer > header {
+		gap: 8px;
+		min-height: 68px;
+		padding: 12px;
 	}
 
-	.sz-website-help-history {
-		max-height: 170px;
-		border-right: 0;
-		border-bottom: 1px solid #dcdcde;
+	.sz-website-help-expand > span:last-child {
+		display: none;
+	}
+
+	.sz-website-help-toolbar {
+		padding: 8px 12px;
+	}
+
+	.sz-website-help-empty,
+	.sz-website-help-messages {
+		padding: 20px;
+	}
+
+	.sz-website-help-empty {
+		padding: 16px;
+	}
+
+	.sz-website-help-starters .button {
+		gap: 6px;
+		padding: 8px;
+	}
+
+	.sz-website-help-starters .sz-website-help-icon {
+		flex-basis: 16px;
+		width: 16px;
+		height: 16px;
+	}
+
+	.sz-website-help-composer {
+		padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+	}
+
+	.sz-website-help-composer textarea,
+	.sz-website-help-history__toolbar :is(input, select) {
+		font-size: 16px;
 	}
 
 	.sz-website-help-message {
 		max-width: 100%;
+	}
+}
+
+@media (max-height: 650px) {
+	.sz-website-help-transcript {
+		flex: 1 0 60px;
+	}
+
+	.sz-website-help-composer {
+		gap: 6px;
+		padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+	}
+
+	.sz-website-help-composer textarea {
+		max-height: 110px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sz-website-help-app.is-busy .sz-website-help-send::after {
+		animation: none;
 	}
 }

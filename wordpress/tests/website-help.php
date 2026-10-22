@@ -260,6 +260,24 @@ $parsed_final = sz_website_help_parse_provider_response([
 sz_website_help_test_assert( 'valid final responses are parsed', true, $parsed_final['valid'], $failures );
 sz_website_help_test_assert( 'final answer sources are retained', [ 'galleries' ], $parsed_final['source_topic_ids'], $failures );
 
+$formatting = json_decode( file_get_contents( __DIR__ . '/../../app/test/website-help/mocks/formatting.json' ), true );
+$formatted_final = sz_website_help_parse_provider_response( [
+	'output_text' => json_encode( [
+		'type'             => 'final',
+		'answer'           => $formatting['sanitizerInput'],
+		'status'           => 'available',
+		'source_topic_ids' => [ 'galleries' ],
+	] ),
+] );
+sz_website_help_test_assert( 'formatted answers preserve paragraphs, indentation, and code through provider parsing', $formatting['sanitizerExpected'], $formatted_final['answer'], $failures );
+sz_website_help_test_assert( 'formatted answers preserve privacy redaction and strip HTML', false, strpos( $formatted_final['answer'], '<b>' ) !== false || strpos( $formatted_final['answer'], '//private/' ) !== false, $failures );
+$formatted_message = sz_website_help_history_message( [ 'role' => 'assistant', 'content' => $formatted_final['answer'] ] );
+sz_website_help_test_assert( 'history selection preserves answer formatting', $formatting['sanitizerExpected'], $formatted_message['content'], $failures );
+sz_website_help_test_assert( 'stored exchange sanitization preserves formatting', $formatting['sanitizerExpected'], sz_website_help_sanitize_scalar( $formatted_final['answer'], 12000, true ), $failures );
+sz_website_help_test_assert( 'user message line breaks survive history selection', $formatting['userMessage'], sz_website_help_history_message( [ 'role' => 'user', 'content' => $formatting['userMessage'] ] )['content'], $failures );
+sz_website_help_test_assert( 'metadata sanitization still collapses whitespace', 'one two three', sz_website_help_sanitize_scalar( "one\n\n  two\tthree" ), $failures );
+sz_website_help_test_assert( 'multiline sanitization still enforces its length limit', "one\n", sz_website_help_sanitize_scalar( "one\n\ntwo", 4, true ), $failures );
+
 $invalid_response = sz_website_help_parse_provider_response([ 'output_text' => '{"type":"context_request","context_request":{"scope":"everything"}}' ]);
 sz_website_help_test_assert( 'invalid provider context requests are rejected', false, $invalid_response['valid'], $failures );
 
@@ -329,4 +347,4 @@ if ( ! empty( $failures ) ) {
 	exit( 1 );
 }
 
-fwrite( STDOUT, "Passed 65 PHP website help tests.\n" );
+fwrite( STDOUT, "Passed 72 PHP website help tests.\n" );
