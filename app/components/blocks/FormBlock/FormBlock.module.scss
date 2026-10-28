@@ -90,6 +90,13 @@
   gap: 1rem;
 }
 
+.prefillGuide {
+  margin-top: 0.75rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: inherit;
+}
+
 .fieldGroup {
   display: grid;
   gap: 0.45rem;

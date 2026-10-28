@@ -52,6 +52,17 @@ describe('seo helpers', () => {
     expect(getSiteUrlFromEnv()).toBe('https://test.example.com')
   })
 
+  it('can build canonical URLs in a browser without a Node process global', () => {
+    let url: string
+    try {
+      vi.stubGlobal('process', undefined)
+      url = getSiteUrlFromEnv()
+    } finally {
+      vi.unstubAllGlobals()
+    }
+    expect(url).toBe('https://studiozanetti.com.au')
+  })
+
   it('defaults to the canonical apex origin when no site URL is configured', () => {
     vi.stubEnv('SITE_URL', '')
     vi.stubEnv('PUBLIC_SITE_URL', '')

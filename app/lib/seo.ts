@@ -16,7 +16,10 @@ function normalizeBaseUrl(url: string): string {
 }
 
 export function getSiteUrlFromEnv(): string {
-  const raw = process.env.SITE_URL ?? process.env.PUBLIC_SITE_URL ?? process.env.APP_URL
+  const raw =
+    typeof process === 'undefined'
+      ? undefined
+      : (process.env.SITE_URL ?? process.env.PUBLIC_SITE_URL ?? process.env.APP_URL)
   if (!raw) return FALLBACK_SITE_URL
 
   try {

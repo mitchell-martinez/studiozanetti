@@ -1,9 +1,9 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useLocation } from 'react-router'
 import { useAnalytics } from '~/components/AnalyticsProvider/context'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
-import { AI_ENQUIRY_PERMISSION, AI_ENQUIRY_STEPS } from '~/lib/enquiryGuidance'
+import { AI_ENQUIRY_PERMISSION, AI_ENQUIRY_STEPS, getFormPrefillGuide } from '~/lib/enquiryGuidance'
 import {
   getEffectiveNumberFieldMin,
   getSubmitterCopyTargetFields,
@@ -16,6 +16,7 @@ import styles from './FormBlock.module.scss'
 import {
   createInitialClientFormValues,
   getPrefilledClientFormValues,
+  parseFormPrefillHash,
   type ClientFormValue,
   type ClientFormValues,
   validateClientFormValues,
@@ -27,6 +28,9 @@ type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 const SUBMIT_ERROR_RESHOW_DELAY_MS = 80
 const SUBMITTER_COPY_LABEL = 'Receive a copy of this form to my email'
 const FORM_FALLBACK_EMAIL = 'info@studiozanetti.com.au'
+const subscribeToHydration = () => () => {}
+const clientSnapshot = () => true
+const serverSnapshot = () => false
 
 interface SubmitResponse {
   success?: boolean
@@ -38,7 +42,8 @@ interface SubmitResponse {
 
 const FormFallbackEmail = () => (
   <>
-    {' '}If you are unable to submit the form, please email us at{' '}
+    {' '}
+    If you are unable to submit the form, please email us at{' '}
     <a href={`mailto:${FORM_FALLBACK_EMAIL}`}>{FORM_FALLBACK_EMAIL}</a>.
   </>
 )
@@ -99,31 +104,25 @@ const isSameClientFormValue = (
   return currentValue === nextValue
 }
 
-const createInitialValues = (fields: FormBlockProps['block']['fields'], search: string, formId: string): ClientFormValues => {
-  const initialValues = createInitialClientFormValues(fields)
-  const prefilledValues = getPrefilledClientFormValues(fields, search, formId)
-
-  for (const [fieldId, prefilledValue] of Object.entries(prefilledValues)) {
-    if (prefilledValue === undefined) {
-      continue
-    }
-
-    initialValues[fieldId] = prefilledValue
-  }
-
-  return initialValues
-}
-
 const FormBlock = ({ block }: FormBlockProps) => {
   const location = useLocation()
   const { getVisitContext, trackEvent } = useAnalytics()
   const trackedFormKey = useRef<string | null>(null)
-  const prefillKey = `${block.form_id}|${location.search}`
+  // Match the server's first render; URL fragments become available after hydration.
+  const hasHydrated = useSyncExternalStore(subscribeToHydration, clientSnapshot, serverSnapshot)
+  const prefillHash = hasHydrated && parseFormPrefillHash(location.hash) ? location.hash : ''
+  const prefillKey = hasHydrated
+    ? JSON.stringify([block.form_id, location.pathname, location.search, prefillHash, location.key])
+    : ''
+  const prefilledValues = hasHydrated
+    ? getPrefilledClientFormValues(block.fields, location.search, block.form_id, prefillHash)
+    : {}
+  const hasPrefilledDetails = Object.keys(prefilledValues).length > 0
   const [values, setValues] = useState<ClientFormValues>(() =>
-    createInitialValues(block.fields, location.search, block.form_id),
+    createInitialClientFormValues(block.fields),
   )
   const [formStartedAtMs, setFormStartedAtMs] = useState<number>(() => Date.now())
-  const [previousPrefillKey, setPreviousPrefillKey] = useState(prefillKey)
+  const [previousPrefillKey, setPreviousPrefillKey] = useState('')
   const [honeypot, setHoneypot] = useState('')
   const [honeypotSecondary, setHoneypotSecondary] = useState('')
   const [requestSubmitterCopy, setRequestSubmitterCopy] = useState(false)
@@ -137,8 +136,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const backgroundImageStyle = getBackgroundImageStyle(block)
   const headingAlignment = headingAlignClass[block.heading_align ?? 'left'] ?? styles.alignLeft
   const formAlignment = formAlignClass[block.form_alignment ?? 'left'] ?? styles.formAlignLeft
-  const submitAlignment =
-    submitAlignClass[block.submit_alignment ?? 'left'] ?? styles.submitLeft
+  const submitAlignment = submitAlignClass[block.submit_alignment ?? 'left'] ?? styles.submitLeft
   const submitText = block.submit_text?.trim() || 'Send message'
   const sectionId = block.form_id?.trim() || undefined
   const formConfigurationErrors = validateFormConfiguration(block)
@@ -149,24 +147,25 @@ const FormBlock = ({ block }: FormBlockProps) => {
     block.offer_submitter_email_copy === true &&
     submitterCopyTargetFields.length === 1
 
-  if (prefillKey !== previousPrefillKey) {
+  if (previousPrefillKey !== prefillKey) {
     setPreviousPrefillKey(prefillKey)
-
-    const prefilledValues = getPrefilledClientFormValues(block.fields, location.search, block.form_id)
     setValues((currentValues) => {
       if (Object.keys(prefilledValues).length === 0) {
         return currentValues
       }
 
-      let hasChanges = false
-      const nextValues = { ...currentValues }
+      // A new personal enquiry link is a new draft; do not retain another person's details.
+      let hasChanges = Boolean(prefillHash)
+      const nextValues = prefillHash
+        ? createInitialClientFormValues(block.fields)
+        : { ...currentValues }
 
       for (const [fieldId, nextValue] of Object.entries(prefilledValues)) {
         if (nextValue === undefined) {
           continue
         }
 
-        if (isSameClientFormValue(currentValues[fieldId], nextValue)) {
+        if (isSameClientFormValue(nextValues[fieldId], nextValue)) {
           continue
         }
 
@@ -177,6 +176,12 @@ const FormBlock = ({ block }: FormBlockProps) => {
       return hasChanges ? nextValues : currentValues
     })
   }
+
+  useEffect(() => {
+    if (hasPrefilledDetails && parseFormPrefillHash(prefillHash)?.formId === block.form_id.trim()) {
+      document.getElementById(block.form_id.trim())?.scrollIntoView?.({ block: 'start' })
+    }
+  }, [block.form_id, prefillHash, hasPrefilledDetails])
 
   const showSubmitError = (nextMessage: string) => {
     setSubmitErrorMessage(nextMessage)
@@ -249,7 +254,9 @@ const FormBlock = ({ block }: FormBlockProps) => {
       if (!response.ok || payload.success !== true) {
         setFieldErrors(payload.fieldErrors ?? {})
         setSubmitState('error')
-        showSubmitError(payload.error ?? 'We could not send your message right now. Please try again.')
+        showSubmitError(
+          payload.error ?? 'We could not send your message right now. Please try again.',
+        )
         return
       }
 
@@ -313,6 +320,13 @@ const FormBlock = ({ block }: FormBlockProps) => {
             </div>
           )}
 
+          {isFormAvailable && prefillHash && hasPrefilledDetails && submitState !== 'success' && (
+            <p className={`${styles.notice} ${styles.noticeTop}`.trim()} role="status">
+              We've filled in the details provided in your link. Please review and complete the form
+              before submitting.
+            </p>
+          )}
+
           {isFormAvailable && submitState !== 'success' && (
             <form
               className={styles.form}
@@ -320,6 +334,10 @@ const FormBlock = ({ block }: FormBlockProps) => {
               onSubmit={handleSubmit}
               noValidate
             >
+              <p className={styles.helpText}>
+                Using an AI assistant? Share our{' '}
+                <a href="/enquiry-links.txt">prefilled enquiry link guide</a> with it.
+              </p>
               <details className={styles.assistantGuidance}>
                 <summary>Enquiring with an AI assistant?</summary>
                 <p>{AI_ENQUIRY_PERMISSION}</p>
@@ -328,6 +346,12 @@ const FormBlock = ({ block }: FormBlockProps) => {
                     <li key={step}>{step}</li>
                   ))}
                 </ol>
+                <details>
+                  <summary>Prefilled link format and field names</summary>
+                  <pre className={styles.prefillGuide}>
+                    {getFormPrefillGuide(block, location.pathname)}
+                  </pre>
+                </details>
               </details>
               <div className={styles.honeypot} aria-hidden="true">
                 <label htmlFor={`${block.form_id}-website`}>Website</label>

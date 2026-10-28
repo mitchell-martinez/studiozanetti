@@ -34,7 +34,28 @@ describe('llms.txt loader', () => {
       heading: 'Wedding enquiries',
       email_to: 'private-inbox@example.com',
       email_subject: 'Internal routing subject',
-      fields: [{ field_id: 'name', label: 'Name', type: 'text', required: true }],
+      fields: [
+        { field_id: 'name', label: 'Name', type: 'text', required: true },
+        {
+          field_id: 'email',
+          label: 'Your email',
+          type: 'email',
+          required: true,
+          vsco_field_key: 'InternalEmailMapping',
+        },
+        {
+          field_id: 'event_date',
+          label: 'Wedding date',
+          type: 'date',
+          help_text: 'An approximate date is fine.',
+        },
+        {
+          field_id: 'package',
+          label: 'Package',
+          type: 'select',
+          options: [{ value: 'essentials', label: 'The Essentials' }],
+        },
+      ],
     }
     const page: WPPage = {
       id: 1,
@@ -95,6 +116,14 @@ describe('llms.txt loader', () => {
     expect(body).not.toContain('Malformed enquiry form')
     expect(body).not.toContain('private-inbox@example.com')
     expect(body).not.toContain('Internal routing subject')
+    expect(body).not.toContain('InternalEmailMapping')
+    expect(body).toContain(
+      'URL format: https://test.example.com/wedding-prices#wedding%20enquiry?FIELD_ID=',
+    )
+    expect(body).toContain('"email" (email, required): Your email')
+    expect(body).toContain('An approximate date is fine.')
+    expect(body).toContain('Value format: YYYY-MM-DD.')
+    expect(body).toContain('"value":"essentials","label":"The Essentials"')
   })
 
   it('lists public WordPress pages and all blog posts with canonical URLs', async () => {
@@ -188,9 +217,7 @@ describe('llms.txt loader', () => {
     const body = await response.text()
 
     expect(response.headers.get('Content-Type')).toContain('text/plain')
-    expect(response.headers.get('Cache-Control')).toBe(
-      'public, max-age=3600, s-maxage=3600',
-    )
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=3600, s-maxage=3600')
     expect(body).toContain('# Studio & Co\n> Portraits & stories')
     expect(body).toContain('A candid photography studio.')
     expect(body).toContain('- Established: 2001')

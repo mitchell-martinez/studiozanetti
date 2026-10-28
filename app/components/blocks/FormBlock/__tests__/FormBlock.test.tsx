@@ -1,8 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, useNavigate } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import AnalyticsProvider from '~/components/AnalyticsProvider'
+import PricingPackagesBlock from '~/components/blocks/PricingPackagesBlock'
 import type { FormBlock as FormBlockType } from '~/types/wordpress'
 import formBlockData from '../__mocks__/formBlock.json'
 import FormBlock from '../index'
@@ -46,6 +47,23 @@ const renderTrackedBlock = () =>
     </MemoryRouter>,
   )
 
+const renderPackageSelection = (initialEntry: string) =>
+  render(
+    <MemoryRouter initialEntries={[initialEntry]}>
+      <PricingPackagesBlock
+        block={{
+          acf_fc_layout: 'pricing_packages',
+          packages: ['wedding', 'family'].map((service) => ({
+            name: service,
+            cta_text: `Select ${service}`,
+            cta_url: `/get-in-touch?form_id=contact-enquiry&service_type=${service}#contact-enquiry`,
+          })),
+        }}
+      />
+      <FormBlock block={baseBlock} />
+    </MemoryRouter>,
+  )
+
 describe('FormBlock', () => {
   it('provides discoverable assistant guidance and machine-readable required fields', async () => {
     const user = userEvent.setup()
@@ -83,7 +101,9 @@ describe('FormBlock', () => {
     await user.click(screen.getByLabelText(/I agree to be contacted/i))
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
-    expect(await screen.findByText('Email is required to receive a copy of the form.')).toBeVisible()
+    expect(
+      await screen.findByText('Email is required to receive a copy of the form.'),
+    ).toBeVisible()
     expect(mockFetch).not.toHaveBeenCalled()
     await user.click(screen.getByLabelText(/Receive a copy of this form to my email/i))
     expect(email).not.toBeRequired()
@@ -93,6 +113,102 @@ describe('FormBlock', () => {
     renderBlock({}, ['/get-in-touch?form_id=contact-enquiry&service_type=family#contact-enquiry'])
 
     expect(screen.getByRole('combobox', { name: /service type/i })).toHaveValue('family')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('reapplies a package button at the same URL and preserves entered contact details', async () => {
+    const user = userEvent.setup()
+    renderPackageSelection(
+      '/get-in-touch?form_id=contact-enquiry&service_type=wedding#contact-enquiry',
+    )
+    const service = screen.getByRole('combobox', { name: /service type/i })
+    const name = screen.getByRole('textbox', { name: /^Name/i })
+    await user.type(name, 'Alex')
+    await user.selectOptions(service, 'family')
+    await user.click(screen.getByRole('link', { name: 'Select wedding' }))
+    expect(service).toHaveValue('wedding')
+    expect(name).toHaveValue('Alex')
+    await user.click(screen.getByRole('link', { name: 'Select family' }))
+    expect(service).toHaveValue('family')
+    expect(name).toHaveValue('Alex')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+
+  it('preserves a personal enquiry draft when a pricing button changes the package', async () => {
+    const user = userEvent.setup()
+    renderPackageSelection(
+      '/get-in-touch#contact-enquiry?name=Alex&email=alex%40example.com&service_type=wedding',
+    )
+    await user.click(screen.getByRole('link', { name: 'Select family' }))
+    expect(screen.getByRole('combobox', { name: /service type/i })).toHaveValue('family')
+    expect(screen.getByRole('textbox', { name: /^Name/i })).toHaveValue('Alex')
+    expect(screen.getByRole('textbox', { name: /^Email/i })).toHaveValue('alex@example.com')
+  })
+
+  it('fills personal details from a fragment without submitting or filling hidden controls', async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    renderBlock({}, [
+      '/get-in-touch#contact-enquiry?name=Zo%C3%AB%20%26%20Alex&email=zoe%2Bevents%40example.com&phone=%2B61%20412%20345%20678&comments=Line%201%0ALine%202&service_type=family&submit=true&website=spam&company=spam&requestSubmitterCopy=true',
+    ])
+
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: /^Name/i })).toHaveValue('Zoë & Alex'),
+    )
+    expect(screen.getByRole('textbox', { name: /^Email/i })).toHaveValue('zoe+events@example.com')
+    expect(screen.getByRole('textbox', { name: /mobile number/i })).toHaveValue('+61 412 345 678')
+    expect(screen.getByRole('textbox', { name: /any other comments/i })).toHaveValue(
+      'Line 1\nLine 2',
+    )
+    expect(screen.getByRole('combobox', { name: /service type/i })).toHaveValue('family')
+    expect(screen.getByRole('status')).toHaveTextContent('review and complete the form')
+    expect(screen.getByLabelText('Website')).toHaveValue('')
+    expect(screen.getByLabelText('Company')).toHaveValue('')
+    expect(screen.getByLabelText(/Receive a copy of this form/i)).not.toBeChecked()
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('targets one block on a page containing multiple forms', async () => {
+    render(
+      <MemoryRouter initialEntries={['/get-in-touch#corporate-enquiry?name=Alex']}>
+        <FormBlock
+          block={{ ...baseBlock, form_id: 'wedding-enquiry', heading: 'Wedding enquiry' }}
+        />
+        <FormBlock
+          block={{ ...baseBlock, form_id: 'corporate-enquiry', heading: 'Corporate enquiry' }}
+        />
+      </MemoryRouter>,
+    )
+    const forms = screen.getAllByRole('form')
+    await waitFor(() => expect(forms[1].querySelector('[name="name"]')).toHaveValue('Alex'))
+    expect(forms[0].querySelector('[name="name"]')).toHaveValue('')
+  })
+
+  it('applies a new fragment link during same-page navigation without overwriting later edits', async () => {
+    const user = userEvent.setup()
+    const Navigation = () => {
+      const navigate = useNavigate()
+      return (
+        <button onClick={() => navigate('/get-in-touch#contact-enquiry?name=Second')}>
+          Open another enquiry link
+        </button>
+      )
+    }
+    render(
+      <MemoryRouter
+        initialEntries={['/get-in-touch#contact-enquiry?name=First&email=first%40example.com']}
+      >
+        <Navigation />
+        <FormBlock block={baseBlock} />
+      </MemoryRouter>,
+    )
+    const name = screen.getByRole('textbox', { name: /^Name/i })
+    await waitFor(() => expect(name).toHaveValue('First'))
+    await user.clear(name)
+    await user.type(name, 'Edited')
+    expect(name).toHaveValue('Edited')
+    await user.click(screen.getByRole('button', { name: /Open another enquiry link/ }))
+    await waitFor(() => expect(name).toHaveValue('Second'))
+    expect(screen.getByRole('textbox', { name: /^Email/i })).toHaveValue('')
   })
 
   it('uses form_id as the section anchor id', () => {
@@ -108,7 +224,9 @@ describe('FormBlock', () => {
       submit_alignment: 'center',
     })
 
-    expect(screen.getByRole('heading', { name: /let's plan your photography/i, level: 3 })).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: /let's plan your photography/i, level: 3 }),
+    ).toBeInTheDocument()
     const panel = container.querySelector('section > div > div:last-child') as HTMLElement
     expect(panel.className).toMatch(/formAlignCenter/)
     const submitRow = container.querySelector('form > div:last-child') as HTMLElement
@@ -133,9 +251,7 @@ describe('FormBlock', () => {
   it('disables and greys out submit button while submitting', async () => {
     vi.stubGlobal(
       'fetch',
-      mockFetch.mockImplementation(
-        () => new Promise(() => {}),
-      ),
+      mockFetch.mockImplementation(() => new Promise(() => {})),
     )
     const user = userEvent.setup()
 
@@ -153,14 +269,17 @@ describe('FormBlock', () => {
   })
 
   it('submits only pagePath, formId, honeypot, and values and hides fields on success', async () => {
-    vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        success: true,
-        emailDelivered: true,
-        message: 'Thanks for getting in touch.',
+    vi.stubGlobal(
+      'fetch',
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          success: true,
+          emailDelivered: true,
+          message: 'Thanks for getting in touch.',
+        }),
       }),
-    }))
+    )
     const user = userEvent.setup()
 
     renderBlock()
@@ -201,10 +320,13 @@ describe('FormBlock', () => {
 
   it('tracks one form start and a confirmed successful submission', async () => {
     vi.stubGlobal('navigator', { ...navigator, sendBeacon: mockSendBeacon })
-    vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ success: true, emailDelivered: true }),
-    }))
+    vi.stubGlobal(
+      'fetch',
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true, emailDelivered: true }),
+      }),
+    )
     const user = userEvent.setup()
 
     renderTrackedBlock()
@@ -223,7 +345,9 @@ describe('FormBlock', () => {
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
     await waitFor(() => {
-      const eventTypes = mockSendBeacon.mock.calls.map(([, body]) => JSON.parse(body as string).eventType)
+      const eventTypes = mockSendBeacon.mock.calls.map(
+        ([, body]) => JSON.parse(body as string).eventType,
+      )
       expect(eventTypes).toContain('form_submit')
     })
     const submissionBody = JSON.parse(mockFetch.mock.calls[0]?.[1]?.body as string)
@@ -262,10 +386,13 @@ describe('FormBlock', () => {
 
   it('does not track a submission when the API did not deliver an email', async () => {
     vi.stubGlobal('navigator', { ...navigator, sendBeacon: mockSendBeacon })
-    vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ success: true, emailDelivered: false }),
-    }))
+    vi.stubGlobal(
+      'fetch',
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true, emailDelivered: false }),
+      }),
+    )
     const user = userEvent.setup()
 
     renderTrackedBlock()
@@ -278,7 +405,9 @@ describe('FormBlock', () => {
     await user.click(screen.getByRole('button', { name: /send message/i }))
 
     expect(await screen.findByText('Thanks. Your message has been sent.')).toBeInTheDocument()
-    const eventTypes = mockSendBeacon.mock.calls.map(([, body]) => JSON.parse(body as string).eventType)
+    const eventTypes = mockSendBeacon.mock.calls.map(
+      ([, body]) => JSON.parse(body as string).eventType,
+    )
     expect(eventTypes).not.toContain('form_submit')
   })
 
@@ -321,10 +450,13 @@ describe('FormBlock', () => {
   })
 
   it('submits requestSubmitterCopy when the generated checkbox is selected', async () => {
-    vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ success: true, message: 'Thanks for getting in touch.' }),
-    }))
+    vi.stubGlobal(
+      'fetch',
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: true, message: 'Thanks for getting in touch.' }),
+      }),
+    )
     const user = userEvent.setup()
 
     renderBlock()
@@ -345,14 +477,17 @@ describe('FormBlock', () => {
   })
 
   it('shows server-side field errors returned by the submit route', async () => {
-    vi.stubGlobal('fetch', mockFetch.mockResolvedValue({
-      ok: false,
-      status: 422,
-      json: async () => ({
-        error: 'Please correct the highlighted fields and try again.',
-        fieldErrors: { email: 'Email must be a valid email address.' },
+    vi.stubGlobal(
+      'fetch',
+      mockFetch.mockResolvedValue({
+        ok: false,
+        status: 422,
+        json: async () => ({
+          error: 'Please correct the highlighted fields and try again.',
+          fieldErrors: { email: 'Email must be a valid email address.' },
+        }),
       }),
-    }))
+    )
     const user = userEvent.setup()
 
     renderBlock()
@@ -397,10 +532,9 @@ describe('FormBlock', () => {
     })
 
     expect(
-      screen.getByText(
-        'This form is unavailable right now while its settings are fixed.',
-        { exact: false },
-      ),
+      screen.getByText('This form is unavailable right now while its settings are fixed.', {
+        exact: false,
+      }),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: fallbackEmail })).toHaveAttribute(
       'href',
@@ -412,7 +546,10 @@ describe('FormBlock', () => {
   it('renders number fields with a minimum of zero and keeps selects native', () => {
     renderBlock()
 
-    expect(screen.getByRole('spinbutton', { name: /how many attendees/i })).toHaveAttribute('min', '0')
+    expect(screen.getByRole('spinbutton', { name: /how many attendees/i })).toHaveAttribute(
+      'min',
+      '0',
+    )
     expect(screen.getByRole('combobox', { name: /service type/i })).toBeInTheDocument()
   })
 })

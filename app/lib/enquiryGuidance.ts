@@ -1,3 +1,7 @@
+import type { FormBlock } from '~/types/wordpress'
+import { getEffectiveNumberFieldMin } from './formConfiguration'
+import { stripHtml } from './html'
+
 export const AI_ENQUIRY_PERMISSION =
   'AI assistants may complete and submit this enquiry form on behalf of a user with their permission. No Studio Zanetti account or connection is required.'
 
@@ -6,5 +10,47 @@ export const AI_ENQUIRY_STEPS = [
   'Review the enquiry with the user and obtain permission to send their details to Studio Zanetti. Select consent, marketing and email-copy options only when authorised by the user.',
   'Submit using the form button, then wait for the confirmation or validation errors. Report success only after the form confirms that the enquiry was sent.',
   'Sending an enquiry does not confirm availability, reserve a date or create a booking.',
-  'If your tools cannot operate this form, give the user a link to it and a draft of their enquiry instead of claiming it was submitted.',
+  'If your tools cannot operate this form, use the prefilled link format and field names below to give the user a link containing the details they have supplied. They can review and submit it themselves; do not claim the link has sent an enquiry.',
 ] as const
+
+export function getFormPrefillGuide(form: FormBlock, pageUrl: string): string {
+  return [
+    `URL format: ${pageUrl}#${encodeURIComponent(form.form_id.trim())}?FIELD_ID=URL_ENCODED_VALUE&ANOTHER_FIELD_ID=URL_ENCODED_VALUE`,
+    'Replace the placeholders with the exact field identifiers below and the user-provided values. Percent-encode each identifier and value (including + in phone numbers, & in messages, and line breaks). Omit unknown details rather than inventing them.',
+    'Keep all personal details after #. The fragment is read in the browser, not sent to the web server as part of the page request. The link still contains personal information and can remain in chat and browser history; share it only with the user.',
+    'Opening the link fills this form only. It does not submit it. The user must review the values and select the submit button. Hidden fields and the generated email-copy checkbox are not prefilled.',
+    'For select/radio fields, use an exact option value. For checkbox groups, repeat the field identifier for each selected value. Include consent or marketing choices only when the user has explicitly chosen them.',
+    'Fields:',
+    ...form.fields.map((field) => {
+      const details = [
+        `- ${JSON.stringify(field.field_id)} (${field.type}, ${field.required ? 'required' : 'optional'}): ${stripHtml(field.label)}`,
+      ]
+      if (field.help_text) details.push(stripHtml(field.help_text))
+      if (field.type === 'date') details.push('Value format: YYYY-MM-DD.')
+      if (field.type === 'time') details.push('Value format: HH:mm (24-hour time).')
+      if (field.type === 'datetime-local')
+        details.push('Value format: YYYY-MM-DDTHH:mm (local time).')
+      if (field.type === 'number') {
+        details.push(`Minimum: ${getEffectiveNumberFieldMin(field)}.`)
+        if (typeof field.max === 'number') details.push(`Maximum: ${field.max}.`)
+        if (typeof field.step === 'number') details.push(`Step: ${field.step}.`)
+      }
+      if (field.type === 'select' || field.type === 'radio' || field.type === 'checkbox') {
+        const options = field.options?.length
+          ? field.options
+          : field.type === 'checkbox'
+            ? [
+                {
+                  value: field.field_id,
+                  label: field.checkbox_label || field.label,
+                },
+              ]
+            : []
+        details.push(
+          `Options: ${JSON.stringify(options.map(({ value, label }) => ({ value, label: stripHtml(label) })))}`,
+        )
+      }
+      return details.join(' ')
+    }),
+  ].join('\n')
+}

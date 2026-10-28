@@ -48,7 +48,10 @@ const normalizeQueryValue = (value: string | null): string | null => {
 }
 
 const normalizeLookupToken = (value: string): string =>
-  value.trim().toLowerCase().replace(/[\s_-]+/g, '_')
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, '_')
 
 const getParamValueByFieldId = (searchParams: URLSearchParams, fieldId: string): string | null => {
   const directValue = normalizeQueryValue(searchParams.get(fieldId))
@@ -99,14 +102,18 @@ const getNormalizedChoiceOption = (
   field: Extract<WPFormField, { type: 'select' | 'radio' }>,
   value: string,
 ): { label: string; value: string } | undefined =>
-  field.options.find((option) => normalizeLookupToken(option.value ?? '') === normalizeLookupToken(value))
+  field.options.find(
+    (option) => normalizeLookupToken(option.value ?? '') === normalizeLookupToken(value),
+  )
 
 const getInitialValue = (field: WPFormField): ClientFormValue => {
   switch (field.type) {
     case 'checkbox':
       if (Array.isArray(field.default_value)) {
         const optionValues = new Set(getCheckboxOptionValues(field))
-        return normalizeSelectionArray(field.default_value).filter((value) => optionValues.has(value))
+        return normalizeSelectionArray(field.default_value).filter((value) =>
+          optionValues.has(value),
+        )
       }
 
       if (field.default_value === true) {
@@ -137,15 +144,35 @@ export function createInitialClientFormValues(fields: WPFormField[]): ClientForm
   return Object.fromEntries(fields.map((field) => [field.field_id, getInitialValue(field)]))
 }
 
+export function parseFormPrefillHash(hash: string): { formId: string; search: string } | null {
+  const separator = hash.indexOf('?')
+  if (!hash.startsWith('#') || separator < 2) return null
+
+  try {
+    const formId = decodeURIComponent(hash.slice(1, separator)).trim()
+    return formId ? { formId, search: hash.slice(separator + 1) } : null
+  } catch {
+    return null
+  }
+}
+
 export function getPrefilledClientFormValues(
   fields: WPFormField[],
   search: string,
   formId?: string,
+  hash = '',
 ): Partial<ClientFormValues> {
-  const searchParams = new URLSearchParams(search)
+  const fragment = parseFormPrefillHash(hash)
+  // A fragment link targets exactly one form and takes precedence over legacy query prefills.
+  if (fragment && fragment.formId !== formId?.trim()) return {}
+  const searchParams = new URLSearchParams(fragment?.search ?? search)
   const requestedFormId = getParamValueByFieldId(searchParams, 'form_id')
 
-  if (requestedFormId && normalizeLookupToken(requestedFormId) !== normalizeLookupToken(formId?.trim() || '')) {
+  if (
+    !fragment &&
+    requestedFormId &&
+    normalizeLookupToken(requestedFormId) !== normalizeLookupToken(formId?.trim() || '')
+  ) {
     return {}
   }
 

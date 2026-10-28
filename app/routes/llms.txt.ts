@@ -1,13 +1,8 @@
 import { decodeHtmlEntities } from '~/lib/html'
 import { AI_ENQUIRY_PERMISSION, AI_ENQUIRY_STEPS } from '~/lib/enquiryGuidance'
-import { validateFormConfiguration } from '~/lib/formConfiguration'
+import { getEnquiryForms } from '~/lib/enquiryForms.server'
 import { toCanonicalUrl } from '~/lib/seo'
-import {
-  buildPagePaths,
-  getAllPages,
-  getPostsByCategories,
-  getSiteSettings,
-} from '~/lib/wordpress'
+import { buildPagePaths, getAllPages, getPostsByCategories, getSiteSettings } from '~/lib/wordpress'
 import type { ContentBlock, WPPage, WPPost, WPSiteSettings } from '~/types/wordpress'
 
 const POSTS_PER_PAGE = 100
@@ -68,9 +63,13 @@ function blockDescription(block: ContentBlock): string {
     case 'image_text':
       return block.body
     case 'services_grid':
-      return block.subheading ?? block.services.find((service) => service.description)?.description ?? ''
+      return (
+        block.subheading ?? block.services.find((service) => service.description)?.description ?? ''
+      )
     case 'pillar_grid':
-      return block.subheading ?? block.pillars.find((pillar) => pillar.description)?.description ?? ''
+      return (
+        block.subheading ?? block.pillars.find((pillar) => pillar.description)?.description ?? ''
+      )
     case 'faq_accordion':
       return block.intro ?? block.faq_items.find((item) => item.answer)?.answer ?? ''
     case 'pricing_packages':
@@ -119,9 +118,9 @@ function pageDescription(page: WPPage): string {
 }
 
 function postDescription(post: WPPost): string {
-  return [post.yoast_head_json?.description, post.excerpt.rendered]
-    .map(conciseText)
-    .find(Boolean) ?? ''
+  return (
+    [post.yoast_head_json?.description, post.excerpt.rendered].map(conciseText).find(Boolean) ?? ''
+  )
 }
 
 function listItem(item: LinkItem): string {
@@ -192,9 +191,7 @@ function siteDetails(siteSettings: WPSiteSettings, pageCount: number, postCount:
     conciseText(business?.description),
     '',
     'Key facts:',
-    ...(business?.founding_date
-      ? [`- Established: ${business.founding_date.slice(0, 4)}`]
-      : []),
+    ...(business?.founding_date ? [`- Established: ${business.founding_date.slice(0, 4)}`] : []),
     ...(location ? [`- Based in: ${location}`] : []),
     ...(business?.area_served?.length
       ? [`- Service area: ${business.area_served.join(', ')}`]
@@ -234,7 +231,7 @@ export async function loader() {
   const pagesBySection = new Map<PageSection, LinkItem[]>(
     PAGE_SECTIONS.map((section) => [section, []]),
   )
-  const enquiryForms: LinkItem[] = []
+  const enquiryForms = getEnquiryForms(pages)
 
   for (const page of publicPages) {
     const path = page.slug === 'home' ? '' : (pagePaths.get(page.id) ?? page.slug)
@@ -243,24 +240,6 @@ export async function loader() {
       url: toCanonicalUrl(path ? `/${path}` : '/'),
       description: pageDescription(page) || fallbackPageDescription(page, path),
     })
-
-    for (const block of page.acf?.blocks ?? []) {
-      if (
-        block.acf_fc_layout !== 'form_block' ||
-        !block.form_id?.trim() ||
-        !Array.isArray(block.fields) ||
-        validateFormConfiguration(block).length > 0
-      ) {
-        continue
-      }
-
-      enquiryForms.push({
-        title: block.heading || `${plainText(page.title.rendered)} enquiry`,
-        url: `${toCanonicalUrl(path ? `/${path}` : '/')}#${encodeURIComponent(block.form_id.trim())}`,
-        description:
-          'Public enquiry form. Read the current fields and choices on the page before submitting.',
-      })
-    }
   }
 
   for (const items of pagesBySection.values()) {
@@ -286,14 +265,21 @@ export async function loader() {
           '',
           '## Enquiries through an AI assistant',
           '',
+          `[Current prefilled enquiry link guide](${toCanonicalUrl('/enquiry-links.txt')}): Exact form URLs, field identifiers and allowed choices.`,
+          '',
           AI_ENQUIRY_PERMISSION,
           '',
           ...AI_ENQUIRY_STEPS.map((step) => `- ${step}`),
-          '- Browser interaction is required for this workflow. Reading this file does not give an assistant submission tools.',
+          '- Direct submission requires browser interaction. Assistants with only web-reading tools can still prepare a prefilled link using the field maps below.',
           '- Visible fields marked with an asterisk are required. Leave hidden fields alone and follow any validation or wait messages.',
-          '- Prefilled links can use ?form_id=FORM_ID&FIELD_ID=VALUE followed by #FORM_ID. Use the form and field identifiers on the page, and URL-encode values. Keep personal details and messages out of URLs.',
           '',
           ...enquiryForms.sort((left, right) => left.url.localeCompare(right.url)).map(listItem),
+          ...enquiryForms.flatMap((form) => [
+            '',
+            `### ${plainText(form.title)}`,
+            '',
+            form.prefillGuide,
+          ]),
         ]
       : []),
     ...PAGE_SECTIONS.flatMap((section) => {
