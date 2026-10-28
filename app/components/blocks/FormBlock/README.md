@@ -2,6 +2,16 @@
 
 Create configurable enquiry forms that send submissions from the React app to email (SMTP), VSCO Workspace, or both.
 
+## Enquiries through AI assistants
+
+Each available form includes an expandable “Enquiring with an AI assistant?” section in its server-rendered HTML. It permits submission on a user's behalf with their permission, explains how to collect and review details, and requires a confirmed result before reporting success. Assistants without browser interaction can provide the form link and a draft instead. These instructions do not grant tools to an assistant or guarantee support in every chat product.
+
+Forms have an accessible name and native required attributes on individual fields, including an optional email field when a copy is requested. The `/llms.txt` index includes the same guidance and links directly to each configured, available form on public pages. Form configuration changes in WordPress automatically update that index; no separate API or customer connection is needed for the browser workflow.
+
+The submission route accepts valid enquiries regardless of user-agent. Honeypots, timing checks, rate limits, trusted server-side configuration and field validation still apply. Honeypot hits return an error instead of a fake success. A successful response requires at least one studio delivery channel to accept the enquiry. The frontend requires `success: true` before showing confirmation; `emailDelivered` is used for email conversion tracking. Enquiry delivery does not confirm availability or create a booking.
+
+For an end-to-end check, use a staging form and test email/VSCO destinations. Ask a browser-capable assistant to fill a wedding or corporate enquiry, review the details and authorise submission. Verify the enquiry arrived once, and separately check missing fields, wait/rate-limit messages and delivery failures. Do not send test enquiries to the live studio inbox.
+
 ## WordPress Fields
 
 | Field | Type | Purpose |
@@ -87,7 +97,7 @@ Publishing is also blocked if the form data becomes invalid behind the editor UI
 - Use `Form Alignment` to center the entire form panel on the page when needed.
 - If `Send Enquiry To` includes VSCO, each submission is posted to VSCO Workspace New Lead API (`/webservice/create-lead/<studioId>`).
 - If `Send Enquiry To` is `Email + VSCO Workspace`, each delivery channel is attempted independently and the submission still succeeds when either channel delivers successfully.
-- Analytics records a submitted-form conversion only after the studio notification email is accepted by the configured SMTP server. Bot/honeypot responses and VSCO-only delivery do not count as submitted forms.
+- Analytics records a submitted-form conversion only after the studio notification email is accepted by the configured SMTP server. Rejected submissions and VSCO-only delivery do not count as submitted forms.
 - VSCO requires `FirstName` and `JobType`. Map these through `VSCO Field Key` or set `VSCO Job Type` as a fallback.
 - If submission fails or the form configuration is invalid, the frontend provides a direct `info@studiozanetti.com.au` email link so the visitor can still make contact.
 

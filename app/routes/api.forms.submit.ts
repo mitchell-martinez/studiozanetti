@@ -1,5 +1,4 @@
 import type { ActionFunctionArgs } from 'react-router'
-import { isbot } from 'isbot'
 import { sendFormSubmissionEmail } from '~/lib/email'
 import { validateFormConfiguration } from '~/lib/formConfiguration'
 import {
@@ -29,9 +28,6 @@ const getFormTimingSettings = () => {
 
   return { minFillTimeMs, maxFillTimeMs }
 }
-
-const getSafeSubmissionSuccessResponse = (message: string) =>
-  Response.json({ success: true, message, emailDelivered: false })
 
 const isValidSubmissionTiming = (
   startedAtMs: number | undefined,
@@ -114,13 +110,16 @@ export async function action({ request }: ActionFunctionArgs) {
   let shouldAttemptEmail = shouldSendEmail
   let shouldAttemptVsco = shouldSendVsco
 
-  const userAgent = request.headers.get('user-agent') ?? ''
-  if (userAgent && isbot(userAgent)) {
-    return getSafeSubmissionSuccessResponse(getFormSuccessMessage(trustedConfig.form))
-  }
-
+  // Browser assistants use the same validation and abuse controls as people.
+  // User-agent heuristics cannot distinguish an authorised assistant from spam.
   if (payload.honeypot?.trim() || payload.honeypotSecondary?.trim()) {
-    return getSafeSubmissionSuccessResponse(getFormSuccessMessage(trustedConfig.form))
+    return Response.json(
+      {
+        success: false,
+        error: 'We could not accept this enquiry. Please reload the page and try again.',
+      },
+      { status: 422 },
+    )
   }
 
   if (!isValidSubmissionTiming(payload.formStartedAtMs, payload.submittedAtMs)) {

@@ -3,6 +3,7 @@ import { useLocation } from 'react-router'
 import { useAnalytics } from '~/components/AnalyticsProvider/context'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
+import { AI_ENQUIRY_PERMISSION, AI_ENQUIRY_STEPS } from '~/lib/enquiryGuidance'
 import {
   getEffectiveNumberFieldMin,
   getSubmitterCopyTargetFields,
@@ -142,10 +143,11 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const sectionId = block.form_id?.trim() || undefined
   const formConfigurationErrors = validateFormConfiguration(block)
   const isFormAvailable = formConfigurationErrors.length === 0
+  const submitterCopyTargetFields = getSubmitterCopyTargetFields(block)
   const shouldOfferSubmitterCopy =
     isFormAvailable &&
     block.offer_submitter_email_copy === true &&
-    getSubmitterCopyTargetFields(block).length === 1
+    submitterCopyTargetFields.length === 1
 
   if (prefillKey !== previousPrefillKey) {
     setPreviousPrefillKey(prefillKey)
@@ -244,7 +246,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
       })
 
       const payload = (await response.json()) as SubmitResponse
-      if (!response.ok) {
+      if (!response.ok || payload.success !== true) {
         setFieldErrors(payload.fieldErrors ?? {})
         setSubmitState('error')
         showSubmitError(payload.error ?? 'We could not send your message right now. Please try again.')
@@ -293,7 +295,10 @@ const FormBlock = ({ block }: FormBlockProps) => {
 
         <div className={`${styles.panel} ${formAlignment}`.trim()}>
           {!isFormAvailable && (
-            <div className={`${styles.notice} ${styles.noticeTop} ${styles.noticeError}`.trim()} role="alert">
+            <div
+              className={`${styles.notice} ${styles.noticeTop} ${styles.noticeError}`.trim()}
+              role="alert"
+            >
               This form is unavailable right now while its settings are fixed.
               <FormFallbackEmail />
             </div>
@@ -309,7 +314,21 @@ const FormBlock = ({ block }: FormBlockProps) => {
           )}
 
           {isFormAvailable && submitState !== 'success' && (
-            <form className={styles.form} onSubmit={handleSubmit} noValidate>
+            <form
+              className={styles.form}
+              aria-label={block.heading?.trim() || 'Photography enquiry'}
+              onSubmit={handleSubmit}
+              noValidate
+            >
+              <details className={styles.assistantGuidance}>
+                <summary>Enquiring with an AI assistant?</summary>
+                <p>{AI_ENQUIRY_PERMISSION}</p>
+                <ol>
+                  {AI_ENQUIRY_STEPS.map((step) => (
+                    <li key={step}>{step}</li>
+                  ))}
+                </ol>
+              </details>
               <div className={styles.honeypot} aria-hidden="true">
                 <label htmlFor={`${block.form_id}-website`}>Website</label>
                 <input
@@ -343,6 +362,11 @@ const FormBlock = ({ block }: FormBlockProps) => {
                   const rawValue = values[field.field_id]
                   const stringValue = typeof rawValue === 'string' ? rawValue : ''
                   const hasError = Boolean(fieldErrors[field.field_id])
+                  const isRequired =
+                    field.required ||
+                    (shouldOfferSubmitterCopy &&
+                      requestSubmitterCopy &&
+                      field.field_id === submitterCopyTargetFields[0].field_id)
 
                   if (field.type === 'radio') {
                     return (
@@ -356,15 +380,22 @@ const FormBlock = ({ block }: FormBlockProps) => {
                             {field.help_text}
                           </p>
                         )}
-                        <div className={styles.choiceGroup} role="radiogroup" aria-describedby={describedBy}>
+                        <div
+                          className={styles.choiceGroup}
+                          role="radiogroup"
+                          aria-describedby={describedBy}
+                        >
                           {field.options.map((option) => (
                             <label key={option.value} className={styles.choiceLabel}>
                               <input
                                 type="radio"
                                 name={field.field_id}
+                                required={isRequired}
                                 value={option.value}
                                 checked={stringValue === option.value}
-                                onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
+                                onChange={(event) =>
+                                  handleValueChange(field.field_id, event.currentTarget.value)
+                                }
                                 aria-invalid={hasError}
                               />
                               <span>{option.label}</span>
@@ -382,10 +413,9 @@ const FormBlock = ({ block }: FormBlockProps) => {
 
                   if (field.type === 'checkbox') {
                     const checkboxOptions = getCheckboxOptions(field)
-                    const selectedValues =
-                      Array.isArray(rawValue)
-                        ? rawValue.filter((value): value is string => typeof value === 'string')
-                        : []
+                    const selectedValues = Array.isArray(rawValue)
+                      ? rawValue.filter((value): value is string => typeof value === 'string')
+                      : []
 
                     return (
                       <fieldset
@@ -401,7 +431,11 @@ const FormBlock = ({ block }: FormBlockProps) => {
                             {field.help_text}
                           </p>
                         )}
-                        <div className={styles.choiceGroup} role="group" aria-describedby={describedBy}>
+                        <div
+                          className={styles.choiceGroup}
+                          role="group"
+                          aria-describedby={describedBy}
+                        >
                           {checkboxOptions.map((option) => (
                             <label key={option.value} className={styles.choiceLabel}>
                               <input
@@ -435,7 +469,7 @@ const FormBlock = ({ block }: FormBlockProps) => {
                     <div key={field.field_id} className={styles.fieldGroup}>
                       <label htmlFor={inputId} className={styles.label}>
                         {field.label}
-                        {field.required && <span className={styles.required}> *</span>}
+                        {isRequired && <span className={styles.required}> *</span>}
                       </label>
                       {field.help_text && (
                         <p id={helpId} className={styles.helpText}>
@@ -450,8 +484,11 @@ const FormBlock = ({ block }: FormBlockProps) => {
                           className={`${styles.input} ${styles.textarea}`.trim()}
                           placeholder={field.placeholder}
                           rows={field.rows ?? 5}
+                          required={isRequired}
                           value={stringValue}
-                          onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
+                          onChange={(event) =>
+                            handleValueChange(field.field_id, event.currentTarget.value)
+                          }
                           aria-invalid={hasError}
                           aria-describedby={describedBy}
                         />
@@ -461,8 +498,11 @@ const FormBlock = ({ block }: FormBlockProps) => {
                             id={inputId}
                             name={field.field_id}
                             className={`${styles.input} ${styles.select}`.trim()}
+                            required={isRequired}
                             value={stringValue}
-                            onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
+                            onChange={(event) =>
+                              handleValueChange(field.field_id, event.currentTarget.value)
+                            }
                             aria-invalid={hasError}
                             aria-describedby={describedBy}
                           >
@@ -480,13 +520,30 @@ const FormBlock = ({ block }: FormBlockProps) => {
                           name={field.field_id}
                           className={styles.input}
                           type={field.type}
+                          required={isRequired}
                           placeholder={field.placeholder}
                           value={stringValue}
-                          autoComplete={field.type === 'text' || field.type === 'email' || field.type === 'tel' ? field.autocomplete : undefined}
-                          min={field.type === 'number' ? getEffectiveNumberFieldMin(field) : undefined}
-                          max={field.type === 'number' && typeof field.max === 'number' ? field.max : undefined}
-                          step={field.type === 'number' && typeof field.step === 'number' ? field.step : undefined}
-                          onChange={(event) => handleValueChange(field.field_id, event.currentTarget.value)}
+                          autoComplete={
+                            field.type === 'text' || field.type === 'email' || field.type === 'tel'
+                              ? field.autocomplete
+                              : undefined
+                          }
+                          min={
+                            field.type === 'number' ? getEffectiveNumberFieldMin(field) : undefined
+                          }
+                          max={
+                            field.type === 'number' && typeof field.max === 'number'
+                              ? field.max
+                              : undefined
+                          }
+                          step={
+                            field.type === 'number' && typeof field.step === 'number'
+                              ? field.step
+                              : undefined
+                          }
+                          onChange={(event) =>
+                            handleValueChange(field.field_id, event.currentTarget.value)
+                          }
                           aria-invalid={hasError}
                           aria-describedby={describedBy}
                         />
@@ -503,7 +560,10 @@ const FormBlock = ({ block }: FormBlockProps) => {
 
                 {shouldOfferSubmitterCopy && (
                   <div className={styles.fieldGroup}>
-                    <label htmlFor={`${block.form_id}-request-submitter-copy`} className={styles.checkboxLabel}>
+                    <label
+                      htmlFor={`${block.form_id}-request-submitter-copy`}
+                      className={styles.checkboxLabel}
+                    >
                       <input
                         id={`${block.form_id}-request-submitter-copy`}
                         name="requestSubmitterCopy"
@@ -529,7 +589,10 @@ const FormBlock = ({ block }: FormBlockProps) => {
               </div>
 
               {isSubmitErrorVisible && submitErrorMessage && (
-                <div className={`${styles.notice} ${styles.noticeBottom} ${styles.noticeError}`.trim()} role="alert">
+                <div
+                  className={`${styles.notice} ${styles.noticeBottom} ${styles.noticeError}`.trim()}
+                  role="alert"
+                >
                   {submitErrorMessage}
                   <FormFallbackEmail />
                 </div>

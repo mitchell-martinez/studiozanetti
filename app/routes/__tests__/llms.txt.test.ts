@@ -11,6 +11,7 @@ vi.mock('~/lib/wordpress', async (importOriginal) => {
 })
 
 import { getAllPages, getPostsByCategories, getSiteSettings } from '~/lib/wordpress'
+import type { FormBlock, WPPage } from '~/types/wordpress'
 import { loader } from '../llms.txt'
 
 afterEach(() => {
@@ -19,6 +20,83 @@ afterEach(() => {
 })
 
 describe('llms.txt loader', () => {
+  it('links to available enquiry forms without exposing delivery configuration', async () => {
+    vi.stubEnv('SITE_URL', 'https://test.example.com')
+    vi.mocked(getSiteSettings).mockResolvedValueOnce({
+      site_name: 'Studio Zanetti',
+      tagline: 'Photography',
+      copyright_text: '',
+      social_links: [],
+    })
+    const form: FormBlock = {
+      acf_fc_layout: 'form_block',
+      form_id: 'wedding enquiry',
+      heading: 'Wedding enquiries',
+      email_to: 'private-inbox@example.com',
+      email_subject: 'Internal routing subject',
+      fields: [{ field_id: 'name', label: 'Name', type: 'text', required: true }],
+    }
+    const page: WPPage = {
+      id: 1,
+      slug: 'wedding-prices',
+      parent: 0,
+      status: 'publish',
+      title: { rendered: 'Wedding prices' },
+      content: { rendered: '' },
+      excerpt: { rendered: '' },
+      acf: { blocks: [form] },
+    }
+    vi.mocked(getAllPages).mockResolvedValueOnce([
+      page,
+      {
+        ...page,
+        id: 2,
+        slug: 'container',
+        acf: { container_only: true, blocks: [{ ...form, heading: 'Hidden enquiry form' }] },
+      },
+      {
+        ...page,
+        id: 3,
+        slug: 'unavailable',
+        acf: { blocks: [{ ...form, heading: 'Invalid enquiry form', fields: [] }] },
+      },
+      {
+        ...page,
+        id: 4,
+        slug: 'malformed',
+        acf: {
+          blocks: [
+            {
+              ...form,
+              heading: 'Malformed enquiry form',
+              fields: undefined as unknown as FormBlock['fields'],
+            },
+          ],
+        },
+      },
+    ])
+    vi.mocked(getPostsByCategories).mockResolvedValueOnce({
+      posts: [],
+      total: 0,
+      total_pages: 0,
+      page: 1,
+    })
+
+    const body = await (await loader()).text()
+
+    expect(body).toContain('## Enquiries through an AI assistant')
+    expect(body).toContain('AI assistants may complete and submit this enquiry form')
+    expect(body).toContain(
+      '[Wedding enquiries](https://test.example.com/wedding-prices#wedding%20enquiry)',
+    )
+    expect(body).toContain('If your tools cannot operate this form')
+    expect(body).not.toContain('Hidden enquiry form')
+    expect(body).not.toContain('Invalid enquiry form')
+    expect(body).not.toContain('Malformed enquiry form')
+    expect(body).not.toContain('private-inbox@example.com')
+    expect(body).not.toContain('Internal routing subject')
+  })
+
   it('lists public WordPress pages and all blog posts with canonical URLs', async () => {
     vi.stubEnv('SITE_URL', 'https://test.example.com')
     vi.mocked(getSiteSettings).mockResolvedValueOnce({

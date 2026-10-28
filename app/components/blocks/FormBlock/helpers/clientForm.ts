@@ -216,6 +216,15 @@ export function validateClientFormValues(
 
     const stringValue = typeof rawValue === 'string' ? rawValue.trim() : ''
 
+    if (
+      options.requestSubmitterCopy &&
+      field.field_id === submitterCopyTargetField?.field_id &&
+      !stringValue
+    ) {
+      errors[field.field_id] = `${field.label} is required to receive a copy of the form.`
+      continue
+    }
+
     if ((field.required || isReservedNameField(field)) && !stringValue) {
       errors[field.field_id] = `${field.label} is required.`
       continue
@@ -225,14 +234,6 @@ export function validateClientFormValues(
 
     if (field.type === 'email' && !EMAIL_PATTERN.test(stringValue)) {
       errors[field.field_id] = `${field.label} must be a valid email address.`
-    }
-
-    if (
-      options.requestSubmitterCopy &&
-      field.field_id === submitterCopyTargetField?.field_id &&
-      !stringValue
-    ) {
-      errors[field.field_id] = `${field.label} is required to receive a copy of the form.`
     }
 
     if (field.type === 'number' && Number.isNaN(Number(stringValue))) {

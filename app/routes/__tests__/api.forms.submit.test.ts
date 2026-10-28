@@ -459,61 +459,64 @@ describe('api.forms.submit action', () => {
     expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
   })
 
-  it('returns success immediately for honeypot hits without sending email', async () => {
-    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
-      page: {
-        id: 12,
-        slug: 'get-in-touch',
-        parent: 0,
-        status: 'publish',
-        title: { rendered: 'Get in touch' },
-        content: { rendered: '' },
-        excerpt: { rendered: '' },
-      },
-      normalizedPagePath: 'get-in-touch',
-      form: {
-        acf_fc_layout: 'form_block',
-        form_id: 'contact-enquiry',
-        success_message: 'Thanks for reaching out.',
-        delivery_target: 'email',
-        email_to: 'hello@studiozanetti.com.au',
-        email_subject: 'Website enquiry',
-        fields: [
-          {
-            field_id: 'name',
-            label: 'Name',
-            type: 'text',
-            required: true,
-            vsco_field_key: 'FirstName',
-          },
-        ],
-      },
-      emailTo: 'hello@studiozanetti.com.au',
-      emailSubject: 'Website enquiry',
-      deliveryTarget: 'email',
-      vscoSendEmailNotification: true,
-    } as never)
+  it.each(['honeypot', 'honeypotSecondary'])(
+    'rejects %s hits without claiming the enquiry was delivered',
+    async (honeypotField) => {
+      vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+        page: {
+          id: 12,
+          slug: 'get-in-touch',
+          parent: 0,
+          status: 'publish',
+          title: { rendered: 'Get in touch' },
+          content: { rendered: '' },
+          excerpt: { rendered: '' },
+        },
+        normalizedPagePath: 'get-in-touch',
+        form: {
+          acf_fc_layout: 'form_block',
+          form_id: 'contact-enquiry',
+          success_message: 'Thanks for reaching out.',
+          delivery_target: 'email',
+          email_to: 'hello@studiozanetti.com.au',
+          email_subject: 'Website enquiry',
+          fields: [
+            {
+              field_id: 'name',
+              label: 'Name',
+              type: 'text',
+              required: true,
+              vsco_field_key: 'FirstName',
+            },
+          ],
+        },
+        emailTo: 'hello@studiozanetti.com.au',
+        emailSubject: 'Website enquiry',
+        deliveryTarget: 'email',
+        vscoSendEmailNotification: true,
+      } as never)
 
-    const response = await action({
-      request: makeRequest({
-        pagePath: '/get-in-touch/',
-        formId: 'contact-enquiry',
-        honeypot: 'bot data',
-        values: {},
-      }),
-      params: {},
-      context: {},
-    } as never)
+      const response = await action({
+        request: makeRequest({
+          pagePath: '/get-in-touch/',
+          formId: 'contact-enquiry',
+          [honeypotField]: 'bot data',
+          values: {},
+        }),
+        params: {},
+        context: {},
+      } as never)
 
-    expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toMatchObject({
-      success: true,
-      emailDelivered: false,
-    })
-    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
-    expect(sendVscoLead).not.toHaveBeenCalled()
-    expect(consumeRateLimit).not.toHaveBeenCalled()
-  })
+      expect(response.status).toBe(422)
+      await expect(response.json()).resolves.toMatchObject({
+        success: false,
+        error: expect.stringContaining('could not accept'),
+      })
+      expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+      expect(sendVscoLead).not.toHaveBeenCalled()
+      expect(consumeRateLimit).not.toHaveBeenCalled()
+    },
+  )
 
   it('returns 429 when the form is submitted faster than the minimum fill time', async () => {
     vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
@@ -568,64 +571,81 @@ describe('api.forms.submit action', () => {
     expect(sendVscoLead).not.toHaveBeenCalled()
   })
 
-  it('returns success immediately for obvious bot user-agents', async () => {
-    vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
-      page: {
-        id: 12,
-        slug: 'get-in-touch',
-        parent: 0,
-        status: 'publish',
-        title: { rendered: 'Get in touch' },
-        content: { rendered: '' },
-        excerpt: { rendered: '' },
-      },
-      normalizedPagePath: 'get-in-touch',
-      form: {
-        acf_fc_layout: 'form_block',
-        form_id: 'contact-enquiry',
-        success_message: 'Thanks for reaching out.',
-        delivery_target: 'email',
-        email_to: 'hello@studiozanetti.com.au',
-        email_subject: 'Website enquiry',
-        fields: [
-          {
-            field_id: 'name',
-            label: 'Name',
-            type: 'text',
-            required: true,
-            vsco_field_key: 'FirstName',
-          },
-        ],
-      },
-      emailTo: 'hello@studiozanetti.com.au',
-      emailSubject: 'Website enquiry',
-      deliveryTarget: 'email',
-      vscoSendEmailNotification: true,
-    } as never)
+  it.each([
+    { userAgent: 'ChatGPT-User/1.0', overrides: {}, status: 200 },
+    { userAgent: 'Googlebot/2.1', overrides: {}, status: 200 },
+    { userAgent: 'ChatGPT-User/1.0', overrides: { values: {} }, status: 422 },
+    { userAgent: 'ChatGPT-User/1.0', overrides: { honeypot: 'spam' }, status: 422 },
+    {
+      userAgent: 'ChatGPT-User/1.0',
+      overrides: { formStartedAtMs: 1_000, submittedAtMs: 1_500 },
+      status: 429,
+    },
+  ])(
+    'validates automated submissions: $userAgent, status $status, $overrides',
+    async ({ userAgent, overrides, status }) => {
+      vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
+        page: {
+          id: 12,
+          slug: 'get-in-touch',
+          parent: 0,
+          status: 'publish',
+          title: { rendered: 'Get in touch' },
+          content: { rendered: '' },
+          excerpt: { rendered: '' },
+        },
+        normalizedPagePath: 'get-in-touch',
+        form: {
+          acf_fc_layout: 'form_block',
+          form_id: 'contact-enquiry',
+          success_message: 'Thanks for reaching out.',
+          delivery_target: 'email',
+          email_to: 'hello@studiozanetti.com.au',
+          email_subject: 'Website enquiry',
+          fields: [
+            {
+              field_id: 'name',
+              label: 'Name',
+              type: 'text',
+              required: true,
+              vsco_field_key: 'FirstName',
+            },
+          ],
+        },
+        emailTo: 'hello@studiozanetti.com.au',
+        emailSubject: 'Website enquiry',
+        deliveryTarget: 'email',
+        vscoSendEmailNotification: true,
+      } as never)
 
-    const request = makeRequest({
-      pagePath: '/get-in-touch/',
-      formId: 'contact-enquiry',
-      values: { name: 'Mitchell' },
-    })
+      const request = makeRequest({
+        pagePath: '/get-in-touch/',
+        formId: 'contact-enquiry',
+        values: { name: 'Mitchell' },
+        ...overrides,
+      })
 
-    request.headers.set('user-agent', 'Googlebot/2.1 (+http://www.google.com/bot.html)')
+      request.headers.set('user-agent', userAgent)
 
-    const response = await action({
-      request,
-      params: {},
-      context: {},
-    } as never)
+      const response = await action({
+        request,
+        params: {},
+        context: {},
+      } as never)
 
-    expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toMatchObject({
-      success: true,
-      emailDelivered: false,
-    })
-    expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
-    expect(sendVscoLead).not.toHaveBeenCalled()
-    expect(consumeRateLimit).not.toHaveBeenCalled()
-  })
+      expect(response.status).toBe(status)
+      const payload = await response.json()
+      if (status === 200) {
+        expect(payload).toMatchObject({ success: true, emailDelivered: true })
+        expect(sendFormSubmissionEmail).toHaveBeenCalledTimes(1)
+        expect(consumeRateLimit).toHaveBeenCalledTimes(1)
+      } else {
+        expect(payload.success).not.toBe(true)
+        expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
+      }
+      expect(sendVscoLead).not.toHaveBeenCalled()
+    },
+  )
 
   it('sends only to VSCO when delivery target is vsco', async () => {
     vi.mocked(getTrustedFormSubmissionConfig).mockResolvedValueOnce({
@@ -671,6 +691,10 @@ describe('api.forms.submit action', () => {
     } as never)
 
     expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      success: true,
+      emailDelivered: false,
+    })
     expect(sendFormSubmissionEmail).not.toHaveBeenCalled()
     expect(sendVscoLead).toHaveBeenCalledWith(
       expect.objectContaining({

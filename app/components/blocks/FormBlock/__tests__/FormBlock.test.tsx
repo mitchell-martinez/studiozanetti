@@ -47,6 +47,48 @@ const renderTrackedBlock = () =>
   )
 
 describe('FormBlock', () => {
+  it('provides discoverable assistant guidance and machine-readable required fields', async () => {
+    const user = userEvent.setup()
+    renderBlock()
+
+    const form = screen.getByRole('form', { name: /let's plan your photography/i })
+    expect(form).toBeInTheDocument()
+    const summary = screen.getByText('Enquiring with an AI assistant?')
+    expect(summary.closest('details')).not.toHaveAttribute('open')
+    await user.click(summary)
+    expect(summary.closest('details')).toHaveAttribute('open')
+    expect(screen.getByText(/AI assistants may complete and submit/)).toBeVisible()
+    expect(screen.getByText(/does not confirm availability/)).toBeVisible()
+    expect(screen.getByText(/only when authorised by the user/)).toBeVisible()
+    expect(screen.getByRole('textbox', { name: /^Name/i })).toBeRequired()
+    expect(screen.getByRole('textbox', { name: /^Email/i })).toBeRequired()
+    expect(screen.getByRole('textbox', { name: /mobile number/i })).not.toBeRequired()
+  })
+
+  it('requires an optional email before submission when a copy is requested', async () => {
+    vi.stubGlobal('fetch', mockFetch)
+    const user = userEvent.setup()
+    renderBlock({
+      fields: baseBlock.fields.map((field) =>
+        field.type === 'email' ? { ...field, required: false } : field,
+      ),
+    })
+
+    const email = screen.getByRole('textbox', { name: /^Email/i })
+    expect(email).not.toBeRequired()
+    await user.click(screen.getByLabelText(/Receive a copy of this form to my email/i))
+    expect(email).toBeRequired()
+    await user.type(screen.getByLabelText(/^Name/i), 'Mitchell')
+    await user.click(screen.getByRole('radio', { name: /^Email$/i }))
+    await user.click(screen.getByLabelText(/I agree to be contacted/i))
+    await user.click(screen.getByRole('button', { name: /send message/i }))
+
+    expect(await screen.findByText('Email is required to receive a copy of the form.')).toBeVisible()
+    expect(mockFetch).not.toHaveBeenCalled()
+    await user.click(screen.getByLabelText(/Receive a copy of this form to my email/i))
+    expect(email).not.toBeRequired()
+  })
+
   it('prefills matching fields from the URL query string for the targeted form', () => {
     renderBlock({}, ['/get-in-touch?form_id=contact-enquiry&service_type=family#contact-enquiry'])
 
@@ -192,6 +234,30 @@ describe('FormBlock', () => {
     })
     expect(submissionBody.visitContext.siteDurationSeconds).toBeGreaterThanOrEqual(0)
     expect(submissionBody.visitContext.pageDurationSeconds).toBeGreaterThanOrEqual(0)
+  })
+
+  it('keeps the enquiry available when an HTTP 200 response does not confirm success', async () => {
+    vi.stubGlobal(
+      'fetch',
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => ({ success: false, message: 'Misleading success message' }),
+      }),
+    )
+    const user = userEvent.setup()
+    renderBlock()
+
+    await user.type(screen.getByLabelText(/^Name/i), 'Mitchell')
+    await user.type(screen.getByRole('textbox', { name: /^Email/i }), 'mitchell@example.com')
+    await user.click(screen.getByRole('radio', { name: /^Email$/i }))
+    await user.click(screen.getByLabelText(/I agree to be contacted/i))
+    await user.click(screen.getByRole('button', { name: /send message/i }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('We could not send your message')
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByText('Misleading success message')).not.toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: /^Name/i })).toHaveValue('Mitchell')
+    expect(screen.getByRole('button', { name: /send message/i })).toBeEnabled()
   })
 
   it('does not track a submission when the API did not deliver an email', async () => {

@@ -1,4 +1,6 @@
 import { decodeHtmlEntities } from '~/lib/html'
+import { AI_ENQUIRY_PERMISSION, AI_ENQUIRY_STEPS } from '~/lib/enquiryGuidance'
+import { validateFormConfiguration } from '~/lib/formConfiguration'
 import { toCanonicalUrl } from '~/lib/seo'
 import {
   buildPagePaths,
@@ -232,6 +234,7 @@ export async function loader() {
   const pagesBySection = new Map<PageSection, LinkItem[]>(
     PAGE_SECTIONS.map((section) => [section, []]),
   )
+  const enquiryForms: LinkItem[] = []
 
   for (const page of publicPages) {
     const path = page.slug === 'home' ? '' : (pagePaths.get(page.id) ?? page.slug)
@@ -240,6 +243,24 @@ export async function loader() {
       url: toCanonicalUrl(path ? `/${path}` : '/'),
       description: pageDescription(page) || fallbackPageDescription(page, path),
     })
+
+    for (const block of page.acf?.blocks ?? []) {
+      if (
+        block.acf_fc_layout !== 'form_block' ||
+        !block.form_id?.trim() ||
+        !Array.isArray(block.fields) ||
+        validateFormConfiguration(block).length > 0
+      ) {
+        continue
+      }
+
+      enquiryForms.push({
+        title: block.heading || `${plainText(page.title.rendered)} enquiry`,
+        url: `${toCanonicalUrl(path ? `/${path}` : '/')}#${encodeURIComponent(block.form_id.trim())}`,
+        description:
+          'Public enquiry form. Read the current fields and choices on the page before submitting.',
+      })
+    }
   }
 
   for (const items of pagesBySection.values()) {
@@ -260,6 +281,21 @@ export async function loader() {
     `> ${plainText(siteSettings.tagline)}`,
     '',
     ...siteDetails(siteSettings, publicPages.length, posts.length),
+    ...(enquiryForms.length > 0
+      ? [
+          '',
+          '## Enquiries through an AI assistant',
+          '',
+          AI_ENQUIRY_PERMISSION,
+          '',
+          ...AI_ENQUIRY_STEPS.map((step) => `- ${step}`),
+          '- Browser interaction is required for this workflow. Reading this file does not give an assistant submission tools.',
+          '- Visible fields marked with an asterisk are required. Leave hidden fields alone and follow any validation or wait messages.',
+          '- Prefilled links can use ?form_id=FORM_ID&FIELD_ID=VALUE followed by #FORM_ID. Use the form and field identifiers on the page, and URL-encode values. Keep personal details and messages out of URLs.',
+          '',
+          ...enquiryForms.sort((left, right) => left.url.localeCompare(right.url)).map(listItem),
+        ]
+      : []),
     ...PAGE_SECTIONS.flatMap((section) => {
       const items = pagesBySection.get(section) ?? []
       return items.length > 0 ? ['', `## ${section}`, '', ...items.map(listItem)] : []
