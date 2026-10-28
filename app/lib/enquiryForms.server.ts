@@ -23,7 +23,7 @@ export function getEnquiryForms(pages: WPPage[]) {
         return [
           {
             title: stripHtml(block.heading || `${page.title.rendered} enquiry`),
-            url: `${pageUrl}#${encodeURIComponent(block.form_id.trim())}`,
+            url: `${pageUrl}?form_id=${encodeURIComponent(block.form_id.trim())}`,
             description:
               'Public enquiry form. Read the current fields and choices on the page before submitting.',
             prefillGuide: getFormPrefillGuide(block, pageUrl),

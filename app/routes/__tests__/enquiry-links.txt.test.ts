@@ -42,7 +42,11 @@ it('publishes current field maps as plain text without exposing private routing 
   const response = await loader()
   const body = await response.text()
   expect(response.headers.get('Content-Type')).toContain('text/plain')
-  expect(body).toContain('URL format: https://test.example.com/weddings#contact-enquiry?FIELD_ID=')
+  expect(body).toContain(
+    'URL format: https://test.example.com/weddings?form_id=contact-enquiry&prefill=1&FIELD_ID=',
+  )
+  expect(body).toContain('No URL fragment is needed')
+  expect(body).not.toContain('#contact-enquiry?')
   expect(body).toContain('"email" (email, required)')
   expect(body).toContain('"value":"wedding","label":"Wedding"')
   expect(body).toContain('"value":"consent_contact"')

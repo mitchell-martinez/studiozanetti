@@ -156,25 +156,50 @@ export function parseFormPrefillHash(hash: string): { formId: string; search: st
   }
 }
 
+export function getFormPrefillRequest(
+  search: string,
+  hash = '',
+): {
+  params: URLSearchParams
+  formId: string | null
+  isDraft: boolean
+  source: 'query' | 'fragment'
+} | null {
+  const params = new URLSearchParams(search)
+  const formId = getParamValueByFieldId(params, 'form_id')
+  const isDraft = params.get('prefill') === '1'
+  // Full enquiry links must name a form, so personal details never fill multiple blocks.
+  if (isDraft && !formId) return null
+  if (formId) return { params, formId, isDraft, source: 'query' }
+
+  const fragment = parseFormPrefillHash(hash)
+  if (fragment) {
+    return {
+      params: new URLSearchParams(fragment.search),
+      formId: fragment.formId,
+      isDraft: true,
+      source: 'fragment',
+    }
+  }
+  return { params, formId: null, isDraft: false, source: 'query' }
+}
+
 export function getPrefilledClientFormValues(
   fields: WPFormField[],
   search: string,
   formId?: string,
   hash = '',
 ): Partial<ClientFormValues> {
-  const fragment = parseFormPrefillHash(hash)
-  // A fragment link targets exactly one form and takes precedence over legacy query prefills.
-  if (fragment && fragment.formId !== formId?.trim()) return {}
-  const searchParams = new URLSearchParams(fragment?.search ?? search)
-  const requestedFormId = getParamValueByFieldId(searchParams, 'form_id')
-
-  if (
-    !fragment &&
-    requestedFormId &&
-    normalizeLookupToken(requestedFormId) !== normalizeLookupToken(formId?.trim() || '')
-  ) {
-    return {}
+  const request = getFormPrefillRequest(search, hash)
+  if (!request) return {}
+  if (request.formId) {
+    const matches =
+      request.source === 'fragment'
+        ? request.formId === formId?.trim()
+        : normalizeLookupToken(request.formId) === normalizeLookupToken(formId?.trim() || '')
+    if (!matches) return {}
   }
+  const searchParams = request.params
 
   const prefilledValues: Partial<ClientFormValues> = {}
 

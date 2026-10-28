@@ -108,7 +108,7 @@ describe('llms.txt loader', () => {
     expect(body).toContain('## Enquiries through an AI assistant')
     expect(body).toContain('AI assistants may complete and submit this enquiry form')
     expect(body).toContain(
-      '[Wedding enquiries](https://test.example.com/wedding-prices#wedding%20enquiry)',
+      '[Wedding enquiries](https://test.example.com/wedding-prices?form_id=wedding%20enquiry)',
     )
     expect(body).toContain('If your tools cannot operate this form')
     expect(body).not.toContain('Hidden enquiry form')
@@ -118,7 +118,7 @@ describe('llms.txt loader', () => {
     expect(body).not.toContain('Internal routing subject')
     expect(body).not.toContain('InternalEmailMapping')
     expect(body).toContain(
-      'URL format: https://test.example.com/wedding-prices#wedding%20enquiry?FIELD_ID=',
+      'URL format: https://test.example.com/wedding-prices?form_id=wedding%20enquiry&prefill=1&FIELD_ID=',
     )
     expect(body).toContain('"email" (email, required): Your email')
     expect(body).toContain('An approximate date is fine.')

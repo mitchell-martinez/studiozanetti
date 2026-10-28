@@ -134,82 +134,95 @@ describe('FormBlock', () => {
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 
-  it('preserves a personal enquiry draft when a pricing button changes the package', async () => {
-    const user = userEvent.setup()
-    renderPackageSelection(
-      '/get-in-touch#contact-enquiry?name=Alex&email=alex%40example.com&service_type=wedding',
-    )
-    await user.click(screen.getByRole('link', { name: 'Select family' }))
-    expect(screen.getByRole('combobox', { name: /service type/i })).toHaveValue('family')
-    expect(screen.getByRole('textbox', { name: /^Name/i })).toHaveValue('Alex')
-    expect(screen.getByRole('textbox', { name: /^Email/i })).toHaveValue('alex@example.com')
-  })
+  it.each([
+    '/get-in-touch?form_id=contact-enquiry&prefill=1&name=Alex&email=alex%40example.com&service_type=wedding',
+    '/get-in-touch#contact-enquiry?name=Alex&email=alex%40example.com&service_type=wedding',
+  ])(
+    'preserves a personal enquiry draft when a pricing button changes the package: %s',
+    async (url) => {
+      const user = userEvent.setup()
+      renderPackageSelection(url)
+      await user.click(screen.getByRole('link', { name: 'Select family' }))
+      expect(screen.getByRole('combobox', { name: /service type/i })).toHaveValue('family')
+      expect(screen.getByRole('textbox', { name: /^Name/i })).toHaveValue('Alex')
+      expect(screen.getByRole('textbox', { name: /^Email/i })).toHaveValue('alex@example.com')
+    },
+  )
 
-  it('fills personal details from a fragment without submitting or filling hidden controls', async () => {
-    vi.stubGlobal('fetch', mockFetch)
-    renderBlock({}, [
-      '/get-in-touch#contact-enquiry?name=Zo%C3%AB%20%26%20Alex&email=zoe%2Bevents%40example.com&phone=%2B61%20412%20345%20678&comments=Line%201%0ALine%202&service_type=family&submit=true&website=spam&company=spam&requestSubmitterCopy=true',
-    ])
+  it.each(['?form_id=contact-enquiry&prefill=1&', '#contact-enquiry?'])(
+    'fills personal details without submitting or filling hidden controls: %s',
+    async (prefix) => {
+      vi.stubGlobal('fetch', mockFetch)
+      renderBlock({}, [
+        `/get-in-touch${prefix}name=Zo%C3%AB%20%26%20Alex&email=zoe%2Bevents%40example.com&phone=%2B61%20412%20345%20678&comments=Line%201%0ALine%202&service_type=family&submit=true&website=spam&company=spam&requestSubmitterCopy=true`,
+      ])
 
-    await waitFor(() =>
-      expect(screen.getByRole('textbox', { name: /^Name/i })).toHaveValue('Zoë & Alex'),
-    )
-    expect(screen.getByRole('textbox', { name: /^Email/i })).toHaveValue('zoe+events@example.com')
-    expect(screen.getByRole('textbox', { name: /mobile number/i })).toHaveValue('+61 412 345 678')
-    expect(screen.getByRole('textbox', { name: /any other comments/i })).toHaveValue(
-      'Line 1\nLine 2',
-    )
-    expect(screen.getByRole('combobox', { name: /service type/i })).toHaveValue('family')
-    expect(screen.getByRole('status')).toHaveTextContent('review and complete the form')
-    expect(screen.getByLabelText('Website')).toHaveValue('')
-    expect(screen.getByLabelText('Company')).toHaveValue('')
-    expect(screen.getByLabelText(/Receive a copy of this form/i)).not.toBeChecked()
-    expect(mockFetch).not.toHaveBeenCalled()
-  })
-
-  it('targets one block on a page containing multiple forms', async () => {
-    render(
-      <MemoryRouter initialEntries={['/get-in-touch#corporate-enquiry?name=Alex']}>
-        <FormBlock
-          block={{ ...baseBlock, form_id: 'wedding-enquiry', heading: 'Wedding enquiry' }}
-        />
-        <FormBlock
-          block={{ ...baseBlock, form_id: 'corporate-enquiry', heading: 'Corporate enquiry' }}
-        />
-      </MemoryRouter>,
-    )
-    const forms = screen.getAllByRole('form')
-    await waitFor(() => expect(forms[1].querySelector('[name="name"]')).toHaveValue('Alex'))
-    expect(forms[0].querySelector('[name="name"]')).toHaveValue('')
-  })
-
-  it('applies a new fragment link during same-page navigation without overwriting later edits', async () => {
-    const user = userEvent.setup()
-    const Navigation = () => {
-      const navigate = useNavigate()
-      return (
-        <button onClick={() => navigate('/get-in-touch#contact-enquiry?name=Second')}>
-          Open another enquiry link
-        </button>
+      await waitFor(() =>
+        expect(screen.getByRole('textbox', { name: /^Name/i })).toHaveValue('Zoë & Alex'),
       )
-    }
-    render(
-      <MemoryRouter
-        initialEntries={['/get-in-touch#contact-enquiry?name=First&email=first%40example.com']}
-      >
-        <Navigation />
-        <FormBlock block={baseBlock} />
-      </MemoryRouter>,
-    )
-    const name = screen.getByRole('textbox', { name: /^Name/i })
-    await waitFor(() => expect(name).toHaveValue('First'))
-    await user.clear(name)
-    await user.type(name, 'Edited')
-    expect(name).toHaveValue('Edited')
-    await user.click(screen.getByRole('button', { name: /Open another enquiry link/ }))
-    await waitFor(() => expect(name).toHaveValue('Second'))
-    expect(screen.getByRole('textbox', { name: /^Email/i })).toHaveValue('')
-  })
+      expect(screen.getByRole('textbox', { name: /^Email/i })).toHaveValue('zoe+events@example.com')
+      expect(screen.getByRole('textbox', { name: /mobile number/i })).toHaveValue('+61 412 345 678')
+      expect(screen.getByRole('textbox', { name: /any other comments/i })).toHaveValue(
+        'Line 1\nLine 2',
+      )
+      expect(screen.getByRole('combobox', { name: /service type/i })).toHaveValue('family')
+      expect(screen.getByRole('status')).toHaveTextContent('review and complete the form')
+      expect(screen.getByLabelText('Website')).toHaveValue('')
+      expect(screen.getByLabelText('Company')).toHaveValue('')
+      expect(screen.getByLabelText(/Receive a copy of this form/i)).not.toBeChecked()
+      expect(mockFetch).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each(['?form_id=corporate-enquiry&prefill=1&name=Alex', '#corporate-enquiry?name=Alex'])(
+    'targets one block on a page containing multiple forms: %s',
+    async (suffix) => {
+      render(
+        <MemoryRouter initialEntries={[`/get-in-touch${suffix}`]}>
+          <FormBlock
+            block={{ ...baseBlock, form_id: 'wedding-enquiry', heading: 'Wedding enquiry' }}
+          />
+          <FormBlock
+            block={{ ...baseBlock, form_id: 'corporate-enquiry', heading: 'Corporate enquiry' }}
+          />
+        </MemoryRouter>,
+      )
+      const forms = screen.getAllByRole('form')
+      await waitFor(() => expect(forms[1].querySelector('[name="name"]')).toHaveValue('Alex'))
+      expect(forms[0].querySelector('[name="name"]')).toHaveValue('')
+    },
+  )
+
+  it.each(['?form_id=contact-enquiry&prefill=1&', '#contact-enquiry?'])(
+    'applies a new draft during same-page navigation without overwriting later edits: %s',
+    async (prefix) => {
+      const user = userEvent.setup()
+      const Navigation = () => {
+        const navigate = useNavigate()
+        return (
+          <button onClick={() => navigate(`/get-in-touch${prefix}name=Second`)}>
+            Open another enquiry link
+          </button>
+        )
+      }
+      render(
+        <MemoryRouter
+          initialEntries={[`/get-in-touch${prefix}name=First&email=first%40example.com`]}
+        >
+          <Navigation />
+          <FormBlock block={baseBlock} />
+        </MemoryRouter>,
+      )
+      const name = screen.getByRole('textbox', { name: /^Name/i })
+      await waitFor(() => expect(name).toHaveValue('First'))
+      await user.clear(name)
+      await user.type(name, 'Edited')
+      expect(name).toHaveValue('Edited')
+      await user.click(screen.getByRole('button', { name: /Open another enquiry link/ }))
+      await waitFor(() => expect(name).toHaveValue('Second'))
+      expect(screen.getByRole('textbox', { name: /^Email/i })).toHaveValue('')
+    },
+  )
 
   it('uses form_id as the section anchor id', () => {
     const { container } = renderBlock()

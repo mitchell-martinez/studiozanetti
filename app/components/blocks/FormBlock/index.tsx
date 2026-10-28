@@ -15,8 +15,8 @@ import sharedStyles from '../shared.module.scss'
 import styles from './FormBlock.module.scss'
 import {
   createInitialClientFormValues,
+  getFormPrefillRequest,
   getPrefilledClientFormValues,
-  parseFormPrefillHash,
   type ClientFormValue,
   type ClientFormValues,
   validateClientFormValues,
@@ -110,7 +110,9 @@ const FormBlock = ({ block }: FormBlockProps) => {
   const trackedFormKey = useRef<string | null>(null)
   // Match the server's first render; URL fragments become available after hydration.
   const hasHydrated = useSyncExternalStore(subscribeToHydration, clientSnapshot, serverSnapshot)
-  const prefillHash = hasHydrated && parseFormPrefillHash(location.hash) ? location.hash : ''
+  const prefillRequest = hasHydrated ? getFormPrefillRequest(location.search, location.hash) : null
+  const prefillHash = prefillRequest?.source === 'fragment' ? location.hash : ''
+  const isDraftPrefill = prefillRequest?.isDraft === true
   const prefillKey = hasHydrated
     ? JSON.stringify([block.form_id, location.pathname, location.search, prefillHash, location.key])
     : ''
@@ -155,8 +157,8 @@ const FormBlock = ({ block }: FormBlockProps) => {
       }
 
       // A new personal enquiry link is a new draft; do not retain another person's details.
-      let hasChanges = Boolean(prefillHash)
-      const nextValues = prefillHash
+      let hasChanges = isDraftPrefill
+      const nextValues = isDraftPrefill
         ? createInitialClientFormValues(block.fields)
         : { ...currentValues }
 
@@ -178,10 +180,13 @@ const FormBlock = ({ block }: FormBlockProps) => {
   }
 
   useEffect(() => {
-    if (hasPrefilledDetails && parseFormPrefillHash(prefillHash)?.formId === block.form_id.trim()) {
+    if (
+      prefillRequest?.formId &&
+      (hasPrefilledDetails || prefillRequest.formId === block.form_id.trim())
+    ) {
       document.getElementById(block.form_id.trim())?.scrollIntoView?.({ block: 'start' })
     }
-  }, [block.form_id, prefillHash, hasPrefilledDetails])
+  }, [block.form_id, prefillKey, prefillRequest?.formId, hasPrefilledDetails])
 
   const showSubmitError = (nextMessage: string) => {
     setSubmitErrorMessage(nextMessage)
@@ -320,12 +325,15 @@ const FormBlock = ({ block }: FormBlockProps) => {
             </div>
           )}
 
-          {isFormAvailable && prefillHash && hasPrefilledDetails && submitState !== 'success' && (
-            <p className={`${styles.notice} ${styles.noticeTop}`.trim()} role="status">
-              We've filled in the details provided in your link. Please review and complete the form
-              before submitting.
-            </p>
-          )}
+          {isFormAvailable &&
+            isDraftPrefill &&
+            hasPrefilledDetails &&
+            submitState !== 'success' && (
+              <p className={`${styles.notice} ${styles.noticeTop}`.trim()} role="status">
+                We've filled in the details provided in your link. Please review and complete the
+                form before submitting.
+              </p>
+            )}
 
           {isFormAvailable && submitState !== 'success' && (
             <form

@@ -27,10 +27,14 @@ test('a personal enquiry link fills the form after hydration and sends only on s
     })
   })
 
-  const response = await page.goto(`/local-lab#contact-enquiry?${new URLSearchParams(details)}`, {
-    waitUntil: 'domcontentloaded',
-  })
-  expect(response?.request().url()).not.toContain('zoe')
+  const response = await page.goto(
+    `/local-lab?form_id=contact-enquiry&prefill=1&${new URLSearchParams(details)}`,
+    {
+      waitUntil: 'domcontentloaded',
+    },
+  )
+  expect(new URL(response!.request().url()).searchParams.get('name')).toBe(details.name)
+  expect(new URL(page.url()).hash).toBe('')
   const form = page.getByRole('form', { name: /let's plan your photography/i })
   await expect(form.getByRole('textbox', { name: /^Name/i })).toHaveValue(details.name)
   await expect(form.getByRole('textbox', { name: /^Email/i })).toHaveValue(details.email)

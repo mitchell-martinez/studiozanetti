@@ -31,27 +31,62 @@ describe('getPrefilledClientFormValues', () => {
     },
   ]
 
-  it('round-trips personal details, choices, numbers and repeated selections from a fragment', () => {
-    const values = {
-      name: 'Zoë & Alex',
-      email: 'zoe+events@example.com',
-      phone: '+61 412 345 678',
-      comments: 'First line: café & flowers\nSecond line: #wedding? yes = please',
-      event_date: '2027-11-14',
-      attendees: '0',
-      service: 'wedding',
-    }
-    const params = new URLSearchParams(values)
-    params.append('interests', 'photos')
-    params.append('interests', 'album')
+  it.each(['query', 'fragment'])(
+    'round-trips personal details, choices, numbers and repeated selections from %s',
+    (format) => {
+      const values = {
+        name: 'Zoë & Alex',
+        email: 'zoe+events@example.com',
+        phone: '+61 412 345 678',
+        comments: 'First line: café & flowers\nSecond line: #wedding? yes = please',
+        event_date: '2027-11-14',
+        attendees: '0',
+        service: 'wedding',
+      }
+      const params = new URLSearchParams(values)
+      params.append('interests', 'photos')
+      params.append('interests', 'album')
+      expect(
+        getPrefilledClientFormValues(
+          personalFields,
+          format === 'query' ? `?form_id=contact-enquiry&prefill=1&${params}` : '',
+          'contact-enquiry',
+          format === 'fragment' ? `#contact-enquiry?${params}` : '',
+        ),
+      ).toEqual({ ...values, interests: ['photos', 'album'] })
+    },
+  )
+
+  it('uses an explicitly targeted query link over an old fragment link', () => {
     expect(
       getPrefilledClientFormValues(
         personalFields,
-        '',
+        '?form_id=contact-enquiry&prefill=1&name=Query',
         'contact-enquiry',
-        `#contact-enquiry?${params}`,
+        '#contact-enquiry?name=Fragment',
       ),
-    ).toEqual({ ...values, interests: ['photos', 'album'] })
+    ).toEqual({ name: 'Query' })
+    expect(
+      getPrefilledClientFormValues(
+        personalFields,
+        '?form_id=other-form&prefill=1&name=Query',
+        'contact-enquiry',
+        '#contact-enquiry?name=Fragment',
+      ),
+    ).toEqual({})
+  })
+
+  it('requires a target form for a new query draft and ignores unknown control parameters', () => {
+    expect(
+      getPrefilledClientFormValues(personalFields, '?prefill=1&name=Alex', 'contact-enquiry'),
+    ).toEqual({})
+    expect(
+      getPrefilledClientFormValues(
+        personalFields,
+        '?form_id=contact-enquiry&prefill=1&name=Alex&service=invalid&website=spam&submit=true&requestSubmitterCopy=true',
+        'contact-enquiry',
+      ),
+    ).toEqual({ name: 'Alex' })
   })
 
   it('fills only the exact form named in the fragment and ignores conflicting query data', () => {
