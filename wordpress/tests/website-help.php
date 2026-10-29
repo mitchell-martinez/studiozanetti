@@ -51,6 +51,7 @@ foreach ( $gallery_topics as $gallery_topic ) {
 }
 
 $retrieval_cases = [
+	[ 'Where is the permalink at the top of my page and how do I edit the URL?', [ 'screen_id' => 'page', 'post_type' => 'page' ], 'page-editor' ],
 	[ 'How do I edit an individual gallery image and see larger previews without an inner scrollbar?', [ 'screen_id' => 'sz_gallery', 'post_type' => 'sz_gallery' ], 'galleries' ],
 	[ 'How do I use Add Image to select multiple thumbnails from the media library?', [ 'screen_id' => 'sz_gallery', 'post_type' => 'sz_gallery' ], 'galleries' ],
 	[ 'Where did the caption rows in my reusable gallery go?', [ 'screen_id' => 'dashboard', 'post_type' => '' ], 'galleries' ],

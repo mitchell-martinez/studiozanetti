@@ -6,9 +6,10 @@ A page has three separate kinds of information: its WordPress identity, its loca
 
 1. Open **Pages** and search by title if necessary.
 2. Check the title and current status before editing. Similar pages can be drafts, parent containers, or older copies.
-3. Find the required section in **Page Blocks** by its visible layout label. Expand collapsed rows to edit their fields.
-4. Make one logical change at a time, refresh the Live Front-End Preview, and use its desktop, tablet, and mobile widths.
-5. Use **Update** only when the saved page should change. Keep unfinished new pages as drafts.
+3. Find **Permalink** directly beneath the page title, above **Live Front-End Preview**. It shows the page's public website URL. The editable **Slug** field remains in **Page Settings**. Save a new page as a draft first if its permalink has not appeared yet.
+4. Find the required section in **Page Blocks** by its visible layout label. Expand collapsed rows to edit their fields.
+5. Make one logical change at a time, refresh the Live Front-End Preview, and use its desktop, tablet, and mobile widths.
+6. Use **Update** only when the saved page should change. Keep unfinished new pages as drafts. After changing **Page Settings > Slug**, save with **Update** or **Save Draft**, then check the permalink beneath the title.
 
 Blocks render from top to bottom. Drag a block's layout header to reorder it. Reordering changes the page narrative and heading order, so preview the sections before and after the moved block. Removing a row removes that section from the next saved version; it does not delete media or reusable Gallery Library entries referenced by the block.
 
@@ -17,7 +18,7 @@ Blocks render from top to bottom. Drag a block's layout header to reorder it. Re
 - **Page Description:** supports search and social descriptions. It should accurately summarize visible content.
 - **Menu Override:** changes which header menu appears on this page. It does not add the page as a visible menu item.
 - **Parent:** changes the page hierarchy and can change its public path. Confirm child-page consequences before changing it.
-- **Slug:** controls the URL segment. Changing a published slug can break saved links and should be treated as a structural change.
+- **Slug:** controls the URL segment and remains editable in **Page Settings**. The **Permalink** beneath the page title shows the URL. Changing a published slug can break saved links and should be treated as a structural change.
 - **Featured Image:** can appear in social previews or other page summaries; it is not automatically a visible page section.
 - **Container Only (no direct access):** makes the page a URL-hierarchy container whose direct URL returns a 404 while child pages continue to work. Do not enable it on a page visitors should open.
 - **Primary Service:** links the page to one authoritative Service Catalog entry for structured data. Leave it blank rather than guessing.

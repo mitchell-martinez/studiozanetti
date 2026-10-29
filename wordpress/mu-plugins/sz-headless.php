@@ -1651,7 +1651,6 @@ function sz_live_preview_js() {
 			var pageAttributesBox = document.getElementById('pageparentdiv');
 			var authorBox = document.getElementById('authordiv');
 			var revisionsBox = document.getElementById('revisionsdiv');
-			var slugBox = document.getElementById('edit-slug-box');
 			var slugMetaBox = document.getElementById('slugdiv');
 			var postNameInput = document.querySelector('input[name="post_name"]');
 			var editablePostName = document.getElementById('editable-post-name');
@@ -1666,10 +1665,7 @@ function sz_live_preview_js() {
 				currentSlug = slugMetaInput.value;
 			}
 
-			// Remove standalone slug box entirely (inline permalink editor + Slug metabox)
-			if (slugBox && slugBox.parentNode) {
-				slugBox.parentNode.removeChild(slugBox);
-			}
+			// Keep the permalink below the title and the editable Slug field in Page Settings.
 			if (slugMetaBox && slugMetaBox.parentNode) {
 				slugMetaBox.parentNode.removeChild(slugMetaBox);
 			}

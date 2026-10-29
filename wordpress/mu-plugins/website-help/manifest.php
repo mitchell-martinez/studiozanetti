@@ -1,7 +1,7 @@
 <?php
 
 return [
-	'knowledge_version' => '1.3.5',
+	'knowledge_version' => '1.3.6',
 	'updated_at'        => '2026-10-29',
 	'topics'            => [
 		[
@@ -67,7 +67,7 @@ return [
 		[
 			'id'          => 'page-editor',
 			'title'       => 'Pages and content blocks',
-			'keywords'    => [ 'page', 'section', 'find', 'locate', 'edit', 'acf', 'title', 'slug', 'url', 'parent', 'container only', 'venue', 'primary service', 'page settings' ],
+			'keywords'    => [ 'page', 'section', 'find', 'locate', 'edit', 'acf', 'title', 'slug', 'url', 'permalink', 'page address', 'parent', 'container only', 'venue', 'primary service', 'page settings' ],
 			'screen_ids'  => [ 'page', 'edit-page' ],
 			'post_types'  => [ 'page' ],
 			'status'      => 'available',

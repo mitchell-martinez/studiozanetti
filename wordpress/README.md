@@ -228,6 +228,10 @@ A page passing the audit does not guarantee rankings, rich results, or inclusion
 
 The frontend emits one server-rendered Schema.org graph linking the business, website, optional primary photographer, services, pages, breadcrumbs, explicit venues, and selected images through stable IDs. It intentionally excludes self-serving Review/AggregateRating data, the deprecated ProfessionalService type, and a standalone Award type. FAQ data remains machine-readable only when complete visible FAQ rows exist; it should not be treated as a guaranteed Google rich-result feature.
 
+### Page permalinks
+
+The native **Permalink** row stays directly beneath the page title, above the live preview. The existing editable **Slug** field remains in **Page Settings** with its current save behavior. After changing that field, save the page and check the permalink beneath the title.
+
 ### Reusable gallery editor
 
 **Gallery Library > Insert Images** uses ACF's native gallery field with larger previews and a grid that expands into the page instead of scrolling inside a fixed-height panel. **Add Image** sits above the grid and opens the media library for one or multiple selections. New selections append to the collection; drag thumbnails to reorder. Every image has visible **Edit** and **Remove** controls. **Edit** (or a thumbnail click) opens ACF's native WordPress image dialog and refreshes the preview when confirmed. Attachment edits affect every use of that image; **Remove** only changes this collection. The former per-image caption field is removed.
