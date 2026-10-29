@@ -48,6 +48,17 @@ describe('BlockRenderer', () => {
     expect(screen.getByRole('button', { name: 'View Gallery' })).toBeInTheDocument()
   })
 
+  it('shows the guide link once, on the first available form', () => {
+    renderBlocks([
+      { ...formBlock, fields: [] } as ContentBlock,
+      formBlock,
+      { ...formBlock, form_id: 'second-form' } as ContentBlock,
+    ])
+    const links = screen.getAllByRole('link', { name: 'AI enquiry link guide' })
+    expect(links).toHaveLength(1)
+    expect(links[0].closest('section')).toHaveAttribute('id', 'contact-enquiry')
+  })
+
   it('renders a text_block', () => {
     renderBlocks([textBlock])
     expect(screen.getByRole('heading', { name: 'Text heading', level: 2 })).toBeInTheDocument()

@@ -103,7 +103,7 @@ const isSameClientFormValue = (
   return currentValue === nextValue
 }
 
-const FormBlock = ({ block }: FormBlockProps) => {
+const FormBlock = ({ block, showEnquiryGuide = true }: FormBlockProps) => {
   const location = useLocation()
   const { getVisitContext, trackEvent } = useAnalytics()
   const trackedFormKey = useRef<string | null>(null)
@@ -341,6 +341,13 @@ const FormBlock = ({ block }: FormBlockProps) => {
               onSubmit={handleSubmit}
               noValidate
             >
+              {showEnquiryGuide && (
+                <p className={styles.enquiryGuide}>
+                  AI assistants can prepare a personalised enquiry link using details you’ve already
+                  shared. Review it before sending.{' '}
+                  <a href="/enquiry-links.txt">AI enquiry link guide</a>.
+                </p>
+              )}
               <div className={styles.honeypot} aria-hidden="true">
                 <label htmlFor={`${block.form_id}-website`}>Website</label>
                 <input

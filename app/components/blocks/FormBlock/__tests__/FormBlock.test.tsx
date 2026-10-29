@@ -65,11 +65,16 @@ const renderPackageSelection = (initialEntry: string) =>
   )
 
 describe('FormBlock', () => {
-  it('exposes required fields without customer-facing agent guidance', () => {
+  it('offers a concise accessible guide link without inline technical instructions', () => {
     renderBlock()
     expect(screen.getByRole('form', { name: /let's plan your photography/i })).toBeInTheDocument()
     expect(screen.queryByText('Enquiring with an AI assistant?')).not.toBeInTheDocument()
     expect(screen.queryByText(/AI assistants may complete and submit/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'AI enquiry link guide' })).toHaveAttribute(
+      'href',
+      '/enquiry-links.txt',
+    )
+    expect(screen.getByRole('link', { name: 'AI enquiry link guide' })).toBeVisible()
     expect(
       screen.queryByRole('link', { name: 'prefilled enquiry link guide' }),
     ).not.toBeInTheDocument()

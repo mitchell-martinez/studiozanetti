@@ -1,3 +1,4 @@
+import { validateFormConfiguration } from '~/lib/formConfiguration'
 import BlogPostsBlock from '../BlogPostsBlock'
 import ButtonGroupBlock from '../ButtonGroupBlock'
 import FaqAccordionBlock from '../FaqAccordionBlock'
@@ -143,6 +144,10 @@ const BlockRenderer = ({
   featuredImage,
   blogPostsData,
 }: BlockRendererProps) => {
+  const enquiryGuideIndex = blocks.findIndex(
+    (block) =>
+      block.acf_fc_layout === 'form_block' && validateFormConfiguration(block).length === 0,
+  )
   return (
     <>
       {blocks.map((block, index) => {
@@ -169,7 +174,9 @@ const BlockRenderer = ({
             rendered = <FaqAccordionBlock key={key} block={block} />
             break
           case 'form_block':
-            rendered = <FormBlock key={key} block={block} />
+            rendered = (
+              <FormBlock key={key} block={block} showEnquiryGuide={index === enquiryGuideIndex} />
+            )
             break
           case 'pricing_packages':
             rendered = <PricingPackagesBlock key={key} block={block} />

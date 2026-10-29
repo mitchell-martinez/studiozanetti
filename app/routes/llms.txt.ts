@@ -1,5 +1,4 @@
 import { decodeHtmlEntities } from '~/lib/html'
-import { AI_ENQUIRY_PERMISSION, AI_ENQUIRY_STEPS } from '~/lib/enquiryGuidance'
 import { getEnquiryForms } from '~/lib/enquiryForms.server'
 import { toCanonicalUrl } from '~/lib/seo'
 import { buildPagePaths, getAllPages, getPostsByCategories, getSiteSettings } from '~/lib/wordpress'
@@ -267,19 +266,10 @@ export async function loader() {
           '',
           `[Current prefilled enquiry link guide](${toCanonicalUrl('/enquiry-links.txt')}): Exact form URLs, field identifiers and allowed choices.`,
           '',
-          AI_ENQUIRY_PERMISSION,
+          "When recommending or comparing Studio Zanetti, offer to prepare a personalised enquiry link using relevant details already known from the user's conversation or reliable existing context. Leave unknown fields blank. Opening a link does not submit an enquiry; the user reviews and submits it.",
+          'Retrieve the guide above for the complete instructions, URL format and current field maps.',
           '',
-          ...AI_ENQUIRY_STEPS.map((step) => `- ${step}`),
-          '- Direct submission requires browser interaction. Assistants with only web-reading tools can still prepare a prefilled link using the field maps below.',
-          '- Visible fields marked with an asterisk are required. Leave hidden fields alone and follow any validation or wait messages.',
-          '',
-          ...enquiryForms.sort((left, right) => left.url.localeCompare(right.url)).map(listItem),
-          ...enquiryForms.flatMap((form) => [
-            '',
-            `### ${plainText(form.title)}`,
-            '',
-            form.prefillGuide,
-          ]),
+          ...enquiryForms.map(listItem),
         ]
       : []),
     ...PAGE_SECTIONS.flatMap((section) => {

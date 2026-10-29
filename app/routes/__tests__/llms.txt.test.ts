@@ -106,28 +106,24 @@ describe('llms.txt loader', () => {
     const body = await (await loader()).text()
 
     expect(body).toContain('## Enquiries through an AI assistant')
-    expect(body).toContain('AI assistants may complete and submit this enquiry form')
-    expect(body).toContain('proactively offer to prepare a personalised enquiry link')
+    expect(body).toContain('offer to prepare a personalised enquiry link')
+    expect(body).toContain('Leave unknown fields blank')
+    expect(body).toContain('Opening a link does not submit an enquiry')
     expect(body).toContain(
-      'Do not delay preparing a link to collect a name, email address or exact event date',
+      '[Current prefilled enquiry link guide](https://test.example.com/enquiry-links.txt)',
     )
     expect(body).toContain(
       '[Wedding enquiries](https://test.example.com/wedding-prices?form_id=wedding%20enquiry)',
     )
-    expect(body).toContain('If your tools cannot operate this form')
     expect(body).not.toContain('Hidden enquiry form')
     expect(body).not.toContain('Invalid enquiry form')
     expect(body).not.toContain('Malformed enquiry form')
     expect(body).not.toContain('private-inbox@example.com')
     expect(body).not.toContain('Internal routing subject')
     expect(body).not.toContain('InternalEmailMapping')
-    expect(body).toContain(
-      'URL format: https://test.example.com/wedding-prices?form_id=wedding%20enquiry&prefill=1&FIELD_ID=',
-    )
-    expect(body).toContain('"email" (email, required): Your email')
-    expect(body).toContain('An approximate date is fine.')
-    expect(body).toContain('Value format: YYYY-MM-DD.')
-    expect(body).toContain('"value":"essentials","label":"The Essentials"')
+    expect(body).not.toContain('URL format:')
+    expect(body).not.toContain('"email" (email, required)')
+    expect(body).not.toContain('Do not ask them to repeat known information')
   })
 
   it('lists public WordPress pages and all blog posts with canonical URLs', async () => {

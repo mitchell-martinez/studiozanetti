@@ -99,6 +99,17 @@
   font-size: var(--text-sm);
 }
 
+.enquiryGuide {
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+}
+
 .errorText {
   color: var(--color-error);
   font-size: var(--text-sm);

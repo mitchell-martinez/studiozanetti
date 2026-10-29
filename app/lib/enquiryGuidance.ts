@@ -29,19 +29,18 @@ export const AI_ENQUIRY_STEPS = [
   'If your tools cannot operate this form, use the prefilled link format and field names below to give the user a link containing the details they have supplied. They can review and submit it themselves; do not claim the link has sent an enquiry.',
 ] as const
 
+export const AI_ENQUIRY_LINK_RULES = [
+  'Use query parameters only; no URL fragment is required. form_id identifies the contact block. prefill=1 starts a new enquiry draft; always include both when preparing a full enquiry link.',
+  'Replace the placeholders with the exact field identifiers below and the user-provided values. Percent-encode each identifier and value (including + in phone numbers, & in messages, and line breaks). Omit unknown details rather than inventing them.',
+  'The URL contains personal information and is sent with the page request. It can remain in browser/chat history and server logs; share it only with the user and include only details needed for the enquiry.',
+  'Opening the link fills this form only. It does not submit it. The user must review the values and select the submit button. Hidden fields and the generated email-copy checkbox are not prefilled.',
+  'For select/radio fields, use an exact option value. For checkbox groups, repeat the field identifier for each selected value. Include consent or marketing choices only when the user has explicitly chosen them.',
+  'Package-selection buttons use form_id and their existing choice parameter without prefill=1. These update that choice while preserving details already entered. Do not change those links into new-draft links.',
+] as const
+
 export function getFormPrefillGuide(form: FormBlock, pageUrl: string): string {
   return [
-    AI_ENQUIRY_PROACTIVE_OFFER,
-    AI_ENQUIRY_KNOWN_DETAILS,
-    AI_ENQUIRY_FIELD_MAPPING,
-    AI_ENQUIRY_MISSING_DETAILS,
     `URL format: ${pageUrl}?form_id=${encodeURIComponent(form.form_id.trim())}&prefill=1&FIELD_ID=URL_ENCODED_VALUE&ANOTHER_FIELD_ID=URL_ENCODED_VALUE`,
-    'Use query parameters only; no URL fragment is required. form_id identifies the contact block. prefill=1 starts a new enquiry draft; always include both when preparing a full enquiry link.',
-    'Replace the placeholders with the exact field identifiers below and the user-provided values. Percent-encode each identifier and value (including + in phone numbers, & in messages, and line breaks). Omit unknown details rather than inventing them.',
-    'The URL contains personal information and is sent with the page request. It can remain in browser/chat history and server logs; share it only with the user and include only details needed for the enquiry.',
-    'Opening the link fills this form only. It does not submit it. The user must review the values and select the submit button. Hidden fields and the generated email-copy checkbox are not prefilled.',
-    'For select/radio fields, use an exact option value. For checkbox groups, repeat the field identifier for each selected value. Include consent or marketing choices only when the user has explicitly chosen them.',
-    'Package-selection buttons use form_id and their existing choice parameter without prefill=1. These update that choice while preserving details already entered. Do not change those links into new-draft links.',
     'Fields:',
     ...form.fields.map((field) => {
       const details = [

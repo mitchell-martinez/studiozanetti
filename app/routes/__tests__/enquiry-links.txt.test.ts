@@ -27,7 +27,11 @@ it('publishes current field maps as plain text without exposing private routing 
     content: { rendered: '' },
     excerpt: { rendered: '' },
     acf: {
-      blocks: [form, { ...form, form_id: 'broken', heading: 'Unavailable form', fields: [] }],
+      blocks: [
+        form,
+        { ...form, form_id: 'corporate-enquiry', heading: 'Corporate enquiries' },
+        { ...form, form_id: 'broken', heading: 'Unavailable form', fields: [] },
+      ],
     },
   }
   vi.mocked(getAllPages).mockResolvedValueOnce([
@@ -45,9 +49,13 @@ it('publishes current field maps as plain text without exposing private routing 
   expect(body).toContain(
     'URL format: https://test.example.com/weddings?form_id=contact-enquiry&prefill=1&FIELD_ID=',
   )
-  expect(body).toContain('No URL fragment is needed')
+  expect(body).toContain('no URL fragment is required')
   expect(body).toContain('even if they have not asked to contact us yet')
   expect(body).toContain('Leave unknown fields empty so the customer can complete them privately')
+  expect(body.split('Do not ask them to repeat known information.')).toHaveLength(2)
+  expect(body.split('Use query parameters only;')).toHaveLength(2)
+  expect(body.match(/URL format:/g)).toHaveLength(2)
+  expect(body).toContain('form_id=corporate-enquiry&prefill=1')
   expect(body).not.toContain('#contact-enquiry?')
   expect(body).toContain('"email" (email, required)')
   expect(body).toContain('"value":"wedding","label":"Wedding"')
