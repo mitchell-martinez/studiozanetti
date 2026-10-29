@@ -201,9 +201,9 @@
 			return { blocks: blocks };
 		}
 		if (scope === 'gallery_summary') {
-			var galleryRows = document.querySelectorAll('[data-name="images"] .acf-row:not(.acf-clone)');
-			var captions = document.querySelectorAll('[data-name="caption"] input, [data-name="caption"] textarea');
-			return { image_count: galleryRows.length, has_captions: Array.prototype.some.call(captions, function (field) { return Boolean(field.value.trim()); }) };
+			var gallery = document.querySelector('[data-key="field_sz_gallery_library_images"]');
+			var images = gallery ? gallery.querySelectorAll('.acf-gallery-attachment') : [];
+			return { image_count: images.length, has_captions: false };
 		}
 		if (scope === 'field_group') {
 			var allowedGroups = {

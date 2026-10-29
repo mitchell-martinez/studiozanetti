@@ -8,6 +8,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+require_once __DIR__ . '/includes/gallery-library.php';
+
+add_filter( 'acf/load_value/key=field_sz_gallery_library_images', 'sz_load_gallery_library_images', 10, 3 );
+// Run before ACF's type filters, which would discard legacy repeater row values.
+add_filter( 'acf/update_value', 'sz_update_gallery_library_images', 5, 3 );
+add_action( 'acf/input/admin_enqueue_scripts', 'sz_enqueue_gallery_library_admin_assets' );
+
+function sz_enqueue_gallery_library_admin_assets() {
+	$screen = get_current_screen();
+	if ( ! $screen || 'post' !== $screen->base || 'sz_gallery' !== $screen->post_type ) {
+		return;
+	}
+
+	$asset_url = content_url( 'mu-plugins/assets/' );
+	wp_enqueue_style( 'sz-gallery-library-admin', $asset_url . 'gallery-library-admin.css', [], (string) filemtime( __DIR__ . '/assets/gallery-library-admin.css' ) );
+	wp_enqueue_script( 'sz-gallery-library-admin', $asset_url . 'gallery-library-admin.js', [ 'acf-input' ], (string) filemtime( __DIR__ . '/assets/gallery-library-admin.js' ), true );
+	wp_localize_script( 'sz-gallery-library-admin', 'szGalleryLibrary', [ 'addImage' => __( 'Add Image', 'studio-zanetti' ) ] );
+}
+
 $sz_form_validation_include = __DIR__ . '/includes/form-block-validation.php';
 if ( file_exists( $sz_form_validation_include ) ) {
 	require_once $sz_form_validation_include;
@@ -419,14 +438,13 @@ add_action( 'acf/init', function () {
 			'key' => 'field_sz_gallery_library_images',
 			'label' => 'Insert Images',
 			'name' => 'images',
-			'type' => 'repeater',
-			'layout' => 'row',
-			'button_label' => 'Add Image',
+			'type' => 'gallery',
+			'return_format' => 'array',
+			'preview_size' => 'thumbnail',
+			'insert' => 'append',
+			'library' => 'all',
 			'min' => 1,
-			'sub_fields' => [
-				[ 'key' => 'field_sz_gallery_library_image_item', 'label' => 'Image', 'name' => 'image', 'type' => 'image', 'return_format' => 'array', 'required' => 1 ],
-				[ 'key' => 'field_sz_gallery_library_image_caption', 'label' => 'Caption', 'name' => 'caption', 'type' => 'text' ],
-			],
+			'instructions' => 'Use Add Image to select one or more images from the Media Library. Drag thumbnails to reorder; remove an image here without deleting it from the Media Library.',
 		],
 	];
 

@@ -523,6 +523,39 @@ describe('Website Help admin interface', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  it('counts the current gallery thumbnails without sending attachment details', async () => {
+    await mount()
+    element('#editor').innerHTML = `
+      <div data-key="field_sz_gallery_library_images">
+        <div class="acf-gallery-attachment" data-id="81"></div>
+        <div class="acf-gallery-attachment" data-id="37"></div>
+      </div>
+      <div data-name="images"><div class="acf-row"></div></div>
+      <div data-name="caption"><input value="Unrelated private caption"></div>`
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    handlers.sz_website_help_ask = () => ({
+      type: 'context_request',
+      thread: { id: fixture.thread.id },
+      exchange: { token: 'gallery-scope', request: { scope: 'gallery_summary' } },
+    })
+    handlers.sz_website_help_context = () => ({ type: 'final', thread: fixture.thread })
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
+      target: { value: 'How many images are here?' },
+    })
+    fireEvent.submit(element('[data-help-form]'))
+    await waitFor(() => {
+      const contextCall = fetchMock.mock.calls.find(
+        ([, init]) => (init.body as FormData).get('action') === 'sz_website_help_context',
+      )
+      expect(contextCall).toBeDefined()
+      expect(JSON.parse(String((contextCall![1].body as FormData).get('context')))).toEqual({
+        image_count: 2,
+        has_captions: false,
+      })
+    })
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue(''))
+  })
+
   it('cancels a pending answer when the drawer closes and ignores its late result', async () => {
     await mount('drawer')
     fireEvent.click(screen.getByRole('button', { name: 'Website Help' }))

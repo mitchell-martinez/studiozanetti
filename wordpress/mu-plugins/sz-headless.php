@@ -549,18 +549,16 @@ function sz_normalize_gallery_rows( array $rows ): array {
 	$normalized = [];
 
 	foreach ( $rows as $row ) {
-		if ( ! is_array( $row ) || ! array_key_exists( 'image', $row ) ) {
-			continue;
-		}
-
-		$img = sz_resolve_image( $row['image'] );
+		// Support both legacy repeater rows and ACF's native gallery images.
+		$is_legacy_row = is_array( $row ) && array_key_exists( 'image', $row );
+		$img = sz_resolve_image( $is_legacy_row ? $row['image'] : $row );
 		if ( ! $img ) {
 			continue;
 		}
 
 		$normalized[] = [
 			'image'   => $img,
-			'caption' => isset( $row['caption'] ) ? $row['caption'] : '',
+			'caption' => $is_legacy_row ? ( $row['caption'] ?? '' ) : '',
 		];
 	}
 
@@ -2565,7 +2563,7 @@ function sz_normalize_block_images( array $block, bool $hydrate_gallery_referenc
 		}
 	}
 
-	// Reusable Gallery block repeater: images[] rows contain { image, caption }.
+	// Reusable Gallery block: keep the frontend's { image, caption } item shape.
 	if (
 		( $block['acf_fc_layout'] ?? '' ) === 'gallery_reference' &&
 		! empty( $block['images'] ) &&

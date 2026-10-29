@@ -51,6 +51,8 @@ foreach ( $gallery_topics as $gallery_topic ) {
 }
 
 $retrieval_cases = [
+	[ 'How do I use Add Image to select multiple thumbnails from the media library?', [ 'screen_id' => 'sz_gallery', 'post_type' => 'sz_gallery' ], 'galleries' ],
+	[ 'Where did the caption rows in my reusable gallery go?', [ 'screen_id' => 'dashboard', 'post_type' => '' ], 'galleries' ],
 	[ 'How do I add a Hero block to a page?', [ 'screen_id' => 'page', 'post_type' => 'page' ], 'page-blocks' ],
 	[ 'Where do I set alternative text and media folders?', [ 'screen_id' => 'upload', 'post_type' => 'attachment' ], 'media' ],
 	[ 'How do I make a dropdown in the main navigation?', [ 'screen_id' => 'nav-menus', 'post_type' => '' ], 'menus' ],

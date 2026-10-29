@@ -1,8 +1,8 @@
 <?php
 
 return [
-	'knowledge_version' => '1.3.3',
-	'updated_at'        => '2026-10-23',
+	'knowledge_version' => '1.3.4',
+	'updated_at'        => '2026-10-29',
 	'topics'            => [
 		[
 			'id'          => 'capabilities',
@@ -57,7 +57,7 @@ return [
 		[
 			'id'          => 'galleries',
 			'title'       => 'Gallery Library and gallery pages',
-			'keywords'    => [ 'gallery', 'galleries', 'name', 'naming', 'rename', 'photos', 'images', 'reusable', 'order', 'caption', 'columns', 'shared gallery' ],
+			'keywords'    => [ 'gallery', 'galleries', 'name', 'naming', 'rename', 'photos', 'images', 'reusable', 'order', 'caption', 'columns', 'shared gallery', 'add image', 'thumbnails', 'media library', 'multiple', 'select', 'remove' ],
 			'screen_ids'  => [ 'edit-sz_gallery', 'sz_gallery' ],
 			'post_types'  => [ 'sz_gallery' ],
 			'status'      => 'available',

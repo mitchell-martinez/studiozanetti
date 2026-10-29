@@ -15,6 +15,9 @@ wp-content/
   mu-plugins/
     sz-headless.php        ← headless config + APIs
     sz-acf-schema.php      ← code-registered ACF fields
+    includes/gallery-library.php ← legacy gallery storage compatibility
+    assets/gallery-library-admin.js
+    assets/gallery-library-admin.css
     sz-media-folders.php   ← media folder organization
     sz-attachment-permalinks.php ← collision-proof media permalinks
     sz-website-help.php    ← private editor guidance (default off)
@@ -224,6 +227,14 @@ The audit groups transparent checks into Content Structure, Search & Social, Ent
 A page passing the audit does not guarantee rankings, rich results, or inclusion in an AI answer. The audit verifies code and editor inputs it can observe. Search authority still depends on useful original content, reputable links, consistent public business profiles and citations, relationships with venues and suppliers, and ongoing Search Console review.
 
 The frontend emits one server-rendered Schema.org graph linking the business, website, optional primary photographer, services, pages, breadcrumbs, explicit venues, and selected images through stable IDs. It intentionally excludes self-serving Review/AggregateRating data, the deprecated ProfessionalService type, and a standalone Award type. FAQ data remains machine-readable only when complete visible FAQ rows exist; it should not be treated as a guaranteed Google rich-result feature.
+
+### Reusable gallery editor
+
+**Gallery Library > Insert Images** uses ACF's native gallery field with thumbnail previews. **Add Image** sits above the grid and opens the media library for one or multiple selections. New selections append to the collection; drag thumbnails to reorder or remove them without deleting the attachments. The former per-image caption field is removed.
+
+Deploy `sz-acf-schema.php`, `sz-headless.php`, `includes/gallery-library.php`, both `assets/gallery-library-admin.*` files, and the updated Website Help assets and handbook together. The compatibility helper reads existing repeater counts and `images_N_image` metadata in order without changing the database on read. Saving stores native ordered attachment IDs; old row metadata is left in place but no longer read once the gallery has been saved. The existing gallery import endpoint still accepts its row-based input, and public gallery payloads retain the frontend's `{ image, caption }` shape. Native gallery items have an empty per-gallery caption; attachment metadata remains separate.
+
+Run the PHP suite and Website Help UI tests after changes. On a WordPress instance, check an existing and a new gallery: cancel media selection, add several images, reorder and remove thumbnails, update and reopen, and preview a page referencing it. Confirm the toolbar is above the grid and remains usable on a narrow screen.
 
 ### Website Help assistant
 

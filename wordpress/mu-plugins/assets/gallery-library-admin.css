@@ -1,0 +1,20 @@
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery-main {
+	display: flex;
+	flex-direction: column;
+}
+
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery-main > .acf-gallery-toolbar {
+	position: relative;
+	inset: auto;
+	order: -1;
+	flex-shrink: 0;
+	border-top: 0;
+	border-bottom: 1px solid #ccd0d4;
+}
+
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery-attachments {
+	position: relative;
+	inset: auto;
+	flex: 1;
+	min-height: 0;
+}
