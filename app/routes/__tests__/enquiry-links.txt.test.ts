@@ -46,6 +46,8 @@ it('publishes current field maps as plain text without exposing private routing 
     'URL format: https://test.example.com/weddings?form_id=contact-enquiry&prefill=1&FIELD_ID=',
   )
   expect(body).toContain('No URL fragment is needed')
+  expect(body).toContain('even if they have not asked to contact us yet')
+  expect(body).toContain('Leave unknown fields empty so the customer can complete them privately')
   expect(body).not.toContain('#contact-enquiry?')
   expect(body).toContain('"email" (email, required)')
   expect(body).toContain('"value":"wedding","label":"Wedding"')

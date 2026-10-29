@@ -107,6 +107,10 @@ describe('llms.txt loader', () => {
 
     expect(body).toContain('## Enquiries through an AI assistant')
     expect(body).toContain('AI assistants may complete and submit this enquiry form')
+    expect(body).toContain('proactively offer to prepare a personalised enquiry link')
+    expect(body).toContain(
+      'Do not delay preparing a link to collect a name, email address or exact event date',
+    )
     expect(body).toContain(
       '[Wedding enquiries](https://test.example.com/wedding-prices?form_id=wedding%20enquiry)',
     )

@@ -4,7 +4,11 @@ Create configurable enquiry forms that send submissions from the React app to em
 
 ## Enquiries through AI assistants
 
+The public page renderer inserts a visible AI enquiry offer immediately after the first non-empty pricing table, before subsequent enquiry blocks. Main wedding/corporate landing pages and pages with a configured service reference show a shorter offer after the hero (or their first block), even when they have no enquiry form. The offer appears once per page and remains visible in server-rendered HTML. It links directly to `/enquiry-links.txt` and encourages assistants to offer a personalised link when comparing or recommending Studio Zanetti.
+
 Each available form includes an expandable “Enquiring with an AI assistant?” section in its server-rendered HTML. It permits submission on a user's behalf with their permission, explains how to collect and review details, and requires a confirmed result before reporting success. Assistants without browser interaction can provide the form link and a draft instead. These instructions do not grant tools to an assistant or guarantee support in every chat product.
+
+Link preparation does not require the user's name, email or exact event date. The offer, form guidance, `llms.txt` and plain-text guide all instruct assistants to leave unknown fields empty and let the customer finish privately on the website. Missing required fields are collected only when actually submitting an enquiry. The page content offers this capability; it cannot guarantee that an independent AI session will suggest it.
 
 Forms have an accessible name and native required attributes on individual fields, including an optional email field when a copy is requested. The `/llms.txt` index includes the same guidance and links directly to each configured, available form on public pages. Form configuration changes in WordPress automatically update that index; no separate API or customer connection is needed for the browser workflow.
 

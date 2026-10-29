@@ -34,6 +34,34 @@ const renderCmsPage = (loaderFn: () => unknown) => {
 
 describe('CmsPage route', () => {
   describe('rendering', () => {
+    it.each(['sydney-wedding-photographer', 'events-and-corporate-photographer-sydney'])(
+      'offers AI enquiry links on the main service page without a form: %s',
+      async (slug) => {
+        renderCmsPage(() => ({
+          type: 'page',
+          page: {
+            ...mockPage,
+            slug,
+            acf: {
+              blocks: [
+                {
+                  acf_fc_layout: 'text_block',
+                  heading: 'Photography services',
+                  body: '<p>Our approach.</p>',
+                },
+              ],
+            },
+          },
+        }))
+        expect(
+          await screen.findByRole('region', {
+            name: 'Enquire with Studio Zanetti using your AI assistant',
+          }),
+        ).toBeInTheDocument()
+        expect(screen.queryByRole('form')).not.toBeInTheDocument()
+      },
+    )
+
     it('renders a page with native WP content (no ACF blocks)', async () => {
       renderCmsPage(() => ({ type: 'page', page: mockPage }))
       await waitFor(() =>
@@ -186,10 +214,7 @@ describe('CmsPage route', () => {
       vi.mocked(getPageBySlug).mockResolvedValueOnce(null)
       // getPageByPath resolves the hierarchical path
       vi.mocked(getPageByPath).mockResolvedValueOnce(galleryChild as never)
-      vi.mocked(getAllPages).mockResolvedValueOnce([
-        galleryParent,
-        galleryChild,
-      ] as never)
+      vi.mocked(getAllPages).mockResolvedValueOnce([galleryParent, galleryChild] as never)
 
       const result = await loader(makeArgs('gallery/stylish-brides') as never)
       expect(result).toEqual({
@@ -223,10 +248,7 @@ describe('CmsPage route', () => {
         title: { rendered: 'Stylish Brides' },
       }
       vi.mocked(getPageBySlug).mockResolvedValueOnce(galleryChild as never)
-      vi.mocked(getAllPages).mockResolvedValueOnce([
-        galleryParent,
-        galleryChild,
-      ] as never)
+      vi.mocked(getAllPages).mockResolvedValueOnce([galleryParent, galleryChild] as never)
 
       const response = (await loader(makeArgs('stylish-brides') as never).catch(
         (error) => error as Response,
@@ -426,6 +448,5 @@ describe('CmsPage route', () => {
         ]),
       )
     })
-
   })
 })

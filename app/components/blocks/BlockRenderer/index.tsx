@@ -1,3 +1,5 @@
+import { Fragment } from 'react'
+import AiEnquiryOffer from '~/components/AiEnquiryOffer'
 import BlogPostsBlock from '../BlogPostsBlock'
 import ButtonGroupBlock from '../ButtonGroupBlock'
 import FaqAccordionBlock from '../FaqAccordionBlock'
@@ -142,75 +144,94 @@ const BlockRenderer = ({
   interactive = false,
   featuredImage,
   blogPostsData,
-}: BlockRendererProps) => (
-  <>
-    {blocks.map((block, index) => {
-      const key = `${block.acf_fc_layout}-${index}`
-      let rendered: React.ReactNode = null
+  showEnquiryOffer = false,
+}: BlockRendererProps) => {
+  const pricingIndex = blocks.findIndex(
+    (block) => block.acf_fc_layout === 'pricing_packages' && block.packages?.length > 0,
+  )
+  const offerIndex =
+    pricingIndex >= 0
+      ? pricingIndex
+      : showEnquiryOffer
+        ? Math.max(
+            0,
+            blocks.findIndex((block) => block.acf_fc_layout === 'hero'),
+          )
+        : -1
 
-      switch (block.acf_fc_layout) {
-        case 'hero':
-          rendered = <HeroBlock key={key} block={block} featuredImage={featuredImage} />
-          break
-        case 'text_block':
-          rendered = <TextBlock key={key} block={block} />
-          break
-        case 'image_text':
-          rendered = <ImageTextBlock key={key} block={block} />
-          break
-        case 'services_grid':
-          rendered = <ServicesGridBlock key={key} block={block} />
-          break
-        case 'pillar_grid':
-          rendered = <PillarGridBlock key={key} block={block} />
-          break
-        case 'faq_accordion':
-          rendered = <FaqAccordionBlock key={key} block={block} />
-          break
-        case 'form_block':
-          rendered = <FormBlock key={key} block={block} />
-          break
-        case 'pricing_packages':
-          rendered = <PricingPackagesBlock key={key} block={block} />
-          break
-        case 'gallery_categories':
-          rendered = <GalleryCategoriesBlock key={key} block={block} />
-          break
-        case 'gallery_reference':
-          rendered = <GalleriesBlock key={key} block={block} />
-          break
-        case 'image_block':
-          rendered = <ImageBlock key={key} block={block} />
-          break
-        case 'button_group':
-          rendered = <ButtonGroupBlock key={key} block={block} />
-          break
-        case 'text_grid':
-          rendered = <TextGridBlock key={key} block={block} />
-          break
-        case 'instagram_feed':
-          rendered = <InstagramFeedBlock key={key} block={block} />
-          break
-        case 'blog_posts':
-          rendered = blogPostsData ? (
-            <BlogPostsBlock key={key} block={block} blogPostsData={blogPostsData} />
-          ) : null
-          break
-        default:
-          return null
-      }
+  return (
+    <>
+      {blocks.map((block, index) => {
+        const key = `${block.acf_fc_layout}-${index}`
+        let rendered: React.ReactNode = null
 
-      if (interactive) {
+        switch (block.acf_fc_layout) {
+          case 'hero':
+            rendered = <HeroBlock key={key} block={block} featuredImage={featuredImage} />
+            break
+          case 'text_block':
+            rendered = <TextBlock key={key} block={block} />
+            break
+          case 'image_text':
+            rendered = <ImageTextBlock key={key} block={block} />
+            break
+          case 'services_grid':
+            rendered = <ServicesGridBlock key={key} block={block} />
+            break
+          case 'pillar_grid':
+            rendered = <PillarGridBlock key={key} block={block} />
+            break
+          case 'faq_accordion':
+            rendered = <FaqAccordionBlock key={key} block={block} />
+            break
+          case 'form_block':
+            rendered = <FormBlock key={key} block={block} />
+            break
+          case 'pricing_packages':
+            rendered = <PricingPackagesBlock key={key} block={block} />
+            break
+          case 'gallery_categories':
+            rendered = <GalleryCategoriesBlock key={key} block={block} />
+            break
+          case 'gallery_reference':
+            rendered = <GalleriesBlock key={key} block={block} />
+            break
+          case 'image_block':
+            rendered = <ImageBlock key={key} block={block} />
+            break
+          case 'button_group':
+            rendered = <ButtonGroupBlock key={key} block={block} />
+            break
+          case 'text_grid':
+            rendered = <TextGridBlock key={key} block={block} />
+            break
+          case 'instagram_feed':
+            rendered = <InstagramFeedBlock key={key} block={block} />
+            break
+          case 'blog_posts':
+            rendered = blogPostsData ? (
+              <BlogPostsBlock key={key} block={block} blogPostsData={blogPostsData} />
+            ) : null
+            break
+          default:
+            return null
+        }
+
         return (
-          <InteractiveBlockWrapper key={key} index={index} layoutType={block.acf_fc_layout}>
-            {rendered}
-          </InteractiveBlockWrapper>
+          <Fragment key={key}>
+            {interactive ? (
+              <InteractiveBlockWrapper index={index} layoutType={block.acf_fc_layout}>
+                {rendered}
+              </InteractiveBlockWrapper>
+            ) : (
+              rendered
+            )}
+            {index === offerIndex && <AiEnquiryOffer compact={pricingIndex < 0} />}
+          </Fragment>
         )
-      }
-
-      return rendered
-    })}
-  </>
-)
+      })}
+    </>
+  )
+}
 
 export default BlockRenderer
