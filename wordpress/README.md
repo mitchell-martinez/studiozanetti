@@ -313,7 +313,9 @@ If the assistant is unavailable, confirm the enable flag, key, model, outbound H
 
 ### Website analytics dashboard
 
-Deploy `sz-analytics.php`, `includes/analytics-validation.php`, `includes/analytics-reporting.php`, `assets/analytics.css` and `assets/analytics.js` together. Open **Analytics** for metric cards, report tabs and quick 7, 30 and 90 day ranges. Reporting dates use UTC. The selected report stays open when dates change; archived reports show retained history independently of the date filter. The Sessions card opens the session list and individual journeys.
+Deploy `sz-analytics.php`, `includes/analytics-validation.php`, `includes/analytics-reporting.php`, `includes/analytics-dashboard.php`, `assets/analytics.css` and `assets/analytics.js` together. Open **Analytics** for daily traffic charts, enquiry activity, report tabs and quick 7, 30 and 90 day ranges. Click the date range to choose custom dates. Reporting dates use UTC. The selected report stays open when dates change; archived reports show retained history independently of the date filter. The Sessions card opens the session list and individual journeys.
+
+The traffic chart switches between page views and daily sessions, fills unrecorded dates with zero, and offers exact daily figures in a disclosure. The enquiry rate counts distinct daily sessions with a submitted form, so repeated submissions in one session do not inflate it. Traffic sources combine a referrer list with a channel mix; shares use the sessions in the listed referrers (up to 50).
 
 Report tabs support arrow keys, Home and End, direct links and browser history. Without JavaScript, all reports remain visible. Tables scroll horizontally on smaller screens. This interface uses the existing analytics collection and retention rules.
 

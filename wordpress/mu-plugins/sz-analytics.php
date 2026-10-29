@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 require_once __DIR__ . '/includes/analytics-validation.php';
 require_once __DIR__ . '/includes/analytics-reporting.php';
+require_once __DIR__ . '/includes/analytics-dashboard.php';
 
 const SZ_ANALYTICS_SCHEMA_VERSION = '1.1.0';
 const SZ_ANALYTICS_RETENTION_DAYS = 90;
@@ -387,7 +388,6 @@ function sz_analytics_render_date_range( DateTimeImmutable $start, DateTimeImmut
 	$earliest = $today->modify( '-' . ( SZ_ANALYTICS_RETENTION_DAYS - 1 ) . ' days' );
 	?>
 	<div class="sz-analytics-toolbar">
-	<div class="sz-analytics-period"><span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span><div><strong><?php echo esc_html( $start->format( 'j M' ) . ' – ' . $end->format( 'j M Y' ) ); ?></strong><span><?php echo esc_html( (string) ( $start->diff( $end )->days + 1 ) ); ?> days · Dates in UTC</span></div></div>
 	<div class="sz-analytics-presets" aria-label="Quick date ranges">
 		<?php foreach ( [ 7, 30, SZ_ANALYTICS_RETENTION_DAYS ] as $days ) : ?>
 			<?php
@@ -397,15 +397,20 @@ function sz_analytics_render_date_range( DateTimeImmutable $start, DateTimeImmut
 			<a href="<?php echo esc_url( sz_analytics_admin_url( $view, $preset_start, $today ) ); ?>" <?php echo $is_current ? 'aria-current="true"' : ''; ?>><?php echo esc_html( (string) $days ); ?> days</a>
 		<?php endforeach; ?>
 	</div>
+	<details class="sz-analytics-date-picker">
+	<summary aria-label="Choose date range"><span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span><?php echo esc_html( $start->format( 'j M' ) . ' – ' . $end->format( 'j M Y' ) ); ?><span class="dashicons dashicons-arrow-down-alt2" aria-hidden="true"></span></summary>
 	<form class="sz-analytics-range" method="get" aria-label="Custom date range">
+		<strong>Custom date range</strong>
 		<input type="hidden" name="page" value="sz-analytics">
 		<?php if ( 'overview' !== $view ) : ?>
 			<input type="hidden" name="analytics_view" value="<?php echo esc_attr( $view ); ?>">
 		<?php endif; ?>
-		<label>From <input type="date" name="start" min="<?php echo esc_attr( $earliest->format( 'Y-m-d' ) ); ?>" max="<?php echo esc_attr( $today->format( 'Y-m-d' ) ); ?>" value="<?php echo esc_attr( $start->format( 'Y-m-d' ) ); ?>" required></label>
+		<div class="sz-analytics-range-fields"><label>From <input type="date" name="start" min="<?php echo esc_attr( $earliest->format( 'Y-m-d' ) ); ?>" max="<?php echo esc_attr( $today->format( 'Y-m-d' ) ); ?>" value="<?php echo esc_attr( $start->format( 'Y-m-d' ) ); ?>" required></label>
 		<label>To <input type="date" name="end" min="<?php echo esc_attr( $earliest->format( 'Y-m-d' ) ); ?>" max="<?php echo esc_attr( $today->format( 'Y-m-d' ) ); ?>" value="<?php echo esc_attr( $end->format( 'Y-m-d' ) ); ?>" required></label>
+		</div><p><?php echo esc_html( (string) ( $start->diff( $end )->days + 1 ) ); ?> days selected · Reporting dates use UTC.</p>
 		<button class="button button-primary" type="submit">Apply</button>
 	</form>
+	</details>
 	</div>
 	<?php
 }
@@ -613,11 +618,21 @@ function sz_analytics_render_dashboard(): void {
 			SUM(event_type = 'page_view' AND has_pricing_block = 1) AS pricing_views,
 			SUM(event_type = 'page_view' AND has_form_block = 1) AS contact_views,
 			SUM(event_type = 'form_start') AS form_starts,
-			SUM(event_type = 'form_submit') AS form_submits
+			SUM(event_type = 'form_submit') AS form_submits,
+			COUNT(DISTINCT CASE WHEN event_type = 'form_submit' THEN NULLIF(session_hash, '') END) AS enquiry_sessions
 		FROM {$table} WHERE {$where}",
 		$params
 	);
 	$summary = $summary_rows[0] ?? [];
+	$daily_rows = sz_analytics_query_rows(
+		"SELECT DATE(occurred_at) AS event_date,
+			SUM(event_type = 'page_view') AS page_views,
+			COUNT(DISTINCT NULLIF(session_hash, '')) AS sessions
+		FROM {$table} WHERE {$where}
+		GROUP BY DATE(occurred_at) ORDER BY event_date",
+		$params
+	);
+	$daily_series = sz_analytics_daily_series( $daily_rows, $start, $end );
 	$sources = sz_analytics_query_rows(
 		"SELECT COALESCE(NULLIF(first_view.referrer_category, ''), 'unknown') AS source,
 			COALESCE(NULLIF(first_view.referrer_domain, ''), '—') AS domain, COUNT(*) AS sessions
@@ -751,15 +766,15 @@ function sz_analytics_render_dashboard(): void {
 	$secret_configured = '' !== trim( (string) getenv( 'SZ_ANALYTICS_INGEST_SECRET' ) );
 	?>
 	<div class="wrap sz-analytics sz-analytics-overview">
+		<div class="sz-analytics-topbar">
 		<header class="sz-analytics-header">
-			<div><span class="sz-analytics-eyebrow">Studio Zanetti · Insights</span><h1>Website analytics</h1><p class="description">A clearer picture of your visitors, pages and enquiries.</p></div>
-			<span class="sz-analytics-privacy" title="First-party analytics with no cookies, no IP storage and no third-party tracking."><span class="dashicons dashicons-shield" aria-hidden="true"></span>Privacy first</span>
+			<div><span class="sz-analytics-eyebrow">Studio Zanetti <span aria-hidden="true">/</span> Analytics</span><h1>Website analytics</h1><p class="description">Traffic, enquiries and the pages that connect them.</p></div>
 		</header>
+		<?php sz_analytics_render_date_range( $start, $end, 'overview' ); ?>
+		</div>
 		<?php if ( ! $secret_configured ) : ?>
 			<div class="notice notice-error inline"><p>Analytics collection is disabled because the ingest secret is not configured.</p></div>
 		<?php endif; ?>
-
-		<?php sz_analytics_render_date_range( $start, $end, 'overview' ); ?>
 
 		<div class="sz-analytics-cards" aria-label="Period summary">
 			<?php
@@ -780,12 +795,16 @@ function sz_analytics_render_dashboard(): void {
 				</a>
 			<?php endforeach; ?>
 		</div>
+		<div class="sz-analytics-insights">
+			<?php sz_analytics_render_traffic_chart( $daily_series ); ?>
+			<?php sz_analytics_render_enquiry_summary( $summary ); ?>
+		</div>
 
 		<nav class="sz-analytics-nav" aria-label="Analytics sections">
 			<a href="#sources">Sources</a><a href="#landing-pages">Landing pages</a><a href="#sites">Sites</a><a href="#pages">Key pages</a><a href="#regions">Regions</a><a href="#forms">Forms</a><a href="#scroll">Pricing depth</a><a href="#exits">Exit pages</a><a href="#archive">Archive</a>
 		</nav>
 
-		<section class="sz-analytics-panel" id="sources"><h2>Traffic sources</h2><p class="description">Where your visitors come from, based on each daily session's first page. AI referrals are a confirmed minimum; assistants often omit referral data.</p><?php sz_analytics_render_table( [ 'Source', 'Domain', 'Sessions' ], $sources, [ 'source', 'domain', 'sessions' ] ); ?></section>
+		<section class="sz-analytics-panel" id="sources"><div class="sz-report-heading"><div><span class="sz-analytics-eyebrow">Acquisition</span><h2>Traffic sources</h2></div><span class="sz-report-count"><?php echo esc_html( number_format_i18n( count( $sources ) ) ); ?> referrers</span></div><p class="description">Each daily session is attributed to its first page. AI referrals are a confirmed minimum; assistants often omit referral data.</p><?php sz_analytics_render_sources( $sources ); ?></section>
 		<section class="sz-analytics-panel" id="landing-pages"><h2>Landing pages</h2><p class="description">The first page visitors see, grouped by traffic source.</p><?php sz_analytics_render_table( [ 'Landing page', 'Source', 'Sessions' ], $landing_pages, [ 'page_path', 'source', 'sessions' ] ); ?></section>
 		<section class="sz-analytics-panel" id="sites"><h2>Sites</h2><p class="description">Page views and daily sessions across your site groups.</p><?php sz_analytics_render_table( [ 'Site', 'Views', 'Sessions' ], $sites, [ 'site_group', 'views', 'sessions' ] ); ?></section>
 		<section class="sz-analytics-panel" id="pages"><h2>Key pages</h2><p class="description">Your most viewed pages, including those with pricing and contact forms.</p><?php sz_analytics_render_table( [ 'Page', 'Views', 'Pricing', 'Contact form' ], $pages, [ 'page_path', 'views', 'pricing', 'contact' ] ); ?></section>

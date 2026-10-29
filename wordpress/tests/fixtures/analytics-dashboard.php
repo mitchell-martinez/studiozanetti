@@ -16,7 +16,7 @@ function sanitize_key( $value ): string { return strtolower( sanitize_html_class
 function sanitize_text_field( $value ): string { return strip_tags( $value ); }
 function wp_unslash( $value ): string { return stripslashes( $value ); }
 function absint( $value ): int { return abs( (int) $value ); }
-function number_format_i18n( $value ): string { return number_format( $value ); }
+function number_format_i18n( $value, $decimals = 0 ): string { return number_format( $value, $decimals ); }
 function admin_url( $path ): string { return '/wp-admin/' . $path; }
 function add_query_arg( $args, $url ): string { return $url . '?' . http_build_query( $args ); }
 function get_date_from_gmt( $value, $format ): string { return ( new DateTimeImmutable( $value, new DateTimeZone( 'UTC' ) ) )->format( $format ); }
@@ -48,9 +48,25 @@ $landings = [
 $forms = [ [ 'region_bucket' => 'AU-NSW', 'page_path' => '/get-in-touch', 'form_id' => 'website-enquiry', 'starts' => 7, 'submits' => 3, 'abandoned' => 4 ] ];
 $hash = str_repeat( 'a', 64 );
 $page_view = [ 'id' => 1, 'session_hash' => $hash, 'event_sequence' => 1, 'event_type' => 'page_view', 'page_path' => '/', 'referrer_category' => 'search', 'referrer_domain' => 'google.com', 'region_bucket' => 'AU-NSW', 'occurred_at' => $today->format( 'Y-m-d' ) . ' 05:00:00' ];
+$weights = [ 23, 36, 29, 42, 34, 17, 21, 38, 48, 36, 33, 25, 20, 47, 58, 41, 32, 24, 19, 39, 51, 45, 33, 22, 28, 43, 54, 42, 37, 31 ];
+$daily = [];
+$start_date = new DateTimeImmutable( $_GET['start'], new DateTimeZone( 'UTC' ) );
+$end_date = new DateTimeImmutable( $_GET['end'], new DateTimeZone( 'UTC' ) );
+$day_count = $start_date->diff( $end_date )->days + 1;
+$weights = array_map( static fn( $index ) => $weights[ $index % count( $weights ) ], range( 0, $day_count - 1 ) );
+$remaining_views = 1015;
+$remaining_sessions = 635;
+foreach ( $weights as $index => $weight ) {
+	$views = $index === $day_count - 1 ? $remaining_views : (int) floor( $weight / array_sum( $weights ) * 1015 );
+	$sessions = $index === $day_count - 1 ? $remaining_sessions : (int) floor( $weight / array_sum( $weights ) * 635 );
+	$daily[] = [ 'event_date' => $start_date->modify( '+' . $index . ' days' )->format( 'Y-m-d' ), 'page_views' => $views, 'sessions' => $sessions ];
+	$remaining_views -= $views;
+	$remaining_sessions -= $sessions;
+}
 $queues = [
 	'overview' => [
-		[ [ 'page_views' => 1015, 'sessions' => 635, 'pricing_views' => 169, 'contact_views' => 124, 'form_starts' => 7, 'form_submits' => 3 ] ],
+		[ [ 'page_views' => 1015, 'sessions' => 635, 'pricing_views' => 169, 'contact_views' => 124, 'form_starts' => 7, 'form_submits' => 3, 'enquiry_sessions' => 2 ] ],
+		$daily,
 		$sources, $landings,
 		[ [ 'site_group' => 'studio-zanetti', 'views' => 1015, 'sessions' => 635 ] ],
 		[ [ 'page_path' => '/', 'views' => 420, 'pricing' => 'No', 'contact' => 'No' ], [ 'page_path' => '/get-in-touch', 'views' => 124, 'pricing' => 'Yes', 'contact' => 'Yes' ] ],

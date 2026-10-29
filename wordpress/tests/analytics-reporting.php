@@ -85,6 +85,23 @@ sz_analytics_reporting_assert( 'returns null for an empty journey', null === sz_
 sz_analytics_reporting_assert( 'does not expose session hashes in summaries', false === strpos( serialize( $summaries ), $session_hash ), $failures );
 sz_analytics_reporting_assert( 'does not expose session hashes in detail', false === strpos( serialize( $detail ), $session_hash ), $failures );
 
+$series = sz_analytics_daily_series(
+	[
+		[ 'event_date' => '2026-10-01', 'page_views' => '12', 'sessions' => '8' ],
+		[ 'event_date' => '2026-09-29', 'page_views' => 200, 'sessions' => 100 ],
+		[ 'event_date' => '2026-09-30', 'page_views' => 4, 'sessions' => 3 ],
+	],
+	new DateTimeImmutable( '2026-09-30', new DateTimeZone( 'UTC' ) ),
+	new DateTimeImmutable( '2026-10-02', new DateTimeZone( 'UTC' ) )
+);
+sz_analytics_reporting_assert( 'orders daily figures across month boundaries', [ '2026-09-30', '2026-10-01', '2026-10-02' ] === array_column( $series, 'event_date' ), $failures );
+sz_analytics_reporting_assert( 'fills unrecorded days with zero', 0 === $series[2]['page_views'] && 0 === $series[2]['sessions'], $failures );
+sz_analytics_reporting_assert( 'excludes activity outside the selected dates', 16 === array_sum( array_column( $series, 'page_views' ) ), $failures );
+sz_analytics_reporting_assert( 'normalizes database numeric strings', 12 === $series[1]['page_views'] && 8 === $series[1]['sessions'], $failures );
+$single_day = sz_analytics_daily_series( [], new DateTimeImmutable( '2026-10-29' ), new DateTimeImmutable( '2026-10-29' ) );
+sz_analytics_reporting_assert( 'supports an empty one-day report', 1 === count( $single_day ) && 0 === $single_day[0]['page_views'], $failures );
+sz_analytics_reporting_assert( 'formats chart dates for display', '30 Sep' === $series[0]['label'] && '1 Oct' === $series[1]['label'], $failures );
+
 if ( ! empty( $failures ) ) {
 	foreach ( $failures as $failure ) {
 		fwrite( STDERR, "FAILED: {$failure}\n" );
@@ -92,4 +109,4 @@ if ( ! empty( $failures ) ) {
 	exit( 1 );
 }
 
-fwrite( STDOUT, "Passed 12 PHP analytics reporting tests.\n" );
+fwrite( STDOUT, "Passed 18 PHP analytics reporting tests.\n" );

@@ -1,5 +1,27 @@
 <?php
 
+if ( ! function_exists( 'sz_analytics_daily_series' ) ) {
+	/** Fill gaps with zeroes, keeping the chart inside the selected UTC dates. */
+	function sz_analytics_daily_series( array $rows, DateTimeImmutable $start, DateTimeImmutable $end ): array {
+		$indexed = [];
+		foreach ( $rows as $row ) {
+			$indexed[ (string) ( $row['event_date'] ?? '' ) ] = $row;
+		}
+		$days = [];
+		for ( $date = $start; $date <= $end; $date = $date->modify( '+1 day' ) ) {
+			$key = $date->format( 'Y-m-d' );
+			$row = $indexed[ $key ] ?? [];
+			$days[] = [
+				'event_date' => $key,
+				'label'      => $date->format( 'j M' ),
+				'page_views' => max( 0, (int) ( $row['page_views'] ?? 0 ) ),
+				'sessions'   => max( 0, (int) ( $row['sessions'] ?? 0 ) ),
+			];
+		}
+		return $days;
+	}
+}
+
 if ( ! function_exists( 'sz_analytics_source_label' ) ) {
 	function sz_analytics_source_label( string $category, string $domain = '' ): string {
 		$labels = [

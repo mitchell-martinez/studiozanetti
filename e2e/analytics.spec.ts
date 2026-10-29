@@ -54,9 +54,54 @@ test('report tabs support links, keyboard navigation, browser history and date c
   await page.getByRole('link', { name: '7 days', exact: true }).click()
   await expect(page).toHaveURL(/start=.*#forms$/)
   await expect(page.getByRole('heading', { name: 'Form progress', exact: true })).toBeVisible()
+  await page.locator('.sz-analytics-date-picker > summary').click()
   await page.getByRole('button', { name: 'Apply', exact: true }).click()
   await expect(page).toHaveURL(/#forms$/)
   await expect(page.getByRole('heading', { name: 'Form progress', exact: true })).toBeVisible()
+})
+
+test('traffic figures, chart controls and source shares use the report data', async ({ page }) => {
+  await page.goto('/wp-admin/admin.php?page=sz-analytics')
+  const chart = page.locator('.sz-traffic-chart')
+  await expect(chart.locator('[data-chart-total]')).toHaveText('1,015')
+  await expect(chart.locator('.sz-chart-hit')).toHaveCount(30)
+  await chart.getByRole('button', { name: 'Sessions', exact: true }).click()
+  await expect(chart.locator('[data-chart-total]')).toHaveText('635')
+  await expect(chart.getByRole('button', { name: 'Sessions', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  await expect(chart.locator('.sz-trend-series[data-metric="sessions"]')).not.toHaveAttribute(
+    'hidden',
+  )
+  await chart.locator('.sz-chart-hit').nth(10).hover()
+  await expect(chart.locator('.sz-chart-tooltip')).toBeVisible()
+  await expect(chart.locator('.sz-chart-tooltip')).toContainText('sessions')
+  await chart.locator('.sz-chart-data > summary').click()
+  await expect(chart.getByRole('columnheader', { name: 'Date', exact: true })).toBeVisible()
+  await expect(page.locator('.sz-rate-ring > strong')).toHaveText('0.3%')
+  await expect(page.locator('.sz-source-donut strong')).toHaveText('617')
+  await expect(page.locator('.sz-source-detail tbody tr').first()).toContainText('70.0%')
+})
+
+test('a one-day or empty chart stays finite and date controls support keyboard dismissal', async ({
+  page,
+}) => {
+  const today = new Date().toISOString().slice(0, 10)
+  await page.goto(`/wp-admin/admin.php?page=sz-analytics&start=${today}&end=${today}`)
+  await expect(page.locator('.sz-chart-hit')).toHaveCount(1)
+  expect(await page.locator('.sz-chart-line').first().getAttribute('points')).not.toMatch(/NaN|INF/)
+  await page.locator('.sz-analytics-date-picker > summary').click()
+  await page.getByLabel('From', { exact: true }).focus()
+  await page.getByLabel('From', { exact: true }).press('Escape')
+  await expect(page.locator('.sz-analytics-date-picker')).not.toHaveAttribute('open')
+  await expect(page.locator('.sz-analytics-date-picker > summary')).toBeFocused()
+  await page.goto('/wp-admin/admin.php?page=sz-analytics&analytics_view=empty')
+  await expect(page.locator('.sz-traffic-chart')).toContainText(
+    'No traffic recorded in this period',
+  )
+  await expect(page.locator('.sz-rate-ring > strong')).toHaveText('0.0%')
+  expect(await page.locator('.sz-chart-line').first().getAttribute('points')).not.toMatch(/NaN|INF/)
 })
 
 test('cards, empty reports and sessions retain their navigation', async ({ page }) => {
