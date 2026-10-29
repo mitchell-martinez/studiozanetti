@@ -8,6 +8,4 @@ export interface BlockRendererProps {
   featuredImage?: WPImage
   /** Pre-fetched blog posts data, threaded to BlogPostsBlock */
   blogPostsData?: BlogPostsData
-  /** Show the enquiry offer near the top of a service page, even without a form. */
-  showEnquiryOffer?: boolean
 }

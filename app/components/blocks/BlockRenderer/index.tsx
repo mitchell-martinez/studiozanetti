@@ -1,5 +1,3 @@
-import { Fragment } from 'react'
-import AiEnquiryOffer from '~/components/AiEnquiryOffer'
 import BlogPostsBlock from '../BlogPostsBlock'
 import ButtonGroupBlock from '../ButtonGroupBlock'
 import FaqAccordionBlock from '../FaqAccordionBlock'
@@ -144,21 +142,7 @@ const BlockRenderer = ({
   interactive = false,
   featuredImage,
   blogPostsData,
-  showEnquiryOffer = false,
 }: BlockRendererProps) => {
-  const pricingIndex = blocks.findIndex(
-    (block) => block.acf_fc_layout === 'pricing_packages' && block.packages?.length > 0,
-  )
-  const offerIndex =
-    pricingIndex >= 0
-      ? pricingIndex
-      : showEnquiryOffer
-        ? Math.max(
-            0,
-            blocks.findIndex((block) => block.acf_fc_layout === 'hero'),
-          )
-        : -1
-
   return (
     <>
       {blocks.map((block, index) => {
@@ -217,18 +201,15 @@ const BlockRenderer = ({
             return null
         }
 
-        return (
-          <Fragment key={key}>
-            {interactive ? (
-              <InteractiveBlockWrapper index={index} layoutType={block.acf_fc_layout}>
-                {rendered}
-              </InteractiveBlockWrapper>
-            ) : (
-              rendered
-            )}
-            {index === offerIndex && <AiEnquiryOffer compact={pricingIndex < 0} />}
-          </Fragment>
-        )
+        if (interactive) {
+          return (
+            <InteractiveBlockWrapper key={key} index={index} layoutType={block.acf_fc_layout}>
+              {rendered}
+            </InteractiveBlockWrapper>
+          )
+        }
+
+        return rendered
       })}
     </>
   )

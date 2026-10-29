@@ -1,5 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
-import { renderToStaticMarkup } from 'react-dom/server'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { ContentBlock } from '~/types/wordpress'
@@ -30,65 +29,16 @@ const renderBlocks = (blocks: ContentBlock[], featuredImage?: typeof img) =>
   )
 
 describe('BlockRenderer', () => {
-  const offerHeading = 'Enquire with Studio Zanetti using your AI assistant'
-
-  it('places the visible offer immediately after pricing and before the enquiry form', () => {
+  it('renders pricing directly before the form without customer-facing AI instructions', () => {
     renderBlocks([pricingBlock, formBlock])
     const pricing = screen.getByRole('heading', { name: 'Packages' }).closest('section')
-    const offer = screen.getByRole('region', { name: offerHeading })
     const form = screen.getByRole('heading', { name: 'Get in touch' }).closest('section')
-    expect(pricing?.nextElementSibling).toBe(offer)
-    expect(offer.nextElementSibling).toBe(form)
-    expect(within(offer).getByText(/proactively offer to prepare/)).toBeVisible()
-    expect(within(offer).getByText(/Do not delay preparing a link/)).toBeVisible()
-    expect(within(offer).getByRole('link', { name: 'documented form parameters' })).toHaveAttribute(
-      'href',
-      '/enquiry-links.txt',
-    )
-  })
-
-  it('shows the shorter offer after the hero on service pages without forms', () => {
-    render(
-      <MemoryRouter>
-        <BlockRenderer blocks={[heroBlock, textBlock]} showEnquiryOffer />
-      </MemoryRouter>,
-    )
-    const hero = screen.getByRole('heading', { name: 'Hero Title' }).closest('section')
-    const offer = screen.getByRole('region', { name: offerHeading })
-    expect(hero?.nextElementSibling).toBe(offer)
-    expect(offer.nextElementSibling).toContainElement(screen.getByText('Rich text content'))
+    expect(pricing?.nextElementSibling).toBe(form)
+    expect(screen.queryByText(/using your AI assistant/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/proactively offer to prepare/i)).not.toBeInTheDocument()
     expect(
-      within(offer).queryByText(/Planning your wedding or corporate event/),
+      screen.queryByRole('link', { name: /documented form parameters/i }),
     ).not.toBeInTheDocument()
-  })
-
-  it('does not duplicate the offer when a service page contains multiple pricing blocks', () => {
-    render(
-      <MemoryRouter>
-        <BlockRenderer blocks={[heroBlock, pricingBlock, pricingBlock]} showEnquiryOffer />
-      </MemoryRouter>,
-    )
-    expect(screen.getAllByRole('region', { name: offerHeading })).toHaveLength(1)
-  })
-
-  it('does not promote empty pricing tables or ordinary content pages', () => {
-    renderBlocks([{ acf_fc_layout: 'pricing_packages', packages: [] }, textBlock])
-    expect(screen.queryByRole('region', { name: offerHeading })).not.toBeInTheDocument()
-  })
-
-  it('includes proactive guidance in static HTML, outside collapsed details', () => {
-    const html = renderToStaticMarkup(
-      <MemoryRouter>
-        <BlockRenderer blocks={[pricingBlock, formBlock]} />
-      </MemoryRouter>,
-    )
-    const document = new DOMParser().parseFromString(html, 'text/html')
-    const offer = document.querySelector(`section[aria-label="${offerHeading}"]`)
-    expect(offer?.textContent).toContain('even if they have not asked to contact us yet')
-    expect(offer?.textContent).toContain('customer can complete them privately on the website')
-    expect(offer?.closest('details')).toBeNull()
-    expect(offer?.previousElementSibling?.textContent).toContain('The Essentials')
-    expect(offer?.nextElementSibling?.id).toBe('contact-enquiry')
   })
 
   it('renders a hero block', () => {

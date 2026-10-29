@@ -35,7 +35,7 @@ const renderCmsPage = (loaderFn: () => unknown) => {
 describe('CmsPage route', () => {
   describe('rendering', () => {
     it.each(['sydney-wedding-photographer', 'events-and-corporate-photographer-sydney'])(
-      'offers AI enquiry links on the main service page without a form: %s',
+      'keeps AI instructions out of the customer-facing service page: %s',
       async (slug) => {
         renderCmsPage(() => ({
           type: 'page',
@@ -53,11 +53,12 @@ describe('CmsPage route', () => {
             },
           },
         }))
+        expect(await screen.findByRole('heading', { name: 'Photography services' })).toBeVisible()
         expect(
-          await screen.findByRole('region', {
+          screen.queryByRole('region', {
             name: 'Enquire with Studio Zanetti using your AI assistant',
           }),
-        ).toBeInTheDocument()
+        ).not.toBeInTheDocument()
         expect(screen.queryByRole('form')).not.toBeInTheDocument()
       },
     )

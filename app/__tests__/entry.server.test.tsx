@@ -61,6 +61,9 @@ describe('entry.server handleRequest', () => {
     expect(response.headers.get('Link')).toContain(
       '</llms.txt>; rel="describedby"; type="text/plain"',
     )
+    expect(response.headers.get('Link')).toContain(
+      '</enquiry-links.txt>; rel="describedby"; type="text/plain"',
+    )
     expect(createReadableStreamFromReadableMock).toHaveBeenCalledTimes(1)
     const [responseBody] = createReadableStreamFromReadableMock.mock.calls[0]
     expect(pipe).toHaveBeenCalledTimes(1)

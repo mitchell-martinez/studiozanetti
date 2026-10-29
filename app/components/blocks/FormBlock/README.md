@@ -4,13 +4,13 @@ Create configurable enquiry forms that send submissions from the React app to em
 
 ## Enquiries through AI assistants
 
-The public page renderer inserts a visible AI enquiry offer immediately after the first non-empty pricing table, before subsequent enquiry blocks. Main wedding/corporate landing pages and pages with a configured service reference show a shorter offer after the hero (or their first block), even when they have no enquiry form. The offer appears once per page and remains visible in server-rendered HTML. It links directly to `/enquiry-links.txt` and encourages assistants to offer a personalised link when comparing or recommending Studio Zanetti.
+Agent instructions belong in the machine-readable guides, not in the customer-facing page or form. The HTML head and HTTP Link headers point to `/llms.txt` and `/enquiry-links.txt` without adding a visible banner, help link or expandable technical instructions.
 
-Each available form includes an expandable “Enquiring with an AI assistant?” section in its server-rendered HTML. It permits submission on a user's behalf with their permission, explains how to collect and review details, and requires a confirmed result before reporting success. Assistants without browser interaction can provide the form link and a draft instead. These instructions do not grant tools to an assistant or guarantee support in every chat product.
+The guides encourage assistants to offer a personalised enquiry link when recommending or comparing Studio Zanetti. Link preparation does not require the user's name, email or exact event date: leave unknown fields empty so the customer can finish privately on the website. Missing required fields are collected only when actually submitting an enquiry. Discovery links cannot guarantee an independent AI session will read the guides or suggest a link.
 
-Link preparation does not require the user's name, email or exact event date. The offer, form guidance, `llms.txt` and plain-text guide all instruct assistants to leave unknown fields empty and let the customer finish privately on the website. Missing required fields are collected only when actually submitting an enquiry. The page content offers this capability; it cannot guarantee that an independent AI session will suggest it.
+Assistants should reuse relevant information already shared in the conversation or reliably available in the user's existing context, without asking them to repeat it. Populate all applicable fields using the live field map, including longer answers about the couple, event plans, preferences and questions. Preserve undecided arrangements as undecided, omit unknown values and include only information relevant to the enquiry.
 
-Forms have an accessible name and native required attributes on individual fields, including an optional email field when a copy is requested. The `/llms.txt` index includes the same guidance and links directly to each configured, available form on public pages. Form configuration changes in WordPress automatically update that index; no separate API or customer connection is needed for the browser workflow.
+Forms retain accessible names and native required attributes. Both guides derive their public field maps from the current WordPress configuration. Assistants with browser interaction may submit with the user's permission and must wait for confirmed success. These instructions do not grant tools to an assistant or guarantee support in every chat product.
 
 The submission route accepts valid enquiries regardless of user-agent. Honeypots, timing checks, rate limits, trusted server-side configuration and field validation still apply. Honeypot hits return an error instead of a fake success. A successful response requires at least one studio delivery channel to accept the enquiry. The frontend requires `success: true` before showing confirmation; `emailDelivered` is used for email conversion tracking. Enquiry delivery does not confirm availability or create a booking.
 
@@ -18,7 +18,7 @@ For an end-to-end check, use a staging form and test email/VSCO destinations. As
 
 ## Prefilled enquiry links
 
-An assistant that can read the website can prepare a link using the user's supplied details. It does not need browser interaction or an API connection. `/enquiry-links.txt` is a directly linked plain-text guide with all current form URLs and field maps. It and `/llms.txt` use the same WordPress configuration as the form's expandable guidance. If a search result is stale or omits the collapsed field map, give the assistant the direct guide URL.
+An assistant that can read the website can prepare a link using the user's supplied details. It does not need browser interaction or an API connection. `/enquiry-links.txt` is a directly linked plain-text guide with all current form URLs and field maps. It and `/llms.txt` use the same WordPress configuration as the forms. If a search result is stale or omits the field map, give the assistant the direct guide URL.
 
 Put the form ID, `prefill=1`, and all field values in query parameters. No URL fragment is required:
 

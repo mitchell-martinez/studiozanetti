@@ -65,19 +65,14 @@ const renderPackageSelection = (initialEntry: string) =>
   )
 
 describe('FormBlock', () => {
-  it('provides discoverable assistant guidance and machine-readable required fields', async () => {
-    const user = userEvent.setup()
+  it('exposes required fields without customer-facing agent guidance', () => {
     renderBlock()
-
-    const form = screen.getByRole('form', { name: /let's plan your photography/i })
-    expect(form).toBeInTheDocument()
-    const summary = screen.getByText('Enquiring with an AI assistant?')
-    expect(summary.closest('details')).not.toHaveAttribute('open')
-    await user.click(summary)
-    expect(summary.closest('details')).toHaveAttribute('open')
-    expect(screen.getByText(/AI assistants may complete and submit/)).toBeVisible()
-    expect(screen.getByText(/does not confirm availability/)).toBeVisible()
-    expect(screen.getByText(/only when authorised by the user/)).toBeVisible()
+    expect(screen.getByRole('form', { name: /let's plan your photography/i })).toBeInTheDocument()
+    expect(screen.queryByText('Enquiring with an AI assistant?')).not.toBeInTheDocument()
+    expect(screen.queryByText(/AI assistants may complete and submit/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'prefilled enquiry link guide' }),
+    ).not.toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: /^Name/i })).toBeRequired()
     expect(screen.getByRole('textbox', { name: /^Email/i })).toBeRequired()
     expect(screen.getByRole('textbox', { name: /mobile number/i })).not.toBeRequired()

@@ -62,39 +62,10 @@
   gap: 1.25rem;
 }
 
-.assistantGuidance {
-  color: var(--color-ink-soft);
-  font-size: var(--text-sm);
-
-  summary {
-    cursor: pointer;
-  }
-
-  p,
-  ol {
-    margin-top: 0.75rem;
-  }
-
-  ol {
-    padding-left: 1.5rem;
-  }
-
-  li + li {
-    margin-top: 0.5rem;
-  }
-}
-
 .fieldset {
   border: 0;
   display: grid;
   gap: 1rem;
-}
-
-.prefillGuide {
-  margin-top: 0.75rem;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  font-family: inherit;
 }
 
 .fieldGroup {

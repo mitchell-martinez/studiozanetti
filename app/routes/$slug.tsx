@@ -262,11 +262,6 @@ const CmsPage = () => {
         blocks={blocks}
         featuredImage={page.featured_image}
         blogPostsData={blogPostsData}
-        showEnquiryOffer={
-          Boolean(page.acf?.service_reference?.trim()) ||
-          page.slug === 'sydney-wedding-photographer' ||
-          page.slug === 'events-and-corporate-photographer-sydney'
-        }
       />
     )
   }

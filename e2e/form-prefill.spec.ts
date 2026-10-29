@@ -35,6 +35,12 @@ test('a personal enquiry link fills the form after hydration and sends only on s
   )
   expect(new URL(response!.request().url()).searchParams.get('name')).toBe(details.name)
   expect(new URL(page.url()).hash).toBe('')
+  await expect(page.getByText(/using your AI assistant/i)).toHaveCount(0)
+  await expect(page.getByText('Enquiring with an AI assistant?', { exact: true })).toHaveCount(0)
+  await expect(page.locator('head link[rel="describedby"][href="/enquiry-links.txt"]')).toHaveCount(
+    1,
+  )
+  expect(response!.headers().link).toContain('</enquiry-links.txt>; rel="describedby"')
   const form = page.getByRole('form', { name: /let's plan your photography/i })
   await expect(form.getByRole('textbox', { name: /^Name/i })).toHaveValue(details.name)
   await expect(form.getByRole('textbox', { name: /^Email/i })).toHaveValue(details.email)

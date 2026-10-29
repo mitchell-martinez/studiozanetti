@@ -30,6 +30,8 @@ import type { WPMenuItem, WPPage, WPPost, WPSiteSettings } from '~/types/wordpre
 export const links: LinksFunction = () => [
   { rel: 'preconnect', href: 'https://picsum.photos' },
   { rel: 'stylesheet', href: globalStyles },
+  { rel: 'describedby', href: '/llms.txt', type: 'text/plain' },
+  { rel: 'describedby', href: '/enquiry-links.txt', type: 'text/plain' },
 ]
 
 // ─── Root loader — fetches nav menu + site settings from WordPress ────────────

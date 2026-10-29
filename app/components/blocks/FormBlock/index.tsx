@@ -3,7 +3,6 @@ import { useLocation } from 'react-router'
 import { useAnalytics } from '~/components/AnalyticsProvider/context'
 import Button from '~/components/Button'
 import RichText from '~/components/RichText'
-import { AI_ENQUIRY_PERMISSION, AI_ENQUIRY_STEPS, getFormPrefillGuide } from '~/lib/enquiryGuidance'
 import {
   getEffectiveNumberFieldMin,
   getSubmitterCopyTargetFields,
@@ -342,25 +341,6 @@ const FormBlock = ({ block }: FormBlockProps) => {
               onSubmit={handleSubmit}
               noValidate
             >
-              <p className={styles.helpText}>
-                Using an AI assistant? Share our{' '}
-                <a href="/enquiry-links.txt">prefilled enquiry link guide</a> with it.
-              </p>
-              <details className={styles.assistantGuidance}>
-                <summary>Enquiring with an AI assistant?</summary>
-                <p>{AI_ENQUIRY_PERMISSION}</p>
-                <ol>
-                  {AI_ENQUIRY_STEPS.map((step) => (
-                    <li key={step}>{step}</li>
-                  ))}
-                </ol>
-                <details>
-                  <summary>Prefilled link format and field names</summary>
-                  <pre className={styles.prefillGuide}>
-                    {getFormPrefillGuide(block, location.pathname)}
-                  </pre>
-                </details>
-              </details>
               <div className={styles.honeypot} aria-hidden="true">
                 <label htmlFor={`${block.form_id}-website`}>Website</label>
                 <input
