@@ -6,6 +6,20 @@ $filters = [];
 $groups = [];
 $meta = [ 42 => [ 'images_0_image' => '81', 'images_1_image' => '37', 'images_2_image' => '95' ] ];
 $meta_reads = [];
+$enqueued_styles = [];
+$enqueued_scripts = [];
+$current_screen = (object) [ 'base' => 'post', 'post_type' => 'page' ];
+
+function get_current_screen() { return $GLOBALS['current_screen']; }
+function content_url( $path ) { return '/wp-content/' . $path; }
+function __( $text, $domain ) { return $text; }
+function wp_localize_script( ...$args ) {}
+function wp_enqueue_style( $handle, $url, $deps, ...$args ) {
+	$GLOBALS['enqueued_styles'][ $handle ] = $deps;
+}
+function wp_enqueue_script( $handle, $url, $deps, ...$args ) {
+	$GLOBALS['enqueued_scripts'][ $handle ] = $deps;
+}
 
 function add_action( $name, $callback, ...$args ) {
 	$GLOBALS['actions'][ $name ][] = $callback;
@@ -51,10 +65,17 @@ foreach ( $actions['acf/init'] as $callback ) {
 }
 $field = $groups['group_sz_gallery_library']['fields'][1];
 gallery_assert( 'gallery', $field['type'], 'The reusable gallery must use the native thumbnail gallery.' );
-gallery_assert( 'thumbnail', $field['preview_size'], 'Use thumbnail previews.' );
+gallery_assert( 'medium', $field['preview_size'], 'Use larger preview files so the editor thumbnails are clear.' );
 gallery_assert( 1, $field['min'], 'The collection still requires an image.' );
 gallery_assert( false, isset( $field['sub_fields'] ), 'No per-image caption or image rows remain.' );
 gallery_assert( [ 'sz_update_gallery_library_images' ], $filters['acf/update_value'][5], 'Import compatibility must run before ACF type filters.' );
+
+sz_enqueue_gallery_library_admin_assets();
+gallery_assert( [], $enqueued_styles, 'Gallery styles must not load on the page editor.' );
+$current_screen->post_type = 'sz_gallery';
+sz_enqueue_gallery_library_admin_assets();
+gallery_assert( [ 'acf-pro-input' ], $enqueued_styles['sz-gallery-library-admin'], 'Gallery overrides must load after the native gallery stylesheet.' );
+gallery_assert( [ 'acf-pro-input' ], $enqueued_scripts['sz-gallery-library-admin'], 'Gallery enhancements must load after the native gallery script.' );
 
 $load = $filters['acf/load_value/key=field_sz_gallery_library_images'][10][0];
 $ids = $load( '3', 42, $field );

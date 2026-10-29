@@ -22,9 +22,15 @@ function sz_enqueue_gallery_library_admin_assets() {
 	}
 
 	$asset_url = content_url( 'mu-plugins/assets/' );
-	wp_enqueue_style( 'sz-gallery-library-admin', $asset_url . 'gallery-library-admin.css', [], (string) filemtime( __DIR__ . '/assets/gallery-library-admin.css' ) );
-	wp_enqueue_script( 'sz-gallery-library-admin', $asset_url . 'gallery-library-admin.js', [ 'acf-input' ], (string) filemtime( __DIR__ . '/assets/gallery-library-admin.js' ), true );
-	wp_localize_script( 'sz-gallery-library-admin', 'szGalleryLibrary', [ 'addImage' => __( 'Add Image', 'studio-zanetti' ) ] );
+	wp_enqueue_style( 'sz-gallery-library-admin', $asset_url . 'gallery-library-admin.css', [ 'acf-pro-input' ], (string) filemtime( __DIR__ . '/assets/gallery-library-admin.css' ) );
+	wp_enqueue_script( 'sz-gallery-library-admin', $asset_url . 'gallery-library-admin.js', [ 'acf-pro-input' ], (string) filemtime( __DIR__ . '/assets/gallery-library-admin.js' ), true );
+	wp_localize_script( 'sz-gallery-library-admin', 'szGalleryLibrary', [
+		'addImage'    => __( 'Add Image', 'studio-zanetti' ),
+		'edit'        => __( 'Edit', 'studio-zanetti' ),
+		'editImage'   => __( 'Edit image', 'studio-zanetti' ),
+		'remove'      => __( 'Remove', 'studio-zanetti' ),
+		'removeImage' => __( 'Remove image', 'studio-zanetti' ),
+	] );
 }
 
 $sz_form_validation_include = __DIR__ . '/includes/form-block-validation.php';
@@ -440,11 +446,11 @@ add_action( 'acf/init', function () {
 			'name' => 'images',
 			'type' => 'gallery',
 			'return_format' => 'array',
-			'preview_size' => 'thumbnail',
+			'preview_size' => 'medium',
 			'insert' => 'append',
 			'library' => 'all',
 			'min' => 1,
-			'instructions' => 'Use Add Image to select one or more images from the Media Library. Drag thumbnails to reorder; remove an image here without deleting it from the Media Library.',
+			'instructions' => 'Use Add Image to select one or more images from the Media Library. Drag thumbnails to reorder, or use Edit and Remove beneath each image. Removing an image here does not delete it from the Media Library.',
 		],
 	];
 

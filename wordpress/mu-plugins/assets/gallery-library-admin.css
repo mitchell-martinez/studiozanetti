@@ -1,20 +1,94 @@
-.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery-main {
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery {
+	height: auto !important;
+	min-height: 0 !important;
+	max-height: none;
+	border: 0;
+	background: transparent;
+	overflow: visible;
+}
+
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-main {
+	position: static;
 	display: flex;
 	flex-direction: column;
 }
 
-.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery-main > .acf-gallery-toolbar {
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-main > .acf-gallery-toolbar {
 	position: relative;
 	inset: auto;
 	order: -1;
 	flex-shrink: 0;
 	border-top: 0;
-	border-bottom: 1px solid #ccd0d4;
+	border-bottom: 0;
+	padding: 0 0 16px;
 }
 
-.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery-attachments {
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-attachments {
 	position: relative;
 	inset: auto;
-	flex: 1;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
+	gap: 16px;
 	min-height: 0;
+	padding: 0;
+	overflow: visible;
+}
+
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-attachment {
+	/* ACF's float value lets sortable detect horizontal movement within the grid. */
+	/* Override data-columns widths even if ACF's stylesheet is printed later. */
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+	background: #fff;
+}
+
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-attachment .margin {
+	margin: 0;
+	border: 0;
+	aspect-ratio: 4 / 3;
+	background: #f6f7f7;
+	cursor: move;
+}
+
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-attachment .margin::before {
+	display: none;
+}
+
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-attachment .thumbnail {
+	position: static;
+	transform: none;
+}
+
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-attachment .thumbnail img {
+	width: 100%;
+	height: 100%;
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+	transform: none;
+}
+
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-attachment .actions {
+	position: static;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 8px;
+	border-top: 1px solid #dcdcde;
+}
+
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-side,
+.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .ui-resizable-handle {
+	display: none;
+}
+
+@media (max-width: 600px) {
+	.acf-field[data-key="field_sz_gallery_library_images"] .acf-gallery .acf-gallery-attachments {
+		grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
+		gap: 12px;
+	}
 }
