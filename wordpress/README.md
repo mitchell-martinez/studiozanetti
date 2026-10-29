@@ -300,6 +300,18 @@ If the assistant is unavailable, confirm the enable flag, key, model, outbound H
 5. Set `SZ_WEBSITE_HELP_ENABLED=true`, recreate only WordPress, then validate as an Editor.
 6. Roll back immediately by setting the flag to false. Stored help history remains available for a later re-enable or user deletion.
 
+### Website analytics dashboard
+
+Deploy `sz-analytics.php`, `includes/analytics-validation.php`, `includes/analytics-reporting.php`, `assets/analytics.css` and `assets/analytics.js` together. Open **Analytics** for metric cards, report tabs and quick 7, 30 and 90 day ranges. Reporting dates use UTC. The selected report stays open when dates change; archived reports show retained history independently of the date filter. The Sessions card opens the session list and individual journeys.
+
+Report tabs support arrow keys, Home and End, direct links and browser history. Without JavaScript, all reports remain visible. Tables scroll horizontally on smaller screens. This interface uses the existing analytics collection and retention rules.
+
+Browser checks render the actual PHP templates with synthetic data and load the real analytics CSS and JavaScript. They require PHP on your PATH, or a `PHP_BINARY` environment variable pointing to the executable:
+
+```bash
+npx playwright test e2e/analytics.spec.ts
+```
+
 ### Lightweight WordPress tests
 
 Run all pure-PHP validation and audit fixtures with:

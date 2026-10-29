@@ -286,6 +286,14 @@ function sz_analytics_admin_assets( string $hook ): void {
 		[],
 		file_exists( $style_path ) ? filemtime( $style_path ) : SZ_ANALYTICS_SCHEMA_VERSION
 	);
+	$script_path = __DIR__ . '/assets/analytics.js';
+	wp_enqueue_script(
+		'sz-analytics',
+		plugins_url( 'assets/analytics.js', __FILE__ ),
+		[],
+		file_exists( $script_path ) ? filemtime( $script_path ) : SZ_ANALYTICS_SCHEMA_VERSION,
+		true
+	);
 }
 add_action( 'admin_enqueue_scripts', 'sz_analytics_admin_assets' );
 
@@ -320,16 +328,39 @@ function sz_analytics_query_rows( string $sql, array $params = [] ): array {
 
 function sz_analytics_render_table( array $headers, array $rows, array $keys ): void {
 	if ( empty( $rows ) ) {
-		echo '<p class="sz-analytics-empty">No data has been recorded for this period.</p>';
+		echo '<div class="sz-analytics-empty"><span class="dashicons dashicons-chart-bar" aria-hidden="true"></span><strong>No activity yet</strong><p>Recorded activity will appear here when it is available.</p></div>';
 		return;
 	}
+	$count_keys = [ 'sessions', 'views', 'page_views', 'pricing_views', 'contact_views', 'form_starts', 'form_submits', 'starts', 'submits', 'abandoned', 'reaches', 'exits' ];
+	$bar_key = end( $keys );
+	$bar_max = in_array( $bar_key, $count_keys, true ) ? max( array_map( 'intval', array_column( $rows, $bar_key ) ) ?: [ 0 ] ) : 0;
 	?>
-	<div class="sz-analytics-table-wrap">
-		<table class="widefat striped">
-			<thead><tr><?php foreach ( $headers as $header ) : ?><th><?php echo esc_html( $header ); ?></th><?php endforeach; ?></tr></thead>
+	<div class="sz-analytics-table-wrap" tabindex="0" role="region" aria-label="<?php echo esc_attr( implode( ', ', $headers ) . ' report' ); ?>">
+		<table class="widefat">
+			<thead><tr><?php foreach ( $headers as $index => $header ) : ?><th scope="col" class="<?php echo in_array( $keys[ $index ], $count_keys, true ) || 'scroll_depth' === $keys[ $index ] ? 'sz-analytics-numeric' : ''; ?>"><?php echo esc_html( $header ); ?></th><?php endforeach; ?></tr></thead>
 			<tbody>
 			<?php foreach ( $rows as $row ) : ?>
-				<tr><?php foreach ( $keys as $key ) : ?><td><?php echo esc_html( (string) ( $row[ $key ] ?? '' ) ); ?></td><?php endforeach; ?></tr>
+				<tr>
+					<?php foreach ( $keys as $key ) : ?>
+						<?php $value = (string) ( $row[ $key ] ?? '' ); ?>
+						<td class="<?php echo in_array( $key, $count_keys, true ) || 'scroll_depth' === $key ? 'sz-analytics-numeric' : ''; ?>">
+							<?php if ( 'source' === $key ) : ?>
+								<span class="sz-source-chip sz-source-<?php echo esc_attr( sanitize_html_class( $value ) ); ?>"><?php echo esc_html( sz_analytics_source_label( $value ) ); ?></span>
+							<?php elseif ( in_array( $key, $count_keys, true ) ) : ?>
+								<span class="sz-analytics-count">
+									<?php if ( $key === $bar_key && $bar_max > 0 ) : ?><span class="sz-analytics-bar" aria-hidden="true"><span style="width: <?php echo esc_attr( (string) round( max( 0, (int) $value ) / $bar_max * 100, 1 ) ); ?>%"></span></span><?php endif; ?>
+									<span><?php echo esc_html( number_format_i18n( (int) $value ) ); ?></span>
+								</span>
+							<?php elseif ( 'scroll_depth' === $key ) : ?>
+								<?php echo esc_html( $value . '%' ); ?>
+							<?php elseif ( 'pricing' === $key || 'contact' === $key ) : ?>
+								<span class="sz-analytics-flag <?php echo 'Yes' === $value ? 'is-present' : ''; ?>"><?php echo esc_html( $value ); ?></span>
+							<?php else : ?>
+								<span class="<?php echo 'page_path' === $key ? 'sz-analytics-path' : ''; ?>"><?php echo esc_html( $value ); ?></span>
+							<?php endif; ?>
+						</td>
+					<?php endforeach; ?>
+				</tr>
 			<?php endforeach; ?>
 			</tbody>
 		</table>
@@ -352,16 +383,30 @@ function sz_analytics_admin_url( string $view, DateTimeImmutable $start, DateTim
 }
 
 function sz_analytics_render_date_range( DateTimeImmutable $start, DateTimeImmutable $end, string $view ): void {
+	$today = new DateTimeImmutable( 'today', new DateTimeZone( 'UTC' ) );
+	$earliest = $today->modify( '-' . ( SZ_ANALYTICS_RETENTION_DAYS - 1 ) . ' days' );
 	?>
-	<form class="sz-analytics-range" method="get">
+	<div class="sz-analytics-toolbar">
+	<div class="sz-analytics-period"><span class="dashicons dashicons-calendar-alt" aria-hidden="true"></span><div><strong><?php echo esc_html( $start->format( 'j M' ) . ' – ' . $end->format( 'j M Y' ) ); ?></strong><span><?php echo esc_html( (string) ( $start->diff( $end )->days + 1 ) ); ?> days · Dates in UTC</span></div></div>
+	<div class="sz-analytics-presets" aria-label="Quick date ranges">
+		<?php foreach ( [ 7, 30, SZ_ANALYTICS_RETENTION_DAYS ] as $days ) : ?>
+			<?php
+			$preset_start = $today->modify( '-' . ( $days - 1 ) . ' days' );
+			$is_current = $start == $preset_start && $end == $today;
+			?>
+			<a href="<?php echo esc_url( sz_analytics_admin_url( $view, $preset_start, $today ) ); ?>" <?php echo $is_current ? 'aria-current="true"' : ''; ?>><?php echo esc_html( (string) $days ); ?> days</a>
+		<?php endforeach; ?>
+	</div>
+	<form class="sz-analytics-range" method="get" aria-label="Custom date range">
 		<input type="hidden" name="page" value="sz-analytics">
 		<?php if ( 'overview' !== $view ) : ?>
 			<input type="hidden" name="analytics_view" value="<?php echo esc_attr( $view ); ?>">
 		<?php endif; ?>
-		<label>From <input type="date" name="start" value="<?php echo esc_attr( $start->format( 'Y-m-d' ) ); ?>"></label>
-		<label>To <input type="date" name="end" value="<?php echo esc_attr( $end->format( 'Y-m-d' ) ); ?>"></label>
+		<label>From <input type="date" name="start" min="<?php echo esc_attr( $earliest->format( 'Y-m-d' ) ); ?>" max="<?php echo esc_attr( $today->format( 'Y-m-d' ) ); ?>" value="<?php echo esc_attr( $start->format( 'Y-m-d' ) ); ?>" required></label>
+		<label>To <input type="date" name="end" min="<?php echo esc_attr( $earliest->format( 'Y-m-d' ) ); ?>" max="<?php echo esc_attr( $today->format( 'Y-m-d' ) ); ?>" value="<?php echo esc_attr( $end->format( 'Y-m-d' ) ); ?>" required></label>
 		<button class="button button-primary" type="submit">Apply</button>
 	</form>
+	</div>
 	<?php
 }
 
@@ -705,34 +750,34 @@ function sz_analytics_render_dashboard(): void {
 	);
 	$secret_configured = '' !== trim( (string) getenv( 'SZ_ANALYTICS_INGEST_SECRET' ) );
 	?>
-	<div class="wrap sz-analytics">
-		<h1>Website Analytics</h1>
-		<p class="description">First-party analytics with no cookies, no IP storage and no third-party tracking.</p>
+	<div class="wrap sz-analytics sz-analytics-overview">
+		<header class="sz-analytics-header">
+			<div><span class="sz-analytics-eyebrow">Studio Zanetti · Insights</span><h1>Website analytics</h1><p class="description">A clearer picture of your visitors, pages and enquiries.</p></div>
+			<span class="sz-analytics-privacy" title="First-party analytics with no cookies, no IP storage and no third-party tracking."><span class="dashicons dashicons-shield" aria-hidden="true"></span>Privacy first</span>
+		</header>
 		<?php if ( ! $secret_configured ) : ?>
 			<div class="notice notice-error inline"><p>Analytics collection is disabled because the ingest secret is not configured.</p></div>
 		<?php endif; ?>
 
 		<?php sz_analytics_render_date_range( $start, $end, 'overview' ); ?>
 
-		<div class="sz-analytics-cards">
+		<div class="sz-analytics-cards" aria-label="Period summary">
 			<?php
 			$cards = [
-				'Page views'    => $summary['page_views'] ?? 0,
-				'Sessions'      => $summary['sessions'] ?? 0,
-				'Pricing views' => $summary['pricing_views'] ?? 0,
-				'Contact views' => $summary['contact_views'] ?? 0,
-				'Form starts'   => $summary['form_starts'] ?? 0,
-				'Form submits'  => $summary['form_submits'] ?? 0,
+				'page_views'    => [ 'Page views', 'visibility', 'Across your website', '#pages' ],
+				'sessions'      => [ 'Sessions', 'admin-users', 'Explore visitor journeys', sz_analytics_admin_url( 'sessions', $start, $end ) ],
+				'pricing_views' => [ 'Pricing views', 'tag', 'Pages with pricing', '#scroll' ],
+				'contact_views' => [ 'Contact views', 'email', 'Pages with a contact form', '#pages' ],
+				'form_starts'   => [ 'Form starts', 'edit', 'Enquiries started', '#forms' ],
+				'form_submits'  => [ 'Form submits', 'yes-alt', 'Enquiries sent', '#forms' ],
 			];
-			foreach ( $cards as $label => $value ) :
+			foreach ( $cards as $key => [ $label, $icon, $description, $url ] ) :
 			?>
-				<?php if ( 'Sessions' === $label ) : ?>
-					<a class="sz-analytics-card sz-analytics-card-link" href="<?php echo esc_url( sz_analytics_admin_url( 'sessions', $start, $end ) ); ?>">
-						<strong><?php echo esc_html( number_format_i18n( (int) $value ) ); ?></strong><span><?php echo esc_html( $label ); ?></span><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span>
-					</a>
-				<?php else : ?>
-					<div class="sz-analytics-card"><strong><?php echo esc_html( number_format_i18n( (int) $value ) ); ?></strong><span><?php echo esc_html( $label ); ?></span></div>
-				<?php endif; ?>
+				<a class="sz-analytics-card sz-analytics-card-link sz-metric-<?php echo esc_attr( $key ); ?>" href="<?php echo esc_url( $url ); ?>">
+					<span class="sz-analytics-card-top"><span><?php echo esc_html( $label ); ?></span><span class="sz-analytics-card-icon dashicons dashicons-<?php echo esc_attr( $icon ); ?>" aria-hidden="true"></span></span>
+					<strong><?php echo esc_html( number_format_i18n( (int) ( $summary[ $key ] ?? 0 ) ) ); ?></strong>
+					<span class="sz-analytics-card-caption"><?php echo esc_html( $description ); ?><span class="dashicons dashicons-arrow-right-alt2" aria-hidden="true"></span></span>
+				</a>
 			<?php endforeach; ?>
 		</div>
 
@@ -740,17 +785,17 @@ function sz_analytics_render_dashboard(): void {
 			<a href="#sources">Sources</a><a href="#landing-pages">Landing pages</a><a href="#sites">Sites</a><a href="#pages">Key pages</a><a href="#regions">Regions</a><a href="#forms">Forms</a><a href="#scroll">Pricing depth</a><a href="#exits">Exit pages</a><a href="#archive">Archive</a>
 		</nav>
 
-		<section id="sources"><h2>Traffic sources</h2><p class="description">Sources are attributed from each daily session's first page. AI assistants often omit referral data, so their count is a confirmed minimum.</p><?php sz_analytics_render_table( [ 'Source', 'Domain', 'Sessions' ], $sources, [ 'source', 'domain', 'sessions' ] ); ?></section>
-		<section id="landing-pages"><h2>Landing pages</h2><?php sz_analytics_render_table( [ 'Landing page', 'Source', 'Sessions' ], $landing_pages, [ 'page_path', 'source', 'sessions' ] ); ?></section>
-		<section id="sites"><h2>Sites</h2><?php sz_analytics_render_table( [ 'Site', 'Views', 'Sessions' ], $sites, [ 'site_group', 'views', 'sessions' ] ); ?></section>
-		<section id="pages"><h2>Key pages</h2><?php sz_analytics_render_table( [ 'Page', 'Views', 'Pricing', 'Contact form' ], $pages, [ 'page_path', 'views', 'pricing', 'contact' ] ); ?></section>
-		<section id="regions"><h2>Regional funnel</h2><p class="description">Location is derived from the browser timezone. Unknown includes browsers that intentionally hide timezone data.</p><?php sz_analytics_render_table( [ 'Region', 'Page views', 'Pricing views', 'Contact views', 'Form starts', 'Form submits' ], $regions, [ 'region_bucket', 'page_views', 'pricing_views', 'contact_views', 'form_starts', 'form_submits' ] ); ?></section>
-		<section id="forms"><h2>Form progress</h2><?php sz_analytics_render_table( [ 'Region', 'Page', 'Form', 'Started sessions', 'Submitted sessions', 'Abandoned' ], $forms, [ 'region_bucket', 'page_path', 'form_id', 'starts', 'submits', 'abandoned' ] ); ?></section>
-		<section id="scroll"><h2>Pricing page scroll depth</h2><?php sz_analytics_render_table( [ 'Page', 'Depth', 'Reaches' ], $scroll, [ 'page_path', 'scroll_depth', 'reaches' ] ); ?></section>
-		<section id="exits"><h2>Exit pages</h2><p class="description">The last recorded page in each privacy-preserving daily session.</p><?php sz_analytics_render_table( [ 'Region', 'Page', 'Exits' ], $exits, [ 'region_bucket', 'page_path', 'exits' ] ); ?></section>
-		<section id="archive">
+		<section class="sz-analytics-panel" id="sources"><h2>Traffic sources</h2><p class="description">Where your visitors come from, based on each daily session's first page. AI referrals are a confirmed minimum; assistants often omit referral data.</p><?php sz_analytics_render_table( [ 'Source', 'Domain', 'Sessions' ], $sources, [ 'source', 'domain', 'sessions' ] ); ?></section>
+		<section class="sz-analytics-panel" id="landing-pages"><h2>Landing pages</h2><p class="description">The first page visitors see, grouped by traffic source.</p><?php sz_analytics_render_table( [ 'Landing page', 'Source', 'Sessions' ], $landing_pages, [ 'page_path', 'source', 'sessions' ] ); ?></section>
+		<section class="sz-analytics-panel" id="sites"><h2>Sites</h2><p class="description">Page views and daily sessions across your site groups.</p><?php sz_analytics_render_table( [ 'Site', 'Views', 'Sessions' ], $sites, [ 'site_group', 'views', 'sessions' ] ); ?></section>
+		<section class="sz-analytics-panel" id="pages"><h2>Key pages</h2><p class="description">Your most viewed pages, including those with pricing and contact forms.</p><?php sz_analytics_render_table( [ 'Page', 'Views', 'Pricing', 'Contact form' ], $pages, [ 'page_path', 'views', 'pricing', 'contact' ] ); ?></section>
+		<section class="sz-analytics-panel" id="regions"><h2>Regional funnel</h2><p class="description">Follow activity from page views to enquiries by region. Location uses browser timezone; browsers that hide it appear as unknown.</p><?php sz_analytics_render_table( [ 'Region', 'Page views', 'Pricing views', 'Contact views', 'Form starts', 'Form submits' ], $regions, [ 'region_bucket', 'page_views', 'pricing_views', 'contact_views', 'form_starts', 'form_submits' ] ); ?></section>
+		<section class="sz-analytics-panel" id="forms"><h2>Form progress</h2><p class="description">Daily sessions that started, submitted or left a form unfinished.</p><?php sz_analytics_render_table( [ 'Region', 'Page', 'Form', 'Started sessions', 'Submitted sessions', 'Abandoned' ], $forms, [ 'region_bucket', 'page_path', 'form_id', 'starts', 'submits', 'abandoned' ] ); ?></section>
+		<section class="sz-analytics-panel" id="scroll"><h2>Pricing page scroll depth</h2><p class="description">How far visitors scroll through pages with pricing.</p><?php sz_analytics_render_table( [ 'Page', 'Depth', 'Reaches' ], $scroll, [ 'page_path', 'scroll_depth', 'reaches' ] ); ?></section>
+		<section class="sz-analytics-panel" id="exits"><h2>Exit pages</h2><p class="description">The last recorded page in each anonymous daily session.</p><?php sz_analytics_render_table( [ 'Region', 'Page', 'Exits' ], $exits, [ 'region_bucket', 'page_path', 'exits' ] ); ?></section>
+		<section class="sz-analytics-panel" id="archive">
 			<h2>Archived analytics</h2>
-			<p class="description">After 90 days, detailed events and session hashes are removed. Non-identifying daily totals and funnel summaries remain indefinitely.</p>
+			<p class="description">All archived history, independent of the date range above. After 90 days, detailed events and session hashes are removed; anonymous daily totals and funnel summaries remain.</p>
 			<h3>Daily totals</h3><?php sz_analytics_render_table( [ 'Date', 'Page views', 'Pricing views', 'Contact views', 'Form starts', 'Form submits' ], $archive, [ 'event_date', 'page_views', 'pricing_views', 'contact_views', 'form_starts', 'form_submits' ] ); ?>
 			<h3>Traffic sources</h3><?php sz_analytics_render_table( [ 'Source', 'Domain', 'Sessions' ], $archive_sources, [ 'source', 'domain', 'sessions' ] ); ?>
 			<h3>Landing pages</h3><?php sz_analytics_render_table( [ 'Landing page', 'Source', 'Sessions' ], $archive_landings, [ 'page_path', 'source', 'sessions' ] ); ?>
@@ -758,7 +803,7 @@ function sz_analytics_render_dashboard(): void {
 			<h3>Exit pages</h3><?php sz_analytics_render_table( [ 'Region', 'Page', 'Exits' ], $archive_exits, [ 'region_bucket', 'page_path', 'exits' ] ); ?>
 		</section>
 
-		<p class="sz-analytics-footnote">Detailed events are retained for <?php echo esc_html( (string) SZ_ANALYTICS_RETENTION_DAYS ); ?> days. <?php echo esc_html( number_format_i18n( $archived_count ) ); ?> older events have been retained as anonymous daily totals.</p>
+		<p class="sz-analytics-footnote"><span class="dashicons dashicons-lock" aria-hidden="true"></span>No cookies, stored IP addresses or third-party tracking. Detailed events are kept for <?php echo esc_html( (string) SZ_ANALYTICS_RETENTION_DAYS ); ?> days; <?php echo esc_html( number_format_i18n( $archived_count ) ); ?> older events are saved as anonymous daily totals.</p>
 	</div>
 	<?php
 }
